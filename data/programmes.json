@@ -28,14 +28,6 @@
     "url": "https://www.golha.co.uk/fa/programme/4"
   },
   {
-    "id": 5,
-    "title": "",
-    "category": "",
-    "no": "",
-    "url": "https://www.golha.co.uk/fa/programme/5",
-    "error": "Site Error"
-  },
-  {
     "id": 6,
     "title": "گلهای جاویدان ۱۱۸",
     "category": "گلهای جاویدان",
@@ -1373,14 +1365,6 @@
     "url": "https://www.golha.co.uk/fa/programme/196"
   },
   {
-    "id": 197,
-    "title": "",
-    "category": "",
-    "no": "",
-    "url": "https://www.golha.co.uk/fa/programme/197",
-    "error": "Site Error"
-  },
-  {
     "id": 198,
     "title": "برگ سبز ۱۸۹",
     "category": "برگ سبز",
@@ -2389,14 +2373,6 @@
     "url": "https://www.golha.co.uk/fa/programme/341"
   },
   {
-    "id": 342,
-    "title": "",
-    "category": "",
-    "no": "",
-    "url": "https://www.golha.co.uk/fa/programme/342",
-    "error": "Site Error"
-  },
-  {
     "id": 343,
     "title": "گلهای جاویدان ۱۳۹",
     "category": "گلهای جاویدان",
@@ -3172,14 +3148,6 @@
     "category": "یک شاخه گل",
     "no": "۶۸",
     "url": "https://www.golha.co.uk/fa/programme/453"
-  },
-  {
-    "id": 454,
-    "title": "",
-    "category": "",
-    "no": "",
-    "url": "https://www.golha.co.uk/fa/programme/454",
-    "error": "Site Error"
   },
   {
     "id": 455,
@@ -4610,14 +4578,6 @@
     "url": "https://www.golha.co.uk/fa/programme/658"
   },
   {
-    "id": 659,
-    "title": "",
-    "category": "",
-    "no": "",
-    "url": "https://www.golha.co.uk/fa/programme/659",
-    "error": "Site Error"
-  },
-  {
     "id": 660,
     "title": "گلهای رنگارنگ ب۳۷۰",
     "category": "گلهای رنگارنگ",
@@ -5134,14 +5094,6 @@
     "category": "برگ سبز",
     "no": "۲۶۴",
     "url": "https://www.golha.co.uk/fa/programme/734"
-  },
-  {
-    "id": 735,
-    "title": "",
-    "category": "",
-    "no": "",
-    "url": "https://www.golha.co.uk/fa/programme/735",
-    "error": "Site Error"
   },
   {
     "id": 736,
@@ -7265,27 +7217,11 @@
     "url": "https://www.golha.co.uk/fa/programme/1140"
   },
   {
-    "id": 1141,
-    "title": "",
-    "category": "",
-    "no": "",
-    "url": "https://www.golha.co.uk/fa/programme/1141",
-    "error": "Site Error"
-  },
-  {
     "id": 1142,
     "title": "گلهای تازه ۱۸۵",
     "category": "گلهای تازه",
     "no": "۱۸۵",
     "url": "https://www.golha.co.uk/fa/programme/1142"
-  },
-  {
-    "id": 1143,
-    "title": "",
-    "category": "",
-    "no": "",
-    "url": "https://www.golha.co.uk/fa/programme/1143",
-    "error": "Site Error"
   },
   {
     "id": 1144,
@@ -7302,91 +7238,11 @@
     "url": "https://www.golha.co.uk/fa/programme/1145"
   },
   {
-    "id": 1146,
-    "title": "",
-    "category": "",
-    "no": "",
-    "url": "https://www.golha.co.uk/fa/programme/1146",
-    "error": "Site Error"
-  },
-  {
     "id": 1147,
     "title": "گلهای تازه ۱۹۰",
     "category": "گلهای تازه",
     "no": "۱۹۰",
     "url": "https://www.golha.co.uk/fa/programme/1147"
-  },
-  {
-    "id": 1148,
-    "title": "",
-    "category": "",
-    "no": "",
-    "url": "https://www.golha.co.uk/fa/programme/1148",
-    "error": "Site Error"
-  },
-  {
-    "id": 1149,
-    "title": "",
-    "category": "",
-    "no": "",
-    "url": "https://www.golha.co.uk/fa/programme/1149",
-    "error": "Site Error"
-  },
-  {
-    "id": 1150,
-    "title": "",
-    "category": "",
-    "no": "",
-    "url": "https://www.golha.co.uk/fa/programme/1150",
-    "error": "Site Error"
-  },
-  {
-    "id": 1151,
-    "title": "",
-    "category": "",
-    "no": "",
-    "url": "https://www.golha.co.uk/fa/programme/1151",
-    "error": "Site Error"
-  },
-  {
-    "id": 1152,
-    "title": "",
-    "category": "",
-    "no": "",
-    "url": "https://www.golha.co.uk/fa/programme/1152",
-    "error": "Site Error"
-  },
-  {
-    "id": 1153,
-    "title": "",
-    "category": "",
-    "no": "",
-    "url": "https://www.golha.co.uk/fa/programme/1153",
-    "error": "Site Error"
-  },
-  {
-    "id": 1154,
-    "title": "",
-    "category": "",
-    "no": "",
-    "url": "https://www.golha.co.uk/fa/programme/1154",
-    "error": "Site Error"
-  },
-  {
-    "id": 1155,
-    "title": "",
-    "category": "",
-    "no": "",
-    "url": "https://www.golha.co.uk/fa/programme/1155",
-    "error": "Site Error"
-  },
-  {
-    "id": 1156,
-    "title": "",
-    "category": "",
-    "no": "",
-    "url": "https://www.golha.co.uk/fa/programme/1156",
-    "error": "Site Error"
   },
   {
     "id": 1157,
