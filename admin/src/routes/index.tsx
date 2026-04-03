@@ -1,10 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { 
-  TrendingUp, 
   Users, 
   Music, 
   Clock, 
-  ArrowUpRight,
   Database,
   Search,
   Activity,
@@ -21,17 +19,16 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Skeleton } from "@/components/ui/skeleton"
 
 export const Route = createFileRoute('/')({
   component: Dashboard,
 })
 
 const STATS = [
-  { label: 'کل برنامه‌ها', value: '۱,۵۶۱', icon: Music, color: 'text-blue-400', bg: 'bg-blue-400/10' },
-  { label: 'هنرمندان ثبت شده', value: '۸۷۲', icon: Users, color: 'text-teal-400', bg: 'bg-teal-400/10' },
-  { label: 'زمان کل آرشیو', value: '۴۲۰ ساعت', icon: Clock, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
-  { label: 'تعداد جستجوها', value: '۱۲,۴۰۰', icon: Search, color: 'text-rose-400', bg: 'bg-rose-400/10' },
+  { label: 'کل برنامه‌ها', value: '۱,۵۶۱', icon: Music, color: 'text-primary', bg: 'bg-primary/10' },
+  { label: 'هنرمندان ثبت شده', value: '۸۷۲', icon: Users, color: 'text-[#79a8a9]', bg: 'bg-[#79a8a9]/10' },
+  { label: 'زمان کل آرشیو', value: '۴۲۰ ساعت', icon: Clock, color: 'text-[#1f4e5f]/70', bg: 'bg-[#1f4e5f]/5' },
+  { label: 'تعداد جستجوها', value: '۱۲,۴۰۰', icon: Search, color: 'text-[#aacfd0]', bg: 'bg-[#aacfd0]/20' },
 ]
 
 function Dashboard() {
@@ -41,7 +38,7 @@ function Dashboard() {
       <section className="flex flex-col md:flex-row justify-between items-end gap-6">
         <div className="space-y-2">
           <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 px-3 py-1 font-black rounded-full">سیستم آنلاین</Badge>
-          <h1 className="text-4xl font-black bg-gradient-to-l from-foreground to-muted-foreground bg-clip-text text-transparent">خوش آمدید، ادمین عزیز</h1>
+          <h1 className="text-4xl font-black bg-gradient-to-l from-primary to-foreground bg-clip-text text-transparent pb-1">خوش آمدید، ادمین عزیز</h1>
           <p className="text-muted-foreground font-medium max-w-lg">وضعیت کلی پروژه آرشیو رادیو گلها و پیشرفت اسکرپرها را از این بخش دنبال کنید.</p>
         </div>
         <div className="flex gap-4">
@@ -59,7 +56,7 @@ function Dashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {STATS.map((stat, i) => (
-          <Card key={i} className="group border-border/50 bg-card/50 backdrop-blur-md hover:border-primary/30 transition-all duration-300 rounded-[2rem] overflow-hidden">
+          <Card key={i} className="group border-border/50 bg-card hover:bg-secondary/50 hover:border-primary/30 transition-all duration-300 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
               <div className={`${stat.bg} w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 duration-500`}>
                 <stat.icon className={`w-6 h-6 ${stat.color}`} />
@@ -112,7 +109,7 @@ function Dashboard() {
 
         {/* Right Column: Active Jobs / Info */}
         <div className="space-y-6">
-          <Card className="bg-gradient-to-br from-primary/20 to-teal-500/10 backdrop-blur-md rounded-[2.5rem] border-primary/20 relative overflow-hidden group p-2">
+          <Card className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-[2.5rem] border-primary/20 relative overflow-hidden group p-2 shadow-sm">
             <CardHeader className="pt-6 px-6">
               <CardTitle className="text-xl font-black">مدیریت دیتابیس</CardTitle>
               <CardDescription className="text-foreground/70 font-medium leading-relaxed pt-2">

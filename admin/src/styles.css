@@ -6,9 +6,9 @@
 
 @theme {
   --font-vazir: "Vazirmatn", sans-serif;
-  --color-brand: var(--color-teal-500);
+  --color-brand: #1f4e5f;
   --animate-in: in-0.2s cubic-bezier(0, 0, 0.2, 1);
-  --animate-out: out-0.2s cubic-bezier(0.4, 0, 1, 1);
+  --animate-out: out-0.2s cubic-bezier(0.4, 0, 0.5, 1);
 }
 
 :root {
@@ -16,18 +16,54 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: dark;
+  color-scheme: light;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* Shadcn Dark Vars (Forced) */
+  /* Color Hunt Palette: f4f7f7 aacfd0 79a8a9 1f4e5f */
+  --background: #f4f7f7;
+  --foreground: #1f4e5f;
+  --card: #ffffff;
+  --card-foreground: #1f4e5f;
+  --popover: #ffffff;
+  --popover-foreground: #1f4e5f;
+  
+  --primary: #1f4e5f; 
+  --primary-foreground: #f4f7f7;
+  
+  --secondary: #aacfd0;
+  --secondary-foreground: #1f4e5f;
+  
+  --muted: #79a8a9;
+  --muted-foreground: #1f4e5f;
+  
+  --accent: #aacfd0;
+  --accent-foreground: #1f4e5f;
+  
+  --destructive: #ef4444;
+  --border: #aacfd0;
+  --input: #aacfd0;
+  --ring: #1f4e5f;
+  --radius: 0.85rem;
+
+  --sidebar: #f4f7f7;
+  --sidebar-foreground: #1f4e5f;
+  --sidebar-primary: #1f4e5f;
+  --sidebar-primary-foreground: #f4f7f7;
+  --sidebar-accent: #aacfd0;
+  --sidebar-accent-foreground: #1f4e5f;
+  --sidebar-border: #aacfd0;
+  --sidebar-ring: #1f4e5f;
+}
+
+.dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.16 0 0);
+  --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.16 0 0);
+  --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.922 0 0);
   --primary-foreground: oklch(0.205 0 0);
@@ -41,9 +77,7 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
-  --radius: 0.75rem;
-
-  --sidebar: oklch(0.12 0 0);
+  --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
   --sidebar-primary-foreground: oklch(0.985 0 0);
@@ -70,7 +104,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-800 rounded-full hover:bg-slate-700 transition-colors;
+  @apply bg-muted/40 rounded-full hover:bg-muted/60 transition-colors;
 }
 
 /* RTL Helpers */
