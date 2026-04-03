@@ -39,7 +39,7 @@
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         }
       ]
     },
@@ -68,7 +68,7 @@
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         }
       ]
     },
@@ -97,12 +97,12 @@
         {
           "role": "نوازندگان",
           "name": "امیرناصر افتتاح",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         }
       ]
     },
@@ -131,17 +131,17 @@
         {
           "role": "نوازندگان",
           "name": "امیرناصر افتتاح",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "علی تجویدی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "مرتضی محجوبی",
-          "instrument": "‎پیانو"
+          "instrument": "پیانو"
         }
       ]
     },
@@ -153,12 +153,12 @@
         {
           "role": "نوازندگان",
           "name": "علی تجویدی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "مرتضی محجوبی",
-          "instrument": "‎پیانو"
+          "instrument": "پیانو"
         },
         {
           "role": "خواننده آواز",
@@ -180,7 +180,7 @@
         {
           "role": "نوازندگان",
           "name": "مرتضی محجوبی",
-          "instrument": "‎پیانو"
+          "instrument": "پیانو"
         }
       ]
     },
@@ -209,12 +209,12 @@
         {
           "role": "نوازندگان",
           "name": "امیرناصر افتتاح",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "جلیل شهناز",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -240,23 +240,23 @@
     "performers": [
       {
         "name": "امیرناصر افتتاح",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       },
       {
         "name": "جلیل شهناز",
-        "instrument": "‎تار"
+        "instrument": "تار"
       },
       {
         "name": "علی تجویدی",
-        "instrument": "‎ویولن"
+        "instrument": "ویولن"
       },
       {
         "name": "كسایی، حسن",
-        "instrument": "‎نی"
+        "instrument": "نی"
       },
       {
         "name": "مرتضی محجوبی",
-        "instrument": "‎پیانو"
+        "instrument": "پیانو"
       }
     ],
     "singers": [

@@ -22,7 +22,7 @@
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         },
         {
           "role": "گوینده",
@@ -44,12 +44,12 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         }
       ]
     },
@@ -61,12 +61,12 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         },
         {
           "role": "گوینده",
@@ -88,7 +88,7 @@
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         }
       ]
     },
@@ -117,7 +117,7 @@
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "گوینده",
@@ -139,7 +139,7 @@
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "خواننده آواز",
@@ -187,15 +187,15 @@
     "performers": [
       {
         "name": "رضا ورزنده",
-        "instrument": "‎سنتور"
+        "instrument": "سنتور"
       },
       {
         "name": "كسایی، حسن",
-        "instrument": "‎نی"
+        "instrument": "نی"
       },
       {
         "name": "ناشناخته",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       }
     ],
     "singers": [

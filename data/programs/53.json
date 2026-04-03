@@ -22,7 +22,7 @@
         {
           "role": "نوازندگان",
           "name": "جلیل شهناز",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -51,7 +51,7 @@
         {
           "role": "نوازندگان",
           "name": "جلیل شهناز",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -80,7 +80,7 @@
         {
           "role": "نوازندگان",
           "name": "جلیل شهناز",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -109,7 +109,7 @@
         {
           "role": "نوازندگان",
           "name": "جلیل شهناز",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -138,7 +138,7 @@
         {
           "role": "نوازندگان",
           "name": "جلیل شهناز",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -150,7 +150,7 @@
         {
           "role": "نوازندگان",
           "name": "جلیل شهناز",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "گوینده",
@@ -172,7 +172,7 @@
         {
           "role": "نوازندگان",
           "name": "جلیل شهناز",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -184,12 +184,12 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "پرویز یاحقی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         }
       ]
     },
@@ -201,7 +201,7 @@
         {
           "role": "نوازندگان",
           "name": "پرویز یاحقی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "خواننده آواز",
@@ -223,7 +223,7 @@
         {
           "role": "نوازندگان",
           "name": "پرویز یاحقی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         }
       ]
     },
@@ -249,15 +249,15 @@
     "performers": [
       {
         "name": "جلیل شهناز",
-        "instrument": "‎تار"
+        "instrument": "تار"
       },
       {
         "name": "ناشناخته",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       },
       {
         "name": "پرویز یاحقی",
-        "instrument": "‎ویولن"
+        "instrument": "ویولن"
       }
     ],
     "singers": [

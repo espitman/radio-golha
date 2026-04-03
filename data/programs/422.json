@@ -22,7 +22,7 @@
         {
           "role": "نوازندگان",
           "name": "ابراهیم سرخوش",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "گوینده",
@@ -44,17 +44,17 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "ابراهیم سرخوش",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "نوازندگان",
           "name": "لشگری، حسن",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         }
       ]
     },
@@ -66,17 +66,17 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "نوازندگان",
           "name": "ابراهیم سرخوش",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "نوازندگان",
           "name": "لشگری، حسن",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "ترانه سرا",
@@ -136,19 +136,19 @@
     "performers": [
       {
         "name": "ابراهیم سرخوش",
-        "instrument": "‎تار"
+        "instrument": "تار"
       },
       {
         "name": "لشگری، حسن",
-        "instrument": "‎ویولن"
+        "instrument": "ویولن"
       },
       {
         "name": "ناشناخته",
-        "instrument": "‎سنتور"
+        "instrument": "سنتور"
       },
       {
         "name": "ناشناخته",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       }
     ],
     "singers": [

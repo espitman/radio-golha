@@ -22,7 +22,7 @@
         {
           "role": "نوازندگان",
           "name": "شیرخدایی، محمد",
-          "instrument": "‎غرنی"
+          "instrument": "غرنی"
         }
       ]
     },
@@ -46,7 +46,7 @@
         {
           "role": "نوازندگان",
           "name": "شیرخدایی، محمد",
-          "instrument": "‎غرنی"
+          "instrument": "غرنی"
         }
       ]
     },
@@ -75,7 +75,7 @@
         {
           "role": "نوازندگان",
           "name": "شیرخدایی، محمد",
-          "instrument": "‎غرنی"
+          "instrument": "غرنی"
         }
       ]
     },
@@ -87,7 +87,7 @@
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         },
         {
           "role": "گوینده",
@@ -160,7 +160,7 @@
         {
           "role": "نوازندگان",
           "name": "عبادی، احمد",
-          "instrument": "‎سه‌تار"
+          "instrument": "سه‌تار"
         }
       ]
     },
@@ -172,7 +172,7 @@
         {
           "role": "نوازندگان",
           "name": "عبادی، احمد",
-          "instrument": "‎سه‌تار"
+          "instrument": "سه‌تار"
         },
         {
           "role": "گوینده",
@@ -211,12 +211,12 @@
         {
           "role": "نوازندگان",
           "name": "علی تجویدی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         }
       ]
     },
@@ -228,7 +228,7 @@
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         },
         {
           "role": "خواننده آواز",
@@ -250,12 +250,12 @@
         {
           "role": "نوازندگان",
           "name": "امیرناصر افتتاح",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         }
       ]
     },
@@ -267,17 +267,17 @@
         {
           "role": "نوازندگان",
           "name": "امیرناصر افتتاح",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "جلیل شهناز",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         }
       ]
     },
@@ -289,12 +289,12 @@
         {
           "role": "نوازندگان",
           "name": "جلیل شهناز",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         },
         {
           "role": "خواننده آواز",
@@ -316,12 +316,12 @@
         {
           "role": "نوازندگان",
           "name": "جلیل شهناز",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         },
         {
           "role": "خواننده آواز",
@@ -343,12 +343,12 @@
         {
           "role": "نوازندگان",
           "name": "جلیل شهناز",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         },
         {
           "role": "گوینده",
@@ -370,12 +370,12 @@
         {
           "role": "نوازندگان",
           "name": "جلیل شهناز",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         },
         {
           "role": "خواننده آواز",
@@ -397,17 +397,17 @@
         {
           "role": "نوازندگان",
           "name": "امیرناصر افتتاح",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "عبادی، احمد",
-          "instrument": "‎سه‌تار"
+          "instrument": "سه‌تار"
         },
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         }
       ]
     },
@@ -428,27 +428,27 @@
     "performers": [
       {
         "name": "امیرناصر افتتاح",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       },
       {
         "name": "جلیل شهناز",
-        "instrument": "‎تار"
+        "instrument": "تار"
       },
       {
         "name": "شیرخدایی، محمد",
-        "instrument": "‎غرنی"
+        "instrument": "غرنی"
       },
       {
         "name": "عبادی، احمد",
-        "instrument": "‎سه‌تار"
+        "instrument": "سه‌تار"
       },
       {
         "name": "علی تجویدی",
-        "instrument": "‎ویولن"
+        "instrument": "ویولن"
       },
       {
         "name": "كسایی، حسن",
-        "instrument": "‎نی"
+        "instrument": "نی"
       }
     ],
     "singers": [

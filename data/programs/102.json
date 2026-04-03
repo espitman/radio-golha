@@ -39,17 +39,17 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "فرهنگ شریف",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "نوازندگان",
           "name": "پرویز یاحقی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         }
       ]
     },
@@ -61,12 +61,12 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "فرهنگ شریف",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "گوینده",
@@ -88,12 +88,12 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "فرهنگ شریف",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -105,12 +105,12 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "پرویز یاحقی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "گوینده",
@@ -132,17 +132,17 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "فرهنگ شریف",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "نوازندگان",
           "name": "پرویز یاحقی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         }
       ]
     },
@@ -171,17 +171,17 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "فرهنگ شریف",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "نوازندگان",
           "name": "پرویز یاحقی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         }
       ]
     },
@@ -210,7 +210,7 @@
         {
           "role": "نوازندگان",
           "name": "مرتضی محجوبی",
-          "instrument": "‎پیانو"
+          "instrument": "پیانو"
         }
       ]
     },
@@ -222,7 +222,7 @@
         {
           "role": "نوازندگان",
           "name": "مرتضی محجوبی",
-          "instrument": "‎پیانو"
+          "instrument": "پیانو"
         },
         {
           "role": "خواننده آواز",
@@ -244,7 +244,7 @@
         {
           "role": "نوازندگان",
           "name": "مرتضی محجوبی",
-          "instrument": "‎پیانو"
+          "instrument": "پیانو"
         },
         {
           "role": "گوینده",
@@ -266,7 +266,7 @@
         {
           "role": "نوازندگان",
           "name": "مرتضی محجوبی",
-          "instrument": "‎پیانو"
+          "instrument": "پیانو"
         },
         {
           "role": "خواننده آواز",
@@ -314,19 +314,19 @@
     "performers": [
       {
         "name": "فرهنگ شریف",
-        "instrument": "‎تار"
+        "instrument": "تار"
       },
       {
         "name": "مرتضی محجوبی",
-        "instrument": "‎پیانو"
+        "instrument": "پیانو"
       },
       {
         "name": "ناشناخته",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       },
       {
         "name": "پرویز یاحقی",
-        "instrument": "‎ویولن"
+        "instrument": "ویولن"
       }
     ],
     "singers": [

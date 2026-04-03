@@ -61,7 +61,7 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "گوینده",
@@ -83,17 +83,17 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته ۱",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "پرویز یاحقی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         }
       ]
     },
@@ -122,7 +122,7 @@
         {
           "role": "نوازندگان",
           "name": "مرتضی محجوبی",
-          "instrument": "‎پیانو"
+          "instrument": "پیانو"
         }
       ]
     },
@@ -310,23 +310,23 @@
       },
       {
         "name": "مرتضی محجوبی",
-        "instrument": "‎پیانو"
+        "instrument": "پیانو"
       },
       {
         "name": "ناشناخته",
-        "instrument": "‎تار"
+        "instrument": "تار"
       },
       {
         "name": "ناشناخته",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       },
       {
         "name": "ناشناخته ۱",
-        "instrument": "‎تار"
+        "instrument": "تار"
       },
       {
         "name": "پرویز یاحقی",
-        "instrument": "‎ویولن"
+        "instrument": "ویولن"
       }
     ],
     "singers": [

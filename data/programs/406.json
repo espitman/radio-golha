@@ -51,17 +51,17 @@
         {
           "role": "نوازندگان",
           "name": "علی تجویدی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "حسین تهرانی",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "عبادی، احمد",
-          "instrument": "‎سه‌تار"
+          "instrument": "سه‌تار"
         }
       ]
     },
@@ -73,12 +73,12 @@
         {
           "role": "نوازندگان",
           "name": "علی تجویدی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "حسین تهرانی",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "گوینده",
@@ -112,17 +112,17 @@
         {
           "role": "نوازندگان",
           "name": "علی تجویدی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "حسین تهرانی",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "عبادی، احمد",
-          "instrument": "‎سه‌تار"
+          "instrument": "سه‌تار"
         },
         {
           "role": "گوینده",
@@ -144,17 +144,17 @@
         {
           "role": "نوازندگان",
           "name": "علی تجویدی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "حسین تهرانی",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "عبادی، احمد",
-          "instrument": "‎سه‌تار"
+          "instrument": "سه‌تار"
         }
       ]
     },
@@ -166,17 +166,17 @@
         {
           "role": "نوازندگان",
           "name": "علی تجویدی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "حسین تهرانی",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "عبادی، احمد",
-          "instrument": "‎سه‌تار"
+          "instrument": "سه‌تار"
         },
         {
           "role": "گوینده",
@@ -238,15 +238,15 @@
       },
       {
         "name": "حسین تهرانی",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       },
       {
         "name": "عبادی، احمد",
-        "instrument": "‎سه‌تار"
+        "instrument": "سه‌تار"
       },
       {
         "name": "علی تجویدی",
-        "instrument": "‎ویولن"
+        "instrument": "ویولن"
       }
     ],
     "singers": [

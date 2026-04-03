@@ -132,7 +132,7 @@
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         }
       ]
     },
@@ -161,12 +161,12 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "علی تجویدی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         }
       ]
     },
@@ -178,7 +178,7 @@
         {
           "role": "نوازندگان",
           "name": "علی تجویدی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "خواننده آواز",
@@ -200,7 +200,7 @@
         {
           "role": "نوازندگان",
           "name": "علی تجویدی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         }
       ]
     },
@@ -212,7 +212,7 @@
         {
           "role": "نوازندگان",
           "name": "علی تجویدی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "خواننده آواز",
@@ -278,17 +278,17 @@
         {
           "role": "نوازندگان",
           "name": "حسین تهرانی",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "مرتضی محجوبی",
-          "instrument": "‎پیانو"
+          "instrument": "پیانو"
         },
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         }
       ]
     },
@@ -317,7 +317,7 @@
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         }
       ]
     },
@@ -342,23 +342,23 @@
       },
       {
         "name": "حسین تهرانی",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       },
       {
         "name": "رضا ورزنده",
-        "instrument": "‎سنتور"
+        "instrument": "سنتور"
       },
       {
         "name": "علی تجویدی",
-        "instrument": "‎ویولن"
+        "instrument": "ویولن"
       },
       {
         "name": "كسایی، حسن",
-        "instrument": "‎نی"
+        "instrument": "نی"
       },
       {
         "name": "مرتضی محجوبی",
-        "instrument": "‎پیانو"
+        "instrument": "پیانو"
       },
       {
         "name": "ناشناخته",
@@ -366,7 +366,7 @@
       },
       {
         "name": "ناشناخته",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       }
     ],
     "singers": [

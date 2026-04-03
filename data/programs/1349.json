@@ -127,17 +127,17 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "اصغر بهاری",
-          "instrument": "‎کمانچه"
+          "instrument": "کمانچه"
         },
         {
           "role": "نوازندگان",
           "name": "جلیل شهناز",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -149,7 +149,7 @@
         {
           "role": "نوازندگان",
           "name": "جلیل شهناز",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "خواننده آواز",
@@ -171,7 +171,7 @@
         {
           "role": "نوازندگان",
           "name": "اصغر بهاری",
-          "instrument": "‎کمانچه"
+          "instrument": "کمانچه"
         },
         {
           "role": "خواننده آواز",
@@ -193,7 +193,7 @@
         {
           "role": "نوازندگان",
           "name": "جلیل شهناز",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "خواننده آواز",
@@ -277,15 +277,15 @@
       },
       {
         "name": "اصغر بهاری",
-        "instrument": "‎کمانچه"
+        "instrument": "کمانچه"
       },
       {
         "name": "جلیل شهناز",
-        "instrument": "‎تار"
+        "instrument": "تار"
       },
       {
         "name": "ناشناخته",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       }
     ],
     "singers": [

@@ -22,7 +22,7 @@
         {
           "role": "نوازندگان",
           "name": "عبادی، احمد",
-          "instrument": "‎سه‌تار"
+          "instrument": "سه‌تار"
         },
         {
           "role": "گوینده",
@@ -44,7 +44,7 @@
         {
           "role": "نوازندگان",
           "name": "عبادی، احمد",
-          "instrument": "‎سه‌تار"
+          "instrument": "سه‌تار"
         }
       ]
     },
@@ -56,7 +56,7 @@
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "گوینده",
@@ -78,7 +78,7 @@
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         }
       ]
     },
@@ -90,12 +90,12 @@
         {
           "role": "نوازندگان",
           "name": "جلیل شهناز",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         }
       ]
     },
@@ -107,17 +107,17 @@
         {
           "role": "نوازندگان",
           "name": "ملک، جهانگیر",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "ناهید، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         },
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         }
       ]
     },
@@ -129,7 +129,7 @@
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "خواننده آواز",
@@ -151,12 +151,12 @@
         {
           "role": "نوازندگان",
           "name": "ملک، جهانگیر",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "خواننده آواز",
@@ -178,17 +178,17 @@
         {
           "role": "نوازندگان",
           "name": "ملک، جهانگیر",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "ناهید، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         },
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "خواننده آواز",
@@ -219,23 +219,23 @@
     "performers": [
       {
         "name": "جلیل شهناز",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       },
       {
         "name": "رضا ورزنده",
-        "instrument": "‎سنتور"
+        "instrument": "سنتور"
       },
       {
         "name": "عبادی، احمد",
-        "instrument": "‎سه‌تار"
+        "instrument": "سه‌تار"
       },
       {
         "name": "ملک، جهانگیر",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       },
       {
         "name": "ناهید، حسن",
-        "instrument": "‎نی"
+        "instrument": "نی"
       }
     ],
     "singers": [

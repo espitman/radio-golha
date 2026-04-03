@@ -22,7 +22,7 @@
         {
           "role": "نوازندگان",
           "name": "موسوی، محمد",
-          "instrument": "‎نی"
+          "instrument": "نی"
         },
         {
           "role": "گوینده",
@@ -44,7 +44,7 @@
         {
           "role": "نوازندگان",
           "name": "موسوی، محمد",
-          "instrument": "‎نی"
+          "instrument": "نی"
         }
       ]
     },
@@ -56,7 +56,7 @@
         {
           "role": "نوازندگان",
           "name": "موسوی، محمد",
-          "instrument": "‎نی"
+          "instrument": "نی"
         },
         {
           "role": "گوینده",
@@ -78,7 +78,7 @@
         {
           "role": "نوازندگان",
           "name": "موسوی، محمد",
-          "instrument": "‎نی"
+          "instrument": "نی"
         }
       ]
     },
@@ -90,7 +90,7 @@
         {
           "role": "نوازندگان",
           "name": "فرهنگ شریف",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "گوینده",
@@ -112,7 +112,7 @@
         {
           "role": "نوازندگان",
           "name": "فرهنگ شریف",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -124,12 +124,12 @@
         {
           "role": "نوازندگان",
           "name": "فرهنگ شریف",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "نوازندگان",
           "name": "ملک، جهانگیر",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         }
       ]
     },
@@ -141,7 +141,7 @@
         {
           "role": "نوازندگان",
           "name": "فرهنگ شریف",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "خواننده آواز",
@@ -172,15 +172,15 @@
     "performers": [
       {
         "name": "فرهنگ شریف",
-        "instrument": "‎تار"
+        "instrument": "تار"
       },
       {
         "name": "ملک، جهانگیر",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       },
       {
         "name": "موسوی، محمد",
-        "instrument": "‎نی"
+        "instrument": "نی"
       }
     ],
     "singers": [

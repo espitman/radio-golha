@@ -110,12 +110,12 @@
         {
           "role": "نوازندگان",
           "name": "همایون خرم",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "مجد، لطف‌ الله",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -127,22 +127,22 @@
         {
           "role": "نوازندگان",
           "name": "امیرناصر افتتاح",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "همایون خرم",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "مجد، لطف‌ الله",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         }
       ]
     },
@@ -154,17 +154,17 @@
         {
           "role": "نوازندگان",
           "name": "همایون خرم",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "مجد، لطف‌ الله",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "خواننده آواز",
@@ -186,7 +186,7 @@
         {
           "role": "نوازندگان",
           "name": "همایون خرم",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         }
       ]
     },
@@ -215,7 +215,7 @@
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         }
       ]
     },
@@ -227,7 +227,7 @@
         {
           "role": "نوازندگان",
           "name": "همایون خرم",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "خواننده آواز",
@@ -266,7 +266,7 @@
         {
           "role": "نوازندگان",
           "name": "همایون خرم",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         }
       ]
     },
@@ -333,19 +333,19 @@
       },
       {
         "name": "امیرناصر افتتاح",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       },
       {
         "name": "رضا ورزنده",
-        "instrument": "‎سنتور"
+        "instrument": "سنتور"
       },
       {
         "name": "مجد، لطف‌ الله",
-        "instrument": "‎تار"
+        "instrument": "تار"
       },
       {
         "name": "همایون خرم",
-        "instrument": "‎ویولن"
+        "instrument": "ویولن"
       }
     ],
     "singers": [

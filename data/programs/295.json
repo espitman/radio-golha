@@ -22,12 +22,12 @@
         {
           "role": "نوازندگان",
           "name": "صارمی، منصور",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "نوازندگان",
           "name": "موسوی، محمد",
-          "instrument": "‎نی"
+          "instrument": "نی"
         },
         {
           "role": "گوینده",
@@ -49,12 +49,12 @@
         {
           "role": "نوازندگان",
           "name": "صارمی، منصور",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "نوازندگان",
           "name": "موسوی، محمد",
-          "instrument": "‎نی"
+          "instrument": "نی"
         }
       ]
     },
@@ -66,7 +66,7 @@
         {
           "role": "نوازندگان",
           "name": "صارمی، منصور",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "خواننده آواز",
@@ -88,7 +88,7 @@
         {
           "role": "نوازندگان",
           "name": "موسوی، محمد",
-          "instrument": "‎نی"
+          "instrument": "نی"
         },
         {
           "role": "خواننده آواز",
@@ -110,7 +110,7 @@
         {
           "role": "نوازندگان",
           "name": "صارمی، منصور",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "خواننده آواز",
@@ -132,7 +132,7 @@
         {
           "role": "نوازندگان",
           "name": "موسوی، محمد",
-          "instrument": "‎نی"
+          "instrument": "نی"
         },
         {
           "role": "خواننده آواز",
@@ -154,7 +154,7 @@
         {
           "role": "نوازندگان",
           "name": "صارمی، منصور",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         }
       ]
     },
@@ -166,12 +166,12 @@
         {
           "role": "نوازندگان",
           "name": "صارمی، منصور",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "نوازندگان",
           "name": "موسوی، محمد",
-          "instrument": "‎نی"
+          "instrument": "نی"
         },
         {
           "role": "خواننده آواز",
@@ -193,12 +193,12 @@
         {
           "role": "نوازندگان",
           "name": "موسوی، محمد",
-          "instrument": "‎نی"
+          "instrument": "نی"
         },
         {
           "role": "نوازندگان",
           "name": "نجاحی، مجید",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "گوینده",
@@ -220,12 +220,12 @@
         {
           "role": "نوازندگان",
           "name": "موسوی، محمد",
-          "instrument": "‎نی"
+          "instrument": "نی"
         },
         {
           "role": "نوازندگان",
           "name": "نجاحی، مجید",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         }
       ]
     },
@@ -237,12 +237,12 @@
         {
           "role": "نوازندگان",
           "name": "موسوی، محمد",
-          "instrument": "‎نی"
+          "instrument": "نی"
         },
         {
           "role": "نوازندگان",
           "name": "نجاحی، مجید",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "گوینده",
@@ -264,12 +264,12 @@
         {
           "role": "نوازندگان",
           "name": "موسوی، محمد",
-          "instrument": "‎نی"
+          "instrument": "نی"
         },
         {
           "role": "نوازندگان",
           "name": "نجاحی، مجید",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         }
       ]
     },
@@ -290,15 +290,15 @@
     "performers": [
       {
         "name": "صارمی، منصور",
-        "instrument": "‎سنتور"
+        "instrument": "سنتور"
       },
       {
         "name": "موسوی، محمد",
-        "instrument": "‎نی"
+        "instrument": "نی"
       },
       {
         "name": "نجاحی، مجید",
-        "instrument": "‎سنتور"
+        "instrument": "سنتور"
       }
     ],
     "singers": [

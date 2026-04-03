@@ -34,12 +34,12 @@
         {
           "role": "نوازندگان",
           "name": "علی تجویدی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "فرهنگ شریف",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -68,12 +68,12 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "فرهنگ شریف",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -123,15 +123,15 @@
     "performers": [
       {
         "name": "علی تجویدی",
-        "instrument": "‎ویولن"
+        "instrument": "ویولن"
       },
       {
         "name": "فرهنگ شریف",
-        "instrument": "‎تار"
+        "instrument": "تار"
       },
       {
         "name": "ناشناخته",
-        "instrument": "‎ویولن"
+        "instrument": "ویولن"
       }
     ],
     "singers": [

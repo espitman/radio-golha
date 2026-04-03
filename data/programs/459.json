@@ -39,7 +39,7 @@
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         },
         {
           "role": "گوینده",
@@ -61,7 +61,7 @@
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         }
       ]
     },
@@ -73,7 +73,7 @@
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         },
         {
           "role": "گوینده",
@@ -90,12 +90,12 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         }
       ]
     },
@@ -176,11 +176,11 @@
       },
       {
         "name": "كسایی، حسن",
-        "instrument": "‎نی"
+        "instrument": "نی"
       },
       {
         "name": "ناشناخته",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       }
     ],
     "singers": [

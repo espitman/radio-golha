@@ -85,12 +85,12 @@
         {
           "role": "نوازندگان",
           "name": "امیرناصر افتتاح",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         }
       ]
     },
@@ -318,11 +318,11 @@
       },
       {
         "name": "امیرناصر افتتاح",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       },
       {
         "name": "كسایی، حسن",
-        "instrument": "‎نی"
+        "instrument": "نی"
       }
     ],
     "singers": [

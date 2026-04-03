@@ -22,7 +22,7 @@
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         }
       ]
     },
@@ -34,7 +34,7 @@
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         },
         {
           "role": "گوینده",
@@ -56,12 +56,12 @@
         {
           "role": "نوازندگان",
           "name": "امیرناصر افتتاح",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         }
       ]
     },
@@ -85,7 +85,7 @@
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         },
         {
           "role": "گوینده",
@@ -124,7 +124,7 @@
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         }
       ]
     },
@@ -136,12 +136,12 @@
         {
           "role": "نوازندگان",
           "name": "امیرناصر افتتاح",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         }
       ]
     },
@@ -153,12 +153,12 @@
         {
           "role": "نوازندگان",
           "name": "امیرناصر افتتاح",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "خواننده آواز",
@@ -189,15 +189,15 @@
     "performers": [
       {
         "name": "امیرناصر افتتاح",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       },
       {
         "name": "رضا ورزنده",
-        "instrument": "‎سنتور"
+        "instrument": "سنتور"
       },
       {
         "name": "كسایی، حسن",
-        "instrument": "‎نی"
+        "instrument": "نی"
       }
     ],
     "singers": [

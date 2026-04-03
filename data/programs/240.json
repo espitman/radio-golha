@@ -22,7 +22,7 @@
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "گوینده",
@@ -44,12 +44,12 @@
         {
           "role": "نوازندگان",
           "name": "امیرناصر افتتاح",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         }
       ]
     },
@@ -61,17 +61,17 @@
         {
           "role": "نوازندگان",
           "name": "امیرناصر افتتاح",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "اصغر بهاری",
-          "instrument": "‎کمانچه"
+          "instrument": "کمانچه"
         },
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         }
       ]
     },
@@ -83,17 +83,17 @@
         {
           "role": "نوازندگان",
           "name": "امیرناصر افتتاح",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "اصغر بهاری",
-          "instrument": "‎کمانچه"
+          "instrument": "کمانچه"
         },
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "گوینده",
@@ -115,17 +115,17 @@
         {
           "role": "نوازندگان",
           "name": "امیرناصر افتتاح",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "اصغر بهاری",
-          "instrument": "‎کمانچه"
+          "instrument": "کمانچه"
         },
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         }
       ]
     },
@@ -137,17 +137,17 @@
         {
           "role": "نوازندگان",
           "name": "امیرناصر افتتاح",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "اصغر بهاری",
-          "instrument": "‎کمانچه"
+          "instrument": "کمانچه"
         },
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "گوینده",
@@ -186,7 +186,7 @@
         {
           "role": "نوازندگان",
           "name": "ناهید، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         }
       ]
     },
@@ -198,7 +198,7 @@
         {
           "role": "نوازندگان",
           "name": "ناهید، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         },
         {
           "role": "خواننده آواز",
@@ -229,19 +229,19 @@
     "performers": [
       {
         "name": "اصغر بهاری",
-        "instrument": "‎کمانچه"
+        "instrument": "کمانچه"
       },
       {
         "name": "امیرناصر افتتاح",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       },
       {
         "name": "رضا ورزنده",
-        "instrument": "‎سنتور"
+        "instrument": "سنتور"
       },
       {
         "name": "ناهید، حسن",
-        "instrument": "‎نی"
+        "instrument": "نی"
       }
     ],
     "singers": [

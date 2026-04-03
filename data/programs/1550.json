@@ -194,12 +194,12 @@
         {
           "role": "نوازندگان",
           "name": "حسین تهرانی",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "مجد، لطف‌ الله",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -228,7 +228,7 @@
         {
           "role": "نوازندگان",
           "name": "مجد، لطف‌ الله",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -296,7 +296,7 @@
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         }
       ]
     },
@@ -325,7 +325,7 @@
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         }
       ]
     },
@@ -354,7 +354,7 @@
         {
           "role": "نوازندگان",
           "name": "كسایی، حسن",
-          "instrument": "‎نی"
+          "instrument": "نی"
         }
       ]
     },
@@ -405,7 +405,7 @@
         {
           "role": "نوازندگان",
           "name": "مرتضی محجوبی",
-          "instrument": "‎پیانو"
+          "instrument": "پیانو"
         }
       ]
     },
@@ -457,19 +457,19 @@
       },
       {
         "name": "حسین تهرانی",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       },
       {
         "name": "كسایی، حسن",
-        "instrument": "‎نی"
+        "instrument": "نی"
       },
       {
         "name": "مجد، لطف‌ الله",
-        "instrument": "‎تار"
+        "instrument": "تار"
       },
       {
         "name": "مرتضی محجوبی",
-        "instrument": "‎پیانو"
+        "instrument": "پیانو"
       }
     ],
     "singers": [

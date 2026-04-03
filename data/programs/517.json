@@ -39,7 +39,7 @@
         {
           "role": "نوازندگان",
           "name": "فرامرز پایور",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         }
       ]
     },
@@ -51,12 +51,12 @@
         {
           "role": "نوازندگان",
           "name": "فرامرز پایور",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "نوازندگان",
           "name": "صبا، ابوالحسن",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         }
       ]
     },
@@ -68,7 +68,7 @@
         {
           "role": "نوازندگان",
           "name": "صبا، ابوالحسن",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         }
       ]
     },
@@ -97,17 +97,17 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "فرامرز پایور",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "نوازندگان",
           "name": "صبا، ابوالحسن",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "ترانه سرا",
@@ -134,12 +134,12 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "صبا، ابوالحسن",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         }
       ]
     },
@@ -151,17 +151,17 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "فرامرز پایور",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "نوازندگان",
           "name": "صبا، ابوالحسن",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         }
       ]
     },
@@ -173,17 +173,17 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "فرامرز پایور",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "نوازندگان",
           "name": "صبا، ابوالحسن",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "ترانه سرا",
@@ -226,15 +226,15 @@
     "performers": [
       {
         "name": "صبا، ابوالحسن",
-        "instrument": "‎ویولن"
+        "instrument": "ویولن"
       },
       {
         "name": "فرامرز پایور",
-        "instrument": "‎سنتور"
+        "instrument": "سنتور"
       },
       {
         "name": "ناشناخته",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       }
     ],
     "singers": [

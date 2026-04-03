@@ -151,7 +151,7 @@
         {
           "role": "نوازندگان",
           "name": "مرتضی محجوبی",
-          "instrument": "‎پیانو"
+          "instrument": "پیانو"
         },
         {
           "role": "خواننده آواز",
@@ -173,7 +173,7 @@
         {
           "role": "نوازندگان",
           "name": "مجد، لطف‌ الله",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -185,7 +185,7 @@
         {
           "role": "نوازندگان",
           "name": "مرتضی محجوبی",
-          "instrument": "‎پیانو"
+          "instrument": "پیانو"
         },
         {
           "role": "خواننده آواز",
@@ -207,7 +207,7 @@
         {
           "role": "نوازندگان",
           "name": "مرتضی محجوبی",
-          "instrument": "‎پیانو"
+          "instrument": "پیانو"
         }
       ]
     },
@@ -236,17 +236,17 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "علی تجویدی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "مجد، لطف‌ الله",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -258,17 +258,17 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "علی تجویدی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "مجد، لطف‌ الله",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "ترانه سرا",
@@ -308,19 +308,19 @@
       },
       {
         "name": "علی تجویدی",
-        "instrument": "‎ویولن"
+        "instrument": "ویولن"
       },
       {
         "name": "مجد، لطف‌ الله",
-        "instrument": "‎تار"
+        "instrument": "تار"
       },
       {
         "name": "مرتضی محجوبی",
-        "instrument": "‎پیانو"
+        "instrument": "پیانو"
       },
       {
         "name": "ناشناخته",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       }
     ],
     "singers": [

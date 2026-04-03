@@ -245,7 +245,7 @@
         {
           "role": "نوازندگان",
           "name": "مجد، لطف‌ الله",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -257,12 +257,12 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "مجد، لطف‌ الله",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -291,7 +291,7 @@
         {
           "role": "نوازندگان",
           "name": "مجد، لطف‌ الله",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -342,7 +342,7 @@
         {
           "role": "نوازندگان",
           "name": "علی تجویدی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         }
       ]
     },
@@ -639,15 +639,15 @@
       },
       {
         "name": "علی تجویدی",
-        "instrument": "‎ویولن"
+        "instrument": "ویولن"
       },
       {
         "name": "مجد، لطف‌ الله",
-        "instrument": "‎تار"
+        "instrument": "تار"
       },
       {
         "name": "ناشناخته",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       }
     ],
     "singers": [

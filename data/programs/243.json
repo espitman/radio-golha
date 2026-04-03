@@ -22,7 +22,7 @@
         {
           "role": "نوازندگان",
           "name": "همایون خرم",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
@@ -49,17 +49,17 @@
         {
           "role": "نوازندگان",
           "name": "امیرناصر افتتاح",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "همایون خرم",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "جلیل شهناز",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -71,12 +71,12 @@
         {
           "role": "نوازندگان",
           "name": "همایون خرم",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "جلیل شهناز",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "گوینده",
@@ -98,12 +98,12 @@
         {
           "role": "نوازندگان",
           "name": "همایون خرم",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "جلیل شهناز",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "گوینده",
@@ -125,17 +125,17 @@
         {
           "role": "نوازندگان",
           "name": "امیرناصر افتتاح",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "همایون خرم",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "جلیل شهناز",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -147,7 +147,7 @@
         {
           "role": "نوازندگان",
           "name": "همایون خرم",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "خواننده آواز",
@@ -169,12 +169,12 @@
         {
           "role": "نوازندگان",
           "name": "همایون خرم",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "جلیل شهناز",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "خواننده آواز",
@@ -205,7 +205,7 @@
     "performers": [
       {
         "name": "امیرناصر افتتاح",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       },
       {
         "name": "جلیل شهناز",
@@ -213,11 +213,11 @@
       },
       {
         "name": "جلیل شهناز",
-        "instrument": "‎تار"
+        "instrument": "تار"
       },
       {
         "name": "همایون خرم",
-        "instrument": "‎ویولن"
+        "instrument": "ویولن"
       }
     ],
     "singers": [

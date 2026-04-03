@@ -39,12 +39,12 @@
         {
           "role": "نوازندگان",
           "name": "همایون خرم",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "ملک، جهانگیر",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "گوینده",
@@ -66,12 +66,12 @@
         {
           "role": "نوازندگان",
           "name": "همایون خرم",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "ملک، جهانگیر",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         }
       ]
     },
@@ -83,7 +83,7 @@
         {
           "role": "نوازندگان",
           "name": "نجاحی، مجید",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "گوینده",
@@ -105,12 +105,12 @@
         {
           "role": "نوازندگان",
           "name": "همایون خرم",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "ملک، جهانگیر",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         }
       ]
     },
@@ -122,7 +122,7 @@
         {
           "role": "نوازندگان",
           "name": "همایون خرم",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "خواننده آواز",
@@ -161,12 +161,12 @@
         {
           "role": "نوازندگان",
           "name": "همایون خرم",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "ملک، جهانگیر",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         }
       ]
     },
@@ -178,12 +178,12 @@
         {
           "role": "نوازندگان",
           "name": "همایون خرم",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "ملک، جهانگیر",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "گوینده",
@@ -214,15 +214,15 @@
     "performers": [
       {
         "name": "ملک، جهانگیر",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       },
       {
         "name": "نجاحی، مجید",
-        "instrument": "‎سنتور"
+        "instrument": "سنتور"
       },
       {
         "name": "همایون خرم",
-        "instrument": "‎ویولن"
+        "instrument": "ویولن"
       }
     ],
     "singers": [

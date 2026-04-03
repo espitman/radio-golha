@@ -117,12 +117,12 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "مجد، لطف‌ الله",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -203,11 +203,11 @@
       },
       {
         "name": "مجد، لطف‌ الله",
-        "instrument": "‎تار"
+        "instrument": "تار"
       },
       {
         "name": "ناشناخته",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       }
     ],
     "singers": [

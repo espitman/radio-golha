@@ -78,7 +78,7 @@
         {
           "role": "نوازندگان",
           "name": "پرویز یاحقی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "گوینده",
@@ -100,12 +100,12 @@
         {
           "role": "نوازندگان",
           "name": "نجاحی، مجید",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "نوازندگان",
           "name": "پرویز یاحقی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         }
       ]
     },
@@ -117,12 +117,12 @@
         {
           "role": "نوازندگان",
           "name": "نجاحی، مجید",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "نوازندگان",
           "name": "پرویز یاحقی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "گوینده",
@@ -144,17 +144,17 @@
         {
           "role": "نوازندگان",
           "name": "ملک، جهانگیر",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "نجاحی، مجید",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "نوازندگان",
           "name": "پرویز یاحقی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         }
       ]
     },
@@ -166,17 +166,17 @@
         {
           "role": "نوازندگان",
           "name": "ملک، جهانگیر",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "نجاحی، مجید",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "نوازندگان",
           "name": "پرویز یاحقی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "گوینده",
@@ -198,17 +198,17 @@
         {
           "role": "نوازندگان",
           "name": "ملک، جهانگیر",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "نجاحی، مجید",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "نوازندگان",
           "name": "پرویز یاحقی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         }
       ]
     },
@@ -277,15 +277,15 @@
       },
       {
         "name": "ملک، جهانگیر",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       },
       {
         "name": "نجاحی، مجید",
-        "instrument": "‎سنتور"
+        "instrument": "سنتور"
       },
       {
         "name": "پرویز یاحقی",
-        "instrument": "‎ویولن"
+        "instrument": "ویولن"
       }
     ],
     "singers": [

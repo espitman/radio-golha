@@ -39,12 +39,12 @@
         {
           "role": "نوازندگان",
           "name": "اصغر بهاری",
-          "instrument": "‎کمانچه"
+          "instrument": "کمانچه"
         },
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         }
       ]
     },
@@ -73,7 +73,7 @@
         {
           "role": "نوازندگان",
           "name": "عبادی، احمد",
-          "instrument": "‎سه‌تار"
+          "instrument": "سه‌تار"
         }
       ]
     },
@@ -85,7 +85,7 @@
         {
           "role": "نوازندگان",
           "name": "عبادی، احمد",
-          "instrument": "‎سه‌تار"
+          "instrument": "سه‌تار"
         },
         {
           "role": "خواننده آواز",
@@ -124,12 +124,12 @@
         {
           "role": "نوازندگان",
           "name": "اصغر بهاری",
-          "instrument": "‎کمانچه"
+          "instrument": "کمانچه"
         },
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         }
       ]
     },
@@ -150,15 +150,15 @@
     "performers": [
       {
         "name": "اصغر بهاری",
-        "instrument": "‎کمانچه"
+        "instrument": "کمانچه"
       },
       {
         "name": "رضا ورزنده",
-        "instrument": "‎سنتور"
+        "instrument": "سنتور"
       },
       {
         "name": "عبادی، احمد",
-        "instrument": "‎سه‌تار"
+        "instrument": "سه‌تار"
       }
     ],
     "singers": [

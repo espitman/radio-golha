@@ -27,7 +27,7 @@
         {
           "role": "نوازندگان",
           "name": "حسین تهرانی",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         }
       ]
     },
@@ -39,7 +39,7 @@
         {
           "role": "نوازندگان",
           "name": "علی تجویدی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "گوینده",
@@ -61,17 +61,17 @@
         {
           "role": "نوازندگان",
           "name": "علی تجویدی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "حسین تهرانی",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "مرتضی محجوبی",
-          "instrument": "‎پیانو"
+          "instrument": "پیانو"
         }
       ]
     },
@@ -95,12 +95,12 @@
         {
           "role": "نوازندگان",
           "name": "حسین تهرانی",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "مرتضی محجوبی",
-          "instrument": "‎پیانو"
+          "instrument": "پیانو"
         }
       ]
     },
@@ -129,17 +129,17 @@
         {
           "role": "نوازندگان",
           "name": "حسین تهرانی",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "مرتضی محجوبی",
-          "instrument": "‎پیانو"
+          "instrument": "پیانو"
         },
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         }
       ]
     },
@@ -168,17 +168,17 @@
         {
           "role": "نوازندگان",
           "name": "حسین تهرانی",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "مرتضی محجوبی",
-          "instrument": "‎پیانو"
+          "instrument": "پیانو"
         },
         {
           "role": "نوازندگان",
           "name": "رضا ورزنده",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         }
       ]
     },
@@ -207,17 +207,17 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎غرنی"
+          "instrument": "غرنی"
         },
         {
           "role": "نوازندگان",
           "name": "علی تجویدی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "حسین تهرانی",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         }
       ]
     },
@@ -246,17 +246,17 @@
         {
           "role": "نوازندگان",
           "name": "علی تجویدی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "حسین تهرانی",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "فرهنگ شریف",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -285,7 +285,7 @@
         {
           "role": "نوازندگان",
           "name": "فرهنگ شریف",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "گوینده",
@@ -307,7 +307,7 @@
         {
           "role": "نوازندگان",
           "name": "فرهنگ شریف",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -354,11 +354,11 @@
       },
       {
         "name": "حسین تهرانی",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       },
       {
         "name": "رضا ورزنده",
-        "instrument": "‎سنتور"
+        "instrument": "سنتور"
       },
       {
         "name": "علی تجویدی",
@@ -366,19 +366,19 @@
       },
       {
         "name": "علی تجویدی",
-        "instrument": "‎ویولن"
+        "instrument": "ویولن"
       },
       {
         "name": "فرهنگ شریف",
-        "instrument": "‎تار"
+        "instrument": "تار"
       },
       {
         "name": "مرتضی محجوبی",
-        "instrument": "‎پیانو"
+        "instrument": "پیانو"
       },
       {
         "name": "ناشناخته",
-        "instrument": "‎غرنی"
+        "instrument": "غرنی"
       }
     ],
     "singers": [

@@ -39,7 +39,7 @@
         {
           "role": "نوازندگان",
           "name": "اسدالله ملك",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "گوینده",
@@ -61,12 +61,12 @@
         {
           "role": "نوازندگان",
           "name": "اسدالله ملك",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "ملک، جهانگیر",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "گوینده",
@@ -88,12 +88,12 @@
         {
           "role": "نوازندگان",
           "name": "اسدالله ملك",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "ملک، جهانگیر",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "گوینده",
@@ -132,7 +132,7 @@
         {
           "role": "نوازندگان",
           "name": "فرهنگ شریف",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "گوینده",
@@ -171,12 +171,12 @@
         {
           "role": "نوازندگان",
           "name": "فرهنگ شریف",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "نوازندگان",
           "name": "ملک، جهانگیر",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "گوینده",
@@ -198,7 +198,7 @@
         {
           "role": "نوازندگان",
           "name": "فرهنگ شریف",
-          "instrument": "‎تار"
+          "instrument": "تار"
         },
         {
           "role": "خواننده آواز",
@@ -229,15 +229,15 @@
     "performers": [
       {
         "name": "اسدالله ملك",
-        "instrument": "‎ویولن"
+        "instrument": "ویولن"
       },
       {
         "name": "فرهنگ شریف",
-        "instrument": "‎تار"
+        "instrument": "تار"
       },
       {
         "name": "ملک، جهانگیر",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       }
     ],
     "singers": [

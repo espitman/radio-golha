@@ -51,7 +51,7 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "گوینده",
@@ -73,12 +73,12 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته ۱",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         }
       ]
     },
@@ -149,11 +149,11 @@
       },
       {
         "name": "ناشناخته",
-        "instrument": "‎ویولن"
+        "instrument": "ویولن"
       },
       {
         "name": "ناشناخته ۱",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       }
     ],
     "singers": [

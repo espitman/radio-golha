@@ -122,17 +122,17 @@
         {
           "role": "نوازندگان",
           "name": "امیرناصر افتتاح",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "حبیب‌الله بدیعی",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "نجاحی، مجید",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         },
         {
           "role": "خواننده آواز",
@@ -386,15 +386,15 @@
       },
       {
         "name": "امیرناصر افتتاح",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       },
       {
         "name": "حبیب‌الله بدیعی",
-        "instrument": "‎ویولن"
+        "instrument": "ویولن"
       },
       {
         "name": "نجاحی، مجید",
-        "instrument": "‎سنتور"
+        "instrument": "سنتور"
       }
     ],
     "singers": [

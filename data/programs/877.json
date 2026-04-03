@@ -78,7 +78,7 @@
         {
           "role": "نوازندگان",
           "name": "همایون خرم",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "گوینده",
@@ -100,12 +100,12 @@
         {
           "role": "نوازندگان",
           "name": "همایون خرم",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "نجاحی، مجید",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         }
       ]
     },
@@ -117,17 +117,17 @@
         {
           "role": "نوازندگان",
           "name": "ناشناخته",
-          "instrument": "‎ضرب / تنبک"
+          "instrument": "تنبک"
         },
         {
           "role": "نوازندگان",
           "name": "همایون خرم",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "نجاحی، مجید",
-          "instrument": "‎سنتور"
+          "instrument": "سنتور"
         }
       ]
     },
@@ -156,7 +156,7 @@
         {
           "role": "نوازندگان",
           "name": "عبدالوهاب شهیدی",
-          "instrument": "‎بربط عود"
+          "instrument": "بربط عود"
         },
         {
           "role": "خواننده آواز",
@@ -256,19 +256,19 @@
       },
       {
         "name": "عبدالوهاب شهیدی",
-        "instrument": "‎بربط عود"
+        "instrument": "بربط عود"
       },
       {
         "name": "ناشناخته",
-        "instrument": "‎ضرب / تنبک"
+        "instrument": "تنبک"
       },
       {
         "name": "نجاحی، مجید",
-        "instrument": "‎سنتور"
+        "instrument": "سنتور"
       },
       {
         "name": "همایون خرم",
-        "instrument": "‎ویولن"
+        "instrument": "ویولن"
       }
     ],
     "singers": [

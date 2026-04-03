@@ -95,7 +95,7 @@
         {
           "role": "نوازندگان",
           "name": "جلیل شهناز",
-          "instrument": "‎تار"
+          "instrument": "تار"
         }
       ]
     },
@@ -124,12 +124,12 @@
         {
           "role": "نوازندگان",
           "name": "همایون خرم",
-          "instrument": "‎ویولن"
+          "instrument": "ویولن"
         },
         {
           "role": "نوازندگان",
           "name": "عبدالوهاب شهیدی",
-          "instrument": "‎بربط عود"
+          "instrument": "بربط عود"
         },
         {
           "role": "خواننده آواز",
@@ -220,15 +220,15 @@
       },
       {
         "name": "جلیل شهناز",
-        "instrument": "‎تار"
+        "instrument": "تار"
       },
       {
         "name": "عبدالوهاب شهیدی",
-        "instrument": "‎بربط عود"
+        "instrument": "بربط عود"
       },
       {
         "name": "همایون خرم",
-        "instrument": "‎ویولن"
+        "instrument": "ویولن"
       }
     ],
     "singers": [
