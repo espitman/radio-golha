@@ -42,3 +42,9 @@ scraper/cache/*
 
 # Mac stuff
 .DS_Store
+
+# SQLite Database
+database/*.db
+*.db-journal
+*.db-wal
+*.db-shm
