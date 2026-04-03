@@ -76,11 +76,11 @@ function RootComponent() {
                         asChild 
                         isActive={isActive} 
                         tooltip={item.label}
-                        className="py-6 px-4 h-12 rounded-xl"
+                        className="h-12 rounded-xl"
                       >
-                        <Link to={item.path as any}>
-                          <item.icon className="w-5 h-5" />
-                          <span className="font-medium text-sm">{item.label}</span>
+                        <Link to={item.path as any} className="flex items-center gap-3 w-full">
+                          <item.icon className="w-5 h-5 shrink-0" />
+                          <span className="font-medium text-sm truncate">{item.label}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
