@@ -9,7 +9,6 @@ import {
   Settings, 
   Search,
   Bell,
-  PanelLeft,
   Music
 } from 'lucide-react'
 import {
@@ -73,16 +72,16 @@ function RootComponent() {
                   return (
                     <SidebarMenuItem key={item.path}>
                       <SidebarMenuButton 
-                        asChild 
                         isActive={isActive} 
                         tooltip={item.label}
                         className="h-12 rounded-xl"
-                      >
-                        <Link to={item.path as any} className="flex items-center gap-3 w-full">
-                          <item.icon className="w-5 h-5 shrink-0" />
-                          <span className="font-medium text-sm truncate">{item.label}</span>
-                        </Link>
-                      </SidebarMenuButton>
+                        render={
+                          <Link to={item.path as any} className="flex items-center gap-3 w-full">
+                            <item.icon className="w-5 h-5 shrink-0" />
+                            <span className="font-medium text-sm truncate">{item.label}</span>
+                          </Link>
+                        }
+                      />
                     </SidebarMenuItem>
                   )
                 })}
