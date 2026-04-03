@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Golha DB Schema Interactive Diagram</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="https://unpkg.com/panzoom@9.4.0/dist/panzoom.min.js"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+        window.onload = function() {
+            setTimeout(() => {
+                const element = document.querySelector('.mermaid svg');
+                if (element) {
+                    panzoom(element, {
+                        maxZoom: 10,
+                        minZoom: 0.1,
+                        bounds: true,
+                        boundsPadding: 0.1
+                    });
+                }
+            }, 1000);
+        };
+    </script>
+    <style>
+        body { background-color: #0b0f19; margin: 0; padding: 0; overflow: hidden; height: 100vh; display: flex; justify-content: center; align-items: center; }
+        .mermaid { cursor: grab; padding: 50px; }
+        .mermaid:active { cursor: grabbing; }
+        .hint { position: fixed; bottom: 20px; left: 20px; color: #64748b; font-family: sans-serif; font-size: 14px; background: rgba(15, 23, 42, 0.8); padding: 8px 12px; border-radius: 6px; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div class="mermaid">
+    erDiagram
+        PROGRAMMES ||--o{ PROGRAMME_TIMELINE : "has"
+        PROGRAMMES ||--o{ PROGRAMME_PERFORMERS : "has"
+        PROGRAMMES ||--o{ TRANSCRIPT_SEGMENTS : "has"
+        
+        ARTISTS ||--o{ PROGRAMME_PERFORMERS : "performer"
+        INSTRUMENTS ||--o{ PROGRAMME_PERFORMERS : "played_on"
+        
+        TRANSCRIPT_SEGMENTS ||--o{ VERSES : "contains"
+        POETS ||--o{ TRANSCRIPT_SEGMENTS : "poet"
+        ARTISTS ||--o{ TRANSCRIPT_SEGMENTS : "speaker"
+        POETIC_STYLES ||--o{ TRANSCRIPT_SEGMENTS : "style"
+
+        PROGRAMMES {
+            int id PK
+            string type
+            int number
+            string url
+            string audio_url
+        }
+
+        ARTISTS {
+            int id PK
+            string name
+        }
+
+        INSTRUMENTS {
+            int id PK
+            string name
+        }
+
+        POETS {
+            int id PK
+            string name
+        }
+
+        POETIC_STYLES {
+            int id PK
+            string name
+        }
+
+        PROGRAMME_PERFORMERS {
+            int id PK
+            int programme_id FK
+            int artist_id FK
+            int instrument_id FK
+            string role
+        }
+
+        PROGRAMME_TIMELINE {
+            int id PK
+            int programme_id FK
+            string mode
+            string start_time
+            string end_time
+        }
+
+        TRANSCRIPT_SEGMENTS {
+            int id PK
+            int programme_id FK
+            int speaker_id FK
+            int poet_id FK
+            int style_id FK
+            int order
+        }
+
+        VERSES {
+            int id PK
+            int segment_id FK
+            text bait_text
+            int order
+        }
+    </div>
+    <div class="hint">💡 اسکرول برای زوم | کلیک و درگ برای جابه‌جایی</div>
+</body>
+</html>
