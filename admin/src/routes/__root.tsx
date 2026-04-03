@@ -9,18 +9,32 @@ import {
   Settings, 
   Search,
   Bell,
-  Menu,
+  PanelLeft,
   Music
 } from 'lucide-react'
-import { useState } from 'react'
-import { clsx, type ClassValue } from 'clsx'
-import { twMerge } from 'tailwind-merge'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  SidebarRail,
+  SidebarInset,
+} from "@/components/ui/sidebar"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar"
+import { Input } from "@/components/ui/input"
+import { Separator } from "@/components/ui/separator"
+import { TooltipProvider } from "@/components/ui/tooltip"
 
 import '../styles.css'
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
 
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: 'داشبورد', path: '/' },
@@ -35,134 +49,107 @@ export const Route = createRootRoute({
 })
 
 function RootComponent() {
-  const [isSidebarOpen, setSidebarOpen] = useState(true)
   const location = useLocation()
 
   return (
-    <div className="flex h-screen bg-slate-950 font-vazir text-slate-100 overflow-hidden" dir="rtl">
-      {/* Sidebar */}
-      <aside 
-        className={cn(
-          "relative h-full bg-slate-900/50 backdrop-blur-xl border-l border-slate-800/50 transition-all duration-300 ease-in-out flex flex-col",
-          isSidebarOpen ? "w-72" : "w-20"
-        )}
-      >
-        {/* Sidebar Header */}
-        <div className="h-20 flex items-center px-6 border-b border-white/5 gap-4">
-          <div className="w-10 h-10 rounded-xl bg-teal-500/20 flex items-center justify-center border border-teal-500/30 shrink-0">
-            <Music className="w-6 h-6 text-teal-400" />
-          </div>
-          <span className={cn(
-            "font-black text-xl tracking-tight transition-opacity duration-200",
-            !isSidebarOpen && "opacity-0 pointer-events-none"
-          )}>
-            رادیو گلها
-          </span>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 py-6 px-4 space-y-2 overflow-y-auto">
-          {NAV_ITEMS.map((item) => {
-            const isActive = location.pathname === item.path
-            return (
-              <Link
-                key={item.path}
-                to={item.path as any}
-                className={cn(
-                  "flex items-center gap-4 px-4 py-3 rounded-xl transition-all group relative overflow-hidden",
-                  isActive 
-                    ? "bg-teal-500/10 text-teal-400 border border-teal-500/20" 
-                    : "text-slate-400 hover:text-slate-100 hover:bg-white/5"
-                )}
-              >
-                <item.icon className={cn(
-                  "w-5 h-5 shrink-0 transition-transform group-hover:scale-110",
-                  isActive ? "text-teal-400" : "text-slate-400"
-                )} />
-                <span className={cn(
-                  "font-medium transition-all duration-200 whitespace-nowrap",
-                  !isSidebarOpen && "opacity-0 translate-x-10 pointer-events-none"
-                )}>
-                  {item.label}
-                </span>
-                {isActive && (
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-teal-400 rounded-l-full" />
-                )}
-              </Link>
-            )
-          })}
-        </nav>
-
-        {/* Sidebar Footer */}
-        <div className="p-4 border-t border-white/5">
-          <button 
-            onClick={() => setSidebarOpen(!isSidebarOpen)}
-            className="flex items-center gap-4 w-full px-4 py-3 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-all group"
-          >
-            <Menu className={cn(
-              "w-5 h-5 shrink-0 transition-transform",
-              !isSidebarOpen && "rotate-180"
-            )} />
-            <span className={cn(
-              "font-medium transition-all",
-              !isSidebarOpen && "opacity-0 pointer-events-none"
-            )}>
-              بستن منو
-            </span>
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <header className="h-20 flex items-center justify-between px-8 bg-slate-950/50 backdrop-blur-md border-b border-white/5 z-10 shrink-0">
-          <div className="flex items-center gap-6 flex-1 max-w-xl">
-            <div className="relative w-full group">
-              <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-teal-400 transition-colors" />
-              <input 
-                type="text" 
-                placeholder="جستجو در آرشیو، هنرمندان، اشعار..."
-                className="w-full bg-slate-900 border border-white/5 rounded-2xl py-2.5 pr-11 pl-4 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500/30 transition-all placeholder:text-slate-600 outline-none"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4 mr-6">
-            <button className="w-10 h-10 rounded-full border border-white/5 flex items-center justify-center text-slate-400 hover:bg-white/5 hover:text-slate-100 transition-all relative">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-teal-500 rounded-full border-2 border-slate-950"></span>
-            </button>
-            <div className="h-8 w-px bg-white/5 mx-2" />
-            <div className="flex items-center gap-3">
-              <div className="text-left flex flex-col items-end">
-                <span className="text-sm font-bold block">ادمین پروژه</span>
-                <span className="text-[10px] text-slate-500 bg-slate-900 px-2 rounded-full border border-white/5">سطح دسترسی کامل</span>
+    <TooltipProvider>
+      <SidebarProvider>
+        <div className="flex h-screen bg-background font-vazir text-foreground w-full" dir="rtl">
+          {/* Main Sidebar */}
+          <Sidebar side="right" variant="inset" collapsible="icon">
+            <SidebarHeader className="h-20 flex flex-row items-center px-6 gap-4">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 shrink-0">
+                <Music className="w-6 h-6 text-primary" />
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal-400 to-emerald-500 overflow-hidden border-2 border-white/10 shadow-lg shadow-teal-500/20">
-                {/* User Avatar Placeholder */}
+              <span className="font-black text-xl tracking-tight sidebar-hide-on-collapse">
+                رادیو گلها
+              </span>
+            </SidebarHeader>
+
+            <SidebarContent className="px-3 py-6">
+              <SidebarMenu>
+                {NAV_ITEMS.map((item) => {
+                  const isActive = location.pathname === item.path
+                  return (
+                    <SidebarMenuItem key={item.path}>
+                      <SidebarMenuButton 
+                        asChild 
+                        isActive={isActive} 
+                        tooltip={item.label}
+                        className="py-6 px-4 h-12 rounded-xl"
+                      >
+                        <Link to={item.path as any}>
+                          <item.icon className="w-5 h-5" />
+                          <span className="font-medium text-sm">{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )
+                })}
+              </SidebarMenu>
+            </SidebarContent>
+
+            <SidebarFooter className="p-4 border-t border-border/50">
+              <div className="flex items-center gap-3 sidebar-hide-on-collapse">
+                <Avatar className="h-10 w-10 border border-border">
+                  <AvatarImage src="" />
+                  <AvatarFallback className="bg-teal-500/20 text-teal-400 text-xs font-bold">AG</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col text-right">
+                  <span className="text-xs font-bold">ادمین پروژه</span>
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">Level 1</span>
+                </div>
               </div>
+            </SidebarFooter>
+            <SidebarRail />
+          </Sidebar>
+
+          {/* Main Content Inset */}
+          <SidebarInset className="bg-background flex flex-col min-w-0 h-screen overflow-hidden">
+            {/* Header */}
+            <header className="h-20 flex items-center justify-between px-8 bg-background/50 backdrop-blur-md border-b border-border z-10 shrink-0">
+              <div className="flex items-center gap-6 flex-1 max-w-xl">
+                <SidebarTrigger className="rtl-flip" />
+                <Separator orientation="vertical" className="h-4 bg-border/20" />
+                <div className="relative w-full group max-w-md">
+                   <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
+                     <Search className="w-4 h-4" />
+                   </div>
+                   <Input 
+                    placeholder="جستجو در آرشیو..."
+                    className="w-full bg-secondary/30 border-border/50 pr-10 focus:bg-background transition-all h-10 rounded-xl placeholder:text-muted-foreground placeholder:text-xs"
+                   />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <button className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:bg-secondary hover:text-foreground transition-all relative">
+                  <Bell className="w-5 h-5" />
+                  <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-teal-500 rounded-full border-2 border-background"></span>
+                </button>
+              </div>
+            </header>
+
+            {/* Page Content */}
+            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-secondary/5">
+              <Outlet />
             </div>
-          </div>
-        </header>
+          </SidebarInset>
 
-        {/* Page Content */}
-        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-           <Outlet />
+          {/* Devtools */}
+          <TanStackDevtools
+            config={{
+              position: 'bottom-right',
+            }}
+            plugins={[
+              {
+                name: 'TanStack Router',
+                render: <TanStackRouterDevtoolsPanel />,
+              },
+            ]}
+          />
         </div>
-      </main>
-
-      <TanStackDevtools
-        config={{
-          position: 'bottom-right',
-        }}
-        plugins={[
-          {
-            name: 'TanStack Router',
-            render: <TanStackRouterDevtoolsPanel />,
-          },
-        ]}
-      />
-    </div>
+      </SidebarProvider>
+    </TooltipProvider>
   )
 }
