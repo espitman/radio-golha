@@ -1,0 +1,175 @@
+{
+  "id": "467",
+  "url": "https://www.golha.co.uk/fa/programme/467",
+  "timeline": [
+    {
+      "mode": "",
+      "start": "00:05",
+      "end": "00:10",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "گوینده رادیو",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "00:10",
+      "end": "01:41",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "ارکستر گل‌ها",
+          "instrument": ""
+        },
+        {
+          "role": "آهنگساز",
+          "name": "محلی گیلکی",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "01:41",
+      "end": "04:46",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "ارکستر گل‌ها",
+          "instrument": ""
+        },
+        {
+          "role": "خواننده ترانه",
+          "name": "ناصر مسعودی",
+          "instrument": ""
+        },
+        {
+          "role": "آهنگساز",
+          "name": "محلی گیلکی",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "04:46",
+      "end": "05:17",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "ناشناخته",
+          "instrument": ""
+        },
+        {
+          "role": "روایت از",
+          "name": "ناشناخته",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "دشتی",
+      "start": "05:17",
+      "end": "09:25",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "جلیل شهناز",
+          "instrument": ""
+        },
+        {
+          "role": "سرایندگان اشعار متن برنامه",
+          "name": "وحشی بافقی",
+          "instrument": "مثنوی"
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "09:25",
+      "end": "10:59",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "ارکستر گل‌ها",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "10:59",
+      "end": "14:05",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "ارکستر گل‌ها",
+          "instrument": ""
+        },
+        {
+          "role": "ترانه سرا",
+          "name": "ناشناخته",
+          "instrument": ""
+        },
+        {
+          "role": "خواننده ترانه",
+          "name": "ناصر مسعودی",
+          "instrument": ""
+        },
+        {
+          "role": "آهنگساز",
+          "name": "محلی گیلکی",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "14:05",
+      "end": "14:10",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "روشنك",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "14:10",
+      "end": "00:00",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "گوینده رادیو",
+          "instrument": ""
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "performers": [
+      {
+        "name": "ارکستر گل‌ها",
+        "instrument": ""
+      },
+      {
+        "name": "جلیل شهناز",
+        "instrument": ""
+      }
+    ],
+    "announcers": [
+      "روشنك",
+      "ناشناخته",
+      "گوینده رادیو"
+    ],
+    "modes": [
+      "دشتی"
+    ],
+    "poets": []
+  }
+}

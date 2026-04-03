@@ -1,0 +1,45 @@
+{
+  "id": "1522",
+  "url": "https://www.golha.co.uk/fa/programme/1522",
+  "timeline": [
+    {
+      "mode": "",
+      "start": "00:00",
+      "end": "00:01",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "ناشناخته",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "سه گاه",
+      "start": "00:01",
+      "end": "00:00",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "فرامرز پایور",
+          "instrument": ""
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "performers": [
+      {
+        "name": "فرامرز پایور",
+        "instrument": ""
+      }
+    ],
+    "announcers": [
+      "ناشناخته"
+    ],
+    "modes": [
+      "سه گاه"
+    ],
+    "poets": []
+  }
+}

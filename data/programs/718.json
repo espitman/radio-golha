@@ -1,0 +1,36 @@
+{
+  "id": "718",
+  "url": "https://www.golha.co.uk/fa/programme/718",
+  "timeline": [
+    {
+      "mode": "نامعلوم",
+      "start": "00:00",
+      "end": "00:00",
+      "items": [
+        {
+          "role": "خواننده آواز",
+          "name": "ذبیحی، سیّدجواد",
+          "instrument": ""
+        },
+        {
+          "role": "سراینده شعر آواز",
+          "name": "صفی‌علیشاه",
+          "instrument": "غزل"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "performers": [],
+    "announcers": [],
+    "modes": [
+      "نامعلوم"
+    ],
+    "poets": [
+      {
+        "name": "صفی‌علیشاه",
+        "type": "غزل"
+      }
+    ]
+  }
+}

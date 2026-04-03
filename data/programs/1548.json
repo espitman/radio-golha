@@ -1,0 +1,184 @@
+{
+  "id": "1548",
+  "url": "https://www.golha.co.uk/fa/programme/1548",
+  "timeline": [
+    {
+      "mode": "",
+      "start": "00:00",
+      "end": "00:05",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "گوینده رادیو",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "شور",
+      "start": "00:05",
+      "end": "00:38",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "ارکستر گل‌ها",
+          "instrument": ""
+        },
+        {
+          "role": "آهنگساز",
+          "name": "محلی",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "شور",
+      "start": "00:38",
+      "end": "02:43",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "ارکستر گل‌ها",
+          "instrument": ""
+        },
+        {
+          "role": "ترانه سرا",
+          "name": "محلی",
+          "instrument": ""
+        },
+        {
+          "role": "خواننده ترانه",
+          "name": "سیما بینا",
+          "instrument": ""
+        },
+        {
+          "role": "آهنگساز",
+          "name": "محلی",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "02:43",
+      "end": "02:58",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "روشنك",
+          "instrument": ""
+        },
+        {
+          "role": "سرایندگان اشعار متن برنامه",
+          "name": "محلی",
+          "instrument": "دو بیتی"
+        }
+      ]
+    },
+    {
+      "mode": "شور",
+      "start": "02:58",
+      "end": "10:21",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "عبادی، احمد",
+          "instrument": "‎سه‌تار"
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "10:21",
+      "end": "10:35",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "روشنك",
+          "instrument": ""
+        },
+        {
+          "role": "سرایندگان اشعار متن برنامه",
+          "name": "محلی",
+          "instrument": "دو بیتی"
+        }
+      ]
+    },
+    {
+      "mode": "شور",
+      "start": "10:35",
+      "end": "13:08",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "ارکستر گل‌ها",
+          "instrument": ""
+        },
+        {
+          "role": "ترانه سرا",
+          "name": "محلی",
+          "instrument": ""
+        },
+        {
+          "role": "خواننده ترانه",
+          "name": "سیما بینا",
+          "instrument": ""
+        },
+        {
+          "role": "آهنگساز",
+          "name": "محلی",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "13:08",
+      "end": "13:34",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "گوینده رادیو",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "شور",
+      "start": "13:34",
+      "end": "00:00",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "ارکستر گل‌ها",
+          "instrument": ""
+        },
+        {
+          "role": "آهنگساز",
+          "name": "محلی",
+          "instrument": ""
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "performers": [
+      {
+        "name": "ارکستر گل‌ها",
+        "instrument": ""
+      },
+      {
+        "name": "عبادی، احمد",
+        "instrument": "‎سه‌تار"
+      }
+    ],
+    "announcers": [
+      "روشنك",
+      "گوینده رادیو"
+    ],
+    "modes": [
+      "شور"
+    ],
+    "poets": []
+  }
+}

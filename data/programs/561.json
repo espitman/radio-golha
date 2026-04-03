@@ -1,0 +1,213 @@
+{
+  "id": "561",
+  "url": "https://www.golha.co.uk/fa/programme/561",
+  "timeline": [
+    {
+      "mode": "",
+      "start": "00:00",
+      "end": "00:07",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "گوینده رادیو",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "00:07",
+      "end": "03:25",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "ارکستر گل‌ها",
+          "instrument": ""
+        },
+        {
+          "role": "آهنگساز",
+          "name": "علی تجویدی",
+          "instrument": ""
+        },
+        {
+          "role": "گوینده",
+          "name": "روشنك",
+          "instrument": ""
+        },
+        {
+          "role": "سرایندگان اشعار متن برنامه",
+          "name": "منیر طه",
+          "instrument": "غزل"
+        }
+      ]
+    },
+    {
+      "mode": "سه گاه",
+      "start": "03:25",
+      "end": "04:13",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "ارکستر گل‌ها",
+          "instrument": ""
+        },
+        {
+          "role": "آهنگساز",
+          "name": "علی تجویدی",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "04:13",
+      "end": "04:34",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "روشنك",
+          "instrument": ""
+        },
+        {
+          "role": "روایت از",
+          "name": "ناشناخته",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "04:34",
+      "end": "04:49",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "روشنك",
+          "instrument": ""
+        },
+        {
+          "role": "سرایندگان اشعار متن برنامه",
+          "name": "ناشناخته",
+          "instrument": "نامعلوم"
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "04:49",
+      "end": "05:15",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "روشنك",
+          "instrument": ""
+        },
+        {
+          "role": "روایت از",
+          "name": "ناشناخته",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "سه گاه",
+      "start": "05:15",
+      "end": "05:48",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "شنجرفی، جهانگیر",
+          "instrument": "‎سنتور"
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "05:48",
+      "end": "06:04",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "روشنك",
+          "instrument": ""
+        },
+        {
+          "role": "روایت از",
+          "name": "ناشناخته",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "سه گاه",
+      "start": "06:04",
+      "end": "14:49",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "ارکستر گل‌ها",
+          "instrument": ""
+        },
+        {
+          "role": "ترانه سرا",
+          "name": "منیر طه",
+          "instrument": ""
+        },
+        {
+          "role": "خواننده ترانه",
+          "name": "بنان، غلامحسین",
+          "instrument": ""
+        },
+        {
+          "role": "آهنگساز",
+          "name": "علی تجویدی",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "14:49",
+      "end": "14:53",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "روشنك",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "14:53",
+      "end": "00:00",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "گوینده رادیو",
+          "instrument": ""
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "performers": [
+      {
+        "name": "ارکستر گل‌ها",
+        "instrument": ""
+      },
+      {
+        "name": "شنجرفی، جهانگیر",
+        "instrument": "‎سنتور"
+      }
+    ],
+    "announcers": [
+      "روشنك",
+      "گوینده رادیو"
+    ],
+    "modes": [
+      "سه گاه"
+    ],
+    "poets": []
+  }
+}

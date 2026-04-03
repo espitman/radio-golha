@@ -1,0 +1,91 @@
+{
+  "id": "583",
+  "url": "https://www.golha.co.uk/fa/programme/583",
+  "timeline": [
+    {
+      "mode": "",
+      "start": "00:00",
+      "end": "01:21",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "ارکستر گل‌ها",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "01:21",
+      "end": "01:33",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "گوینده رادیو",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "01:33",
+      "end": "02:31",
+      "items": []
+    },
+    {
+      "mode": "",
+      "start": "02:31",
+      "end": "02:40",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "روشنك",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "02:40",
+      "end": "04:21",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "ارکستر گل‌ها",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "04:21",
+      "end": "00:00",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "ارکستر گل‌ها",
+          "instrument": ""
+        },
+        {
+          "role": "خواننده ترانه",
+          "name": "سیما بینا",
+          "instrument": ""
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "performers": [
+      {
+        "name": "ارکستر گل‌ها",
+        "instrument": ""
+      }
+    ],
+    "announcers": [
+      "روشنك",
+      "گوینده رادیو"
+    ],
+    "modes": [],
+    "poets": []
+  }
+}

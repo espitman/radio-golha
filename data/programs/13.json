@@ -1,0 +1,219 @@
+{
+  "id": "13",
+  "url": "https://www.golha.co.uk/fa/programme/13",
+  "timeline": [
+    {
+      "mode": "",
+      "start": "00:00",
+      "end": "00:05",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "گوینده رادیو",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "همایون",
+      "start": "00:05",
+      "end": "01:41",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "ارکستر گل‌ها",
+          "instrument": ""
+        },
+        {
+          "role": "آهنگساز",
+          "name": "علی تجویدی",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "همایون",
+      "start": "01:41",
+      "end": "06:03",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "ارکستر گل‌ها",
+          "instrument": ""
+        },
+        {
+          "role": "ترانه سرا",
+          "name": "منیر طه",
+          "instrument": ""
+        },
+        {
+          "role": "خواننده ترانه",
+          "name": "مرضیه",
+          "instrument": ""
+        },
+        {
+          "role": "آهنگساز",
+          "name": "علی تجویدی",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "06:03",
+      "end": "06:17",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "روشنك",
+          "instrument": ""
+        },
+        {
+          "role": "روایت از",
+          "name": "رهی معیری",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "همایون",
+      "start": "06:17",
+      "end": "07:21",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "كسایی، حسن",
+          "instrument": "‎نی"
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "07:21",
+      "end": "07:39",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "روشنك",
+          "instrument": ""
+        },
+        {
+          "role": "روایت از",
+          "name": "رهی معیری",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "همایون",
+      "start": "07:39",
+      "end": "08:25",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "كسایی، حسن",
+          "instrument": "‎نی"
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "08:25",
+      "end": "08:30",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "روشنك",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "همایون",
+      "start": "08:30",
+      "end": "09:53",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "ارکستر گل‌ها",
+          "instrument": ""
+        },
+        {
+          "role": "آهنگساز",
+          "name": "علی تجویدی",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "همایون",
+      "start": "09:53",
+      "end": "13:23",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "ارکستر گل‌ها",
+          "instrument": ""
+        },
+        {
+          "role": "ترانه سرا",
+          "name": "منیر طه",
+          "instrument": ""
+        },
+        {
+          "role": "خواننده ترانه",
+          "name": "مرضیه",
+          "instrument": ""
+        },
+        {
+          "role": "آهنگساز",
+          "name": "علی تجویدی",
+          "instrument": ""
+        },
+        {
+          "role": "مطلع شعر ترانه",
+          "name": "Notes",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "13:23",
+      "end": "13:27",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "روشنك",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "13:27",
+      "end": "00:00",
+      "items": []
+    }
+  ],
+  "summary": {
+    "performers": [
+      {
+        "name": "ارکستر گل‌ها",
+        "instrument": ""
+      },
+      {
+        "name": "كسایی، حسن",
+        "instrument": "‎نی"
+      }
+    ],
+    "announcers": [
+      "روشنك",
+      "گوینده رادیو"
+    ],
+    "modes": [
+      "همایون"
+    ],
+    "poets": []
+  }
+}

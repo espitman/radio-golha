@@ -1,0 +1,57 @@
+{
+  "id": "1537",
+  "url": "https://www.golha.co.uk/fa/programme/1537",
+  "timeline": [
+    {
+      "mode": "",
+      "start": "00:00",
+      "end": "00:14",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "گوینده رادیو",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "00:14",
+      "end": "02:10",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "ایراندخت پرتوی",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "02:10",
+      "end": "00:00",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "سلطانی، محمد",
+          "instrument": ""
+        },
+        {
+          "role": "سرایندگان اشعار متن برنامه",
+          "name": "رهی معیری",
+          "instrument": "غزل"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "performers": [],
+    "announcers": [
+      "ایراندخت پرتوی",
+      "سلطانی، محمد",
+      "گوینده رادیو"
+    ],
+    "modes": [],
+    "poets": []
+  }
+}

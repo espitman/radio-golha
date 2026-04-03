@@ -1,0 +1,119 @@
+{
+  "id": "481",
+  "url": "https://www.golha.co.uk/fa/programme/481",
+  "timeline": [
+    {
+      "mode": "",
+      "start": "00:00",
+      "end": "00:04",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "گوینده رادیو",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "سه گاه",
+      "start": "00:04",
+      "end": "02:16",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "ارکستر گل‌ها",
+          "instrument": ""
+        },
+        {
+          "role": "آهنگساز",
+          "name": "بدیع‌زاده، سیدجواد",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "02:16",
+      "end": "03:05",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "روشنك",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "03:05",
+      "end": "03:48",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "روشنك",
+          "instrument": ""
+        },
+        {
+          "role": "سرایندگان اشعار متن برنامه",
+          "name": "صورتگر",
+          "instrument": "غزل"
+        }
+      ]
+    },
+    {
+      "mode": "سه گاه",
+      "start": "03:48",
+      "end": "13:33",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "ارکستر گل‌ها",
+          "instrument": ""
+        },
+        {
+          "role": "ترانه سرا",
+          "name": "نواب  صفا",
+          "instrument": ""
+        },
+        {
+          "role": "خواننده ترانه",
+          "name": "قوامی (فاخته‌ای)، حسین",
+          "instrument": ""
+        },
+        {
+          "role": "آهنگساز",
+          "name": "بدیع‌زاده، سیدجواد",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "13:33",
+      "end": "00:00",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "گوینده رادیو",
+          "instrument": ""
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "performers": [
+      {
+        "name": "ارکستر گل‌ها",
+        "instrument": ""
+      }
+    ],
+    "announcers": [
+      "روشنك",
+      "گوینده رادیو"
+    ],
+    "modes": [
+      "سه گاه"
+    ],
+    "poets": []
+  }
+}

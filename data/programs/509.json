@@ -1,0 +1,141 @@
+{
+  "id": "509",
+  "url": "https://www.golha.co.uk/fa/programme/509",
+  "timeline": [
+    {
+      "mode": "همایون",
+      "start": "00:00",
+      "end": "00:51",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "ارکستر گل‌ها",
+          "instrument": ""
+        },
+        {
+          "role": "تنظیم آهنگ",
+          "name": "عباس شاپوری",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "همایون",
+      "start": "00:51",
+      "end": "06:01",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "ارکستر گل‌ها",
+          "instrument": ""
+        },
+        {
+          "role": "ترانه سرا",
+          "name": "بیژن ترقی",
+          "instrument": ""
+        },
+        {
+          "role": "خواننده ترانه",
+          "name": "آذر",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "06:01",
+      "end": "06:30",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "روشنك",
+          "instrument": ""
+        },
+        {
+          "role": "روایت از",
+          "name": "ناشناخته",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "06:30",
+      "end": "07:17",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "ناشناخته",
+          "instrument": ""
+        },
+        {
+          "role": "سرایندگان اشعار متن برنامه",
+          "name": "ملک‌ الشعراء بهار",
+          "instrument": "قصیده"
+        }
+      ]
+    },
+    {
+      "mode": "همایون",
+      "start": "07:17",
+      "end": "09:07",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "ارکستر گل‌ها",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "همایون",
+      "start": "09:07",
+      "end": "14:18",
+      "items": [
+        {
+          "role": "نوازندگان",
+          "name": "ارکستر گل‌ها",
+          "instrument": ""
+        },
+        {
+          "role": "ترانه سرا",
+          "name": "محلی",
+          "instrument": ""
+        },
+        {
+          "role": "خواننده ترانه",
+          "name": "آذر",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "14:18",
+      "end": "00:00",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "ناشناخته",
+          "instrument": ""
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "performers": [
+      {
+        "name": "ارکستر گل‌ها",
+        "instrument": ""
+      }
+    ],
+    "announcers": [
+      "روشنك",
+      "ناشناخته"
+    ],
+    "modes": [
+      "همایون"
+    ],
+    "poets": []
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "id": "1542",
+  "url": "https://www.golha.co.uk/fa/programme/1542",
+  "timeline": [
+    {
+      "mode": "",
+      "start": "00:00",
+      "end": "00:00",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "گوینده رادیو",
+          "instrument": ""
+        },
+        {
+          "role": "سرایندگان اشعار متن برنامه",
+          "name": "ابدال اصفهانی",
+          "instrument": ""
+        },
+        {
+          "role": "سراینده شعر آواز",
+          "name": "آغاباجی قراباغی",
+          "instrument": ""
+        }
+      ]
+    },
+    {
+      "mode": "",
+      "start": "00:00",
+      "end": "00:00",
+      "items": [
+        {
+          "role": "گوینده",
+          "name": "گوینده رادیو",
+          "instrument": ""
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "performers": [],
+    "announcers": [
+      "گوینده رادیو"
+    ],
+    "modes": [],
+    "poets": [
+      {
+        "name": "آغاباجی قراباغی",
+        "type": ""
+      }
+    ]
+  }
+}
