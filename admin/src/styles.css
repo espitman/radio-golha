@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  --font-vazir: "Vazirmatn", sans-serif;
+  --color-brand: var(--color-teal-500);
+  --animate-in: in-0.2s cubic-bezier(0, 0, 0.2, 1);
+  --animate-out: out-0.2s cubic-bezier(0.4, 0, 1, 1);
+}
+
+:root {
+  font-family: var(--font-vazir);
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-800 rounded-full hover:bg-slate-700 transition-colors;
+}
+
+/* RTL Helpers */
+.rtl-flip {
+  transform: scaleX(-1);
+}
+
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold;
+  }
+}
