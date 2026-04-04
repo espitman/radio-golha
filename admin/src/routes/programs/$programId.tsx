@@ -54,11 +54,11 @@ function MetaSection({
 }) {
   return (
     <section className="space-y-3">
-      <div className="flex w-full flex-row-reverse items-center justify-start gap-2 text-right">
-        <span className={`inline-flex h-8 w-8 items-center justify-center rounded-2xl ${accentClass}`}>
+      <div className="flex items-center justify-start gap-2.5 text-right">
+        <span className={`inline-flex h-8 w-8 items-center justify-center rounded-2xl shadow-sm ${accentClass}`}>
           <Icon className="w-4 h-4" />
         </span>
-        <h3 className="text-[11px] font-black text-foreground/80 text-right">{title}</h3>
+        <h3 className="text-[11px] font-black text-foreground/90">{title}</h3>
       </div>
       {children}
     </section>
@@ -233,7 +233,7 @@ function ProgramDetail() {
 
             <CardContent className="h-[calc(100%-73px)] overflow-y-auto space-y-5 px-5 py-5 text-right custom-scrollbar">
               <MetaSection title="خوانندگان اصلی" icon={Mic} accentClass="bg-primary/10 text-primary">
-                <div className="flex flex-wrap justify-end gap-2">
+                <div className="flex flex-wrap justify-start gap-2">
                   {data.singers?.length ? (
                     data.singers.map((name: string) => (
                       <Badge key={name} className="rounded-full border-none bg-primary px-3 py-1.5 text-[10px] font-black text-white">
@@ -254,10 +254,10 @@ function ProgramDetail() {
                         key={`${performer.name}-${performer.instrument}-${index}`}
                         className="flex items-center justify-between rounded-[1.2rem] border border-border/35 bg-white/70 px-3 py-3"
                       >
+                        <span className="text-[12px] font-black text-foreground">{performer.name}</span>
                         <span className="rounded-full bg-primary/6 px-2.5 py-1 text-[10px] font-black text-primary/75">
                           {performer.instrument || 'نامشخص'}
                         </span>
-                        <span className="text-[12px] font-black text-foreground">{performer.name}</span>
                       </div>
                     ))
                   ) : (
@@ -270,8 +270,15 @@ function ProgramDetail() {
 
               {data.poets?.length > 0 && (
                 <MetaSection title="شاعران" icon={BookOpen} accentClass="bg-amber-100 text-amber-800">
-                  <div className="rounded-[1.2rem] border border-amber-200/65 bg-amber-50/75 p-3 text-[12px] font-black leading-7 text-amber-950/80">
-                    {data.poets.join('، ')}
+                  <div className="flex w-full flex-row-reverse flex-wrap justify-start gap-2 text-right">
+                    {[...data.poets].reverse().map((name: string) => (
+                      <Badge
+                        key={name}
+                        className="rounded-full border border-amber-200/70 bg-amber-50 px-3 py-1.5 text-[10px] font-black text-amber-900 shadow-none"
+                      >
+                        {name}
+                      </Badge>
+                    ))}
                   </div>
                 </MetaSection>
               )}
@@ -296,8 +303,15 @@ function ProgramDetail() {
 
               {data.announcers?.length > 0 && (
                 <MetaSection title="گویندگان برنامه" icon={Radio} accentClass="bg-sky-100 text-sky-900">
-                  <div className="rounded-[1.2rem] border border-sky-200/65 bg-sky-50/75 p-3 text-[12px] font-black leading-7 text-sky-950/70">
-                    {data.announcers.join('، ')}
+                  <div className="flex w-full flex-row-reverse flex-wrap justify-start gap-2 text-right">
+                    {[...data.announcers].reverse().map((name: string) => (
+                      <Badge
+                        key={name}
+                        className="rounded-full border border-sky-200/70 bg-sky-50 px-3 py-1.5 text-[10px] font-black text-sky-900 shadow-none"
+                      >
+                        {name}
+                      </Badge>
+                    ))}
                   </div>
                 </MetaSection>
               )}
@@ -432,8 +446,8 @@ function ProgramDetail() {
                               <Music className="w-3.5 h-3.5 text-primary/70" />
                               نوازندگان و تکنوازان این بازه
                             </div>
-                            <div className="flex flex-wrap justify-end gap-2">
-                              {segment.performers.map((performer: any, performerIndex: number) => (
+                            <div className="flex w-full flex-row-reverse flex-wrap justify-start gap-2 text-right">
+                              {[...segment.performers].reverse().map((performer: any, performerIndex: number) => (
                                 <span
                                   key={`${performer.name}-${performer.instrument}-${performerIndex}`}
                                   className="inline-flex items-center gap-2 rounded-full border border-secondary/25 bg-secondary/10 px-3 py-1.5 text-[11px] font-black text-foreground/85"
