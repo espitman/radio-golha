@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Search, Music, ExternalLink, Hash, Filter } from 'lucide-react'
 import {
   Pagination,
   PaginationContent,
@@ -12,44 +11,95 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+import {
+  ExternalLink,
+  Filter,
+  Hash,
+  Music2,
+  Search,
+  SlidersHorizontal,
+} from 'lucide-react'
+
+type Category = {
+  id: number
+  title_fa: string
+}
+
+type ProgramRow = {
+  id: number
+  no: string | number
+  title: string
+  category_name: string
+}
+
+type ProgramsResponse = {
+  rows: ProgramRow[]
+  categories: Category[]
+  total: number
+  page: number
+  totalPages: number
+  activeCategoryId: number | null
+}
 
 export const Route = createFileRoute('/programs/')({
   component: ProgramsList,
 })
 
 function ProgramsList() {
-  const [data, setData] = useState<{ rows: any[], total: number, page: number, totalPages: number }>({
-    rows: [], total: 0, page: 1, totalPages: 1
+  const [data, setData] = useState<ProgramsResponse>({
+    rows: [],
+    categories: [],
+    total: 0,
+    page: 1,
+    totalPages: 1,
+    activeCategoryId: null,
   })
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [categoryId, setCategoryId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     setLoading(true)
-    fetch(`/api/programs?search=${encodeURIComponent(search)}&page=${page}`)
-      .then(res => res.json())
-      .then(d => {
-        if (d && d.rows) setData(d)
+    const params = new URLSearchParams({
+      search,
+      page: page.toString(),
+    })
+    if (categoryId) params.set('categoryId', categoryId.toString())
+
+    fetch(`/api/programs?${params.toString()}`)
+      .then((res) => res.json())
+      .then((response) => {
+        if (response?.rows) setData(response)
         setLoading(false)
       })
       .catch(() => setLoading(false))
-  }, [search, page])
+  }, [search, page, categoryId])
 
-  const handleSearchChange = (val: string) => {
-    setSearch(val)
+  const activeCategoryTitle = useMemo(() => {
+    if (!categoryId) return 'همه دسته‌ها'
+    return data.categories.find((item) => item.id === categoryId)?.title_fa || 'فیلتر شده'
+  }, [categoryId, data.categories])
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value)
     setPage(1)
   }
 
-  // Generate pagination items
+  const toggleCategory = (id: number | null) => {
+    setCategoryId(id)
+    setPage(1)
+  }
+
   const renderPagination = () => {
     const items = []
     const total = data.totalPages || 1
-    
-    // Always show first
+
     items.push(
       <PaginationItem key="first">
-        <PaginationLink onClick={() => setPage(1)} isActive={page === 1} className="cursor-pointer">1</PaginationLink>
+        <PaginationLink onClick={() => setPage(1)} isActive={page === 1} className="cursor-pointer">
+          1
+        </PaginationLink>
       </PaginationItem>
     )
 
@@ -57,25 +107,27 @@ function ProgramsList() {
       items.push(<PaginationItem key="e1"><PaginationEllipsis /></PaginationItem>)
     }
 
-    // Neighbors
     for (let i = Math.max(2, page - 1); i <= Math.min(total - 1, page + 1); i++) {
-        if (i === 1 || i === total) continue;
-        items.push(
-          <PaginationItem key={i}>
-            <PaginationLink onClick={() => setPage(i)} isActive={page === i} className="cursor-pointer">{i}</PaginationLink>
-          </PaginationItem>
-        )
+      if (i === 1 || i === total) continue
+      items.push(
+        <PaginationItem key={i}>
+          <PaginationLink onClick={() => setPage(i)} isActive={page === i} className="cursor-pointer">
+            {i}
+          </PaginationLink>
+        </PaginationItem>
+      )
     }
 
     if (page < total - 2) {
       items.push(<PaginationItem key="e2"><PaginationEllipsis /></PaginationItem>)
     }
 
-    // Always show last if > 1
     if (total > 1) {
       items.push(
         <PaginationItem key="last">
-          <PaginationLink onClick={() => setPage(total)} isActive={page === total} className="cursor-pointer">{total}</PaginationLink>
+          <PaginationLink onClick={() => setPage(total)} isActive={page === total} className="cursor-pointer">
+            {total}
+          </PaginationLink>
         </PaginationItem>
       )
     }
@@ -84,71 +136,153 @@ function ProgramsList() {
   }
 
   return (
-    <div className="p-0 space-y-4 md:space-y-6 animate-in">
-      {/* Header Container */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-card/60 p-5 rounded-[1.5rem] border border-border/40 shadow-sm backdrop-blur-md">
-        <div className="space-y-0.5 text-center md:text-right">
-          <h1 className="text-xl font-black text-foreground tracking-tight flex items-center gap-2">
-             <Music className="w-6 h-6 text-primary" />
-             آرشیو برنامه‌های گل‌ها
-          </h1>
-          <p className="text-muted-foreground text-[10px] font-medium tracking-tight italic">مدیریت و فیلترینگ هوشمند ۱۴۴۰ قطعه ماندگار موسیقی ایران</p>
-        </div>
-        
-        <div className="relative w-full md:w-80 group">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-          <Input 
-            placeholder="جستجوی نام یا شماره برنامه..." 
-            value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            className="h-10 pr-10 rounded-xl bg-background/80 border-border/60 focus:ring-primary/20 transition-all font-medium text-xs"
-          />
-        </div>
-      </div>
+    <div className="space-y-4 animate-in" dir="rtl">
+      <section className="rounded-[1.8rem] border border-primary/10 bg-white/80 p-5 shadow-[0_18px_50px_rgba(31,78,95,0.06)] backdrop-blur-md">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+            <div className="space-y-2 text-right">
+              <div className="flex items-center justify-end gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-[1.4rem] bg-primary text-white shadow-lg shadow-primary/10">
+                  <Music2 className="h-6 w-6" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-black tracking-tight text-foreground">آرشیو برنامه‌های گل‌ها</h1>
+                  <p className="text-[12px] font-bold text-muted-foreground">
+                    مرور سریع برنامه‌ها برای بررسی داده و ورود مستقیم به صفحه جزئیات
+                  </p>
+                </div>
+              </div>
+            </div>
 
-      {/* Table Container */}
-      <div className="rounded-[1.5rem] border border-primary/20 bg-card/40 shadow-2xl shadow-primary/5 overflow-hidden backdrop-blur-xl">
-        <div className="w-full overflow-x-auto min-h-[450px]">
-          <table className="w-full text-right border-collapse">
-            <thead className="bg-primary/5 border-b border-primary/20">
+            <div className="flex items-center justify-end gap-2">
+              <Badge className="rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-[10px] font-black text-primary">
+                {activeCategoryTitle}
+              </Badge>
+              <Badge className="rounded-full border-none bg-primary px-3 py-1 text-[10px] font-black text-white">
+                {data.total} برنامه
+              </Badge>
+            </div>
+          </div>
+
+          <div className="rounded-[1.5rem] border border-primary/10 bg-background/70 p-4">
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,340px)_1fr] xl:items-center">
+              <div className="relative">
+                <Search className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="جستجوی عنوان یا شماره برنامه..."
+                  value={search}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="h-12 rounded-2xl border-primary/10 bg-white pr-11 text-sm font-bold shadow-none focus-visible:ring-primary/15"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => toggleCategory(null)}
+                    className={`rounded-full px-3 py-1.5 text-[10px] font-black transition-all ${
+                      categoryId === null
+                        ? 'bg-primary text-white'
+                        : 'bg-primary/5 text-primary hover:bg-primary/10'
+                    }`}
+                  >
+                    پاک کردن فیلتر
+                  </button>
+                  <div className="flex items-center gap-2 text-[11px] font-black text-muted-foreground">
+                    <SlidersHorizontal className="h-4 w-4 text-primary/70" />
+                    فیلتر دسته‌بندی برنامه‌ها
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap justify-end gap-2">
+                  {data.categories.map((category) => {
+                    const active = categoryId === category.id
+                    return (
+                      <button
+                        key={category.id}
+                        type="button"
+                        onClick={() => toggleCategory(active ? null : category.id)}
+                        className={`rounded-full border px-4 py-2 text-[11px] font-black transition-all ${
+                          active
+                            ? 'border-primary bg-primary text-white shadow-md shadow-primary/15'
+                            : 'border-primary/15 bg-white text-primary hover:border-primary/30 hover:bg-primary/5'
+                        }`}
+                      >
+                        {category.title_fa}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="overflow-hidden rounded-[1.8rem] border border-primary/10 bg-white/85 shadow-[0_18px_45px_rgba(31,78,95,0.06)] backdrop-blur-md">
+        <div className="flex items-center justify-between border-b border-primary/8 px-5 py-4">
+          <div className="text-right">
+            <div className="text-[10px] font-mono uppercase tracking-[0.28em] text-primary/35">Program List</div>
+            <div className="text-[11px] font-bold text-muted-foreground">فهرست برنامه‌ها با دسترسی مستقیم به صفحه جزئیات</div>
+          </div>
+          <div className="flex items-center gap-2 text-sm font-black text-primary">
+            <span>لیست برنامه‌ها</span>
+            <Filter className="h-4 w-4" />
+          </div>
+        </div>
+
+        <div className="w-full overflow-x-auto">
+          <table className="w-full border-collapse text-right">
+            <thead className="bg-primary/[0.03]">
               <tr>
-                <th className="p-3 text-primary font-black text-[11px] w-[70px]"><Hash className="w-3 h-3"/></th>
-                <th className="p-3 text-primary font-black text-[11px] w-[110px]">شماره برنامه</th>
-                <th className="p-3 text-primary font-black text-[11px]">عنوان کامل برنامه</th>
-                <th className="p-3 text-primary font-black text-[11px] w-[160px]"><Filter className="w-3 h-3 inline-block ml-1"/> دسته</th>
-                <th className="p-3 text-center text-primary font-black text-[11px] w-[90px]">عملیات</th>
+                <th className="px-5 py-4 text-[11px] font-black text-primary"><Hash className="h-3.5 w-3.5" /></th>
+                <th className="px-5 py-4 text-[11px] font-black text-primary">شماره برنامه</th>
+                <th className="px-5 py-4 text-[11px] font-black text-primary">عنوان برنامه</th>
+                <th className="px-5 py-4 text-[11px] font-black text-primary">دسته</th>
+                <th className="px-5 py-4 text-center text-[11px] font-black text-primary">مشاهده</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-primary/20">
+
+            <tbody className="divide-y divide-primary/8">
               {loading ? (
-                 [...Array(10)].map((_, i) => (
-                    <tr key={i} className="animate-pulse bg-white/5 h-12">
-                      <td colSpan={5}></td>
-                    </tr>
-                 ))
+                [...Array(10)].map((_, index) => (
+                  <tr key={index} className="animate-pulse">
+                    <td colSpan={5} className="h-16 bg-white/40" />
+                  </tr>
+                ))
               ) : data.rows.length === 0 ? (
                 <tr>
-                   <td colSpan={5} className="p-20 text-center text-muted-foreground italic font-medium">هیچ داده‌ای یافت نشد.</td>
+                  <td colSpan={5} className="px-6 py-20 text-center">
+                    <div className="space-y-2">
+                      <div className="text-lg font-black text-primary">برنامه‌ای پیدا نشد</div>
+                      <p className="text-sm font-bold text-muted-foreground">عبارت جستجو یا فیلتر را تغییر بده.</p>
+                    </div>
+                  </td>
                 </tr>
               ) : (
-                data.rows.map((p) => (
-                  <tr key={p.id} className="group border-border/10 hover:bg-primary/5 transition-colors duration-200">
-                    <td className="p-3 font-mono text-[10px] text-muted-foreground">{p.id}</td>
-                    <td className="p-3">
-                      <span className="bg-primary/5 text-primary px-2.5 py-1 rounded-lg border border-primary/10 font-black text-[10px] font-mono">
-                        {p.no}
+                data.rows.map((program) => (
+                  <tr key={program.id} className="group transition-colors hover:bg-primary/[0.035]">
+                    <td className="px-5 py-4 font-mono text-[10px] font-black text-muted-foreground">{program.id}</td>
+                    <td className="px-5 py-4">
+                      <span className="inline-flex rounded-xl border border-primary/10 bg-primary/5 px-3 py-1.5 text-[10px] font-black text-primary">
+                        {program.no}
                       </span>
                     </td>
-                    <td className="p-3 font-bold text-foreground text-sm group-hover:text-primary transition-colors">{p.title}</td>
-                    <td className="p-3">
-                      <Badge variant="outline" className="bg-secondary/10 text-primary border-primary/20 px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-tight">
-                        {p.category_name}
+                    <td className="px-5 py-4">
+                      <div className="text-sm font-black text-foreground transition-colors group-hover:text-primary">
+                        {program.title}
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <Badge variant="outline" className="rounded-full border-primary/20 bg-secondary/10 px-3 py-1 text-[10px] font-black text-primary">
+                        {program.category_name}
                       </Badge>
                     </td>
-                    <td className="p-3 text-center">
-                      <Link to="/programs/$programId" params={{ programId: p.id.toString() }}>
-                        <button className="p-1.5 rounded-lg bg-primary/5 border border-primary/10 text-primary hover:bg-primary hover:text-white transition-all">
-                          <ExternalLink className="w-3.5 h-3.5" />
+                    <td className="px-5 py-4 text-center">
+                      <Link to="/programs/$programId" params={{ programId: program.id.toString() }}>
+                        <button className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-primary/10 bg-primary/5 text-primary transition-all hover:bg-primary hover:text-white hover:shadow-lg hover:shadow-primary/15">
+                          <ExternalLink className="h-4 w-4" />
                         </button>
                       </Link>
                     </td>
@@ -158,36 +292,37 @@ function ProgramsList() {
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
 
-      {/* Shadcn Pagination Implementation */}
-      <div className="p-4 flex flex-col md:flex-row justify-between items-center gap-6 bg-card/40 rounded-[1.5rem] border border-border/40 backdrop-blur-md">
+      <div className="flex flex-col gap-4 rounded-[1.4rem] border border-border/40 bg-card/50 p-4 backdrop-blur-md md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col items-end gap-1">
+          <span className="text-[10px] font-black uppercase tracking-[0.26em] text-primary/45">
+            {data.total} Total Programmes
+          </span>
+          <span className="text-[11px] font-bold text-muted-foreground">
+            صفحه {data.page} از {data.totalPages}
+          </span>
+        </div>
+
         <Pagination className="justify-start">
           <PaginationContent>
             <PaginationItem>
-              <PaginationPrevious 
-                onClick={() => setPage(p => Math.max(1, p - 1))} 
-                className={`cursor-pointer ${page === 1 ? 'opacity-30 pointer-events-none' : ''}`}
+              <PaginationPrevious
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                className={`cursor-pointer ${page === 1 ? 'pointer-events-none opacity-30' : ''}`}
               />
             </PaginationItem>
-            
+
             {renderPagination()}
 
             <PaginationItem>
-              <PaginationNext 
-                onClick={() => setPage(p => Math.min(data.totalPages, p + 1))} 
-                className={`cursor-pointer ${page === data.totalPages ? 'opacity-30 pointer-events-none' : ''}`}
+              <PaginationNext
+                onClick={() => setPage((current) => Math.min(data.totalPages, current + 1))}
+                className={`cursor-pointer ${page === data.totalPages ? 'pointer-events-none opacity-30' : ''}`}
               />
             </PaginationItem>
           </PaginationContent>
         </Pagination>
-        
-        <div className="flex flex-col items-end gap-1 shrink-0">
-           <span className="text-[9px] font-black uppercase tracking-widest text-primary/60">
-              {data.total || 0} TOTAL PROGRAMMES FOUND
-           </span>
-           <span className="text-[8px] uppercase font-mono tracking-tighter text-muted-foreground/40 italic">Golha Archive Engine v5.1</span>
-        </div>
       </div>
     </div>
   )
