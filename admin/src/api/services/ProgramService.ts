@@ -1,27 +1,12 @@
 import { ProgramRepository } from '../repositories/ProgramRepository';
+import { runCoreQuery } from '../rust/runCoreQuery';
 
 export class ProgramService {
   static async list(search: string = '', page: number = 1, categoryId?: number, singerId?: number) {
-    const repo = new ProgramRepository();
-    try {
-      const rows = await repo.list(search, page, categoryId, singerId);
-      const total = await repo.count(search, categoryId, singerId);
-      const categories = await repo.categories();
-      const singers = await repo.singers();
-      const limit = 24;
-      return {
-        rows,
-        categories,
-        singers,
-        total,
-        page,
-        totalPages: Math.ceil((total as number) / limit),
-        activeCategoryId: categoryId || null,
-        activeSingerId: singerId || null,
-      };
-    } finally {
-      repo.close();
-    }
+    const args = ['--search', search, '--page', page.toString()];
+    if (categoryId) args.push('--category-id', categoryId.toString());
+    if (singerId) args.push('--singer-id', singerId.toString());
+    return runCoreQuery('admin-programs', args);
   }
 
   static async getDetail(id: number) {

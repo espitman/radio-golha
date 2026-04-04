@@ -1,6 +1,7 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use radiogolha_core::RadioGolhaCore;
+use serde_json::to_string;
 
 #[derive(Debug, Parser)]
 #[command(name = "radiogolha-core-cli")]
@@ -15,11 +16,22 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum Command {
     Dashboard,
+    AdminDashboard,
     Programs {
         #[arg(long, default_value_t = 10)]
         limit: usize,
         #[arg(long, default_value_t = 0)]
         offset: usize,
+    },
+    AdminPrograms {
+        #[arg(long, default_value = "")]
+        search: String,
+        #[arg(long, default_value_t = 1)]
+        page: i64,
+        #[arg(long)]
+        category_id: Option<i64>,
+        #[arg(long)]
+        singer_id: Option<i64>,
     },
     ProgramDetail {
         id: i64,
@@ -38,6 +50,9 @@ fn main() -> Result<()> {
             println!("{:#?}", core.top_singers(5)?);
             println!("{:#?}", core.top_modes(5)?);
         }
+        Command::AdminDashboard => {
+            println!("{}", to_string(&core.admin_dashboard_overview()?)?);
+        }
         Command::Programs { limit, offset } => {
             for item in core.list_programs(limit, offset)? {
                 println!(
@@ -49,6 +64,17 @@ fn main() -> Result<()> {
                     item.title
                 );
             }
+        }
+        Command::AdminPrograms {
+            search,
+            page,
+            category_id,
+            singer_id,
+        } => {
+            println!(
+                "{}",
+                to_string(&core.admin_program_list(&search, page, category_id, singer_id)?)?
+            );
         }
         Command::ProgramDetail { id } => {
             println!("{:#?}", core.get_program_detail(id)?);

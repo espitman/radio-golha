@@ -4,8 +4,9 @@ use crate::{
     db::RadioGolhaCore,
     error::CoreResult,
     models::{
-        CategoryStat, DashboardSummary, OrchestraLeaderCredit, PerformerCredit, ProgramDetail,
-        ProgramListItem, RankedNameStat, TimelineSegment,
+        CategoryOption, CategoryStat, DashboardOverview, DashboardSummary,
+        OrchestraLeaderCredit, PerformerCredit, ProgramDetail, ProgramListItem,
+        ProgramListResponse, RankedNameStat, SingerOption, TimelineSegment,
     },
 };
 
@@ -19,7 +20,10 @@ impl RadioGolhaCore {
               (SELECT COUNT(*) FROM program_timeline) AS total_segments,
               (SELECT COUNT(*) FROM mode) AS total_modes,
               (SELECT COUNT(*) FROM program WHERE audio_url IS NOT NULL AND TRIM(audio_url) <> '') AS programs_with_audio,
-              (SELECT COUNT(DISTINCT program_id) FROM program_timeline) AS programs_with_timeline
+              (SELECT COUNT(DISTINCT program_id) FROM program_timeline) AS programs_with_timeline,
+              (SELECT COUNT(*) FROM category) AS total_categories,
+              (SELECT COUNT(*) FROM orchestra) AS total_orchestras,
+              (SELECT COUNT(*) FROM instrument) AS total_instruments
             ",
             [],
             |row| {
@@ -30,6 +34,9 @@ impl RadioGolhaCore {
                     total_modes: row.get(3)?,
                     programs_with_audio: row.get(4)?,
                     programs_with_timeline: row.get(5)?,
+                    total_categories: row.get(6)?,
+                    total_orchestras: row.get(7)?,
+                    total_instruments: row.get(8)?,
                 })
             },
         )?;
@@ -103,6 +110,52 @@ impl RadioGolhaCore {
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 
+    pub fn top_orchestras(&self, limit: usize) -> CoreResult<Vec<RankedNameStat>> {
+        let mut stmt = self.connection().prepare(
+            "
+            SELECT o.name, COUNT(*) AS total
+            FROM program_orchestras po
+            JOIN orchestra o ON o.id = po.orchestra_id
+            GROUP BY o.id
+            ORDER BY total DESC, o.name ASC
+            LIMIT ?1
+            ",
+        )?;
+
+        let rows = stmt.query_map([limit as i64], |row| {
+            Ok(RankedNameStat {
+                name: row.get(0)?,
+                total: row.get(1)?,
+            })
+        })?;
+
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    pub fn recent_programs(&self, limit: usize) -> CoreResult<Vec<ProgramListItem>> {
+        let mut stmt = self.connection().prepare(
+            "
+            SELECT p.id, p.title, c.title_fa, p.no, p.sub_no
+            FROM program p
+            JOIN category c ON c.id = p.category_id
+            ORDER BY p.id DESC
+            LIMIT ?1
+            ",
+        )?;
+
+        let rows = stmt.query_map([limit as i64], |row| {
+            Ok(ProgramListItem {
+                id: row.get(0)?,
+                title: row.get(1)?,
+                category_name: row.get(2)?,
+                no: row.get(3)?,
+                sub_no: row.get(4)?,
+            })
+        })?;
+
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
     pub fn list_programs(&self, limit: usize, offset: usize) -> CoreResult<Vec<ProgramListItem>> {
         let mut stmt = self.connection().prepare(
             "
@@ -125,6 +178,153 @@ impl RadioGolhaCore {
         })?;
 
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    pub fn program_categories(&self) -> CoreResult<Vec<CategoryOption>> {
+        let mut stmt = self
+            .connection()
+            .prepare("SELECT id, title_fa FROM category ORDER BY id ASC")?;
+
+        let rows = stmt.query_map([], |row| {
+            Ok(CategoryOption {
+                id: row.get(0)?,
+                title_fa: row.get(1)?,
+            })
+        })?;
+
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    pub fn program_singers(&self) -> CoreResult<Vec<SingerOption>> {
+        let mut stmt = self.connection().prepare(
+            "
+            SELECT DISTINCT s.id, a.name
+            FROM singer s
+            JOIN artist a ON s.artist_id = a.id
+            JOIN program_singers ps ON ps.singer_id = s.id
+            ORDER BY a.name ASC
+            ",
+        )?;
+
+        let rows = stmt.query_map([], |row| {
+            Ok(SingerOption {
+                id: row.get(0)?,
+                name: row.get(1)?,
+            })
+        })?;
+
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    pub fn count_programs(
+        &self,
+        search: &str,
+        category_id: Option<i64>,
+        singer_id: Option<i64>,
+    ) -> CoreResult<i64> {
+        let escaped_search = format!("%{}%", search.trim());
+        let total = self.connection().query_row(
+            "
+            SELECT COUNT(*) as total
+            FROM program p
+            WHERE
+              (?1 = '' OR p.title LIKE ?2 OR CAST(p.no AS TEXT) LIKE ?2 OR COALESCE(p.sub_no, '') LIKE ?2)
+              AND (?3 IS NULL OR p.category_id = ?3)
+              AND (
+                ?4 IS NULL OR EXISTS (
+                  SELECT 1
+                  FROM program_singers ps
+                  WHERE ps.program_id = p.id AND ps.singer_id = ?4
+                )
+              )
+            ",
+            params![search.trim(), escaped_search, category_id, singer_id],
+            |row| row.get(0),
+        )?;
+
+        Ok(total)
+    }
+
+    pub fn list_programs_filtered(
+        &self,
+        search: &str,
+        page: i64,
+        category_id: Option<i64>,
+        singer_id: Option<i64>,
+        limit: i64,
+    ) -> CoreResult<Vec<ProgramListItem>> {
+        let page = page.max(1);
+        let offset = (page - 1) * limit.max(1);
+        let escaped_search = format!("%{}%", search.trim());
+        let mut stmt = self.connection().prepare(
+            "
+            SELECT p.id, p.title, c.title_fa, p.no, p.sub_no
+            FROM program p
+            JOIN category c ON p.category_id = c.id
+            WHERE
+              (?1 = '' OR p.title LIKE ?2 OR CAST(p.no AS TEXT) LIKE ?2 OR COALESCE(p.sub_no, '') LIKE ?2)
+              AND (?3 IS NULL OR p.category_id = ?3)
+              AND (
+                ?4 IS NULL OR EXISTS (
+                  SELECT 1
+                  FROM program_singers ps
+                  WHERE ps.program_id = p.id AND ps.singer_id = ?4
+                )
+              )
+            ORDER BY p.no ASC, COALESCE(p.sub_no, '') ASC, p.id ASC
+            LIMIT ?5 OFFSET ?6
+            ",
+        )?;
+
+        let rows = stmt.query_map(
+            params![search.trim(), escaped_search, category_id, singer_id, limit.max(1), offset],
+            |row| {
+                Ok(ProgramListItem {
+                    id: row.get(0)?,
+                    title: row.get(1)?,
+                    category_name: row.get(2)?,
+                    no: row.get(3)?,
+                    sub_no: row.get(4)?,
+                })
+            },
+        )?;
+
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    pub fn admin_dashboard_overview(&self) -> CoreResult<DashboardOverview> {
+        Ok(DashboardOverview {
+            summary: self.dashboard_summary()?,
+            category_breakdown: self.category_breakdown()?,
+            top_singers: self.top_singers(8)?,
+            top_modes: self.top_modes(8)?,
+            top_orchestras: self.top_orchestras(5)?,
+            recent_programs: self.recent_programs(6)?,
+        })
+    }
+
+    pub fn admin_program_list(
+        &self,
+        search: &str,
+        page: i64,
+        category_id: Option<i64>,
+        singer_id: Option<i64>,
+    ) -> CoreResult<ProgramListResponse> {
+        let limit = 24_i64;
+        let safe_page = page.max(1);
+        let total = self.count_programs(search, category_id, singer_id)?;
+        let total_pages = ((total + limit - 1) / limit).max(1);
+
+        Ok(ProgramListResponse {
+            rows: self.list_programs_filtered(search, safe_page, category_id, singer_id, limit)?,
+            categories: self.program_categories()?,
+            singers: self.program_singers()?,
+            total,
+            page: safe_page,
+            total_pages,
+            active_category_id: category_id,
+            active_singer_id: singer_id,
+        })
     }
 
     pub fn get_program_detail(&self, program_id: i64) -> CoreResult<Option<ProgramDetail>> {
