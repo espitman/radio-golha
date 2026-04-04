@@ -9,18 +9,22 @@ export class ProgramRepository {
     this.db = new sqlite3.Database(dbPath);
   }
 
-  async list(search: string, page: number, categoryId?: number, limit: number = 24) {
+  async list(search: string, page: number, categoryId?: number, singerId?: number, limit: number = 24) {
     const offset = (page - 1) * limit;
     let sql = 'SELECT p.*, c.title_fa as category_name FROM program p JOIN category c ON p.category_id = c.id WHERE 1=1';
     const params: any[] = [];
     if (search) { sql += ' AND (p.title LIKE ? OR p.no LIKE ?)'; params.push(`%${search}%`, `%${search}%`); }
     if (categoryId) { sql += ' AND p.category_id = ?'; params.push(categoryId); }
+    if (singerId) {
+      sql += ' AND EXISTS (SELECT 1 FROM program_singers ps WHERE ps.program_id = p.id AND ps.singer_id = ?)';
+      params.push(singerId);
+    }
     sql += ' ORDER BY CAST(p.no AS INTEGER) ASC LIMIT ? OFFSET ?';
     params.push(limit, offset);
     return new Promise((r, j) => { this.db.all(sql, params, (err, rows) => err ? j(err) : r(rows)); });
   }
 
-  async count(search: string, categoryId?: number) {
+  async count(search: string, categoryId?: number, singerId?: number) {
     let sql = 'SELECT COUNT(*) as total FROM program p WHERE 1=1';
     const params: any[] = [];
     if (search) {
@@ -31,12 +35,28 @@ export class ProgramRepository {
       sql += ' AND p.category_id = ?';
       params.push(categoryId);
     }
+    if (singerId) {
+      sql += ' AND EXISTS (SELECT 1 FROM program_singers ps WHERE ps.program_id = p.id AND ps.singer_id = ?)';
+      params.push(singerId);
+    }
     return new Promise((r, j) => { this.db.get(sql, params, (err, res: any) => err ? j(err) : r(res?.total || 0)); });
   }
 
   async categories() {
     return new Promise((r, j) => {
       this.db.all('SELECT id, title_fa FROM category ORDER BY id ASC', [], (err, rows) => err ? j(err) : r(rows || []));
+    });
+  }
+
+  async singers() {
+    return new Promise((r, j) => {
+      this.db.all(`
+        SELECT DISTINCT s.id, a.name
+        FROM singer s
+        JOIN artist a ON s.artist_id = a.id
+        JOIN program_singers ps ON ps.singer_id = s.id
+        ORDER BY a.name ASC
+      `, [], (err, rows) => err ? j(err) : r(rows || []));
     });
   }
 

@@ -25,8 +25,9 @@ export default defineConfig({
             const search = url.searchParams.get('search') || '';
             const page = parseInt(url.searchParams.get('page') || '1');
             const categoryId = parseInt(url.searchParams.get('categoryId') || '0');
+            const singerId = parseInt(url.searchParams.get('singerId') || '0');
             try {
-                const data = await ProgramService.list(search, page, categoryId || undefined);
+                const data = await ProgramService.list(search, page, categoryId || undefined, singerId || undefined);
                 res.setHeader('Content-Type', 'application/json');
                 return res.end(JSON.stringify(data));
             } catch (e: any) {
