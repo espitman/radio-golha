@@ -6,6 +6,9 @@ import {
   Database, 
   Music2, 
   Users, 
+  Drum,
+  Guitar,
+  Waves,
   Settings, 
   Search,
   Bell,
@@ -40,6 +43,9 @@ const NAV_ITEMS = [
   { icon: Database, label: 'مدیریت داده‌ها', path: '/database' },
   { icon: Music2, label: 'برنامه‌ها', path: '/programs' },
   { icon: Users, label: 'هنرمندان', path: '/artists' },
+  { icon: Drum, label: 'ارکسترها', path: '/orchestras' },
+  { icon: Guitar, label: 'سازها', path: '/instruments' },
+  { icon: Waves, label: 'دستگاه‌ها', path: '/modes' },
   { icon: Settings, label: 'تنظیمات', path: '/settings' },
 ]
 

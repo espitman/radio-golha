@@ -12,6 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProgramsIndexRouteImport } from './routes/programs/index'
+import { Route as OrchestrasIndexRouteImport } from './routes/orchestras/index'
+import { Route as ModesIndexRouteImport } from './routes/modes/index'
+import { Route as InstrumentsIndexRouteImport } from './routes/instruments/index'
+import { Route as DatabaseIndexRouteImport } from './routes/database/index'
 import { Route as ArtistsIndexRouteImport } from './routes/artists/index'
 import { Route as ProgramsProgramIdRouteImport } from './routes/programs/$programId'
 
@@ -30,6 +34,26 @@ const ProgramsIndexRoute = ProgramsIndexRouteImport.update({
   path: '/programs/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OrchestrasIndexRoute = OrchestrasIndexRouteImport.update({
+  id: '/orchestras/',
+  path: '/orchestras/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ModesIndexRoute = ModesIndexRouteImport.update({
+  id: '/modes/',
+  path: '/modes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InstrumentsIndexRoute = InstrumentsIndexRouteImport.update({
+  id: '/instruments/',
+  path: '/instruments/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DatabaseIndexRoute = DatabaseIndexRouteImport.update({
+  id: '/database/',
+  path: '/database/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ArtistsIndexRoute = ArtistsIndexRouteImport.update({
   id: '/artists/',
   path: '/artists/',
@@ -46,6 +70,10 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/programs/$programId': typeof ProgramsProgramIdRoute
   '/artists/': typeof ArtistsIndexRoute
+  '/database/': typeof DatabaseIndexRoute
+  '/instruments/': typeof InstrumentsIndexRoute
+  '/modes/': typeof ModesIndexRoute
+  '/orchestras/': typeof OrchestrasIndexRoute
   '/programs/': typeof ProgramsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +81,10 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/programs/$programId': typeof ProgramsProgramIdRoute
   '/artists': typeof ArtistsIndexRoute
+  '/database': typeof DatabaseIndexRoute
+  '/instruments': typeof InstrumentsIndexRoute
+  '/modes': typeof ModesIndexRoute
+  '/orchestras': typeof OrchestrasIndexRoute
   '/programs': typeof ProgramsIndexRoute
 }
 export interface FileRoutesById {
@@ -61,6 +93,10 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/programs/$programId': typeof ProgramsProgramIdRoute
   '/artists/': typeof ArtistsIndexRoute
+  '/database/': typeof DatabaseIndexRoute
+  '/instruments/': typeof InstrumentsIndexRoute
+  '/modes/': typeof ModesIndexRoute
+  '/orchestras/': typeof OrchestrasIndexRoute
   '/programs/': typeof ProgramsIndexRoute
 }
 export interface FileRouteTypes {
@@ -70,15 +106,32 @@ export interface FileRouteTypes {
     | '/about'
     | '/programs/$programId'
     | '/artists/'
+    | '/database/'
+    | '/instruments/'
+    | '/modes/'
+    | '/orchestras/'
     | '/programs/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/programs/$programId' | '/artists' | '/programs'
+  to:
+    | '/'
+    | '/about'
+    | '/programs/$programId'
+    | '/artists'
+    | '/database'
+    | '/instruments'
+    | '/modes'
+    | '/orchestras'
+    | '/programs'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/programs/$programId'
     | '/artists/'
+    | '/database/'
+    | '/instruments/'
+    | '/modes/'
+    | '/orchestras/'
     | '/programs/'
   fileRoutesById: FileRoutesById
 }
@@ -87,6 +140,10 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   ProgramsProgramIdRoute: typeof ProgramsProgramIdRoute
   ArtistsIndexRoute: typeof ArtistsIndexRoute
+  DatabaseIndexRoute: typeof DatabaseIndexRoute
+  InstrumentsIndexRoute: typeof InstrumentsIndexRoute
+  ModesIndexRoute: typeof ModesIndexRoute
+  OrchestrasIndexRoute: typeof OrchestrasIndexRoute
   ProgramsIndexRoute: typeof ProgramsIndexRoute
 }
 
@@ -113,6 +170,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProgramsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/orchestras/': {
+      id: '/orchestras/'
+      path: '/orchestras'
+      fullPath: '/orchestras/'
+      preLoaderRoute: typeof OrchestrasIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/modes/': {
+      id: '/modes/'
+      path: '/modes'
+      fullPath: '/modes/'
+      preLoaderRoute: typeof ModesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/instruments/': {
+      id: '/instruments/'
+      path: '/instruments'
+      fullPath: '/instruments/'
+      preLoaderRoute: typeof InstrumentsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/database/': {
+      id: '/database/'
+      path: '/database'
+      fullPath: '/database/'
+      preLoaderRoute: typeof DatabaseIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/artists/': {
       id: '/artists/'
       path: '/artists'
@@ -135,6 +220,10 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   ProgramsProgramIdRoute: ProgramsProgramIdRoute,
   ArtistsIndexRoute: ArtistsIndexRoute,
+  DatabaseIndexRoute: DatabaseIndexRoute,
+  InstrumentsIndexRoute: InstrumentsIndexRoute,
+  ModesIndexRoute: ModesIndexRoute,
+  OrchestrasIndexRoute: OrchestrasIndexRoute,
   ProgramsIndexRoute: ProgramsIndexRoute,
 }
 export const routeTree = rootRouteImport

@@ -1,5 +1,6 @@
 import { URL } from 'url'
 import { ArtistService } from '../services/ArtistService'
+import { LookupService } from '../services/LookupService'
 import { ProgramService } from '../services/ProgramService'
 
 type IncomingMessage = {
@@ -49,6 +50,45 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
 
     try {
       const data = await ArtistService.list(search, page, role)
+      sendJson(res, data)
+    } catch (e: any) {
+      sendJson(res, { error: e.message }, 500)
+    }
+    return true
+  }
+
+  if (req.method === 'GET' && url.pathname.startsWith('/api/orchestras')) {
+    const search = url.searchParams.get('search') || ''
+    const page = parseInt(url.searchParams.get('page') || '1')
+
+    try {
+      const data = await LookupService.list('orchestras', search, page)
+      sendJson(res, data)
+    } catch (e: any) {
+      sendJson(res, { error: e.message }, 500)
+    }
+    return true
+  }
+
+  if (req.method === 'GET' && url.pathname.startsWith('/api/instruments')) {
+    const search = url.searchParams.get('search') || ''
+    const page = parseInt(url.searchParams.get('page') || '1')
+
+    try {
+      const data = await LookupService.list('instruments', search, page)
+      sendJson(res, data)
+    } catch (e: any) {
+      sendJson(res, { error: e.message }, 500)
+    }
+    return true
+  }
+
+  if (req.method === 'GET' && url.pathname.startsWith('/api/modes')) {
+    const search = url.searchParams.get('search') || ''
+    const page = parseInt(url.searchParams.get('page') || '1')
+
+    try {
+      const data = await LookupService.list('modes', search, page)
       sendJson(res, data)
     } catch (e: any) {
       sendJson(res, { error: e.message }, 500)
