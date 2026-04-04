@@ -43,6 +43,10 @@ scraper/cache/*
 # Mac stuff
 .DS_Store
 
+# Rust
+target/
+core/target/
+
 # SQLite Database
 database/*.db
 *.db-journal
