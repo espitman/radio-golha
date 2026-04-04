@@ -4,6 +4,22 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("/fonts/Vazirmatn-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("/fonts/Vazirmatn-Bold.woff2") format("woff2");
+  font-weight: 700 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --font-vazir: "Vazirmatn", sans-serif;
   --color-brand: #1f4e5f;
@@ -90,6 +106,7 @@
 body {
   margin: 0;
   min-height: 100vh;
+  direction: rtl;
   @apply bg-background text-foreground;
 }
 

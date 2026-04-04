@@ -6,6 +6,7 @@ from role_utils import normalize_role_text, classify_timeline_role
 from name_utils import normalize_person_name
 from orchestra_utils import split_orchestra_and_leader, canonicalize_orchestra_name
 from mode_utils import split_mode_names
+from program_number_utils import extract_program_number
 
 def fa_to_en_digits(text):
     if not text: return 0
@@ -36,7 +37,7 @@ CREATE TABLE orchestra (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE);
 CREATE TABLE instrument (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE);
 CREATE TABLE mode (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE);
 
-CREATE TABLE program (id INTEGER PRIMARY KEY, title TEXT, category_id INTEGER, no INTEGER, url TEXT, audio_url TEXT, FOREIGN KEY(category_id) REFERENCES category(id));
+CREATE TABLE program (id INTEGER PRIMARY KEY, title TEXT, category_id INTEGER, no INTEGER, sub_no TEXT, url TEXT, audio_url TEXT, FOREIGN KEY(category_id) REFERENCES category(id));
 
 CREATE TABLE program_performers (id INTEGER PRIMARY KEY AUTOINCREMENT, program_id INTEGER, performer_id INTEGER, instrument_id INTEGER, FOREIGN KEY(program_id) REFERENCES program(id), FOREIGN KEY(performer_id) REFERENCES performer(id), FOREIGN KEY(instrument_id) REFERENCES instrument(id));
 CREATE TABLE program_singers (id INTEGER PRIMARY KEY AUTOINCREMENT, program_id INTEGER, singer_id INTEGER, FOREIGN KEY(program_id) REFERENCES program(id), FOREIGN KEY(singer_id) REFERENCES singer(id));
@@ -148,7 +149,13 @@ for en_key, p_list in categories_dict.items():
         if os.path.exists(audio_path):
             with open(audio_path, 'r') as af: audio_url = json.load(af).get('audio_url', '')
             
-        cursor.execute("INSERT INTO program (id, title, category_id, no, url, audio_url) VALUES (?, ?, ?, ?, ?, ?)", (pid, p.get('title'), cat_id, fa_to_en_digits(p.get('no')), meta.get('url'), audio_url))
+        program_no, program_sub_no = extract_program_number(p.get('title', ''), p.get('no', ''))
+        if p.get('sub_no'):
+            program_sub_no = str(p.get('sub_no')).strip() or program_sub_no
+        cursor.execute(
+            "INSERT INTO program (id, title, category_id, no, sub_no, url, audio_url) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (pid, p.get('title'), cat_id, program_no, program_sub_no, meta.get('url'), audio_url),
+        )
         
         smr = meta.get('summary', {})
         seen_program_orchestras = set()

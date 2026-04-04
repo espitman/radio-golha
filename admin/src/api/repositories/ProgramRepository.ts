@@ -13,13 +13,16 @@ export class ProgramRepository {
     const offset = (page - 1) * limit;
     let sql = 'SELECT p.*, c.title_fa as category_name FROM program p JOIN category c ON p.category_id = c.id WHERE 1=1';
     const params: any[] = [];
-    if (search) { sql += ' AND (p.title LIKE ? OR p.no LIKE ?)'; params.push(`%${search}%`, `%${search}%`); }
+    if (search) {
+      sql += ' AND (p.title LIKE ? OR CAST(p.no AS TEXT) LIKE ? OR COALESCE(p.sub_no, \'\') LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    }
     if (categoryId) { sql += ' AND p.category_id = ?'; params.push(categoryId); }
     if (singerId) {
       sql += ' AND EXISTS (SELECT 1 FROM program_singers ps WHERE ps.program_id = p.id AND ps.singer_id = ?)';
       params.push(singerId);
     }
-    sql += ' ORDER BY CAST(p.no AS INTEGER) ASC LIMIT ? OFFSET ?';
+    sql += ' ORDER BY p.no ASC, COALESCE(p.sub_no, \'\') ASC, p.id ASC LIMIT ? OFFSET ?';
     params.push(limit, offset);
     return new Promise((r, j) => { this.db.all(sql, params, (err, rows) => err ? j(err) : r(rows)); });
   }
@@ -28,8 +31,8 @@ export class ProgramRepository {
     let sql = 'SELECT COUNT(*) as total FROM program p WHERE 1=1';
     const params: any[] = [];
     if (search) {
-      sql += ' AND (p.title LIKE ? OR p.no LIKE ?)';
-      params.push(`%${search}%`, `%${search}%`);
+      sql += ' AND (p.title LIKE ? OR CAST(p.no AS TEXT) LIKE ? OR COALESCE(p.sub_no, \'\') LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
     if (categoryId) {
       sql += ' AND p.category_id = ?';

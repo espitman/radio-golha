@@ -158,7 +158,9 @@ function ProgramDetail() {
                   {data.title}
                 </h1>
                 <div className="mt-2 flex flex-wrap items-center justify-end gap-3 text-[11px] font-bold text-white/55">
-                  <span className="rounded-full bg-black/10 px-3 py-1 font-mono">NO: {data.no}</span>
+                  <span className="rounded-full bg-black/10 px-3 py-1 font-mono">
+                    NO: {data.sub_no ? `${data.no} ${data.sub_no}` : data.no}
+                  </span>
                   <span className="inline-flex items-center gap-1.5">
                     <Clock3 className="w-3.5 h-3.5" />
                     نمای کامل برنامه و تایم‌لاین اجرایی

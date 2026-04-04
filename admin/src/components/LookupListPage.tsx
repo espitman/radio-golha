@@ -163,11 +163,16 @@ export function LookupListPage({
 
         <div className="w-full overflow-x-auto">
           <table className="w-full border-collapse text-right">
+            <colgroup>
+              <col className="w-[96px]" />
+              <col />
+              <col className="w-[140px]" />
+            </colgroup>
             <thead className="bg-primary/[0.03]">
               <tr>
-                <th className="px-5 py-4 text-[11px] font-black text-primary"><Hash className="h-3.5 w-3.5" /></th>
+                <th className="w-[96px] px-5 py-4 text-center text-[11px] font-black text-primary"><Hash className="mx-auto h-3.5 w-3.5" /></th>
                 <th className="px-5 py-4 text-[11px] font-black text-primary">نام</th>
-                <th className="px-5 py-4 text-center text-[11px] font-black text-primary">{usageLabel}</th>
+                <th className="w-[140px] px-5 py-4 text-center text-[11px] font-black text-primary">{usageLabel}</th>
               </tr>
             </thead>
 
@@ -190,17 +195,19 @@ export function LookupListPage({
               ) : (
                 data.rows.map((row) => (
                   <tr key={row.id} className="group transition-colors hover:bg-primary/[0.035]">
-                    <td className="px-5 py-4">
-                      <span className="inline-flex rounded-xl border border-primary/10 bg-primary/5 px-3 py-1.5 text-[10px] font-mono font-black text-primary">
-                        {row.id}
-                      </span>
+                    <td className="w-[96px] px-5 py-4">
+                      <div className="flex justify-center">
+                        <span className="inline-flex rounded-xl border border-primary/10 bg-primary/5 px-3 py-1.5 text-[10px] font-mono font-black text-primary">
+                          {row.id}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-5 py-4">
                       <div className="text-sm font-black text-foreground transition-colors group-hover:text-primary">
                         {row.name}
                       </div>
                     </td>
-                    <td className="px-5 py-4 text-center">
+                    <td className="w-[140px] px-5 py-4 text-center">
                       <Badge variant="outline" className="rounded-full border-primary/20 bg-secondary/10 px-3 py-1 text-[10px] font-black text-primary">
                         {row.usage_count}
                       </Badge>

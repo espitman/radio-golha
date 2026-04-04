@@ -35,6 +35,7 @@ type Singer = {
 type ProgramRow = {
   id: number
   no: string | number
+  sub_no?: string | null
   title: string
   category_name: string
 }
@@ -343,13 +344,22 @@ function ProgramsList() {
 
         <div className="w-full overflow-x-auto">
           <table className="w-full border-collapse text-right">
+            <colgroup>
+              <col className="w-[96px]" />
+              <col className="w-[120px]" />
+              <col className="w-[120px]" />
+              <col />
+              <col className="w-[140px]" />
+              <col className="w-[96px]" />
+            </colgroup>
             <thead className="bg-primary/[0.03]">
               <tr>
-                <th className="px-5 py-4 text-right text-[11px] font-black text-primary"><Hash className="h-3.5 w-3.5" /></th>
-                <th className="px-5 py-4 text-right text-[11px] font-black text-primary">شماره برنامه</th>
+                <th className="w-[96px] px-5 py-4 text-center text-[11px] font-black text-primary"><Hash className="mx-auto h-3.5 w-3.5" /></th>
+                <th className="w-[120px] whitespace-nowrap px-3 py-4 text-center text-[11px] font-black text-primary">شماره برنامه</th>
+                <th className="w-[120px] whitespace-nowrap px-3 py-4 text-center text-[11px] font-black text-primary">ساب‌نامبر</th>
                 <th className="px-5 py-4 text-right text-[11px] font-black text-primary">عنوان برنامه</th>
-                <th className="px-5 py-4 text-right text-[11px] font-black text-primary">دسته</th>
-                <th className="px-5 py-4 text-center text-[11px] font-black text-primary">مشاهده</th>
+                <th className="w-[140px] px-5 py-4 text-center text-[11px] font-black text-primary">دسته</th>
+                <th className="w-[96px] px-5 py-4 text-center text-[11px] font-black text-primary">مشاهده</th>
               </tr>
             </thead>
 
@@ -357,12 +367,12 @@ function ProgramsList() {
               {loading ? (
                 [...Array(10)].map((_, index) => (
                   <tr key={index} className="animate-pulse">
-                    <td colSpan={5} className="h-16 bg-white/40" />
+                    <td colSpan={6} className="h-16 bg-white/40" />
                   </tr>
                 ))
               ) : data.rows.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-20 text-center">
+                  <td colSpan={6} className="px-6 py-20 text-center">
                     <div className="space-y-2">
                       <div className="text-lg font-black text-primary">برنامه‌ای پیدا نشد</div>
                       <p className="text-sm font-bold text-muted-foreground">عبارت جستجو یا فیلتر را تغییر بده.</p>
@@ -372,23 +382,36 @@ function ProgramsList() {
               ) : (
                 data.rows.map((program) => (
                   <tr key={program.id} className="group transition-colors hover:bg-primary/[0.035]">
-                    <td className="px-5 py-4 font-mono text-[10px] font-black text-muted-foreground">{program.id}</td>
-                    <td className="px-5 py-4">
-                      <span className="inline-flex rounded-xl border border-primary/10 bg-primary/5 px-3 py-1.5 text-[10px] font-black text-primary">
-                        {program.no}
-                      </span>
+                    <td className="w-[96px] px-5 py-4 text-center font-mono text-[10px] font-black text-muted-foreground">{program.id}</td>
+                    <td className="w-[120px] whitespace-nowrap px-3 py-4">
+                      <div className="flex justify-center">
+                        <span className="inline-flex rounded-xl border border-primary/10 bg-primary/5 px-3 py-1.5 text-[10px] font-black text-primary">
+                          {program.no}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="w-[120px] whitespace-nowrap px-3 py-4">
+                      <div className="flex justify-center">
+                        {program.sub_no ? (
+                          <Badge variant="outline" className="rounded-full border-primary/20 bg-secondary/10 px-2.5 py-1 text-[10px] font-black text-primary">
+                            {program.sub_no}
+                          </Badge>
+                        ) : (
+                          <span className="text-[10px] font-bold text-muted-foreground/50">-</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-5 py-4">
                       <div className="text-sm font-black text-foreground transition-colors group-hover:text-primary">
                         {program.title}
                       </div>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="w-[140px] px-5 py-4 text-center">
                       <Badge variant="outline" className="rounded-full border-primary/20 bg-secondary/10 px-3 py-1 text-[10px] font-black text-primary">
                         {program.category_name}
                       </Badge>
                     </td>
-                    <td className="px-5 py-4 text-center">
+                    <td className="w-[96px] px-5 py-4 text-center">
                       <Link to="/programs/$programId" params={{ programId: program.id.toString() }}>
                         <button className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-primary/10 bg-primary/5 text-primary transition-all hover:bg-primary hover:text-white hover:shadow-lg hover:shadow-primary/15">
                           <ExternalLink className="h-4 w-4" />
