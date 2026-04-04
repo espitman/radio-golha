@@ -18,67 +18,37 @@ if not os.path.exists('database'): os.makedirs('database')
 conn = sqlite3.connect(db_path)
 cursor = conn.cursor()
 
-# Schema v3: Strongly Typed and Normalized
+# Schema v4: Based on User's Snippet
 cursor.executescript('''
-CREATE TABLE Artists (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE);
-CREATE TABLE Poets (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE);
-CREATE TABLE Instruments (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE);
-CREATE TABLE PoeticStyles (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE);
-CREATE TABLE MusicalModes (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE);
-CREATE TABLE ProgrammeTypes (id INTEGER PRIMARY KEY AUTOINCREMENT, name_fa TEXT UNIQUE, name_en TEXT UNIQUE);
+CREATE TABLE category (id INTEGER PRIMARY KEY AUTOINCREMENT, name_en TEXT, title_fa TEXT);
+CREATE TABLE performer (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE);
+CREATE TABLE singer (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE);
+CREATE TABLE announcer (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE);
+CREATE TABLE poet (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE);
+CREATE TABLE instrument (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE);
+CREATE TABLE mode (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE);
+CREATE TABLE composer (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE);
+CREATE TABLE arranger (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE);
+CREATE TABLE orchestra (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE);
 
-CREATE TABLE Programmes (
+CREATE TABLE program (
     id INTEGER PRIMARY KEY,
-    type_id INTEGER,
-    number INTEGER,
+    title TEXT,
+    category_id INTEGER,
+    no INTEGER,
     url TEXT,
     audio_url TEXT,
-    FOREIGN KEY(type_id) REFERENCES ProgrammeTypes(id)
+    FOREIGN KEY(category_id) REFERENCES category(id)
 );
 
-CREATE TABLE Timeline_Segments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    programme_id INTEGER,
-    mode_id INTEGER,
-    start_time TEXT,
-    end_time TEXT,
-    FOREIGN KEY(programme_id) REFERENCES Programmes(id),
-    FOREIGN KEY(mode_id) REFERENCES MusicalModes(id)
-);
-
-CREATE TABLE Timeline_Details (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    segment_id INTEGER,
-    artist_id INTEGER,
-    instrument_id INTEGER,
-    poet_id INTEGER,
-    role TEXT, -- singer, performer, announcer, poet_mention
-    FOREIGN KEY(segment_id) REFERENCES Timeline_Segments(id),
-    FOREIGN KEY(artist_id) REFERENCES Artists(id),
-    FOREIGN KEY(instrument_id) REFERENCES Instruments(id),
-    FOREIGN KEY(poet_id) REFERENCES Poets(id)
-);
-
-CREATE TABLE Transcript_Segments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    programme_id INTEGER,
-    speaker_id INTEGER,
-    poet_id INTEGER,
-    style_id INTEGER,
-    segment_order INTEGER,
-    FOREIGN KEY(programme_id) REFERENCES Programmes(id),
-    FOREIGN KEY(speaker_id) REFERENCES Artists(id),
-    FOREIGN KEY(poet_id) REFERENCES Poets(id),
-    FOREIGN KEY(style_id) REFERENCES PoeticStyles(id)
-);
-
-CREATE TABLE Verses (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    segment_id INTEGER,
-    bait_text TEXT,
-    verse_order INTEGER,
-    FOREIGN KEY(segment_id) REFERENCES Transcript_Segments(id)
-);
+CREATE TABLE program_performers (id INTEGER PRIMARY KEY AUTOINCREMENT, program_id INTEGER, artist_id INTEGER, instrument_id INTEGER, FOREIGN KEY(program_id) REFERENCES program(id), FOREIGN KEY(artist_id) REFERENCES performer(id), FOREIGN KEY(instrument_id) REFERENCES instrument(id));
+CREATE TABLE program_singers (id INTEGER PRIMARY KEY AUTOINCREMENT, program_id INTEGER, singer_id INTEGER, FOREIGN KEY(program_id) REFERENCES program(id), FOREIGN KEY(singer_id) REFERENCES singer(id));
+CREATE TABLE program_announcers (id INTEGER PRIMARY KEY AUTOINCREMENT, program_id INTEGER, announcer_id INTEGER, FOREIGN KEY(program_id) REFERENCES program(id), FOREIGN KEY(announcer_id) REFERENCES announcer(id));
+CREATE TABLE program_poets (id INTEGER PRIMARY KEY AUTOINCREMENT, program_id INTEGER, poet_id INTEGER, FOREIGN KEY(program_id) REFERENCES program(id), FOREIGN KEY(poet_id) REFERENCES poet(id));
+CREATE TABLE program_modes (id INTEGER PRIMARY KEY AUTOINCREMENT, program_id INTEGER, mode_id INTEGER, FOREIGN KEY(program_id) REFERENCES program(id), FOREIGN KEY(mode_id) REFERENCES mode(id));
+CREATE TABLE program_composers (id INTEGER PRIMARY KEY AUTOINCREMENT, program_id INTEGER, composer_id INTEGER, FOREIGN KEY(program_id) REFERENCES program(id), FOREIGN KEY(composer_id) REFERENCES composer(id));
+CREATE TABLE program_arrangers (id INTEGER PRIMARY KEY AUTOINCREMENT, program_id INTEGER, arranger_id INTEGER, FOREIGN KEY(program_id) REFERENCES program(id), FOREIGN KEY(arranger_id) REFERENCES arranger(id));
+CREATE TABLE program_orchestras (id INTEGER PRIMARY KEY AUTOINCREMENT, program_id INTEGER, orchestra_id INTEGER, FOREIGN KEY(program_id) REFERENCES program(id), FOREIGN KEY(orchestra_id) REFERENCES orchestra(id));
 ''')
 
 def get_id(table, col, val):
@@ -93,11 +63,13 @@ def get_id(table, col, val):
 with open('data/programmes_by_category.json', 'r') as f:
     categories_dict = json.load(f)
 
+print("Building Granular Database v4...")
+
 for en_key, p_list in categories_dict.items():
     if not p_list: continue
     fa_name = p_list[0].get('category', en_key)
-    type_id = get_id('ProgrammeTypes', 'name_fa', fa_name)
-    cursor.execute("UPDATE ProgrammeTypes SET name_en = ? WHERE id = ?", (en_key.replace('-', ' '), type_id))
+    cursor.execute("INSERT INTO category (name_en, title_fa) VALUES (?, ?)", (en_key.replace('-', ' '), fa_name))
+    cat_id = cursor.lastrowid
     
     for p in p_list:
         pid = p['id']
@@ -110,50 +82,46 @@ for en_key, p_list in categories_dict.items():
         if os.path.exists(audio_path):
             with open(audio_path, 'r') as af: audio_url = json.load(af).get('audio_url', '')
             
-        cursor.execute("INSERT INTO Programmes (id, type_id, number, url, audio_url) VALUES (?, ?, ?, ?, ?)",
-                       (pid, type_id, fa_to_en_digits(p.get('no')), meta.get('url'), audio_url))
+        cursor.execute("INSERT INTO program (id, title, category_id, no, url, audio_url) VALUES (?, ?, ?, ?, ?, ?)",
+                       (pid, p.get('title'), cat_id, fa_to_en_digits(p.get('no')), meta.get('url'), audio_url))
         
-        # Timeline Integration
-        for entry in meta.get('timeline', []):
-            mode_id = get_id('MusicalModes', 'name', entry.get('mode'))
-            cursor.execute("INSERT INTO Timeline_Segments (programme_id, mode_id, start_time, end_time) VALUES (?, ?, ?, ?)",
-                           (pid, mode_id, entry.get('start'), entry.get('end')))
-            seg_id = cursor.lastrowid
+        sumry = meta.get('summary', {})
+        
+        # New Fields Integration
+        for name in sumry.get('composers', []):
+            cid = get_id('composer', 'name', name)
+            cursor.execute("INSERT INTO program_composers (program_id, composer_id) VALUES (?, ?)", (pid, cid))
+        for name in sumry.get('arrangers', []):
+            aid = get_id('arranger', 'name', name)
+            cursor.execute("INSERT INTO program_arrangers (program_id, arranger_id) VALUES (?, ?)", (pid, aid))
+        for name in sumry.get('orchestras', []):
+            oid = get_id('orchestra', 'name', name)
+            cursor.execute("INSERT INTO program_orchestras (program_id, orchestra_id) VALUES (?, ?)", (pid, oid))
             
-            for item in entry.get('items', []):
-                role = item.get('role', '')
-                raw_name = item.get('name', '')
-                raw_inst = item.get('instrument', '')
+        # Traditional Summary Linkage
+        for p_info in sumry.get('performers', []):
+            artist_id = get_id('performer', 'name', p_info['name'])
+            inst_id = get_id('instrument', 'name', p_info['instrument'])
+            cursor.execute("INSERT INTO program_performers (program_id, artist_id, instrument_id) VALUES (?, ?, ?)", (pid, artist_id, inst_id))
+        
+        for name in sumry.get('singers', []):
+            sid = get_id('singer', 'name', name)
+            cursor.execute("INSERT INTO program_singers (program_id, singer_id) VALUES (?, ?)", (pid, sid))
+            
+        for name in sumry.get('announcers', []):
+            an_id = get_id('announcer', 'name', name)
+            cursor.execute("INSERT INTO program_announcers (program_id, announcer_id) VALUES (?, ?)", (pid, an_id))
+            
+        for p_item in sumry.get('poets', []):
+            p_name = p_item if isinstance(p_item, str) else p_item.get('name', '')
+            if p_name:
+                poet_id = get_id('poet', 'name', p_name)
+                cursor.execute("INSERT INTO program_poets (program_id, poet_id) VALUES (?, ?)", (pid, poet_id))
                 
-                a_id = None; p_id = None; i_id = None
-                
-                if "سرایندگان" in role or "شاعر" in role:
-                    p_id = get_id('Poets', 'name', raw_name)
-                    # instrument field here might be style like Ghaside
-                elif "گوینده" in role:
-                    a_id = get_id('Artists', 'name', raw_name)
-                else:
-                    a_id = get_id('Artists', 'name', raw_name)
-                    i_id = get_id('Instruments', 'name', raw_inst)
-                
-                cursor.execute("INSERT INTO Timeline_Details (segment_id, artist_id, instrument_id, poet_id, role) VALUES (?, ?, ?, ?, ?)",
-                               (seg_id, a_id, i_id, p_id, role))
-
-        # Transcripts
-        trans_path = f"data/transcripts/{pid}.json"
-        if os.path.exists(trans_path):
-            with open(trans_path, 'r') as tf: trans = json.load(tf)
-            for s_idx, seg in enumerate(trans.get('segments', [])):
-                spk_id = get_id('Artists', 'name', seg.get('speaker'))
-                poet_id = get_id('Poets', 'name', seg.get('poet'))
-                sty_id = get_id('PoeticStyles', 'name', seg.get('style'))
-                cursor.execute("INSERT INTO Transcript_Segments (programme_id, speaker_id, poet_id, style_id, segment_order) VALUES (?, ?, ?, ?, ?)",
-                               (pid, spk_id, poet_id, sty_id, s_idx))
-                t_seg_id = cursor.lastrowid
-                for v_idx, verse in enumerate(seg.get('verses', [])):
-                    cursor.execute("INSERT INTO Verses (segment_id, bait_text, verse_order) VALUES (?, ?, ?)",
-                                   (t_seg_id, verse, v_idx))
+        for m_name in sumry.get('modes', []):
+            mid = get_id('mode', 'name', m_name)
+            cursor.execute("INSERT INTO program_modes (program_id, mode_id) VALUES (?, ?)", (pid, mid))
 
 conn.commit()
 conn.close()
-print("Final ID-Centric Database Rebuilt Successfully!")
+print("Granular Database Rebuilt SUCCESSFULLY!")
