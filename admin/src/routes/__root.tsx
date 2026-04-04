@@ -38,7 +38,7 @@ import '../styles.css'
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: 'داشبورد', path: '/' },
   { icon: Database, label: 'مدیریت داده‌ها', path: '/database' },
-  { icon: Music2, label: 'برنامه‌ها', path: '/programmes' },
+  { icon: Music2, label: 'برنامه‌ها', path: '/programs' },
   { icon: Users, label: 'هنرمندان', path: '/artists' },
   { icon: Settings, label: 'تنظیمات', path: '/settings' },
 ]
@@ -68,20 +68,19 @@ function RootComponent() {
             <SidebarContent className="px-3 py-6">
               <SidebarMenu>
                 {NAV_ITEMS.map((item) => {
-                  const isActive = location.pathname === item.path
+                  const isActive = location.pathname.startsWith(item.path) && (item.path !== '/' || location.pathname === '/')
                   return (
                     <SidebarMenuItem key={item.path}>
                       <SidebarMenuButton 
                         isActive={isActive} 
                         tooltip={item.label}
                         className="h-12 rounded-xl"
-                        render={
-                          <Link to={item.path as any} className="flex items-center gap-3 w-full">
-                            <item.icon className="w-5 h-5 shrink-0" />
-                            <span className="font-medium text-sm truncate">{item.label}</span>
-                          </Link>
-                        }
-                      />
+                      >
+                        <Link to={item.path as any} className="flex items-center gap-3 w-full h-full p-2">
+                          <item.icon className="w-5 h-5 shrink-0" />
+                          <span className="font-medium text-sm truncate">{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
                     </SidebarMenuItem>
                   )
                 })}
@@ -114,10 +113,6 @@ function RootComponent() {
                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
                      <Search className="w-4 h-4" />
                    </div>
-                   <Input 
-                    placeholder="جستجو در آرشیو..."
-                    className="w-full bg-secondary/30 border-border/50 pr-10 focus:bg-background transition-all h-10 rounded-xl placeholder:text-muted-foreground placeholder:text-xs"
-                   />
                 </div>
               </div>
 
