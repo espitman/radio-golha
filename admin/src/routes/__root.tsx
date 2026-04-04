@@ -8,6 +8,7 @@ import {
   Drum,
   Guitar,
   Waves,
+  Braces,
   Settings, 
   Search,
   Bell,
@@ -44,6 +45,7 @@ const NAV_ITEMS = [
   { icon: Drum, label: 'ارکسترها', path: '/orchestras' },
   { icon: Guitar, label: 'سازها', path: '/instruments' },
   { icon: Waves, label: 'دستگاه‌ها', path: '/modes' },
+  { icon: Braces, label: 'API Lab', path: '/api-lab' },
   { icon: Settings, label: 'تنظیمات', path: '/settings' },
 ]
 

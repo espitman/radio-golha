@@ -17,6 +17,7 @@ import { Route as ModesIndexRouteImport } from './routes/modes/index'
 import { Route as InstrumentsIndexRouteImport } from './routes/instruments/index'
 import { Route as DatabaseIndexRouteImport } from './routes/database/index'
 import { Route as ArtistsIndexRouteImport } from './routes/artists/index'
+import { Route as ApiLabIndexRouteImport } from './routes/api-lab/index'
 import { Route as ProgramsProgramIdRouteImport } from './routes/programs/$programId'
 
 const AboutRoute = AboutRouteImport.update({
@@ -59,6 +60,11 @@ const ArtistsIndexRoute = ArtistsIndexRouteImport.update({
   path: '/artists/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiLabIndexRoute = ApiLabIndexRouteImport.update({
+  id: '/api-lab/',
+  path: '/api-lab/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProgramsProgramIdRoute = ProgramsProgramIdRouteImport.update({
   id: '/programs/$programId',
   path: '/programs/$programId',
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/programs/$programId': typeof ProgramsProgramIdRoute
+  '/api-lab/': typeof ApiLabIndexRoute
   '/artists/': typeof ArtistsIndexRoute
   '/database/': typeof DatabaseIndexRoute
   '/instruments/': typeof InstrumentsIndexRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/programs/$programId': typeof ProgramsProgramIdRoute
+  '/api-lab': typeof ApiLabIndexRoute
   '/artists': typeof ArtistsIndexRoute
   '/database': typeof DatabaseIndexRoute
   '/instruments': typeof InstrumentsIndexRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/programs/$programId': typeof ProgramsProgramIdRoute
+  '/api-lab/': typeof ApiLabIndexRoute
   '/artists/': typeof ArtistsIndexRoute
   '/database/': typeof DatabaseIndexRoute
   '/instruments/': typeof InstrumentsIndexRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/programs/$programId'
+    | '/api-lab/'
     | '/artists/'
     | '/database/'
     | '/instruments/'
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/programs/$programId'
+    | '/api-lab'
     | '/artists'
     | '/database'
     | '/instruments'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/programs/$programId'
+    | '/api-lab/'
     | '/artists/'
     | '/database/'
     | '/instruments/'
@@ -139,6 +151,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   ProgramsProgramIdRoute: typeof ProgramsProgramIdRoute
+  ApiLabIndexRoute: typeof ApiLabIndexRoute
   ArtistsIndexRoute: typeof ArtistsIndexRoute
   DatabaseIndexRoute: typeof DatabaseIndexRoute
   InstrumentsIndexRoute: typeof InstrumentsIndexRoute
@@ -205,6 +218,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ArtistsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api-lab/': {
+      id: '/api-lab/'
+      path: '/api-lab'
+      fullPath: '/api-lab/'
+      preLoaderRoute: typeof ApiLabIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/programs/$programId': {
       id: '/programs/$programId'
       path: '/programs/$programId'
@@ -219,6 +239,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   ProgramsProgramIdRoute: ProgramsProgramIdRoute,
+  ApiLabIndexRoute: ApiLabIndexRoute,
   ArtistsIndexRoute: ArtistsIndexRoute,
   DatabaseIndexRoute: DatabaseIndexRoute,
   InstrumentsIndexRoute: InstrumentsIndexRoute,
