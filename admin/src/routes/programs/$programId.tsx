@@ -6,17 +6,12 @@ import { Separator } from "@/components/ui/separator"
 import {
   ArrowLeft,
   BookOpen,
-  Clock3,
-  Disc3,
-  Layout,
   Library,
   Mic,
   Music,
   PenTool,
   Play,
-  Radio,
   Timer,
-  Volume2,
   Waves,
 } from "lucide-react"
 
@@ -29,16 +24,6 @@ function timeToSeconds(timeStr: string) {
   const parts = timeStr.split(':').map(Number)
   if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2]
   return parts[0] * 60 + parts[1] || 0
-}
-
-function formatDuration(start?: string, end?: string) {
-  const seconds = Math.max(0, timeToSeconds(end || '') - timeToSeconds(start || ''))
-  if (!seconds) return 'نامشخص'
-  const minutes = Math.floor(seconds / 60)
-  const remaining = seconds % 60
-  if (minutes && remaining) return `${minutes}:${remaining.toString().padStart(2, '0')}`
-  if (minutes) return `${minutes} دقیقه`
-  return `${remaining} ثانیه`
 }
 
 function MetaSection({
@@ -123,10 +108,10 @@ function ProgramDetail() {
                    <Badge className="bg-secondary text-primary border-none px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter">
                       {data.category_name}
                    </Badge>
-                   <span className="text-white/20 text-[10px] font-mono tracking-widest">ID: #{data.id}</span>
+                   <span className="text-white/20 text-[10px] font-black">کد آرشیو: {data.id}</span>
                 </div>
                 <h1 className="text-4xl md:text-5xl font-black leading-tight drop-shadow-2xl">{data.title}</h1>
-                <div className="text-secondary/60 text-xs font-black font-mono">PROGRAM NO. {data.no}</div>
+                <div className="text-secondary/60 text-xs font-black">شماره برنامه: {data.no}</div>
              </div>
           </div>
 
@@ -219,7 +204,6 @@ function ProgramDetail() {
            <Card className="rounded-[2.5rem] border-primary/10 bg-white shadow-2xl overflow-hidden">
               <CardHeader className="p-6 pb-4 border-b border-primary/5 flex flex-row items-center justify-between">
                  <CardTitle className="text-primary text-base font-black flex items-center gap-2">تایم‌لاین تحلیلی <Timer className="w-5 h-5"/></CardTitle>
-                 <span className="text-[9px] font-mono opacity-30">Analysis v5.3</span>
               </CardHeader>
               <CardContent className="p-6 overflow-y-auto max-h-[800px] custom-scrollbar">
                  <div className="relative pr-10">

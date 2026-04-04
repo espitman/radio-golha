@@ -97,7 +97,7 @@ function ProgramsList() {
 
     items.push(
       <PaginationItem key="first">
-        <PaginationLink onClick={() => setPage(1)} isActive={page === 1} className="cursor-pointer">
+        <PaginationLink size="default" onClick={() => setPage(1)} isActive={page === 1} className="cursor-pointer">
           1
         </PaginationLink>
       </PaginationItem>
@@ -111,7 +111,7 @@ function ProgramsList() {
       if (i === 1 || i === total) continue
       items.push(
         <PaginationItem key={i}>
-          <PaginationLink onClick={() => setPage(i)} isActive={page === i} className="cursor-pointer">
+          <PaginationLink size="default" onClick={() => setPage(i)} isActive={page === i} className="cursor-pointer">
             {i}
           </PaginationLink>
         </PaginationItem>
@@ -125,7 +125,7 @@ function ProgramsList() {
     if (total > 1) {
       items.push(
         <PaginationItem key="last">
-          <PaginationLink onClick={() => setPage(total)} isActive={page === total} className="cursor-pointer">
+          <PaginationLink size="default" onClick={() => setPage(total)} isActive={page === total} className="cursor-pointer">
             {total}
           </PaginationLink>
         </PaginationItem>
@@ -222,13 +222,12 @@ function ProgramsList() {
 
       <section className="overflow-hidden rounded-[1.8rem] border border-primary/10 bg-white/85 shadow-[0_18px_45px_rgba(31,78,95,0.06)] backdrop-blur-md">
         <div className="flex items-center justify-between border-b border-primary/8 px-5 py-4">
-          <div className="text-right">
-            <div className="text-[10px] font-mono uppercase tracking-[0.28em] text-primary/35">Program List</div>
-            <div className="text-[11px] font-bold text-muted-foreground">فهرست برنامه‌ها با دسترسی مستقیم به صفحه جزئیات</div>
-          </div>
           <div className="flex items-center gap-2 text-sm font-black text-primary">
-            <span>لیست برنامه‌ها</span>
             <Filter className="h-4 w-4" />
+            <span>لیست برنامه‌ها</span>
+          </div>
+          <div className="text-right">
+            <div className="text-[11px] font-bold text-muted-foreground">فهرست برنامه‌ها با دسترسی مستقیم به صفحه جزئیات</div>
           </div>
         </div>
 
@@ -295,21 +294,13 @@ function ProgramsList() {
       </section>
 
       <div className="flex flex-col gap-4 rounded-[1.4rem] border border-border/40 bg-card/50 p-4 backdrop-blur-md md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-col items-end gap-1">
-          <span className="text-[10px] font-black uppercase tracking-[0.26em] text-primary/45">
-            {data.total} Total Programmes
-          </span>
-          <span className="text-[11px] font-bold text-muted-foreground">
-            صفحه {data.page} از {data.totalPages}
-          </span>
-        </div>
-
-        <Pagination className="justify-start">
+        <Pagination className="justify-start md:order-1 order-2">
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
+                size="default"
                 onClick={() => setPage((current) => Math.max(1, current - 1))}
-                className={`cursor-pointer ${page === 1 ? 'pointer-events-none opacity-30' : ''}`}
+                className={`cursor-pointer ${page === 1 ? 'pointer-events-none opacity-30 shadow-none' : ''}`}
               />
             </PaginationItem>
 
@@ -317,12 +308,19 @@ function ProgramsList() {
 
             <PaginationItem>
               <PaginationNext
+                size="default"
                 onClick={() => setPage((current) => Math.min(data.totalPages, current + 1))}
-                className={`cursor-pointer ${page === data.totalPages ? 'pointer-events-none opacity-30' : ''}`}
+                className={`cursor-pointer ${page === data.totalPages ? 'pointer-events-none opacity-30 shadow-none' : ''}`}
               />
             </PaginationItem>
           </PaginationContent>
         </Pagination>
+
+        <div className="flex flex-col items-end gap-1 md:order-2 order-1 w-full">
+          <span className="text-[11px] font-bold text-muted-foreground">
+            صفحه {data.page} از {data.totalPages}
+          </span>
+        </div>
       </div>
     </div>
   )

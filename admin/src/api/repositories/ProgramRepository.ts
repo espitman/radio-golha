@@ -15,7 +15,7 @@ export class ProgramRepository {
     const params: any[] = [];
     if (search) { sql += ' AND (p.title LIKE ? OR p.no LIKE ?)'; params.push(`%${search}%`, `%${search}%`); }
     if (categoryId) { sql += ' AND p.category_id = ?'; params.push(categoryId); }
-    sql += ' ORDER BY p.id ASC LIMIT ? OFFSET ?';
+    sql += ' ORDER BY CAST(p.no AS INTEGER) ASC LIMIT ? OFFSET ?';
     params.push(limit, offset);
     return new Promise((r, j) => { this.db.all(sql, params, (err, rows) => err ? j(err) : r(rows)); });
   }
