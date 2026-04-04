@@ -1,6 +1,6 @@
 # Golha Database Management
 
-PYTHON = ./venv/bin/python3
+PYTHON = ./scraper/.venv/bin/python3
 DB_SCRIPT = scraper/generate_sqlite_db.py
 DB_FILE = database/golha_database.db
 
@@ -22,4 +22,3 @@ clean:
 	@echo "🗑️  Removing database file..."
 	@rm -f $(DB_FILE)
 	@echo "✅ Cleaned."
-

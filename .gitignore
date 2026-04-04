@@ -47,6 +47,10 @@ scraper/cache/*
 target/
 core/target/
 
+# Python virtual environments
+venv/
+scraper/.venv/
+
 # SQLite Database
 database/*.db
 *.db-journal
