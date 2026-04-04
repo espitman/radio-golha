@@ -1,5 +1,6 @@
 import { URL } from 'url'
 import { ArtistService } from '../services/ArtistService'
+import { DashboardService } from '../services/DashboardService'
 import { LookupService } from '../services/LookupService'
 import { ProgramService } from '../services/ProgramService'
 
@@ -22,6 +23,16 @@ function sendJson(res: ServerResponse, payload: unknown, statusCode: number = 20
 
 export async function handleApiRequest(req: IncomingMessage, res: ServerResponse) {
   const url = new URL(req.url || '/', 'http://localhost')
+
+  if (req.method === 'GET' && url.pathname === '/api/dashboard') {
+    try {
+      const data = await DashboardService.getOverview()
+      sendJson(res, data)
+    } catch (e: any) {
+      sendJson(res, { error: e.message }, 500)
+    }
+    return true
+  }
 
   if (req.method === 'GET' && url.pathname.startsWith('/api/programs')) {
     const search = url.searchParams.get('search') || ''
