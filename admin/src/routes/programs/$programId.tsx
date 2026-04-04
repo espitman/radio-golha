@@ -270,11 +270,11 @@ function ProgramDetail() {
 
               {data.poets?.length > 0 && (
                 <MetaSection title="شاعران" icon={BookOpen} accentClass="bg-amber-100 text-amber-800">
-                  <div className="flex w-full flex-row-reverse flex-wrap justify-start gap-2 text-right">
-                    {[...data.poets].reverse().map((name: string) => (
+                  <div className="flex w-full flex-wrap justify-start gap-2 text-right">
+                    {data.poets.map((name: string) => (
                       <Badge
                         key={name}
-                        className="rounded-full border border-amber-200/70 bg-amber-50 px-3 py-1.5 text-[10px] font-black text-amber-900 shadow-none"
+                        className="rounded-full border border-amber-200/70 bg-amber-50 px-3 py-1.5 text-[10px] font-black text-amber-900 shadow-none hover:bg-amber-100 transition-all"
                       >
                         {name}
                       </Badge>
@@ -303,11 +303,11 @@ function ProgramDetail() {
 
               {data.announcers?.length > 0 && (
                 <MetaSection title="گویندگان برنامه" icon={Radio} accentClass="bg-sky-100 text-sky-900">
-                  <div className="flex w-full flex-row-reverse flex-wrap justify-start gap-2 text-right">
-                    {[...data.announcers].reverse().map((name: string) => (
+                  <div className="flex w-full flex-wrap justify-start gap-2 text-right">
+                    {data.announcers.map((name: string) => (
                       <Badge
                         key={name}
-                        className="rounded-full border border-sky-200/70 bg-sky-50 px-3 py-1.5 text-[10px] font-black text-sky-900 shadow-none"
+                        className="rounded-full border border-sky-200/70 bg-sky-50 px-3 py-1.5 text-[10px] font-black text-sky-900 shadow-none hover:bg-sky-100 transition-all"
                       >
                         {name}
                       </Badge>
@@ -343,8 +343,8 @@ function ProgramDetail() {
           </CardHeader>
 
           <CardContent className="h-[calc(100%-73px)] overflow-y-auto p-4 md:p-5 custom-scrollbar">
-            <div className="relative pr-10">
-              <div className="absolute right-[1.55rem] top-2 bottom-2 w-[2px] rounded-full bg-gradient-to-b from-primary/20 via-primary/8 to-transparent" />
+            <div className="relative pr-14">
+              <div className="absolute right-6 top-2 bottom-2 w-[2px] rounded-full bg-gradient-to-b from-primary/20 via-primary/8 to-transparent" />
 
               <div className="space-y-4">
                 {data.timeline.map((segment: any, index: number) => {
@@ -363,7 +363,7 @@ function ProgramDetail() {
                     >
                       <div
                         className={[
-                          "absolute right-0 top-5 z-10 flex h-7 w-7 items-center justify-center rounded-full border text-[9px] font-black shadow-sm transition-all",
+                          "absolute right-6 top-5 z-10 flex h-7 w-7 translate-x-1/2 items-center justify-center rounded-full border text-[9px] font-black shadow-sm transition-all",
                           isActive
                             ? "border-secondary bg-secondary text-primary shadow-[0_0_0_6px_rgba(170,207,208,0.18)]"
                             : "border-primary/20 bg-white text-primary group-hover:border-primary group-hover:bg-primary/8",
@@ -413,8 +413,7 @@ function ProgramDetail() {
                             <div className="rounded-[1.2rem] border border-primary/8 bg-primary/[0.04] p-3 text-right">
                               <div className="mb-2 flex items-center justify-start gap-2 text-[10px] font-black text-primary/70">
                                 <Mic className="w-3.5 h-3.5" />
-                                خواننده این بخش
-                              </div>
+                                خواننده                                </div>
                               <div className="text-sm font-black text-primary">{segment.singers.join('، ')}</div>
                             </div>
                           )}
@@ -423,8 +422,7 @@ function ProgramDetail() {
                             <div className="rounded-[1.2rem] border border-amber-200/70 bg-amber-50/70 p-3 text-right">
                               <div className="mb-2 flex items-center justify-start gap-2 text-[10px] font-black text-amber-800/80">
                                 <BookOpen className="w-3.5 h-3.5" />
-                                شاعر ابیات
-                              </div>
+                                شاعر                               </div>
                               <div className="text-sm font-black text-amber-950/80">{segment.poets.join('، ')}</div>
                             </div>
                           )}
@@ -444,13 +442,13 @@ function ProgramDetail() {
                           <div className="mt-4 rounded-[1.2rem] border border-border/45 bg-background/70 p-3.5">
                             <div className="mb-3 flex items-center justify-start gap-2 text-[10px] font-black text-muted-foreground">
                               <Music className="w-3.5 h-3.5 text-primary/70" />
-                              نوازندگان و تکنوازان این بازه
+                              نوازندگان
                             </div>
-                            <div className="flex w-full flex-row-reverse flex-wrap justify-start gap-2 text-right">
-                              {[...segment.performers].reverse().map((performer: any, performerIndex: number) => (
+                            <div className="flex w-full flex-wrap justify-start gap-2 text-right">
+                              {segment.performers.map((performer: any, performerIndex: number) => (
                                 <span
                                   key={`${performer.name}-${performer.instrument}-${performerIndex}`}
-                                  className="inline-flex items-center gap-2 rounded-full border border-secondary/25 bg-secondary/10 px-3 py-1.5 text-[11px] font-black text-foreground/85"
+                                  className="inline-flex items-center gap-2 rounded-full border border-secondary/25 bg-secondary/10 px-3 py-1.5 text-[11px] font-black text-foreground/85 hover:bg-secondary/20 transition-all"
                                 >
                                   <span className="text-muted-foreground/80 text-[10px]">({performer.instrument || 'ساز نامشخص'})</span>
                                   <span>{performer.name}</span>
