@@ -232,6 +232,18 @@ function ProgramDetail() {
             </CardHeader>
 
             <CardContent className="h-[calc(100%-73px)] overflow-y-auto space-y-5 px-5 py-5 text-right custom-scrollbar">
+              {data.modes?.length > 0 && (
+                <MetaSection title="دستگاه‌ها" icon={Waves} accentClass="bg-primary/10 text-primary">
+                  <div className="flex flex-wrap justify-start gap-2">
+                    {data.modes.map((mode: string) => (
+                      <Badge key={mode} className="rounded-full border-none bg-primary px-3 py-1.5 text-[10px] font-black text-white">
+                        {mode}
+                      </Badge>
+                    ))}
+                  </div>
+                </MetaSection>
+              )}
+
               <MetaSection title="خوانندگان اصلی" icon={Mic} accentClass="bg-primary/10 text-primary">
                 <div className="flex flex-wrap justify-start gap-2">
                   {data.singers?.length ? (

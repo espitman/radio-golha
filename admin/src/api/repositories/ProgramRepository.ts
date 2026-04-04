@@ -74,6 +74,7 @@ export class ProgramRepository {
     // NEW OVERALL METADATA: ANNOUNCERS, ORCHESTRAS, COMPOSERS, ARRANGERS
     program.announcers = await new Promise(r => this.db.all('SELECT a.name FROM program_announcers pa JOIN announcer s ON pa.announcer_id = s.id JOIN artist a ON s.artist_id = a.id WHERE pa.program_id = ?', [id], (_, res) => r((res || []).map((a: any) => a.name))));
     program.orchestras = await new Promise(r => this.db.all('SELECT o.name FROM program_orchestras po JOIN orchestra o ON po.orchestra_id = o.id WHERE po.program_id = ?', [id], (_, res) => r((res || []).map((o: any) => o.name))));
+    program.modes = await new Promise(r => this.db.all('SELECT DISTINCT m.name FROM program_modes pm JOIN mode m ON pm.mode_id = m.id WHERE pm.program_id = ? ORDER BY m.name ASC', [id], (_, res) => r((res || []).map((m: any) => m.name))));
     program.orchestra_leaders = await new Promise(r => this.db.all(`
       SELECT DISTINCT a.name, o.name as orchestra
       FROM program_orchestra_leaders pol
@@ -87,7 +88,22 @@ export class ProgramRepository {
     program.arrangers = await new Promise(r => this.db.all('SELECT a.name FROM program_arrangers pa JOIN arranger s ON pa.arranger_id = s.id JOIN artist a ON s.artist_id = a.id WHERE pa.program_id = ?', [id], (_, res) => r((res || []).map((arr: any) => arr.name))));
 
     // TIMELINE METADATA (STRICT SEPARATION TO FIX MOLAVI/ATTAR MIXUP)
-    const timeline: any[] = await new Promise(r => this.db.all('SELECT t.*, m.name as mode_name FROM program_timeline t LEFT JOIN mode m ON t.mode_id = m.id WHERE t.program_id = ?', [id], (_, res) => r(res || [])));
+    const timeline: any[] = await new Promise(r => this.db.all(`
+      SELECT
+        t.*,
+        COALESCE(
+          (
+            SELECT GROUP_CONCAT(m2.name, '، ')
+            FROM program_timeline_modes ptm
+            JOIN mode m2 ON ptm.mode_id = m2.id
+            WHERE ptm.timeline_id = t.id
+          ),
+          m.name
+        ) as mode_name
+      FROM program_timeline t
+      LEFT JOIN mode m ON t.mode_id = m.id
+      WHERE t.program_id = ?
+    `, [id], (_, res) => r(res || [])));
     const fullTimeline = [];
     for (const segment of timeline) {
         const singers = await new Promise(r => this.db.all('SELECT a.name FROM program_timeline_singers pts JOIN singer s ON pts.singer_id = s.id JOIN artist a ON s.artist_id = a.id WHERE pts.timeline_id = ?', [segment.id], (_, res) => r((res || []).map((s: any) => s.name))));

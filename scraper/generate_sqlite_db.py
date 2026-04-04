@@ -5,6 +5,7 @@ import re
 from role_utils import normalize_role_text, classify_timeline_role
 from name_utils import normalize_person_name
 from orchestra_utils import split_orchestra_and_leader, canonicalize_orchestra_name
+from mode_utils import split_mode_names
 
 def fa_to_en_digits(text):
     if not text: return 0
@@ -48,6 +49,7 @@ CREATE TABLE program_poets (id INTEGER PRIMARY KEY AUTOINCREMENT, program_id INT
 CREATE TABLE program_modes (id INTEGER PRIMARY KEY AUTOINCREMENT, program_id INTEGER, mode_id INTEGER, FOREIGN KEY(program_id) REFERENCES program(id), FOREIGN KEY(mode_id) REFERENCES mode(id));
 
 CREATE TABLE program_timeline (id INTEGER PRIMARY KEY AUTOINCREMENT, program_id INTEGER, start_time TEXT, end_time TEXT, mode_id INTEGER, FOREIGN KEY(program_id) REFERENCES program(id), FOREIGN KEY(mode_id) REFERENCES mode(id));
+CREATE TABLE program_timeline_modes (id INTEGER PRIMARY KEY AUTOINCREMENT, timeline_id INTEGER, mode_id INTEGER, FOREIGN KEY(timeline_id) REFERENCES program_timeline(id), FOREIGN KEY(mode_id) REFERENCES mode(id));
 
 CREATE TABLE program_timeline_performers (id INTEGER PRIMARY KEY AUTOINCREMENT, timeline_id INTEGER, performer_id INTEGER, FOREIGN KEY(timeline_id) REFERENCES program_timeline(id), FOREIGN KEY(performer_id) REFERENCES performer(id));
 CREATE TABLE program_timeline_singers (id INTEGER PRIMARY KEY AUTOINCREMENT, timeline_id INTEGER, singer_id INTEGER, FOREIGN KEY(timeline_id) REFERENCES program_timeline(id), FOREIGN KEY(singer_id) REFERENCES singer(id));
@@ -151,6 +153,7 @@ for en_key, p_list in categories_dict.items():
         smr = meta.get('summary', {})
         seen_program_orchestras = set()
         seen_program_orchestra_leaders = set()
+        seen_program_modes = set()
         for name in smr.get('composers', []): cursor.execute("INSERT INTO program_composers (program_id, composer_id) VALUES (?, ?)", (pid, get_role_id('composer', get_id('artist', 'name', normalize_person_name(name)))))
         for name in smr.get('arrangers', []): cursor.execute("INSERT INTO program_arrangers (program_id, arranger_id) VALUES (?, ?)", (pid, get_role_id('arranger', get_id('artist', 'name', normalize_person_name(name)))))
         for name in smr.get('orchestras', []):
@@ -165,7 +168,11 @@ for en_key, p_list in categories_dict.items():
             pname = normalize_person_name(pname)
             if pname: cursor.execute("INSERT INTO program_poets (program_id, poet_id) VALUES (?, ?)", (pid, get_role_id('poet', get_id('artist', 'name', pname))))
         for p_info in smr.get('performers', []): cursor.execute("INSERT INTO program_performers (program_id, performer_id, instrument_id) VALUES (?, ?, ?)", (pid, get_role_id('performer', get_id('artist', 'name', normalize_person_name(p_info['name']))), get_id('instrument', 'name', p_info['instrument'])))
-        for m_name in smr.get('modes', []): cursor.execute("INSERT INTO program_modes (program_id, mode_id) VALUES (?, ?)", (pid, get_id('mode', 'name', m_name)))
+        for m_name in smr.get('modes', []):
+            for split_mode in split_mode_names(m_name):
+                if split_mode and split_mode not in seen_program_modes:
+                    cursor.execute("INSERT INTO program_modes (program_id, mode_id) VALUES (?, ?)", (pid, get_id('mode', 'name', split_mode)))
+                    seen_program_modes.add(split_mode)
 
         leader_details = smr.get('orchestra_leader_details', [])
         if leader_details:
@@ -178,11 +185,19 @@ for en_key, p_list in categories_dict.items():
 
         # Timeline - Improved Detection Logic
         for entry in meta.get('timeline', []):
-            mid = get_id('mode', 'name', entry.get('mode'))
+            timeline_modes = entry.get('modes') or split_mode_names(entry.get('mode'))
+            primary_mode = timeline_modes[0] if timeline_modes else entry.get('mode')
+            mid = get_id('mode', 'name', primary_mode)
             cursor.execute("INSERT INTO program_timeline (program_id, start_time, end_time, mode_id) VALUES (?, ?, ?, ?)", (pid, entry.get('start'), entry.get('end'), mid))
             tid = cursor.lastrowid
             seen_timeline_orchestras = set()
             seen_timeline_orchestra_leaders = set()
+            seen_timeline_modes = set()
+
+            for timeline_mode in timeline_modes:
+                if timeline_mode and timeline_mode not in seen_timeline_modes:
+                    cursor.execute("INSERT INTO program_timeline_modes (timeline_id, mode_id) VALUES (?, ?)", (tid, get_id('mode', 'name', timeline_mode)))
+                    seen_timeline_modes.add(timeline_mode)
             
             for item in entry.get('items', []):
                 role = normalize_role_text(item.get('role', ''))

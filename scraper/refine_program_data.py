@@ -4,6 +4,7 @@ import glob
 from role_utils import normalize_role_text, classify_timeline_role
 from name_utils import normalize_person_name
 from orchestra_utils import split_orchestra_and_leader
+from mode_utils import split_mode_names
 
 def refine_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -65,6 +66,12 @@ def refine_file(file_path):
     for key in ['singers', 'announcers', 'composers', 'arrangers']:
         summary[key] = [normalize_person_name(name) for name in summary.get(key, [])]
 
+    existing_modes = list(summary.get('modes', []))
+    summary['modes'] = []
+    for mode_name in existing_modes:
+        for part in split_mode_names(mode_name):
+            add_unique(summary['modes'], part)
+
     existing_orchestras = list(summary.get('orchestras', []))
     summary['orchestras'] = []
     for orchestra_name in existing_orchestras:
@@ -84,6 +91,13 @@ def refine_file(file_path):
     # Process Timeline Items
     timeline = data.get('timeline', [])
     for entry in timeline:
+        split_modes = split_mode_names(entry.get('mode', ''))
+        if split_modes:
+            entry['modes'] = split_modes
+            entry['mode'] = split_modes[0]
+        elif 'modes' in entry:
+            entry.pop('modes', None)
+
         for item in entry.get('items', []):
             role = normalize_role_text(item.get('role', ''))
             original_name = item.get('name', '')
