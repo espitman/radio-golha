@@ -319,10 +319,19 @@ function ProgramDetail() {
               {data.orchestras?.length > 0 && (
                 <MetaSection title="ارکستر" icon={Library} accentClass="bg-emerald-100 text-emerald-900">
                   <div className="rounded-[1.2rem] border border-emerald-200/65 bg-emerald-50/75 p-3 text-[12px] font-black leading-7 text-emerald-950/70">
-                    {data.orchestras.join('، ')}
+                    {data.orchestras.map((orchestra: string) => {
+                      const leaders = (data.orchestra_leaders || [])
+                        .filter((leader: any) => leader.orchestra === orchestra)
+                        .map((leader: any) => leader.name)
+
+                      return leaders.length
+                        ? `${orchestra}، به رهبری ${leaders.join(' و ')}`
+                        : orchestra
+                    }).join('، ')}
                   </div>
                 </MetaSection>
               )}
+
             </CardContent>
           </Card>
         </div>
@@ -434,6 +443,30 @@ function ProgramDetail() {
                                 گوینده
                               </div>
                               <div className="text-sm font-black text-sky-950/70">{segment.announcers.join('، ')}</div>
+                            </div>
+                          )}
+
+                          {(segment.orchestras?.length > 0 || segment.orchestraLeaders?.length > 0) && (
+                            <div className="rounded-[1.2rem] border border-emerald-200/70 bg-emerald-50/80 p-3 text-right">
+                              <div className="mb-2 flex items-center justify-start gap-2 text-[10px] font-black text-emerald-900/70">
+                                <Library className="w-3.5 h-3.5" />
+                                ارکستر
+                              </div>
+                              {segment.orchestras?.length > 0 && (
+                                <div className="text-sm font-black text-emerald-950/80">{segment.orchestras.join('، ')}</div>
+                              )}
+                              {segment.orchestraLeaders?.length > 0 && (
+                                <div className="mt-2 flex flex-wrap justify-start gap-2">
+                                  {segment.orchestraLeaders.map((leader: any) => (
+                                    <Badge
+                                      key={`${segment.id}-${leader.orchestra}-${leader.name}`}
+                                      className="rounded-full border border-emerald-200/70 bg-white px-2.5 py-1 text-[9px] font-black text-emerald-950/80 shadow-none"
+                                    >
+                                      رهبر: {leader.name}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>

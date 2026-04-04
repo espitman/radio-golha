@@ -3,6 +3,7 @@ import os
 import glob
 from role_utils import normalize_role_text, classify_timeline_role
 from name_utils import normalize_person_name
+from orchestra_utils import split_orchestra_and_leader
 
 def refine_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -12,6 +13,8 @@ def refine_file(file_path):
     if 'composers' not in summary: summary['composers'] = []
     if 'arrangers' not in summary: summary['arrangers'] = []
     if 'orchestras' not in summary: summary['orchestras'] = []
+    if 'orchestra_leaders' not in summary: summary['orchestra_leaders'] = []
+    if 'orchestra_leader_details' not in summary: summary['orchestra_leader_details'] = []
     if 'poets' not in summary: summary['poets'] = []
 
     def get_name_from_list_item(item):
@@ -31,6 +34,17 @@ def refine_file(file_path):
         if name and name not in lst:
             lst.append(name)
 
+    def add_orchestra(name):
+        orchestra_name, leader_name = split_orchestra_and_leader(name)
+        if orchestra_name:
+            add_unique(summary['orchestras'], orchestra_name)
+        if leader_name:
+            add_unique(summary['orchestra_leaders'], leader_name)
+        if orchestra_name and leader_name:
+            detail = {'orchestra': orchestra_name, 'leader': leader_name}
+            if detail not in summary['orchestra_leader_details']:
+                summary['orchestra_leader_details'].append(detail)
+
     # Process Performers
     performers = summary.get('performers', [])
     for p in performers:
@@ -39,11 +53,22 @@ def refine_file(file_path):
         name = p.get('name', '')
         if 'آهنگساز' in role: add_unique(summary['composers'], name)
         if 'تنظیم' in role: add_unique(summary['arrangers'], name)
-        if 'ارکستر' in name or 'ارکستر' in role: add_unique(summary['orchestras'], name)
+        if 'ارکستر' in name or 'اركستر' in name or 'ارکستر' in role or 'اركستر' in role:
+            orchestra_name, leader_name = split_orchestra_and_leader(name)
+            if orchestra_name:
+                p['name'] = orchestra_name
+            if leader_name:
+                p['leader'] = leader_name
+            add_orchestra(name)
         if 'ترانه سرا' in role: add_unique_poet(name)
 
     for key in ['singers', 'announcers', 'composers', 'arrangers']:
         summary[key] = [normalize_person_name(name) for name in summary.get(key, [])]
+
+    existing_orchestras = list(summary.get('orchestras', []))
+    summary['orchestras'] = []
+    for orchestra_name in existing_orchestras:
+        add_orchestra(orchestra_name)
 
     normalized_poets = []
     for poet in summary.get('poets', []):
@@ -61,13 +86,23 @@ def refine_file(file_path):
     for entry in timeline:
         for item in entry.get('items', []):
             role = normalize_role_text(item.get('role', ''))
-            item['name'] = normalize_person_name(item.get('name', ''))
+            original_name = item.get('name', '')
+            existing_leader = normalize_person_name(item.get('leader', ''))
+            item['name'] = normalize_person_name(original_name)
             name = item.get('name', '')
             item['role'] = role
             role_type = classify_timeline_role(role, name)
             if role_type == 'composer': add_unique(summary['composers'], name)
             if role_type == 'arranger': add_unique(summary['arrangers'], name)
-            if role_type == 'orchestra': add_unique(summary['orchestras'], name)
+            if role_type == 'orchestra':
+                orchestra_name, leader_name = split_orchestra_and_leader(original_name)
+                if orchestra_name:
+                    item['name'] = orchestra_name
+                if leader_name or existing_leader:
+                    item['leader'] = leader_name or existing_leader
+                elif 'leader' in item:
+                    item.pop('leader', None)
+                add_orchestra(original_name)
             if role_type == 'poet': add_unique_poet(name)
 
     # Update summary poets (append new ones detected as lyricists)

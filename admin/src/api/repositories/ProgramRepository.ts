@@ -74,6 +74,15 @@ export class ProgramRepository {
     // NEW OVERALL METADATA: ANNOUNCERS, ORCHESTRAS, COMPOSERS, ARRANGERS
     program.announcers = await new Promise(r => this.db.all('SELECT a.name FROM program_announcers pa JOIN announcer s ON pa.announcer_id = s.id JOIN artist a ON s.artist_id = a.id WHERE pa.program_id = ?', [id], (_, res) => r((res || []).map((a: any) => a.name))));
     program.orchestras = await new Promise(r => this.db.all('SELECT o.name FROM program_orchestras po JOIN orchestra o ON po.orchestra_id = o.id WHERE po.program_id = ?', [id], (_, res) => r((res || []).map((o: any) => o.name))));
+    program.orchestra_leaders = await new Promise(r => this.db.all(`
+      SELECT DISTINCT a.name, o.name as orchestra
+      FROM program_orchestra_leaders pol
+      JOIN orchestra_leader ol ON pol.orchestra_leader_id = ol.id
+      JOIN artist a ON ol.artist_id = a.id
+      JOIN orchestra o ON pol.orchestra_id = o.id
+      WHERE pol.program_id = ?
+      ORDER BY a.name ASC
+    `, [id], (_, res) => r(res || [])));
     program.composers = await new Promise(r => this.db.all('SELECT a.name FROM program_composers pc JOIN composer s ON pc.composer_id = s.id JOIN artist a ON s.artist_id = a.id WHERE pc.program_id = ?', [id], (_, res) => r((res || []).map((c: any) => c.name))));
     program.arrangers = await new Promise(r => this.db.all('SELECT a.name FROM program_arrangers pa JOIN arranger s ON pa.arranger_id = s.id JOIN artist a ON s.artist_id = a.id WHERE pa.program_id = ?', [id], (_, res) => r((res || []).map((arr: any) => arr.name))));
 
@@ -85,8 +94,18 @@ export class ProgramRepository {
         const performers = await new Promise(r => this.db.all('SELECT a.name, i.name as instrument FROM program_timeline_performers ptp JOIN performer r ON ptp.performer_id = r.id JOIN artist a ON r.artist_id = a.id LEFT JOIN program_performers gp ON (gp.program_id = ? AND gp.performer_id = ptp.performer_id) LEFT JOIN instrument i ON gp.instrument_id = i.id WHERE ptp.timeline_id = ?', [id, segment.id], (_, res) => r(res || [])));
         const poets = await new Promise(r => this.db.all('SELECT a.name FROM program_timeline_poets ptpo JOIN poet p ON ptpo.poet_id = p.id JOIN artist a ON p.artist_id = a.id WHERE ptpo.timeline_id = ?', [segment.id], (_, res) => r((res || []).map((p: any) => p.name))));
         const announcers = await new Promise(r => this.db.all('SELECT a.name FROM program_timeline_announcers ptan JOIN announcer s ON ptan.announcer_id = s.id JOIN artist a ON s.artist_id = a.id WHERE ptan.timeline_id = ?', [segment.id], (_, res) => r((res || []).map((a: any) => a.name))));
-        
-        fullTimeline.push({...segment, singers, performers, poets, announcers});
+        const orchestras = await new Promise(r => this.db.all('SELECT DISTINCT o.name FROM program_timeline_orchestras pto JOIN orchestra o ON pto.orchestra_id = o.id WHERE pto.timeline_id = ?', [segment.id], (_, res) => r((res || []).map((o: any) => o.name))));
+        const orchestraLeaders = await new Promise(r => this.db.all(`
+          SELECT DISTINCT a.name, o.name as orchestra
+          FROM program_timeline_orchestra_leaders ptol
+          JOIN orchestra_leader ol ON ptol.orchestra_leader_id = ol.id
+          JOIN artist a ON ol.artist_id = a.id
+          JOIN orchestra o ON ptol.orchestra_id = o.id
+          WHERE ptol.timeline_id = ?
+          ORDER BY a.name ASC
+        `, [segment.id], (_, res) => r(res || [])));
+
+        fullTimeline.push({...segment, singers, performers, poets, announcers, orchestras, orchestraLeaders});
     }
 
     program.timeline = fullTimeline;

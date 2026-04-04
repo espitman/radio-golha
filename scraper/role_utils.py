@@ -44,7 +44,7 @@ def classify_timeline_role(role: str, name: str = "") -> str:
     role = normalize_role_text(role)
     name = (name or "").strip()
 
-    if "ارکستر" in name or "ارکستر" in role:
+    if "ارکستر" in name or "اركستر" in name or "ارکستر" in role or "اركستر" in role:
         return "orchestra"
     if role == "گوینده" or "گوینده" in role or "روایت" in role:
         return "announcer"

@@ -4,6 +4,7 @@ import os
 import re
 from role_utils import normalize_role_text, classify_timeline_role
 from name_utils import normalize_person_name
+from orchestra_utils import split_orchestra_and_leader, canonicalize_orchestra_name
 
 def fa_to_en_digits(text):
     if not text: return 0
@@ -29,6 +30,7 @@ CREATE TABLE announcer (id INTEGER PRIMARY KEY AUTOINCREMENT, artist_id INTEGER,
 CREATE TABLE composer (id INTEGER PRIMARY KEY AUTOINCREMENT, artist_id INTEGER, FOREIGN KEY(artist_id) REFERENCES artist(id));
 CREATE TABLE arranger (id INTEGER PRIMARY KEY AUTOINCREMENT, artist_id INTEGER, FOREIGN KEY(artist_id) REFERENCES artist(id));
 CREATE TABLE poet (id INTEGER PRIMARY KEY AUTOINCREMENT, artist_id INTEGER, FOREIGN KEY(artist_id) REFERENCES artist(id));
+CREATE TABLE orchestra_leader (id INTEGER PRIMARY KEY AUTOINCREMENT, artist_id INTEGER, FOREIGN KEY(artist_id) REFERENCES artist(id));
 CREATE TABLE orchestra (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE);
 CREATE TABLE instrument (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE);
 CREATE TABLE mode (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE);
@@ -41,6 +43,7 @@ CREATE TABLE program_announcers (id INTEGER PRIMARY KEY AUTOINCREMENT, program_i
 CREATE TABLE program_composers (id INTEGER PRIMARY KEY AUTOINCREMENT, program_id INTEGER, composer_id INTEGER, FOREIGN KEY(program_id) REFERENCES program(id), FOREIGN KEY(composer_id) REFERENCES composer(id));
 CREATE TABLE program_arrangers (id INTEGER PRIMARY KEY AUTOINCREMENT, program_id INTEGER, arranger_id INTEGER, FOREIGN KEY(program_id) REFERENCES program(id), FOREIGN KEY(arranger_id) REFERENCES arranger(id));
 CREATE TABLE program_orchestras (id INTEGER PRIMARY KEY AUTOINCREMENT, program_id INTEGER, orchestra_id INTEGER, FOREIGN KEY(program_id) REFERENCES program(id), FOREIGN KEY(orchestra_id) REFERENCES orchestra(id));
+CREATE TABLE program_orchestra_leaders (id INTEGER PRIMARY KEY AUTOINCREMENT, program_id INTEGER, orchestra_id INTEGER, orchestra_leader_id INTEGER, FOREIGN KEY(program_id) REFERENCES program(id), FOREIGN KEY(orchestra_id) REFERENCES orchestra(id), FOREIGN KEY(orchestra_leader_id) REFERENCES orchestra_leader(id));
 CREATE TABLE program_poets (id INTEGER PRIMARY KEY AUTOINCREMENT, program_id INTEGER, poet_id INTEGER, FOREIGN KEY(program_id) REFERENCES program(id), FOREIGN KEY(poet_id) REFERENCES poet(id));
 CREATE TABLE program_modes (id INTEGER PRIMARY KEY AUTOINCREMENT, program_id INTEGER, mode_id INTEGER, FOREIGN KEY(program_id) REFERENCES program(id), FOREIGN KEY(mode_id) REFERENCES mode(id));
 
@@ -50,6 +53,7 @@ CREATE TABLE program_timeline_performers (id INTEGER PRIMARY KEY AUTOINCREMENT, 
 CREATE TABLE program_timeline_singers (id INTEGER PRIMARY KEY AUTOINCREMENT, timeline_id INTEGER, singer_id INTEGER, FOREIGN KEY(timeline_id) REFERENCES program_timeline(id), FOREIGN KEY(singer_id) REFERENCES singer(id));
 CREATE TABLE program_timeline_announcers (id INTEGER PRIMARY KEY AUTOINCREMENT, timeline_id INTEGER, announcer_id INTEGER, FOREIGN KEY(timeline_id) REFERENCES program_timeline(id), FOREIGN KEY(announcer_id) REFERENCES announcer(id));
 CREATE TABLE program_timeline_orchestras (id INTEGER PRIMARY KEY AUTOINCREMENT, timeline_id INTEGER, orchestra_id INTEGER, FOREIGN KEY(timeline_id) REFERENCES program_timeline(id), FOREIGN KEY(orchestra_id) REFERENCES orchestra(id));
+CREATE TABLE program_timeline_orchestra_leaders (id INTEGER PRIMARY KEY AUTOINCREMENT, timeline_id INTEGER, orchestra_id INTEGER, orchestra_leader_id INTEGER, FOREIGN KEY(timeline_id) REFERENCES program_timeline(id), FOREIGN KEY(orchestra_id) REFERENCES orchestra(id), FOREIGN KEY(orchestra_leader_id) REFERENCES orchestra_leader(id));
 CREATE TABLE program_timeline_poets (id INTEGER PRIMARY KEY AUTOINCREMENT, timeline_id INTEGER, poet_id INTEGER, FOREIGN KEY(timeline_id) REFERENCES program_timeline(id), FOREIGN KEY(poet_id) REFERENCES poet(id));
 ''')
 
@@ -83,6 +87,46 @@ def get_role_id(table, artist_id):
     _cache[key] = res
     return res
 
+
+def insert_program_orchestra_leader(program_id, orchestra_name, leader_name, seen_pairs):
+    orchestra_name = canonicalize_orchestra_name(orchestra_name)
+    leader_name = normalize_person_name(leader_name)
+    if not orchestra_name or not leader_name:
+        return
+
+    key = (program_id, orchestra_name, leader_name)
+    if key in seen_pairs:
+        return
+
+    orchestra_id = get_id('orchestra', 'name', orchestra_name)
+    leader_artist_id = get_id('artist', 'name', leader_name)
+    leader_id = get_role_id('orchestra_leader', leader_artist_id)
+    cursor.execute(
+        "INSERT INTO program_orchestra_leaders (program_id, orchestra_id, orchestra_leader_id) VALUES (?, ?, ?)",
+        (program_id, orchestra_id, leader_id),
+    )
+    seen_pairs.add(key)
+
+
+def insert_timeline_orchestra_leader(timeline_id, orchestra_name, leader_name, seen_pairs):
+    orchestra_name = canonicalize_orchestra_name(orchestra_name)
+    leader_name = normalize_person_name(leader_name)
+    if not orchestra_name or not leader_name:
+        return
+
+    key = (timeline_id, orchestra_name, leader_name)
+    if key in seen_pairs:
+        return
+
+    orchestra_id = get_id('orchestra', 'name', orchestra_name)
+    leader_artist_id = get_id('artist', 'name', leader_name)
+    leader_id = get_role_id('orchestra_leader', leader_artist_id)
+    cursor.execute(
+        "INSERT INTO program_timeline_orchestra_leaders (timeline_id, orchestra_id, orchestra_leader_id) VALUES (?, ?, ?)",
+        (timeline_id, orchestra_id, leader_id),
+    )
+    seen_pairs.add(key)
+
 with open('data/programmes_by_category.json', 'r') as f:
     categories_dict = json.load(f)
 
@@ -105,9 +149,15 @@ for en_key, p_list in categories_dict.items():
         cursor.execute("INSERT INTO program (id, title, category_id, no, url, audio_url) VALUES (?, ?, ?, ?, ?, ?)", (pid, p.get('title'), cat_id, fa_to_en_digits(p.get('no')), meta.get('url'), audio_url))
         
         smr = meta.get('summary', {})
+        seen_program_orchestras = set()
+        seen_program_orchestra_leaders = set()
         for name in smr.get('composers', []): cursor.execute("INSERT INTO program_composers (program_id, composer_id) VALUES (?, ?)", (pid, get_role_id('composer', get_id('artist', 'name', normalize_person_name(name)))))
         for name in smr.get('arrangers', []): cursor.execute("INSERT INTO program_arrangers (program_id, arranger_id) VALUES (?, ?)", (pid, get_role_id('arranger', get_id('artist', 'name', normalize_person_name(name)))))
-        for name in smr.get('orchestras', []): cursor.execute("INSERT INTO program_orchestras (program_id, orchestra_id) VALUES (?, ?)", (pid, get_id('orchestra', 'name', name)))
+        for name in smr.get('orchestras', []):
+            orchestra_name = canonicalize_orchestra_name(name)
+            if orchestra_name and orchestra_name not in seen_program_orchestras:
+                cursor.execute("INSERT INTO program_orchestras (program_id, orchestra_id) VALUES (?, ?)", (pid, get_id('orchestra', 'name', orchestra_name)))
+                seen_program_orchestras.add(orchestra_name)
         for name in smr.get('singers', []): cursor.execute("INSERT INTO program_singers (program_id, singer_id) VALUES (?, ?)", (pid, get_role_id('singer', get_id('artist', 'name', normalize_person_name(name)))))
         for name in smr.get('announcers', []): cursor.execute("INSERT INTO program_announcers (program_id, announcer_id) VALUES (?, ?)", (pid, get_role_id('announcer', get_id('artist', 'name', normalize_person_name(name)))))
         for poet_val in smr.get('poets', []):
@@ -117,30 +167,49 @@ for en_key, p_list in categories_dict.items():
         for p_info in smr.get('performers', []): cursor.execute("INSERT INTO program_performers (program_id, performer_id, instrument_id) VALUES (?, ?, ?)", (pid, get_role_id('performer', get_id('artist', 'name', normalize_person_name(p_info['name']))), get_id('instrument', 'name', p_info['instrument'])))
         for m_name in smr.get('modes', []): cursor.execute("INSERT INTO program_modes (program_id, mode_id) VALUES (?, ?)", (pid, get_id('mode', 'name', m_name)))
 
+        leader_details = smr.get('orchestra_leader_details', [])
+        if leader_details:
+            for detail in leader_details:
+                insert_program_orchestra_leader(pid, detail.get('orchestra', ''), detail.get('leader', ''), seen_program_orchestra_leaders)
+        else:
+            for name in smr.get('orchestras', []):
+                orchestra_name, leader_name = split_orchestra_and_leader(name)
+                insert_program_orchestra_leader(pid, orchestra_name, leader_name, seen_program_orchestra_leaders)
+
         # Timeline - Improved Detection Logic
         for entry in meta.get('timeline', []):
             mid = get_id('mode', 'name', entry.get('mode'))
             cursor.execute("INSERT INTO program_timeline (program_id, start_time, end_time, mode_id) VALUES (?, ?, ?, ?)", (pid, entry.get('start'), entry.get('end'), mid))
             tid = cursor.lastrowid
+            seen_timeline_orchestras = set()
+            seen_timeline_orchestra_leaders = set()
             
             for item in entry.get('items', []):
                 role = normalize_role_text(item.get('role', ''))
                 name = normalize_person_name(item.get('name', '').strip())
                 if not name: continue
-                aid = get_id('artist', 'name', name)
 
                 role_type = classify_timeline_role(role, name)
                 if role_type == "singer":
+                    aid = get_id('artist', 'name', name)
                     cursor.execute("INSERT INTO program_timeline_singers (timeline_id, singer_id) VALUES (?, ?)", (tid, get_role_id('singer', aid)))
                 elif role_type == "announcer":
+                    aid = get_id('artist', 'name', name)
                     cursor.execute("INSERT INTO program_timeline_announcers (timeline_id, announcer_id) VALUES (?, ?)", (tid, get_role_id('announcer', aid)))
                 elif role_type == "poet":
+                    aid = get_id('artist', 'name', name)
                     cursor.execute("INSERT INTO program_timeline_poets (timeline_id, poet_id) VALUES (?, ?)", (tid, get_role_id('poet', aid)))
                 elif role_type == "orchestra":
-                    cursor.execute("INSERT INTO program_timeline_orchestras (timeline_id, orchestra_id) VALUES (?, ?)", (tid, get_id('orchestra', 'name', name)))
+                    orchestra_name, leader_name = split_orchestra_and_leader(item.get('name', ''))
+                    orchestra_name = orchestra_name or canonicalize_orchestra_name(name)
+                    if orchestra_name and orchestra_name not in seen_timeline_orchestras:
+                        cursor.execute("INSERT INTO program_timeline_orchestras (timeline_id, orchestra_id) VALUES (?, ?)", (tid, get_id('orchestra', 'name', orchestra_name)))
+                        seen_timeline_orchestras.add(orchestra_name)
+                    insert_timeline_orchestra_leader(tid, orchestra_name, item.get('leader', '') or leader_name, seen_timeline_orchestra_leaders)
                 else:
+                    aid = get_id('artist', 'name', name)
                     cursor.execute("INSERT INTO program_timeline_performers (timeline_id, performer_id) VALUES (?, ?)", (tid, get_role_id('performer', aid)))
 
 conn.commit()
 conn.close()
-print("Granular DB v5.1 - Timeline Poets FIXED!")
+print("Granular DB v5.2 - Orchestra leaders normalized and merged.")
