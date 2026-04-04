@@ -2,6 +2,7 @@ import json
 import os
 import glob
 from role_utils import normalize_role_text, classify_timeline_role
+from name_utils import normalize_person_name
 
 def refine_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -33,6 +34,7 @@ def refine_file(file_path):
     # Process Performers
     performers = summary.get('performers', [])
     for p in performers:
+        p['name'] = normalize_person_name(p.get('name', ''))
         role = p.get('role', '')
         name = p.get('name', '')
         if 'آهنگساز' in role: add_unique(summary['composers'], name)
@@ -40,11 +42,26 @@ def refine_file(file_path):
         if 'ارکستر' in name or 'ارکستر' in role: add_unique(summary['orchestras'], name)
         if 'ترانه سرا' in role: add_unique_poet(name)
 
+    for key in ['singers', 'announcers', 'composers', 'arrangers']:
+        summary[key] = [normalize_person_name(name) for name in summary.get(key, [])]
+
+    normalized_poets = []
+    for poet in summary.get('poets', []):
+        if isinstance(poet, str):
+            normalized_poets.append(normalize_person_name(poet))
+        elif isinstance(poet, dict):
+            poet['name'] = normalize_person_name(poet.get('name', ''))
+            normalized_poets.append(poet)
+        else:
+            normalized_poets.append(poet)
+    summary['poets'] = normalized_poets
+
     # Process Timeline Items
     timeline = data.get('timeline', [])
     for entry in timeline:
         for item in entry.get('items', []):
             role = normalize_role_text(item.get('role', ''))
+            item['name'] = normalize_person_name(item.get('name', ''))
             name = item.get('name', '')
             item['role'] = role
             role_type = classify_timeline_role(role, name)

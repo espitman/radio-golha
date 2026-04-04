@@ -3,6 +3,7 @@ import json
 import os
 import re
 from role_utils import normalize_role_text, classify_timeline_role
+from name_utils import normalize_person_name
 
 def fa_to_en_digits(text):
     if not text: return 0
@@ -104,15 +105,16 @@ for en_key, p_list in categories_dict.items():
         cursor.execute("INSERT INTO program (id, title, category_id, no, url, audio_url) VALUES (?, ?, ?, ?, ?, ?)", (pid, p.get('title'), cat_id, fa_to_en_digits(p.get('no')), meta.get('url'), audio_url))
         
         smr = meta.get('summary', {})
-        for name in smr.get('composers', []): cursor.execute("INSERT INTO program_composers (program_id, composer_id) VALUES (?, ?)", (pid, get_role_id('composer', get_id('artist', 'name', name))))
-        for name in smr.get('arrangers', []): cursor.execute("INSERT INTO program_arrangers (program_id, arranger_id) VALUES (?, ?)", (pid, get_role_id('arranger', get_id('artist', 'name', name))))
+        for name in smr.get('composers', []): cursor.execute("INSERT INTO program_composers (program_id, composer_id) VALUES (?, ?)", (pid, get_role_id('composer', get_id('artist', 'name', normalize_person_name(name)))))
+        for name in smr.get('arrangers', []): cursor.execute("INSERT INTO program_arrangers (program_id, arranger_id) VALUES (?, ?)", (pid, get_role_id('arranger', get_id('artist', 'name', normalize_person_name(name)))))
         for name in smr.get('orchestras', []): cursor.execute("INSERT INTO program_orchestras (program_id, orchestra_id) VALUES (?, ?)", (pid, get_id('orchestra', 'name', name)))
-        for name in smr.get('singers', []): cursor.execute("INSERT INTO program_singers (program_id, singer_id) VALUES (?, ?)", (pid, get_role_id('singer', get_id('artist', 'name', name))))
-        for name in smr.get('announcers', []): cursor.execute("INSERT INTO program_announcers (program_id, announcer_id) VALUES (?, ?)", (pid, get_role_id('announcer', get_id('artist', 'name', name))))
+        for name in smr.get('singers', []): cursor.execute("INSERT INTO program_singers (program_id, singer_id) VALUES (?, ?)", (pid, get_role_id('singer', get_id('artist', 'name', normalize_person_name(name)))))
+        for name in smr.get('announcers', []): cursor.execute("INSERT INTO program_announcers (program_id, announcer_id) VALUES (?, ?)", (pid, get_role_id('announcer', get_id('artist', 'name', normalize_person_name(name)))))
         for poet_val in smr.get('poets', []):
             pname = poet_val if isinstance(poet_val, str) else poet_val.get('name', '')
+            pname = normalize_person_name(pname)
             if pname: cursor.execute("INSERT INTO program_poets (program_id, poet_id) VALUES (?, ?)", (pid, get_role_id('poet', get_id('artist', 'name', pname))))
-        for p_info in smr.get('performers', []): cursor.execute("INSERT INTO program_performers (program_id, performer_id, instrument_id) VALUES (?, ?, ?)", (pid, get_role_id('performer', get_id('artist', 'name', p_info['name'])), get_id('instrument', 'name', p_info['instrument'])))
+        for p_info in smr.get('performers', []): cursor.execute("INSERT INTO program_performers (program_id, performer_id, instrument_id) VALUES (?, ?, ?)", (pid, get_role_id('performer', get_id('artist', 'name', normalize_person_name(p_info['name']))), get_id('instrument', 'name', p_info['instrument'])))
         for m_name in smr.get('modes', []): cursor.execute("INSERT INTO program_modes (program_id, mode_id) VALUES (?, ?)", (pid, get_id('mode', 'name', m_name)))
 
         # Timeline - Improved Detection Logic
@@ -123,7 +125,7 @@ for en_key, p_list in categories_dict.items():
             
             for item in entry.get('items', []):
                 role = normalize_role_text(item.get('role', ''))
-                name = item.get('name', '').strip()
+                name = normalize_person_name(item.get('name', '').strip())
                 if not name: continue
                 aid = get_id('artist', 'name', name)
 
