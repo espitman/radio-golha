@@ -1,28 +1,30 @@
 import { ProgramRepository } from '../repositories/ProgramRepository';
 
 export class ProgramService {
-    static async list(search: string = '', page: number = 1) {
-        const limit = 24;
-        const offset = (page - 1) * limit;
-        return await ProgramRepository.findAll(search, limit, offset);
+  static async list(search: string = '', page: number = 1) {
+    const repo = new ProgramRepository();
+    try {
+      const rows = await repo.list(search, page);
+      const total = await repo.count(search);
+      const limit = 24;
+      return {
+        rows,
+        total,
+        page,
+        totalPages: Math.ceil((total as number) / limit)
+      };
+    } finally {
+      repo.close();
     }
+  }
 
-    static async getDetail(id: number) {
-        const main: any = await ProgramRepository.findById(id);
-        if (!main) return null;
-
-        // Fetch sub-details through cleaner Repo methods
-        const singers = await ProgramRepository.findSingers(id);
-        const poets = await ProgramRepository.findPoets(id);
-        const performers = await ProgramRepository.findPerformers(id);
-        const timeline = await ProgramRepository.findTimeline(id);
-
-        return {
-            ...main,
-            singers: singers.map(s => s.name),
-            poets: poets.map(p => p.name),
-            performers,
-            timeline
-        };
+  static async getDetail(id: number) {
+    const repo = new ProgramRepository();
+    try {
+      const detail = await repo.getDetail(id);
+      return detail;
+    } finally {
+      repo.close();
     }
+  }
 }
