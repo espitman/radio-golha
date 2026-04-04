@@ -1,108 +1,277 @@
 <!DOCTYPE html>
-<html>
+<html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>Golha DB Schema Interactive Diagram</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golha Database Schema Diagram (Pro View)</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <script src="https://unpkg.com/panzoom@9.4.0/dist/panzoom.min.js"></script>
-    <script>
-        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
-        window.onload = function() {
-            setTimeout(() => {
-                const element = document.querySelector('.mermaid svg');
-                if (element) {
-                    panzoom(element, {
-                        maxZoom: 10,
-                        minZoom: 0.1,
-                        bounds: true,
-                        boundsPadding: 0.1
-                    });
-                }
-            }, 1000);
-        };
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
     <style>
-        body { background-color: #0b0f19; margin: 0; padding: 0; overflow: hidden; height: 100vh; display: flex; justify-content: center; align-items: center; }
-        .mermaid { cursor: grab; padding: 50px; }
-        .mermaid:active { cursor: grabbing; }
-        .hint { position: fixed; bottom: 20px; left: 20px; color: #64748b; font-family: sans-serif; font-size: 14px; background: rgba(15, 23, 42, 0.8); padding: 8px 12px; border-radius: 6px; pointer-events: none; }
+        :root {
+            --bg-color: #0f172a;
+            --header-bg: #1e293b;
+            --accent: #38bdf8;
+            --text: #f1f5f9;
+        }
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text);
+            font-family: 'Segoe UI', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+        header {
+            background-color: var(--header-bg);
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        h1 { margin: 0; font-size: 1.25rem; color: var(--accent); }
+        #diagram-container {
+            width: 100vw;
+            height: calc(100vh - 70px);
+            margin-top: 70px;
+            background: radial-gradient(circle, #1e293b 1px, rgba(0,0,0,0) 1px);
+            background-size: 20px 20px;
+        }
+        svg { width: 100%; height: 100%; }
+        .controls-hint { font-size: 0.8rem; opacity: 0.6; }
     </style>
 </head>
 <body>
-    <div class="mermaid">
-    erDiagram
-        PROGRAMMES ||--o{ PROGRAMME_TIMELINE : "has"
-        PROGRAMMES ||--o{ PROGRAMME_PERFORMERS : "has"
-        PROGRAMMES ||--o{ TRANSCRIPT_SEGMENTS : "has"
-        
-        ARTISTS ||--o{ PROGRAMME_PERFORMERS : "performer"
-        INSTRUMENTS ||--o{ PROGRAMME_PERFORMERS : "played_on"
-        
-        TRANSCRIPT_SEGMENTS ||--o{ VERSES : "contains"
-        POETS ||--o{ TRANSCRIPT_SEGMENTS : "poet"
-        ARTISTS ||--o{ TRANSCRIPT_SEGMENTS : "speaker"
-        POETIC_STYLES ||--o{ TRANSCRIPT_SEGMENTS : "style"
+    <header>
+        <h1>💎 Golha Relational Schema (Pro View)</h1>
+        <div class="controls-hint">Scroll: Zoom | Click & Drag: Pan</div>
+    </header>
 
-        PROGRAMMES {
-            int id PK
-            string type
-            int number
-            string url
-            string audio_url
-        }
+    <div id="diagram-container">
+        <div class="mermaid">
+erDiagram
+    artist ||--o{ performer : "has"
+    artist ||--o{ singer : "has"
+    artist ||--o{ announcer : "has"
+    artist ||--o{ composer : "has"
+    artist ||--o{ arranger : "has"
+    artist ||--o{ poet : "has"
 
-        ARTISTS {
-            int id PK
-            string name
-        }
+    category ||--o{ program : "categorizes"
+    
+    program ||--o{ program_performers : "includes"
+    program ||--o{ program_singers : "includes"
+    program ||--o{ program_announcers : "includes"
+    program ||--o{ program_composers : "includes"
+    program ||--o{ program_arrangers : "includes"
+    program ||--o{ program_orchestras : "includes"
+    program ||--o{ program_poets : "includes"
+    program ||--o{ program_modes : "includes"
+    program ||--o{ program_timeline : "timeline"
 
-        INSTRUMENTS {
-            int id PK
-            string name
-        }
+    performer ||--o{ program_performers : "performs"
+    singer ||--o{ program_singers : "sings"
+    announcer ||--o{ program_announcers : "announces"
+    composer ||--o{ program_composers : "composes"
+    arranger ||--o{ program_arrangers : "arranges"
+    orchestra ||--o{ program_orchestras : "plays"
+    poet ||--o{ program_poets : "writes"
+    instrument ||--o{ program_performers : "used"
+    mode ||--o{ program_modes : "setup"
 
-        POETS {
-            int id PK
-            string name
-        }
+    program_timeline ||--o{ program_timeline_performers : "has"
+    program_timeline ||--o{ program_timeline_singers : "has"
+    program_timeline ||--o{ program_timeline_announcers : "has"
+    program_timeline ||--o{ program_timeline_orchestras : "has"
+    program_timeline ||--o{ program_timeline_poets : "has"
+    mode ||--o{ program_timeline : "tuned"
 
-        POETIC_STYLES {
-            int id PK
-            string name
-        }
+    performer ||--o{ program_timeline_performers : "at"
+    singer ||--o{ program_timeline_singers : "at"
+    announcer ||--o{ program_timeline_announcers : "at"
+    orchestra ||--o{ program_timeline_orchestras : "at"
+    poet ||--o{ program_timeline_poets : "at"
 
-        PROGRAMME_PERFORMERS {
-            int id PK
-            int programme_id FK
-            int artist_id FK
-            int instrument_id FK
-            string role
-        }
+    artist {
+        int id PK
+        string name
+        string avatar
+    }
 
-        PROGRAMME_TIMELINE {
-            int id PK
-            int programme_id FK
-            string mode
-            string start_time
-            string end_time
-        }
+    performer {
+        int id PK
+        int artist_id FK
+    }
 
-        TRANSCRIPT_SEGMENTS {
-            int id PK
-            int programme_id FK
-            int speaker_id FK
-            int poet_id FK
-            int style_id FK
-            int order
-        }
+    singer {
+        int id PK
+        int artist_id FK
+    }
 
-        VERSES {
-            int id PK
-            int segment_id FK
-            text bait_text
-            int order
-        }
+    announcer {
+        int id PK
+        int artist_id FK
+    }
+
+    composer {
+        int id PK
+        int artist_id FK
+    }
+
+    arranger {
+        int id PK
+        int artist_id FK
+    }
+
+    poet {
+        int id PK
+        int artist_id FK
+    }
+
+    orchestra {
+        int id PK
+        string name
+    }
+
+    program {
+        int id PK
+        string title
+        int category_id FK
+        int no
+        string url
+        string audio_url
+    }
+
+    category {
+        int id PK
+        string name_en
+        string title_fa
+    }
+
+    instrument {
+        int id PK
+        string name
+    }
+
+    mode {
+        int id PK
+        string name
+    }
+
+    program_timeline {
+        int id PK
+        int program_id FK
+        string start_time
+        string end_time
+        int mode_id FK
+    }
+
+    program_performers {
+        int id PK
+        int program_id FK
+        int performer_id FK
+        int instrument_id FK
+    }
+
+    program_singers {
+        int id PK
+        int program_id FK
+        int singer_id FK
+    }
+
+    program_announcers {
+        int id PK
+        int program_id FK
+        int announcer_id FK
+    }
+
+    program_composers {
+        int id PK
+        int program_id FK
+        int composer_id FK
+    }
+
+    program_arrangers {
+        int id PK
+        int program_id FK
+        int arranger_id FK
+    }
+
+    program_orchestras {
+        int id PK
+        int program_id FK
+        int orchestra_id FK
+    }
+
+    program_poets {
+        int id PK
+        int program_id FK
+        int poet_id FK
+    }
+
+    program_modes {
+        int id PK
+        int program_id FK
+        int mode_id FK
+    }
+
+    program_timeline_performers {
+        int id PK
+        int timeline_id FK
+        int performer_id FK
+    }
+
+    program_timeline_singers {
+        int id PK
+        int timeline_id FK
+        int singer_id FK
+    }
+
+    program_timeline_announcers {
+        int id PK
+        int timeline_id FK
+        int announcer_id FK
+    }
+
+    program_timeline_orchestras {
+        int id PK
+        int timeline_id FK
+        int orchestra_id FK
+    }
+
+    program_timeline_poets {
+        int id PK
+        int timeline_id FK
+        int poet_id FK
+    }
+        </div>
     </div>
-    <div class="hint">💡 اسکرول برای زوم | کلیک و درگ برای جابه‌جایی</div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+
+        window.addEventListener('load', async () => {
+            const { svg } = await mermaid.render('mermaid-svg', document.querySelector('.mermaid').innerText);
+            const container = document.getElementById('diagram-container');
+            container.innerHTML = svg;
+            
+            const svgElement = container.querySelector('svg');
+            svgElement.style.width = '100%';
+            svgElement.style.height = '100%';
+
+            svgPanZoom(svgElement, {
+                zoomEnabled: true,
+                controlIconsEnabled: true,
+                fit: true,
+                center: true,
+                minZoom: 0.1,
+                maxZoom: 50,
+                zoomScaleSensitivity: 0.3
+            });
+        });
+    </script>
 </body>
 </html>
