@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProgramsIndexRouteImport } from './routes/programs/index'
+import { Route as ArtistsIndexRouteImport } from './routes/artists/index'
 import { Route as ProgramsProgramIdRouteImport } from './routes/programs/$programId'
 
 const AboutRoute = AboutRouteImport.update({
@@ -29,6 +30,11 @@ const ProgramsIndexRoute = ProgramsIndexRouteImport.update({
   path: '/programs/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ArtistsIndexRoute = ArtistsIndexRouteImport.update({
+  id: '/artists/',
+  path: '/artists/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProgramsProgramIdRoute = ProgramsProgramIdRouteImport.update({
   id: '/programs/$programId',
   path: '/programs/$programId',
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/programs/$programId': typeof ProgramsProgramIdRoute
+  '/artists/': typeof ArtistsIndexRoute
   '/programs/': typeof ProgramsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/programs/$programId': typeof ProgramsProgramIdRoute
+  '/artists': typeof ArtistsIndexRoute
   '/programs': typeof ProgramsIndexRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,33 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/programs/$programId': typeof ProgramsProgramIdRoute
+  '/artists/': typeof ArtistsIndexRoute
   '/programs/': typeof ProgramsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/programs/$programId' | '/programs/'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/programs/$programId'
+    | '/artists/'
+    | '/programs/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/programs/$programId' | '/programs'
-  id: '__root__' | '/' | '/about' | '/programs/$programId' | '/programs/'
+  to: '/' | '/about' | '/programs/$programId' | '/artists' | '/programs'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/programs/$programId'
+    | '/artists/'
+    | '/programs/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   ProgramsProgramIdRoute: typeof ProgramsProgramIdRoute
+  ArtistsIndexRoute: typeof ArtistsIndexRoute
   ProgramsIndexRoute: typeof ProgramsIndexRoute
 }
 
@@ -92,6 +113,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProgramsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/artists/': {
+      id: '/artists/'
+      path: '/artists'
+      fullPath: '/artists/'
+      preLoaderRoute: typeof ArtistsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/programs/$programId': {
       id: '/programs/$programId'
       path: '/programs/$programId'
@@ -106,6 +134,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   ProgramsProgramIdRoute: ProgramsProgramIdRoute,
+  ArtistsIndexRoute: ArtistsIndexRoute,
   ProgramsIndexRoute: ProgramsIndexRoute,
 }
 export const routeTree = rootRouteImport

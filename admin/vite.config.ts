@@ -6,6 +6,7 @@ import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { URL } from 'url'
 import { ProgramService } from './src/api/services/ProgramService' 
+import { ArtistService } from './src/api/services/ArtistService'
 
 export default defineConfig({
   plugins: [
@@ -33,6 +34,20 @@ export default defineConfig({
             } catch (e: any) {
                 res.statusCode = 500;
                 return res.end(JSON.stringify({ error: e.message }));
+            }
+          }
+
+          if (req.method === 'GET' && url.pathname.startsWith('/api/artists')) {
+            const search = url.searchParams.get('search') || ''
+            const page = parseInt(url.searchParams.get('page') || '1')
+            const role = url.searchParams.get('role') || undefined
+            try {
+              const data = await ArtistService.list(search, page, role)
+              res.setHeader('Content-Type', 'application/json')
+              return res.end(JSON.stringify(data))
+            } catch (e: any) {
+              res.statusCode = 500
+              return res.end(JSON.stringify({ error: e.message }))
             }
           }
 
