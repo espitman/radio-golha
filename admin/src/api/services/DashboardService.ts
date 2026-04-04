@@ -1,7 +1,5 @@
 import { runCoreQuery } from '../rust/runCoreQuery'
 
-export class DashboardService {
-  static async getOverview() {
-    return runCoreQuery('admin-dashboard')
-  }
+export function getDashboardOverview() {
+  return runCoreQuery('admin-dashboard')
 }
