@@ -3,7 +3,6 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import { 
   LayoutDashboard, 
-  Database, 
   Music2, 
   Users, 
   Drum,
@@ -40,7 +39,6 @@ import '../styles.css'
 
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: 'داشبورد', path: '/' },
-  { icon: Database, label: 'مدیریت داده‌ها', path: '/database' },
   { icon: Music2, label: 'برنامه‌ها', path: '/programs' },
   { icon: Users, label: 'هنرمندان', path: '/artists' },
   { icon: Drum, label: 'ارکسترها', path: '/orchestras' },
