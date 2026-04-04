@@ -2,6 +2,7 @@ import sqlite3
 import json
 import os
 import re
+from role_utils import normalize_role_text, classify_timeline_role
 
 def fa_to_en_digits(text):
     if not text: return 0
@@ -121,19 +122,19 @@ for en_key, p_list in categories_dict.items():
             tid = cursor.lastrowid
             
             for item in entry.get('items', []):
-                role = item.get('role', '').replace('\n', ' ').strip()
+                role = normalize_role_text(item.get('role', ''))
                 name = item.get('name', '').strip()
                 if not name: continue
                 aid = get_id('artist', 'name', name)
-                
-                # Broad Match for Roles
-                if any(x in role for x in ["خواننده", "آواز", "آوازخوان"]):
+
+                role_type = classify_timeline_role(role, name)
+                if role_type == "singer":
                     cursor.execute("INSERT INTO program_timeline_singers (timeline_id, singer_id) VALUES (?, ?)", (tid, get_role_id('singer', aid)))
-                elif "گوینده" in role:
+                elif role_type == "announcer":
                     cursor.execute("INSERT INTO program_timeline_announcers (timeline_id, announcer_id) VALUES (?, ?)", (tid, get_role_id('announcer', aid)))
-                elif any(x in role for x in ["سراینده", "شاعر", "شعر", "غزل", "مثنوی", "ترانه"]):
+                elif role_type == "poet":
                     cursor.execute("INSERT INTO program_timeline_poets (timeline_id, poet_id) VALUES (?, ?)", (tid, get_role_id('poet', aid)))
-                elif "ارکستر" in name or "ارکستر" in role:
+                elif role_type == "orchestra":
                     cursor.execute("INSERT INTO program_timeline_orchestras (timeline_id, orchestra_id) VALUES (?, ?)", (tid, get_id('orchestra', 'name', name)))
                 else:
                     cursor.execute("INSERT INTO program_timeline_performers (timeline_id, performer_id) VALUES (?, ?)", (tid, get_role_id('performer', aid)))

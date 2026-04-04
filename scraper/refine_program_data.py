@@ -1,6 +1,7 @@
 import json
 import os
 import glob
+from role_utils import normalize_role_text, classify_timeline_role
 
 def refine_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -43,12 +44,14 @@ def refine_file(file_path):
     timeline = data.get('timeline', [])
     for entry in timeline:
         for item in entry.get('items', []):
-            role = item.get('role', '')
+            role = normalize_role_text(item.get('role', ''))
             name = item.get('name', '')
-            if 'آهنگساز' in role: add_unique(summary['composers'], name)
-            if 'تنظیم' in role: add_unique(summary['arrangers'], name)
-            if 'ارکستر' in name or 'ارکستر' in role: add_unique(summary['orchestras'], name)
-            if 'ترانه سرا' in role: add_unique_poet(name)
+            item['role'] = role
+            role_type = classify_timeline_role(role, name)
+            if role_type == 'composer': add_unique(summary['composers'], name)
+            if role_type == 'arranger': add_unique(summary['arrangers'], name)
+            if role_type == 'orchestra': add_unique(summary['orchestras'], name)
+            if role_type == 'poet': add_unique_poet(name)
 
     # Update summary poets (append new ones detected as lyricists)
     for np in new_poets:
