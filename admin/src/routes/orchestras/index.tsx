@@ -12,7 +12,7 @@ function OrchestrasPage() {
       title="آرشیو ارکسترها"
       description="فهرست ارکسترهای ثبت‌شده در آرشیو برای مرور و کنترل داده‌ها."
       singularLabel="ارکستر"
-      usageLabel="تعداد استفاده"
+      usageLabel="تعداد برنامه"
     />
   )
 }

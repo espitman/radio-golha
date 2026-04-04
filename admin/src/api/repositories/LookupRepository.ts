@@ -6,15 +6,15 @@ type LookupKind = 'orchestras' | 'instruments' | 'modes'
 const LOOKUP_CONFIG: Record<LookupKind, { table: string; usageSql: string }> = {
   orchestras: {
     table: 'orchestra',
-    usageSql: '(SELECT COUNT(*) FROM program_orchestras po WHERE po.orchestra_id = base.id)',
+    usageSql: '(SELECT COUNT(DISTINCT po.program_id) FROM program_orchestras po WHERE po.orchestra_id = base.id)',
   },
   instruments: {
     table: 'instrument',
-    usageSql: '(SELECT COUNT(*) FROM program_performers pp WHERE pp.instrument_id = base.id)',
+    usageSql: '(SELECT COUNT(DISTINCT pp.program_id) FROM program_performers pp WHERE pp.instrument_id = base.id)',
   },
   modes: {
     table: 'mode',
-    usageSql: '(SELECT COUNT(*) FROM program_modes pm WHERE pm.mode_id = base.id)',
+    usageSql: '(SELECT COUNT(DISTINCT pm.program_id) FROM program_modes pm WHERE pm.mode_id = base.id)',
   },
 }
 

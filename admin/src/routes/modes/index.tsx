@@ -12,7 +12,7 @@ function ModesPage() {
       title="آرشیو دستگاه‌ها"
       description="فهرست دستگاه‌ها و آوازهای ثبت‌شده در آرشیو برای جستجو و کنترل داده‌ها."
       singularLabel="دستگاه"
-      usageLabel="تعداد استفاده"
+      usageLabel="تعداد برنامه"
     />
   )
 }

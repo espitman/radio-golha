@@ -12,7 +12,7 @@ function InstrumentsPage() {
       title="آرشیو سازها"
       description="فهرست سازهای ثبت‌شده در آرشیو برای مرور، جستجو و کنترل داده‌ها."
       singularLabel="ساز"
-      usageLabel="تعداد استفاده"
+      usageLabel="تعداد برنامه"
     />
   )
 }
