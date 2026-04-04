@@ -1,6 +1,6 @@
 use anyhow::Result;
-use clap::{Parser, Subcommand};
-use radiogolha_core::RadioGolhaCore;
+use clap::{Parser, Subcommand, ValueEnum};
+use radiogolha_core::{LookupKind, RadioGolhaCore};
 use serde_json::to_string;
 
 #[derive(Debug, Parser)]
@@ -33,9 +33,45 @@ enum Command {
         #[arg(long)]
         singer_id: Option<i64>,
     },
+    AdminProgramDetail {
+        id: i64,
+    },
+    AdminArtists {
+        #[arg(long, default_value = "")]
+        search: String,
+        #[arg(long, default_value_t = 1)]
+        page: i64,
+        #[arg(long)]
+        role: Option<String>,
+    },
+    AdminLookup {
+        #[arg(value_enum)]
+        kind: LookupKindArg,
+        #[arg(long, default_value = "")]
+        search: String,
+        #[arg(long, default_value_t = 1)]
+        page: i64,
+    },
     ProgramDetail {
         id: i64,
     },
+}
+
+#[derive(Clone, Debug, ValueEnum)]
+enum LookupKindArg {
+    Orchestras,
+    Instruments,
+    Modes,
+}
+
+impl From<LookupKindArg> for LookupKind {
+    fn from(value: LookupKindArg) -> Self {
+        match value {
+            LookupKindArg::Orchestras => LookupKind::Orchestras,
+            LookupKindArg::Instruments => LookupKind::Instruments,
+            LookupKindArg::Modes => LookupKind::Modes,
+        }
+    }
 }
 
 fn main() -> Result<()> {
@@ -74,6 +110,21 @@ fn main() -> Result<()> {
             println!(
                 "{}",
                 to_string(&core.admin_program_list(&search, page, category_id, singer_id)?)?
+            );
+        }
+        Command::AdminProgramDetail { id } => {
+            println!("{}", to_string(&core.get_program_detail(id)?)?);
+        }
+        Command::AdminArtists { search, page, role } => {
+            println!(
+                "{}",
+                to_string(&core.admin_artist_list(&search, page, role.as_deref())?)?
+            );
+        }
+        Command::AdminLookup { kind, search, page } => {
+            println!(
+                "{}",
+                to_string(&core.admin_lookup_list(kind.into(), &search, page)?)?
             );
         }
         Command::ProgramDetail { id } => {

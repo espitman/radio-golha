@@ -47,6 +47,60 @@ pub struct SingerOption {
 }
 
 #[derive(Debug, Clone, Serialize)]
+pub struct ArtistListItem {
+    pub id: i64,
+    pub name: String,
+    pub is_singer: i64,
+    pub is_performer: i64,
+    pub is_poet: i64,
+    pub is_announcer: i64,
+    pub is_composer: i64,
+    pub is_arranger: i64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ArtistStats {
+    pub total_artists: i64,
+    pub singers: i64,
+    pub performers: i64,
+    pub poets: i64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ArtistListResponse {
+    pub rows: Vec<ArtistListItem>,
+    pub stats: ArtistStats,
+    pub total: i64,
+    pub page: i64,
+    pub total_pages: i64,
+    pub active_role: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct LookupListItem {
+    pub id: i64,
+    pub name: String,
+    pub usage_count: i64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct LookupStats {
+    pub total_items: i64,
+    pub total_usage: i64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LookupListResponse {
+    pub rows: Vec<LookupListItem>,
+    pub stats: LookupStats,
+    pub total: i64,
+    pub page: i64,
+    pub total_pages: i64,
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub struct ProgramListItem {
     pub id: i64,
     pub title: String,
@@ -88,6 +142,7 @@ pub struct PerformerCredit {
 #[derive(Debug, Clone, Serialize)]
 pub struct OrchestraLeaderCredit {
     pub orchestra: String,
+    #[serde(rename = "name")]
     pub leader: String,
 }
 
@@ -101,6 +156,7 @@ pub struct TimelineSegment {
     pub poets: Vec<String>,
     pub announcers: Vec<String>,
     pub orchestras: Vec<String>,
+    #[serde(rename = "orchestraLeaders")]
     pub orchestra_leaders: Vec<OrchestraLeaderCredit>,
     pub performers: Vec<PerformerCredit>,
 }

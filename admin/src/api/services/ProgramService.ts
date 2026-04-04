@@ -1,4 +1,3 @@
-import { ProgramRepository } from '../repositories/ProgramRepository';
 import { runCoreQuery } from '../rust/runCoreQuery';
 
 export class ProgramService {
@@ -10,12 +9,6 @@ export class ProgramService {
   }
 
   static async getDetail(id: number) {
-    const repo = new ProgramRepository();
-    try {
-      const detail = await repo.getDetail(id);
-      return detail;
-    } finally {
-      repo.close();
-    }
+    return runCoreQuery('admin-program-detail', [id.toString()])
   }
 }

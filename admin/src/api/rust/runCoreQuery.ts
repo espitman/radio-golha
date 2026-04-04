@@ -9,7 +9,12 @@ const CORE_DIR = path.resolve(process.cwd(), '../core')
 const CORE_DB = path.resolve(process.cwd(), '../database/golha_database.db')
 const CORE_BINARY = path.resolve(CORE_DIR, 'target/debug/radiogolha-core-cli')
 
-type CoreCommand = 'admin-dashboard' | 'admin-programs'
+type CoreCommand =
+  | 'admin-dashboard'
+  | 'admin-programs'
+  | 'admin-program-detail'
+  | 'admin-artists'
+  | 'admin-lookup'
 
 async function resolveCoreExecutable() {
   try {

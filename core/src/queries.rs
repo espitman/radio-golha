@@ -4,11 +4,43 @@ use crate::{
     db::RadioGolhaCore,
     error::CoreResult,
     models::{
-        CategoryOption, CategoryStat, DashboardOverview, DashboardSummary,
-        OrchestraLeaderCredit, PerformerCredit, ProgramDetail, ProgramListItem,
-        ProgramListResponse, RankedNameStat, SingerOption, TimelineSegment,
+        ArtistListItem, ArtistListResponse, ArtistStats, CategoryOption, CategoryStat,
+        DashboardOverview, DashboardSummary, LookupListItem, LookupListResponse, LookupStats,
+        OrchestraLeaderCredit, PerformerCredit, ProgramDetail, ProgramListItem, ProgramListResponse,
+        RankedNameStat, SingerOption, TimelineSegment,
     },
 };
+
+#[derive(Debug, Clone, Copy)]
+pub enum LookupKind {
+    Orchestras,
+    Instruments,
+    Modes,
+}
+
+impl LookupKind {
+    fn table_name(self) -> &'static str {
+        match self {
+            LookupKind::Orchestras => "orchestra",
+            LookupKind::Instruments => "instrument",
+            LookupKind::Modes => "mode",
+        }
+    }
+
+    fn usage_sql(self) -> &'static str {
+        match self {
+            LookupKind::Orchestras => {
+                "(SELECT COUNT(DISTINCT po.program_id) FROM program_orchestras po WHERE po.orchestra_id = base.id)"
+            }
+            LookupKind::Instruments => {
+                "(SELECT COUNT(DISTINCT pp.program_id) FROM program_performers pp WHERE pp.instrument_id = base.id)"
+            }
+            LookupKind::Modes => {
+                "(SELECT COUNT(DISTINCT pm.program_id) FROM program_modes pm WHERE pm.mode_id = base.id)"
+            }
+        }
+    }
+}
 
 impl RadioGolhaCore {
     pub fn dashboard_summary(&self) -> CoreResult<DashboardSummary> {
@@ -324,6 +356,216 @@ impl RadioGolhaCore {
             total_pages,
             active_category_id: category_id,
             active_singer_id: singer_id,
+        })
+    }
+
+    pub fn artist_stats(&self) -> CoreResult<ArtistStats> {
+        let stats = self.connection().query_row(
+            "
+            SELECT
+              (SELECT COUNT(*) FROM artist) AS total_artists,
+              (SELECT COUNT(*) FROM singer) AS singers,
+              (SELECT COUNT(*) FROM performer) AS performers,
+              (SELECT COUNT(*) FROM poet) AS poets
+            ",
+            [],
+            |row| {
+                Ok(ArtistStats {
+                    total_artists: row.get(0)?,
+                    singers: row.get(1)?,
+                    performers: row.get(2)?,
+                    poets: row.get(3)?,
+                })
+            },
+        )?;
+
+        Ok(stats)
+    }
+
+    pub fn count_artists(&self, search: &str, role: Option<&str>) -> CoreResult<i64> {
+        let escaped_search = format!("%{}%", search.trim());
+        let role = role.unwrap_or("").trim();
+        let total = self.connection().query_row(
+            "
+            SELECT COUNT(*)
+            FROM artist a
+            WHERE
+              (?1 = '' OR a.name LIKE ?2)
+              AND (
+                ?3 = ''
+                OR (?3 = 'singer' AND EXISTS(SELECT 1 FROM singer s WHERE s.artist_id = a.id))
+                OR (?3 = 'performer' AND EXISTS(SELECT 1 FROM performer p WHERE p.artist_id = a.id))
+                OR (?3 = 'poet' AND EXISTS(SELECT 1 FROM poet po WHERE po.artist_id = a.id))
+                OR (?3 = 'announcer' AND EXISTS(SELECT 1 FROM announcer an WHERE an.artist_id = a.id))
+                OR (?3 = 'composer' AND EXISTS(SELECT 1 FROM composer c WHERE c.artist_id = a.id))
+                OR (?3 = 'arranger' AND EXISTS(SELECT 1 FROM arranger ar WHERE ar.artist_id = a.id))
+              )
+            ",
+            params![search.trim(), escaped_search, role],
+            |row| row.get(0),
+        )?;
+
+        Ok(total)
+    }
+
+    pub fn list_artists_filtered(
+        &self,
+        search: &str,
+        page: i64,
+        role: Option<&str>,
+        limit: i64,
+    ) -> CoreResult<Vec<ArtistListItem>> {
+        let page = page.max(1);
+        let offset = (page - 1) * limit.max(1);
+        let escaped_search = format!("%{}%", search.trim());
+        let role = role.unwrap_or("").trim();
+        let mut stmt = self.connection().prepare(
+            "
+            SELECT
+              a.id,
+              a.name,
+              EXISTS(SELECT 1 FROM singer s WHERE s.artist_id = a.id) AS is_singer,
+              EXISTS(SELECT 1 FROM performer p WHERE p.artist_id = a.id) AS is_performer,
+              EXISTS(SELECT 1 FROM poet po WHERE po.artist_id = a.id) AS is_poet,
+              EXISTS(SELECT 1 FROM announcer an WHERE an.artist_id = a.id) AS is_announcer,
+              EXISTS(SELECT 1 FROM composer c WHERE c.artist_id = a.id) AS is_composer,
+              EXISTS(SELECT 1 FROM arranger ar WHERE ar.artist_id = a.id) AS is_arranger
+            FROM artist a
+            WHERE
+              (?1 = '' OR a.name LIKE ?2)
+              AND (
+                ?3 = ''
+                OR (?3 = 'singer' AND EXISTS(SELECT 1 FROM singer s WHERE s.artist_id = a.id))
+                OR (?3 = 'performer' AND EXISTS(SELECT 1 FROM performer p WHERE p.artist_id = a.id))
+                OR (?3 = 'poet' AND EXISTS(SELECT 1 FROM poet po WHERE po.artist_id = a.id))
+                OR (?3 = 'announcer' AND EXISTS(SELECT 1 FROM announcer an WHERE an.artist_id = a.id))
+                OR (?3 = 'composer' AND EXISTS(SELECT 1 FROM composer c WHERE c.artist_id = a.id))
+                OR (?3 = 'arranger' AND EXISTS(SELECT 1 FROM arranger ar WHERE ar.artist_id = a.id))
+              )
+            ORDER BY a.name COLLATE NOCASE ASC
+            LIMIT ?4 OFFSET ?5
+            ",
+        )?;
+
+        let rows = stmt.query_map(
+            params![search.trim(), escaped_search, role, limit.max(1), offset],
+            |row| {
+                Ok(ArtistListItem {
+                    id: row.get(0)?,
+                    name: row.get(1)?,
+                    is_singer: row.get(2)?,
+                    is_performer: row.get(3)?,
+                    is_poet: row.get(4)?,
+                    is_announcer: row.get(5)?,
+                    is_composer: row.get(6)?,
+                    is_arranger: row.get(7)?,
+                })
+            },
+        )?;
+
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    pub fn admin_artist_list(&self, search: &str, page: i64, role: Option<&str>) -> CoreResult<ArtistListResponse> {
+        let limit = 24_i64;
+        let safe_page = page.max(1);
+        let normalized_role = role.map(str::trim).filter(|value| !value.is_empty());
+        let total = self.count_artists(search, normalized_role)?;
+        let total_pages = ((total + limit - 1) / limit).max(1);
+
+        Ok(ArtistListResponse {
+            rows: self.list_artists_filtered(search, safe_page, normalized_role, limit)?,
+            stats: self.artist_stats()?,
+            total,
+            page: safe_page,
+            total_pages,
+            active_role: normalized_role.map(ToOwned::to_owned),
+        })
+    }
+
+    pub fn count_lookup_items(&self, kind: LookupKind, search: &str) -> CoreResult<i64> {
+        let escaped_search = format!("%{}%", search.trim());
+        let sql = format!(
+            "SELECT COUNT(*) FROM {} base WHERE (?1 = '' OR base.name LIKE ?2)",
+            kind.table_name()
+        );
+        let total = self
+            .connection()
+            .query_row(&sql, params![search.trim(), escaped_search], |row| row.get(0))?;
+        Ok(total)
+    }
+
+    pub fn list_lookup_items(
+        &self,
+        kind: LookupKind,
+        search: &str,
+        page: i64,
+        limit: i64,
+    ) -> CoreResult<Vec<LookupListItem>> {
+        let page = page.max(1);
+        let offset = (page - 1) * limit.max(1);
+        let escaped_search = format!("%{}%", search.trim());
+        let sql = format!(
+            "
+            SELECT
+              base.id,
+              base.name,
+              {} AS usage_count
+            FROM {} base
+            WHERE (?1 = '' OR base.name LIKE ?2)
+            ORDER BY base.name COLLATE NOCASE ASC
+            LIMIT ?3 OFFSET ?4
+            ",
+            kind.usage_sql(),
+            kind.table_name()
+        );
+        let mut stmt = self.connection().prepare(&sql)?;
+        let rows = stmt.query_map(params![search.trim(), escaped_search, limit.max(1), offset], |row| {
+            Ok(LookupListItem {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                usage_count: row.get(2)?,
+            })
+        })?;
+
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    pub fn lookup_stats(&self, kind: LookupKind) -> CoreResult<LookupStats> {
+        let sql = format!(
+            "
+            SELECT
+              (SELECT COUNT(*) FROM {table}) AS total_items,
+              (SELECT COALESCE(SUM(usage_count), 0) FROM (
+                SELECT {usage} AS usage_count
+                FROM {table} base
+              )) AS total_usage
+            ",
+            table = kind.table_name(),
+            usage = kind.usage_sql()
+        );
+        let stats = self.connection().query_row(&sql, [], |row| {
+            Ok(LookupStats {
+                total_items: row.get(0)?,
+                total_usage: row.get(1)?,
+            })
+        })?;
+
+        Ok(stats)
+    }
+
+    pub fn admin_lookup_list(&self, kind: LookupKind, search: &str, page: i64) -> CoreResult<LookupListResponse> {
+        let limit = 24_i64;
+        let safe_page = page.max(1);
+        let total = self.count_lookup_items(kind, search)?;
+        let total_pages = ((total + limit - 1) / limit).max(1);
+
+        Ok(LookupListResponse {
+            rows: self.list_lookup_items(kind, search, safe_page, limit)?,
+            stats: self.lookup_stats(kind)?,
+            total,
+            page: safe_page,
+            total_pages,
         })
     }
 
