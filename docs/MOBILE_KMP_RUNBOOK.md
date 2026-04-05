@@ -183,15 +183,3 @@ export ANDROID_SDK_ROOT="/Users/espitman/Library/Android/sdk"
 "$HOME/Library/Android/sdk/platform-tools/adb" -s emulator-5554 install -r -t ./composeApp/build/outputs/apk/debug/composeApp-debug.apk
 "$HOME/Library/Android/sdk/platform-tools/adb" -s emulator-5554 shell am start -W -n com.radiogolha.mobile/.MainActivity
 ```
-
----
-
-## Android Studio Option
-
-You can also:
-
-1. Open `mobile/` in Android Studio
-2. Select the `Medium_Phone_API_36.0` emulator
-3. Run the `composeApp` Android configuration
-
-This is convenient for iterative UI work, but the CLI steps above are the canonical reproducible flow.

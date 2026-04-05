@@ -1,10 +1,55 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.gradle.api.tasks.Copy
+import org.gradle.api.tasks.Exec
+import java.io.File
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+}
+
+val androidSdkRoot = providers
+    .environmentVariable("ANDROID_SDK_ROOT")
+    .orElse(providers.environmentVariable("ANDROID_HOME"))
+    .orElse("${System.getProperty("user.home")}/Library/Android/sdk")
+
+val ndkRoot = androidSdkRoot.map { "$it/ndk/27.1.12297006" }
+val ndkPrebuiltDir = ndkRoot.map { "$it/toolchains/llvm/prebuilt/darwin-x86_64" }
+val rustAdapterDir = rootProject.file("../core/adapters/android")
+val rustTarget = "aarch64-linux-android"
+val rustApiLevel = "24"
+val rustLibName = "libradiogolha_android.so"
+val rustJniLibsRootDir = layout.buildDirectory.dir("generated/rust/jniLibs")
+val rustJniLibsDir = layout.buildDirectory.dir("generated/rust/jniLibs/arm64-v8a")
+val archiveAssetsDir = layout.buildDirectory.dir("generated/archive-assets")
+
+val syncArchiveDb by tasks.registering(Copy::class) {
+    from(rootProject.file("../database/golha_database.db"))
+    into(archiveAssetsDir)
+}
+
+val buildRustAndroid by tasks.registering(Exec::class) {
+    dependsOn(syncArchiveDb)
+    workingDir = rustAdapterDir
+
+    doFirst {
+        rustJniLibsDir.get().asFile.mkdirs()
+    }
+
+    environment("ANDROID_NDK_HOME", ndkRoot.get())
+    environment("CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER", "${ndkPrebuiltDir.get()}/bin/aarch64-linux-android${rustApiLevel}-clang")
+    environment("CC_aarch64_linux_android", "${ndkPrebuiltDir.get()}/bin/aarch64-linux-android${rustApiLevel}-clang")
+    environment("AR_aarch64_linux_android", "${ndkPrebuiltDir.get()}/bin/llvm-ar")
+    commandLine("cargo", "build", "--target", rustTarget)
+
+    doLast {
+        copy {
+            from(File(rustAdapterDir, "target/$rustTarget/debug/$rustLibName"))
+            into(rustJniLibsDir.get().asFile)
+        }
+    }
 }
 
 kotlin {
@@ -56,6 +101,9 @@ android {
         versionName = "0.1.0"
     }
 
+    sourceSets["main"].assets.srcDir(archiveAssetsDir)
+    sourceSets["main"].jniLibs.srcDir(rustJniLibsRootDir)
+
     buildFeatures {
         compose = true
     }
@@ -81,3 +129,9 @@ android {
 dependencies {
     debugImplementation(compose.uiTooling)
 }
+
+tasks.matching { it.name in setOf("mergeDebugJniLibFolders", "mergeDebugNativeLibs", "mergeDebugAssets") }
+    .configureEach {
+        dependsOn(buildRustAndroid)
+        dependsOn(syncArchiveDb)
+    }
