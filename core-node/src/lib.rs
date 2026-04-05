@@ -1,7 +1,10 @@
 use napi::Result as NapiResult;
 use napi::bindgen_prelude::Error as NapiError;
 use napi_derive::napi;
-use radiogolha_core::{LookupKind, ProgramSearchFilters, RadioGolhaCore, SearchMatchMode};
+use radiogolha_core::{
+    LookupKind, ProgramSearchFilters, ProgramSortField, RadioGolhaCore, SearchMatchMode,
+    SortDirection,
+};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize, Default)]
@@ -69,11 +72,20 @@ pub fn list_programs(
     page: i64,
     category_id: Option<i64>,
     singer_id: Option<i64>,
+    sort_field: Option<String>,
+    sort_direction: Option<String>,
 ) -> NapiResult<String> {
     let core = open_core(db_path)?;
     serialize(
         &core
-            .admin_program_list(&search, page, category_id, singer_id)
+            .admin_program_list(
+                &search,
+                page,
+                category_id,
+                singer_id,
+                ProgramSortField::from_str(sort_field.as_deref().unwrap_or("no")),
+                SortDirection::from_str(sort_direction.as_deref().unwrap_or("asc")),
+            )
             .map_err(|error| NapiError::from_reason(error.to_string()))?,
     )
 }

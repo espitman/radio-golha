@@ -1,6 +1,9 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand, ValueEnum};
-use radiogolha_core::{LookupKind, ProgramSearchFilters, RadioGolhaCore, SearchMatchMode};
+use radiogolha_core::{
+    LookupKind, ProgramSearchFilters, ProgramSortField, RadioGolhaCore, SearchMatchMode,
+    SortDirection,
+};
 use serde_json::to_string;
 
 #[derive(Debug, Parser)]
@@ -32,6 +35,10 @@ enum Command {
         category_id: Option<i64>,
         #[arg(long)]
         singer_id: Option<i64>,
+        #[arg(long, default_value = "no")]
+        sort_field: String,
+        #[arg(long, default_value = "asc")]
+        sort_direction: String,
     },
     AdminProgramDetail {
         id: i64,
@@ -170,10 +177,19 @@ fn main() -> Result<()> {
             page,
             category_id,
             singer_id,
+            sort_field,
+            sort_direction,
         } => {
             println!(
                 "{}",
-                to_string(&core.admin_program_list(&search, page, category_id, singer_id)?)?
+                to_string(&core.admin_program_list(
+                    &search,
+                    page,
+                    category_id,
+                    singer_id,
+                    ProgramSortField::from_str(&sort_field),
+                    SortDirection::from_str(&sort_direction),
+                )?)?
             );
         }
         Command::AdminProgramDetail { id } => {

@@ -6,7 +6,15 @@ const require = createRequire(import.meta.url)
 
 type NativeCoreModule = {
   dashboardOverview(dbPath: string): string
-  listPrograms(dbPath: string, search: string, page: number, categoryId?: number, singerId?: number): string
+  listPrograms(
+    dbPath: string,
+    search: string,
+    page: number,
+    categoryId?: number,
+    singerId?: number,
+    sortField?: string,
+    sortDirection?: string,
+  ): string
   getProgramDetail(dbPath: string, id: number): string
   listArtists(dbPath: string, search: string, page: number, role?: string): string
   listLookupItems(dbPath: string, kind: string, search: string, page: number): string
@@ -68,10 +76,29 @@ export class RustCoreClient {
     page?: number
     categoryId?: number
     singerId?: number
+    sortField?: 'id' | 'no' | 'sub_no' | 'title' | 'category_name'
+    sortDirection?: 'asc' | 'desc'
   }): Promise<T> {
-    const { search = '', page = 1, categoryId, singerId } = params || {}
+    const {
+      search = '',
+      page = 1,
+      categoryId,
+      singerId,
+      sortField = 'no',
+      sortDirection = 'asc',
+    } = params || {}
     return this.wrap(() =>
-      parseJson<T>(this.core.listPrograms(this.dbPath, search, page, categoryId, singerId))
+      parseJson<T>(
+        this.core.listPrograms(
+          this.dbPath,
+          search,
+          page,
+          categoryId,
+          singerId,
+          sortField,
+          sortDirection,
+        ),
+      )
     )
   }
 

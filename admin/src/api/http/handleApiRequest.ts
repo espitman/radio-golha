@@ -65,13 +65,20 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
     const page = getIntParam(url.searchParams.get('page'), 1)
     const categoryId = getIntParam(url.searchParams.get('categoryId'), 0)
     const singerId = getIntParam(url.searchParams.get('singerId'), 0)
+    const allowedSortFields = new Set(['id', 'no', 'sub_no', 'title', 'category_name'])
+    const sortField = allowedSortFields.has(url.searchParams.get('sortField') || '')
+      ? (url.searchParams.get('sortField') as 'id' | 'no' | 'sub_no' | 'title' | 'category_name')
+      : 'no'
+    const sortDirection = url.searchParams.get('sortDirection') === 'desc' ? 'desc' : 'asc'
 
     await respondWithJson(res, () =>
       listPrograms(
         search,
         page,
         categoryId || undefined,
-        singerId || undefined
+        singerId || undefined,
+        sortField,
+        sortDirection,
       )
     )
     return true

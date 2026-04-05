@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/pagination"
 import {
   Check,
+  ChevronDown,
+  ChevronUp,
   ChevronsUpDown,
   ExternalLink,
   Filter,
@@ -51,6 +53,9 @@ type ProgramsResponse = {
   activeSingerId: number | null
 }
 
+type SortField = 'id' | 'no' | 'sub_no' | 'title' | 'category_name'
+type SortDirection = 'asc' | 'desc'
+
 export const Route = createFileRoute('/programs/')({
   component: ProgramsList,
 })
@@ -72,12 +77,16 @@ function ProgramsList() {
   const [singerQuery, setSingerQuery] = useState('')
   const [singerOpen, setSingerOpen] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [sortField, setSortField] = useState<SortField>('no')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const singerBoxRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setLoading(true)
     const params = new URLSearchParams({
       page: page.toString(),
+      sortField,
+      sortDirection,
     })
     if (categoryId) params.set('categoryId', categoryId.toString())
     if (singerId) params.set('singerId', singerId.toString())
@@ -89,7 +98,7 @@ function ProgramsList() {
         setLoading(false)
       })
       .catch(() => setLoading(false))
-  }, [page, categoryId, singerId])
+  }, [page, categoryId, singerId, sortField, sortDirection])
 
   const activeCategoryTitle = useMemo(() => {
     if (!categoryId) return 'همه دسته‌ها'
@@ -117,6 +126,25 @@ function ProgramsList() {
     setPage(1)
     setSingerOpen(false)
     setSingerQuery('')
+  }
+
+  const toggleSort = (field: SortField) => {
+    setPage(1)
+    if (sortField === field) {
+      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
+      return
+    }
+    setSortField(field)
+    setSortDirection('asc')
+  }
+
+  const renderSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <ChevronsUpDown className="h-3.5 w-3.5 opacity-45" />
+    }
+    return sortDirection === 'asc'
+      ? <ChevronUp className="h-3.5 w-3.5" />
+      : <ChevronDown className="h-3.5 w-3.5" />
   }
 
   useEffect(() => {
@@ -354,11 +382,36 @@ function ProgramsList() {
             </colgroup>
             <thead className="bg-primary/[0.03]">
               <tr>
-                <th className="w-[96px] px-5 py-4 text-center text-[11px] font-black text-primary"><Hash className="mx-auto h-3.5 w-3.5" /></th>
-                <th className="w-[120px] whitespace-nowrap px-3 py-4 text-center text-[11px] font-black text-primary">شماره برنامه</th>
-                <th className="w-[120px] whitespace-nowrap px-3 py-4 text-center text-[11px] font-black text-primary">ساب‌نامبر</th>
-                <th className="px-5 py-4 text-right text-[11px] font-black text-primary">عنوان برنامه</th>
-                <th className="w-[140px] px-5 py-4 text-center text-[11px] font-black text-primary">دسته</th>
+                <th className="w-[96px] px-5 py-4 text-center text-[11px] font-black text-primary">
+                  <button type="button" onClick={() => toggleSort('id')} className="inline-flex items-center justify-center gap-1.5">
+                    <Hash className="h-3.5 w-3.5" />
+                    {renderSortIcon('id')}
+                  </button>
+                </th>
+                <th className="w-[120px] whitespace-nowrap px-3 py-4 text-center text-[11px] font-black text-primary">
+                  <button type="button" onClick={() => toggleSort('no')} className="inline-flex items-center justify-center gap-1.5">
+                    <span>شماره برنامه</span>
+                    {renderSortIcon('no')}
+                  </button>
+                </th>
+                <th className="w-[120px] whitespace-nowrap px-3 py-4 text-center text-[11px] font-black text-primary">
+                  <button type="button" onClick={() => toggleSort('sub_no')} className="inline-flex items-center justify-center gap-1.5">
+                    <span>ساب‌نامبر</span>
+                    {renderSortIcon('sub_no')}
+                  </button>
+                </th>
+                <th className="px-5 py-4 text-right text-[11px] font-black text-primary">
+                  <button type="button" onClick={() => toggleSort('title')} className="inline-flex items-center gap-1.5">
+                    {renderSortIcon('title')}
+                    <span>عنوان برنامه</span>
+                  </button>
+                </th>
+                <th className="w-[140px] px-5 py-4 text-center text-[11px] font-black text-primary">
+                  <button type="button" onClick={() => toggleSort('category_name')} className="inline-flex items-center justify-center gap-1.5">
+                    <span>دسته</span>
+                    {renderSortIcon('category_name')}
+                  </button>
+                </th>
                 <th className="w-[96px] px-5 py-4 text-center text-[11px] font-black text-primary">مشاهده</th>
               </tr>
             </thead>

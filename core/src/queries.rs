@@ -27,6 +27,44 @@ pub enum LookupKind {
     Modes,
 }
 
+#[derive(Debug, Clone, Copy, Default)]
+pub enum ProgramSortField {
+    Id,
+    #[default]
+    No,
+    SubNo,
+    Title,
+    CategoryName,
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub enum SortDirection {
+    #[default]
+    Asc,
+    Desc,
+}
+
+impl ProgramSortField {
+    pub fn from_str(value: &str) -> Self {
+        match value {
+            "id" => Self::Id,
+            "sub_no" => Self::SubNo,
+            "title" => Self::Title,
+            "category_name" => Self::CategoryName,
+            _ => Self::No,
+        }
+    }
+}
+
+impl SortDirection {
+    pub fn from_str(value: &str) -> Self {
+        match value {
+            "desc" => Self::Desc,
+            _ => Self::Asc,
+        }
+    }
+}
+
 impl LookupKind {
     fn table_name(self) -> &'static str {
         match self {
@@ -372,12 +410,26 @@ impl RadioGolhaCore {
         page: i64,
         category_id: Option<i64>,
         singer_id: Option<i64>,
+        sort_field: ProgramSortField,
+        sort_direction: SortDirection,
         limit: i64,
     ) -> CoreResult<Vec<ProgramListItem>> {
         let page = page.max(1);
         let offset = (page - 1) * limit.max(1);
         let escaped_search = format!("%{}%", search.trim());
-        let mut stmt = self.connection().prepare(
+        let order_by = match (sort_field, sort_direction) {
+            (ProgramSortField::Id, SortDirection::Asc) => "p.id ASC",
+            (ProgramSortField::Id, SortDirection::Desc) => "p.id DESC",
+            (ProgramSortField::No, SortDirection::Asc) => "p.no ASC, COALESCE(p.sub_no, '') ASC, p.id ASC",
+            (ProgramSortField::No, SortDirection::Desc) => "p.no DESC, COALESCE(p.sub_no, '') DESC, p.id DESC",
+            (ProgramSortField::SubNo, SortDirection::Asc) => "COALESCE(p.sub_no, '') ASC, p.no ASC, p.id ASC",
+            (ProgramSortField::SubNo, SortDirection::Desc) => "COALESCE(p.sub_no, '') DESC, p.no DESC, p.id DESC",
+            (ProgramSortField::Title, SortDirection::Asc) => "p.title COLLATE NOCASE ASC, p.id ASC",
+            (ProgramSortField::Title, SortDirection::Desc) => "p.title COLLATE NOCASE DESC, p.id DESC",
+            (ProgramSortField::CategoryName, SortDirection::Asc) => "c.title_fa COLLATE NOCASE ASC, p.no ASC, p.id ASC",
+            (ProgramSortField::CategoryName, SortDirection::Desc) => "c.title_fa COLLATE NOCASE DESC, p.no DESC, p.id DESC",
+        };
+        let sql = format!(
             "
             SELECT p.id, p.title, c.title_fa, p.no, p.sub_no
             FROM program p
@@ -392,10 +444,11 @@ impl RadioGolhaCore {
                   WHERE ps.program_id = p.id AND ps.singer_id = ?4
                 )
               )
-            ORDER BY p.no ASC, COALESCE(p.sub_no, '') ASC, p.id ASC
+            ORDER BY {order_by}
             LIMIT ?5 OFFSET ?6
-            ",
-        )?;
+            "
+        );
+        let mut stmt = self.connection().prepare(&sql)?;
 
         let rows = stmt.query_map(
             params![search.trim(), escaped_search, category_id, singer_id, limit.max(1), offset],
@@ -430,6 +483,8 @@ impl RadioGolhaCore {
         page: i64,
         category_id: Option<i64>,
         singer_id: Option<i64>,
+        sort_field: ProgramSortField,
+        sort_direction: SortDirection,
     ) -> CoreResult<ProgramListResponse> {
         let limit = 24_i64;
         let safe_page = page.max(1);
@@ -437,7 +492,15 @@ impl RadioGolhaCore {
         let total_pages = ((total + limit - 1) / limit).max(1);
 
         Ok(ProgramListResponse {
-            rows: self.list_programs_filtered(search, safe_page, category_id, singer_id, limit)?,
+            rows: self.list_programs_filtered(
+                search,
+                safe_page,
+                category_id,
+                singer_id,
+                sort_field,
+                sort_direction,
+                limit,
+            )?,
             categories: self.program_categories()?,
             singers: self.program_singers()?,
             total,
