@@ -214,6 +214,18 @@ Returns either:
       "orchestraLeaders": [],
       "performers": []
     }
+  ],
+  "transcript": [
+    {
+      "segment_order": 1,
+      "verse_order": 1,
+      "text": "چشم بگشا که جلوه دلدار..."
+    },
+    {
+      "segment_order": 1,
+      "verse_order": 2,
+      "text": "این تماشا چو بنگری..."
+    }
   ]
 }
 ```
@@ -229,6 +241,20 @@ Inside `timeline`, the field is:
 - `orchestraLeaders`
 
 This asymmetry is intentional because the current Admin UI already depends on these names.
+
+### Transcript note
+
+The top-level `ProgramDetail` payload now also includes:
+
+- `transcript`
+
+This field is an ordered array of verse rows and intentionally keeps the database naming:
+
+- `segment_order`
+- `verse_order`
+- `text`
+
+The Admin UI uses this payload to render the transcript section below the metadata and timeline panels.
 
 ## 4. Artists List
 

@@ -211,6 +211,11 @@ export const API_ENDPOINTS: ApiEndpointContract[] = [
     orchestraLeaders: Array<{ orchestra: string; name: string }>
     performers: Array<{ name: string; instrument: string | null }>
   }>
+  transcript: Array<{
+    segment_order: number
+    verse_order: number
+    text: string
+  }>
 } | null`,
     requestExample: `GET /api/program/1251`,
     responseExample: `{
@@ -219,6 +224,18 @@ export const API_ENDPOINTS: ApiEndpointContract[] = [
   "category_name": "Colorful Flowers",
   "orchestra_leaders": [
     { "orchestra": "Golha Orchestra", "name": "Sample Conductor" }
+  ],
+  "transcript": [
+    {
+      "segment_order": 1,
+      "verse_order": 1,
+      "text": "Sample verse line one"
+    },
+    {
+      "segment_order": 1,
+      "verse_order": 2,
+      "text": "Sample verse line two"
+    }
   ]
 }`,
   },
