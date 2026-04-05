@@ -16,6 +16,17 @@ def fa_to_en_digits(text):
     nums_only = re.sub(r'[^\d۰-۹]', '', str(text))
     return int(nums_only.translate(mapping)) if nums_only else 0
 
+def normalize_search_text(text):
+    if text is None:
+        return ''
+    text = str(text)
+    text = text.replace('ي', 'ی').replace('ك', 'ک').replace('ؤ', 'و').replace('إ', 'ا').replace('أ', 'ا').replace('ۀ', 'ه')
+    text = re.sub(r'[\u064B-\u065F\u0670\u06D6-\u06ED]', '', text)
+    text = re.sub(r'[^\w\s\u0600-\u06FF]', ' ', text, flags=re.UNICODE)
+    text = re.sub(r'[_]+', ' ', text)
+    text = re.sub(r'\s+', ' ', text)
+    return text.strip().lower()
+
 db_path = 'database/golha_database.db'
 if os.path.exists(db_path): os.remove(db_path)
 if not os.path.exists('database'): os.makedirs('database')
@@ -66,6 +77,12 @@ CREATE TABLE program_transcript_verses (
     verse_order INTEGER,
     text TEXT NOT NULL,
     FOREIGN KEY(program_id) REFERENCES program(id)
+);
+
+CREATE VIRTUAL TABLE program_transcript_fts USING fts5(
+    program_id UNINDEXED,
+    content,
+    tokenize = 'unicode61 remove_diacritics 2'
 );
 ''')
 
@@ -260,6 +277,17 @@ for en_key, p_list in categories_dict.items():
                         (pid, segment_index, verse_index, verse_text),
                     )
 
+cursor.execute("""
+    SELECT program_id, GROUP_CONCAT(text, ' ')
+    FROM program_transcript_verses
+    GROUP BY program_id
+""")
+for program_id, transcript_text in cursor.fetchall():
+    cursor.execute(
+        "INSERT INTO program_transcript_fts (program_id, content) VALUES (?, ?)",
+        (program_id, normalize_search_text(transcript_text)),
+    )
+
 conn.commit()
 conn.close()
-print("Granular DB v5.3 - Transcript verses imported.")
+print("Granular DB v5.4 - Transcript FTS index built.")

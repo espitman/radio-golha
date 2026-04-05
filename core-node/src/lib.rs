@@ -1,7 +1,7 @@
 use napi::Result as NapiResult;
 use napi::bindgen_prelude::Error as NapiError;
 use napi_derive::napi;
-use radiogolha_core::{LookupKind, RadioGolhaCore};
+use radiogolha_core::{LookupKind, ProgramSearchFilters, RadioGolhaCore};
 
 fn open_core(db_path: String) -> NapiResult<RadioGolhaCore> {
     RadioGolhaCore::open(db_path).map_err(|error| NapiError::from_reason(error.to_string()))
@@ -69,6 +69,56 @@ pub fn list_lookup_items(db_path: String, kind: String, search: String, page: i6
     serialize(
         &core
             .admin_lookup_list(kind, &search, page)
+            .map_err(|error| NapiError::from_reason(error.to_string()))?,
+    )
+}
+
+#[napi(js_name = "getProgramSearchOptions")]
+pub fn get_program_search_options(db_path: String) -> NapiResult<String> {
+    let core = open_core(db_path)?;
+    serialize(
+        &core
+            .program_search_options()
+            .map_err(|error| NapiError::from_reason(error.to_string()))?,
+    )
+}
+
+#[napi(js_name = "searchPrograms")]
+#[allow(clippy::too_many_arguments)]
+pub fn search_programs(
+    db_path: String,
+    transcript_query: Option<String>,
+    page: i64,
+    category_ids: Vec<i64>,
+    mode_ids: Vec<i64>,
+    orchestra_ids: Vec<i64>,
+    instrument_ids: Vec<i64>,
+    singer_ids: Vec<i64>,
+    poet_ids: Vec<i64>,
+    announcer_ids: Vec<i64>,
+    composer_ids: Vec<i64>,
+    arranger_ids: Vec<i64>,
+    performer_ids: Vec<i64>,
+    orchestra_leader_ids: Vec<i64>,
+) -> NapiResult<String> {
+    let core = open_core(db_path)?;
+    let filters = ProgramSearchFilters {
+        transcript_query: transcript_query.filter(|value| !value.trim().is_empty()),
+        category_ids,
+        mode_ids,
+        orchestra_ids,
+        instrument_ids,
+        singer_ids,
+        poet_ids,
+        announcer_ids,
+        composer_ids,
+        arranger_ids,
+        performer_ids,
+        orchestra_leader_ids,
+    };
+    serialize(
+        &core
+            .admin_program_search(&filters, page)
             .map_err(|error| NapiError::from_reason(error.to_string()))?,
     )
 }

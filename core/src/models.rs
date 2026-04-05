@@ -41,6 +41,12 @@ pub struct CategoryOption {
 }
 
 #[derive(Debug, Clone, Serialize)]
+pub struct SearchOption {
+    pub id: i64,
+    pub name: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub struct SingerOption {
     pub id: i64,
     pub name: String,
@@ -120,6 +126,31 @@ pub struct ProgramListResponse {
     pub total_pages: i64,
     pub active_category_id: Option<i64>,
     pub active_singer_id: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProgramSearchOptions {
+    pub categories: Vec<CategoryOption>,
+    pub singers: Vec<SearchOption>,
+    pub poets: Vec<SearchOption>,
+    pub announcers: Vec<SearchOption>,
+    pub composers: Vec<SearchOption>,
+    pub arrangers: Vec<SearchOption>,
+    pub performers: Vec<SearchOption>,
+    pub orchestra_leaders: Vec<SearchOption>,
+    pub modes: Vec<SearchOption>,
+    pub orchestras: Vec<SearchOption>,
+    pub instruments: Vec<SearchOption>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProgramSearchResponse {
+    pub rows: Vec<ProgramListItem>,
+    pub total: i64,
+    pub page: i64,
+    pub total_pages: i64,
 }
 
 #[derive(Debug, Clone, Serialize)]

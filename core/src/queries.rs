@@ -1,4 +1,5 @@
-use rusqlite::{OptionalExtension, params};
+use rusqlite::{OptionalExtension, params, params_from_iter, types::Value};
+use std::borrow::Cow;
 
 use crate::{
     db::RadioGolhaCore,
@@ -7,7 +8,8 @@ use crate::{
         ArtistListItem, ArtistListResponse, ArtistStats, CategoryOption, CategoryStat,
         DashboardOverview, DashboardSummary, LookupListItem, LookupListResponse, LookupStats,
         OrchestraLeaderCredit, PerformerCredit, ProgramDetail, ProgramListItem, ProgramListResponse,
-        RankedNameStat, SingerOption, TimelineSegment, TranscriptVerse,
+        ProgramSearchOptions, ProgramSearchResponse, RankedNameStat, SearchOption, SingerOption,
+        TimelineSegment, TranscriptVerse,
     },
 };
 
@@ -40,6 +42,76 @@ impl LookupKind {
             }
         }
     }
+}
+
+fn normalize_search_text(text: &str) -> String {
+    let replaced = text
+        .replace('ي', "ی")
+        .replace('ك', "ک")
+        .replace('ؤ', "و")
+        .replace(['إ', 'أ'], "ا")
+        .replace('ۀ', "ه");
+
+    let mut out = String::with_capacity(replaced.len());
+    let mut last_was_space = true;
+
+    for ch in replaced.chars() {
+        let mapped: Cow<'_, str> = match ch {
+            '\u{064B}'..='\u{065F}' | '\u{0670}' | '\u{06D6}'..='\u{06ED}' => Cow::Borrowed(""),
+            c if c.is_whitespace() => Cow::Borrowed(" "),
+            c if c.is_alphanumeric() || ('\u{0600}'..='\u{06FF}').contains(&c) => Cow::Owned(c.to_lowercase().collect()),
+            _ => Cow::Borrowed(" "),
+        };
+
+        for mapped_char in mapped.chars() {
+            if mapped_char == ' ' {
+                if !last_was_space {
+                    out.push(' ');
+                }
+                last_was_space = true;
+            } else {
+                out.push(mapped_char);
+                last_was_space = false;
+            }
+        }
+    }
+
+    out.trim().to_string()
+}
+
+fn build_fts_query(search: &str) -> Option<String> {
+    let normalized = normalize_search_text(search);
+    if normalized.is_empty() {
+        return None;
+    }
+
+    let tokens = normalized
+        .split_whitespace()
+        .filter(|token| !token.is_empty())
+        .map(|token| format!("\"{}\"*", token.replace('"', "")))
+        .collect::<Vec<_>>();
+
+    if tokens.is_empty() {
+        None
+    } else {
+        Some(tokens.join(" AND "))
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct ProgramSearchFilters {
+    pub transcript_query: Option<String>,
+    pub category_ids: Vec<i64>,
+    pub mode_ids: Vec<i64>,
+    pub orchestra_ids: Vec<i64>,
+    pub instrument_ids: Vec<i64>,
+    pub singer_ids: Vec<i64>,
+    pub poet_ids: Vec<i64>,
+    pub announcer_ids: Vec<i64>,
+    pub composer_ids: Vec<i64>,
+    pub arranger_ids: Vec<i64>,
+    pub performer_ids: Vec<i64>,
+    pub orchestra_leader_ids: Vec<i64>,
 }
 
 impl RadioGolhaCore {
@@ -357,6 +429,297 @@ impl RadioGolhaCore {
             active_category_id: category_id,
             active_singer_id: singer_id,
         })
+    }
+
+    pub fn program_search_options(&self) -> CoreResult<ProgramSearchOptions> {
+        Ok(ProgramSearchOptions {
+            categories: self.program_categories()?,
+            singers: self.search_option_list(
+                "
+                SELECT DISTINCT s.id, a.name
+                FROM singer s
+                JOIN artist a ON a.id = s.artist_id
+                JOIN program_singers ps ON ps.singer_id = s.id
+                ORDER BY a.name ASC
+                ",
+            )?,
+            poets: self.search_option_list(
+                "
+                SELECT DISTINCT p.id, a.name
+                FROM poet p
+                JOIN artist a ON a.id = p.artist_id
+                JOIN program_poets pp ON pp.poet_id = p.id
+                ORDER BY a.name ASC
+                ",
+            )?,
+            announcers: self.search_option_list(
+                "
+                SELECT DISTINCT an.id, a.name
+                FROM announcer an
+                JOIN artist a ON a.id = an.artist_id
+                JOIN program_announcers pa ON pa.announcer_id = an.id
+                ORDER BY a.name ASC
+                ",
+            )?,
+            composers: self.search_option_list(
+                "
+                SELECT DISTINCT c.id, a.name
+                FROM composer c
+                JOIN artist a ON a.id = c.artist_id
+                JOIN program_composers pc ON pc.composer_id = c.id
+                ORDER BY a.name ASC
+                ",
+            )?,
+            arrangers: self.search_option_list(
+                "
+                SELECT DISTINCT ar.id, a.name
+                FROM arranger ar
+                JOIN artist a ON a.id = ar.artist_id
+                JOIN program_arrangers pa ON pa.arranger_id = ar.id
+                ORDER BY a.name ASC
+                ",
+            )?,
+            performers: self.search_option_list(
+                "
+                SELECT DISTINCT p.id, a.name
+                FROM performer p
+                JOIN artist a ON a.id = p.artist_id
+                JOIN program_performers pp ON pp.performer_id = p.id
+                ORDER BY a.name ASC
+                ",
+            )?,
+            orchestra_leaders: self.search_option_list(
+                "
+                SELECT DISTINCT ol.id, a.name
+                FROM orchestra_leader ol
+                JOIN artist a ON a.id = ol.artist_id
+                JOIN program_orchestra_leaders pol ON pol.orchestra_leader_id = ol.id
+                ORDER BY a.name ASC
+                ",
+            )?,
+            modes: self.search_option_list(
+                "
+                SELECT DISTINCT m.id, m.name
+                FROM mode m
+                JOIN program_modes pm ON pm.mode_id = m.id
+                ORDER BY m.name ASC
+                ",
+            )?,
+            orchestras: self.search_option_list(
+                "
+                SELECT DISTINCT o.id, o.name
+                FROM orchestra o
+                JOIN program_orchestras po ON po.orchestra_id = o.id
+                ORDER BY o.name ASC
+                ",
+            )?,
+            instruments: self.search_option_list(
+                "
+                SELECT DISTINCT i.id, i.name
+                FROM instrument i
+                JOIN program_performers pp ON pp.instrument_id = i.id
+                ORDER BY i.name ASC
+                ",
+            )?,
+        })
+    }
+
+    pub fn admin_program_search(
+        &self,
+        filters: &ProgramSearchFilters,
+        page: i64,
+    ) -> CoreResult<ProgramSearchResponse> {
+        let limit = 24_i64;
+        let safe_page = page.max(1);
+        let total = self.count_program_search(filters)?;
+        let total_pages = ((total + limit - 1) / limit).max(1);
+
+        Ok(ProgramSearchResponse {
+            rows: self.list_program_search_rows(filters, safe_page, limit)?,
+            total,
+            page: safe_page,
+            total_pages,
+        })
+    }
+
+    fn search_option_list(&self, sql: &str) -> CoreResult<Vec<SearchOption>> {
+        let mut stmt = self.connection().prepare(sql)?;
+        let rows = stmt.query_map([], |row| {
+            Ok(SearchOption {
+                id: row.get(0)?,
+                name: row.get(1)?,
+            })
+        })?;
+
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    fn build_program_search_sql(
+        &self,
+        filters: &ProgramSearchFilters,
+        include_ordering: bool,
+    ) -> (String, Vec<Value>) {
+        let mut sql = String::from(
+            "
+            SELECT p.id, p.title, c.title_fa, p.no, p.sub_no
+            FROM program p
+            JOIN category c ON p.category_id = c.id
+            WHERE 1=1
+            ",
+        );
+        let mut params: Vec<Value> = Vec::new();
+
+        if let Some(query) = filters.transcript_query.as_ref().and_then(|value| build_fts_query(value)) {
+            sql.push_str(
+                "
+                AND EXISTS (
+                  SELECT 1
+                  FROM program_transcript_fts ptf
+                  WHERE ptf.program_id = p.id AND ptf.content MATCH ?
+                )
+                ",
+            );
+            params.push(Value::Text(query));
+        }
+
+        self.append_id_filters(
+            &mut sql,
+            &mut params,
+            &filters.category_ids,
+            |idx| format!("AND p.category_id = ? /* category {idx} */ "),
+        );
+        self.append_exists_filters(
+            &mut sql,
+            &mut params,
+            &filters.mode_ids,
+            "SELECT 1 FROM program_modes pm WHERE pm.program_id = p.id AND pm.mode_id = ?",
+        );
+        self.append_exists_filters(
+            &mut sql,
+            &mut params,
+            &filters.orchestra_ids,
+            "SELECT 1 FROM program_orchestras po WHERE po.program_id = p.id AND po.orchestra_id = ?",
+        );
+        self.append_exists_filters(
+            &mut sql,
+            &mut params,
+            &filters.instrument_ids,
+            "SELECT 1 FROM program_performers pp WHERE pp.program_id = p.id AND pp.instrument_id = ?",
+        );
+        self.append_exists_filters(
+            &mut sql,
+            &mut params,
+            &filters.singer_ids,
+            "SELECT 1 FROM program_singers ps WHERE ps.program_id = p.id AND ps.singer_id = ?",
+        );
+        self.append_exists_filters(
+            &mut sql,
+            &mut params,
+            &filters.poet_ids,
+            "SELECT 1 FROM program_poets pp WHERE pp.program_id = p.id AND pp.poet_id = ?",
+        );
+        self.append_exists_filters(
+            &mut sql,
+            &mut params,
+            &filters.announcer_ids,
+            "SELECT 1 FROM program_announcers pa WHERE pa.program_id = p.id AND pa.announcer_id = ?",
+        );
+        self.append_exists_filters(
+            &mut sql,
+            &mut params,
+            &filters.composer_ids,
+            "SELECT 1 FROM program_composers pc WHERE pc.program_id = p.id AND pc.composer_id = ?",
+        );
+        self.append_exists_filters(
+            &mut sql,
+            &mut params,
+            &filters.arranger_ids,
+            "SELECT 1 FROM program_arrangers pa WHERE pa.program_id = p.id AND pa.arranger_id = ?",
+        );
+        self.append_exists_filters(
+            &mut sql,
+            &mut params,
+            &filters.performer_ids,
+            "SELECT 1 FROM program_performers pp WHERE pp.program_id = p.id AND pp.performer_id = ?",
+        );
+        self.append_exists_filters(
+            &mut sql,
+            &mut params,
+            &filters.orchestra_leader_ids,
+            "SELECT 1 FROM program_orchestra_leaders pol WHERE pol.program_id = p.id AND pol.orchestra_leader_id = ?",
+        );
+
+        if include_ordering {
+            sql.push_str(" ORDER BY p.no ASC, COALESCE(p.sub_no, '') ASC, p.id ASC ");
+        }
+
+        (sql, params)
+    }
+
+    fn append_exists_filters(
+        &self,
+        sql: &mut String,
+        params: &mut Vec<Value>,
+        ids: &[i64],
+        exists_sql: &str,
+    ) {
+        for id in ids {
+            sql.push_str(" AND EXISTS (");
+            sql.push_str(exists_sql);
+            sql.push(')');
+            params.push(Value::Integer(*id));
+        }
+    }
+
+    fn append_id_filters<F>(
+        &self,
+        sql: &mut String,
+        params: &mut Vec<Value>,
+        ids: &[i64],
+        fragment: F,
+    ) where
+        F: Fn(usize) -> String,
+    {
+        for (index, id) in ids.iter().enumerate() {
+            sql.push_str(&fragment(index));
+            params.push(Value::Integer(*id));
+        }
+    }
+
+    fn count_program_search(&self, filters: &ProgramSearchFilters) -> CoreResult<i64> {
+        let (base_sql, params) = self.build_program_search_sql(filters, false);
+        let sql = format!("SELECT COUNT(*) FROM ({base_sql}) filtered");
+        let total = self
+            .connection()
+            .query_row(&sql, params_from_iter(params.iter()), |row| row.get(0))?;
+        Ok(total)
+    }
+
+    fn list_program_search_rows(
+        &self,
+        filters: &ProgramSearchFilters,
+        page: i64,
+        limit: i64,
+    ) -> CoreResult<Vec<ProgramListItem>> {
+        let page = page.max(1);
+        let offset = (page - 1) * limit.max(1);
+        let (mut sql, mut params) = self.build_program_search_sql(filters, true);
+        sql.push_str(" LIMIT ? OFFSET ? ");
+        params.push(Value::Integer(limit.max(1)));
+        params.push(Value::Integer(offset));
+
+        let mut stmt = self.connection().prepare(&sql)?;
+        let rows = stmt.query_map(params_from_iter(params.iter()), |row| {
+            Ok(ProgramListItem {
+                id: row.get(0)?,
+                title: row.get(1)?,
+                category_name: row.get(2)?,
+                no: row.get(3)?,
+                sub_no: row.get(4)?,
+            })
+        })?;
+
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 
     pub fn artist_stats(&self) -> CoreResult<ArtistStats> {

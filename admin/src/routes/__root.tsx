@@ -40,6 +40,7 @@ import '../styles.css'
 
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: 'داشبورد', path: '/' },
+  { icon: Search, label: 'جست‌وجو', path: '/search' },
   { icon: Music2, label: 'برنامه‌ها', path: '/programs' },
   { icon: Users, label: 'هنرمندان', path: '/artists' },
   { icon: Drum, label: 'ارکسترها', path: '/orchestras' },

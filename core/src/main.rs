@@ -1,6 +1,6 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand, ValueEnum};
-use radiogolha_core::{LookupKind, RadioGolhaCore};
+use radiogolha_core::{LookupKind, ProgramSearchFilters, RadioGolhaCore};
 use serde_json::to_string;
 
 #[derive(Debug, Parser)]
@@ -51,6 +51,35 @@ enum Command {
         search: String,
         #[arg(long, default_value_t = 1)]
         page: i64,
+    },
+    AdminProgramSearchOptions,
+    AdminProgramSearch {
+        #[arg(long)]
+        transcript_query: Option<String>,
+        #[arg(long, default_value_t = 1)]
+        page: i64,
+        #[arg(long, value_delimiter = ',')]
+        category_ids: Vec<i64>,
+        #[arg(long, value_delimiter = ',')]
+        mode_ids: Vec<i64>,
+        #[arg(long, value_delimiter = ',')]
+        orchestra_ids: Vec<i64>,
+        #[arg(long, value_delimiter = ',')]
+        instrument_ids: Vec<i64>,
+        #[arg(long, value_delimiter = ',')]
+        singer_ids: Vec<i64>,
+        #[arg(long, value_delimiter = ',')]
+        poet_ids: Vec<i64>,
+        #[arg(long, value_delimiter = ',')]
+        announcer_ids: Vec<i64>,
+        #[arg(long, value_delimiter = ',')]
+        composer_ids: Vec<i64>,
+        #[arg(long, value_delimiter = ',')]
+        arranger_ids: Vec<i64>,
+        #[arg(long, value_delimiter = ',')]
+        performer_ids: Vec<i64>,
+        #[arg(long, value_delimiter = ',')]
+        orchestra_leader_ids: Vec<i64>,
     },
     ProgramDetail {
         id: i64,
@@ -126,6 +155,40 @@ fn main() -> Result<()> {
                 "{}",
                 to_string(&core.admin_lookup_list(kind.into(), &search, page)?)?
             );
+        }
+        Command::AdminProgramSearchOptions => {
+            println!("{}", to_string(&core.program_search_options()?)?);
+        }
+        Command::AdminProgramSearch {
+            transcript_query,
+            page,
+            category_ids,
+            mode_ids,
+            orchestra_ids,
+            instrument_ids,
+            singer_ids,
+            poet_ids,
+            announcer_ids,
+            composer_ids,
+            arranger_ids,
+            performer_ids,
+            orchestra_leader_ids,
+        } => {
+            let filters = ProgramSearchFilters {
+                transcript_query,
+                category_ids,
+                mode_ids,
+                orchestra_ids,
+                instrument_ids,
+                singer_ids,
+                poet_ids,
+                announcer_ids,
+                composer_ids,
+                arranger_ids,
+                performer_ids,
+                orchestra_leader_ids,
+            };
+            println!("{}", to_string(&core.admin_program_search(&filters, page)?)?);
         }
         Command::ProgramDetail { id } => {
             println!("{:#?}", core.get_program_detail(id)?);

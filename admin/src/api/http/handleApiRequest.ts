@@ -3,7 +3,8 @@ import { listArtists } from '../services/ArtistService'
 import { getDashboardOverview } from '../services/DashboardService'
 import { listLookupItems } from '../services/LookupService'
 import { getProgramDetail, listPrograms } from '../services/ProgramService'
-import { getIntParam, respondWithJson } from './httpUtils'
+import { getProgramSearchOptions, searchPrograms } from '../services/SearchService'
+import { getIntListParam, getIntParam, respondWithJson } from './httpUtils'
 
 type IncomingMessage = {
   method?: string
@@ -17,6 +18,35 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
 
   if (req.method === 'GET' && url.pathname === '/api/dashboard') {
     await respondWithJson(res, () => getDashboardOverview())
+    return true
+  }
+
+  if (req.method === 'GET' && url.pathname === '/api/program-search/options') {
+    await respondWithJson(res, () => getProgramSearchOptions())
+    return true
+  }
+
+  if (req.method === 'GET' && url.pathname === '/api/program-search') {
+    const page = getIntParam(url.searchParams.get('page'), 1)
+    const transcriptQuery = url.searchParams.get('transcriptQuery') || undefined
+
+    await respondWithJson(res, () =>
+      searchPrograms({
+        page,
+        transcriptQuery,
+        categoryIds: getIntListParam(url.searchParams.get('categoryIds')),
+        modeIds: getIntListParam(url.searchParams.get('modeIds')),
+        orchestraIds: getIntListParam(url.searchParams.get('orchestraIds')),
+        instrumentIds: getIntListParam(url.searchParams.get('instrumentIds')),
+        singerIds: getIntListParam(url.searchParams.get('singerIds')),
+        poetIds: getIntListParam(url.searchParams.get('poetIds')),
+        announcerIds: getIntListParam(url.searchParams.get('announcerIds')),
+        composerIds: getIntListParam(url.searchParams.get('composerIds')),
+        arrangerIds: getIntListParam(url.searchParams.get('arrangerIds')),
+        performerIds: getIntListParam(url.searchParams.get('performerIds')),
+        orchestraLeaderIds: getIntListParam(url.searchParams.get('orchestraLeaderIds')),
+      }),
+    )
     return true
   }
 

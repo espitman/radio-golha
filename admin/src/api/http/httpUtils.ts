@@ -15,6 +15,14 @@ export function getIntParam(value: string | null, fallback: number) {
   return Number.isFinite(parsed) ? parsed : fallback
 }
 
+export function getIntListParam(value: string | null) {
+  if (!value) return []
+  return value
+    .split(',')
+    .map((item) => Number.parseInt(item.trim(), 10))
+    .filter((item) => Number.isFinite(item) && item > 0)
+}
+
 export async function respondWithJson(
   res: ServerResponse,
   loader: () => Promise<unknown>,

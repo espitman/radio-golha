@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SearchIndexRouteImport } from './routes/search/index'
 import { Route as ProgramsIndexRouteImport } from './routes/programs/index'
 import { Route as OrchestrasIndexRouteImport } from './routes/orchestras/index'
 import { Route as ModesIndexRouteImport } from './routes/modes/index'
@@ -28,6 +29,11 @@ const AboutRoute = AboutRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchIndexRoute = SearchIndexRouteImport.update({
+  id: '/search/',
+  path: '/search/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProgramsIndexRoute = ProgramsIndexRouteImport.update({
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/modes/': typeof ModesIndexRoute
   '/orchestras/': typeof OrchestrasIndexRoute
   '/programs/': typeof ProgramsIndexRoute
+  '/search/': typeof SearchIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/modes': typeof ModesIndexRoute
   '/orchestras': typeof OrchestrasIndexRoute
   '/programs': typeof ProgramsIndexRoute
+  '/search': typeof SearchIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   '/modes/': typeof ModesIndexRoute
   '/orchestras/': typeof OrchestrasIndexRoute
   '/programs/': typeof ProgramsIndexRoute
+  '/search/': typeof SearchIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
     | '/modes/'
     | '/orchestras/'
     | '/programs/'
+    | '/search/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/modes'
     | '/orchestras'
     | '/programs'
+    | '/search'
   id:
     | '__root__'
     | '/'
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | '/modes/'
     | '/orchestras/'
     | '/programs/'
+    | '/search/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -158,6 +170,7 @@ export interface RootRouteChildren {
   ModesIndexRoute: typeof ModesIndexRoute
   OrchestrasIndexRoute: typeof OrchestrasIndexRoute
   ProgramsIndexRoute: typeof ProgramsIndexRoute
+  SearchIndexRoute: typeof SearchIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -174,6 +187,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search/': {
+      id: '/search/'
+      path: '/search'
+      fullPath: '/search/'
+      preLoaderRoute: typeof SearchIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/programs/': {
@@ -246,6 +266,7 @@ const rootRouteChildren: RootRouteChildren = {
   ModesIndexRoute: ModesIndexRoute,
   OrchestrasIndexRoute: OrchestrasIndexRoute,
   ProgramsIndexRoute: ProgramsIndexRoute,
+  SearchIndexRoute: SearchIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

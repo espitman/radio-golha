@@ -9,6 +9,23 @@ type NativeCoreModule = {
   getProgramDetail(dbPath: string, id: number): string
   listArtists(dbPath: string, search: string, page: number, role?: string): string
   listLookupItems(dbPath: string, kind: string, search: string, page: number): string
+  getProgramSearchOptions(dbPath: string): string
+  searchPrograms(
+    dbPath: string,
+    transcriptQuery: string | undefined,
+    page: number,
+    categoryIds: number[],
+    modeIds: number[],
+    orchestraIds: number[],
+    instrumentIds: number[],
+    singerIds: number[],
+    poetIds: number[],
+    announcerIds: number[],
+    composerIds: number[],
+    arrangerIds: number[],
+    performerIds: number[],
+    orchestraLeaderIds: number[],
+  ): string
 }
 
 export type LookupKind = 'orchestras' | 'instruments' | 'modes'
@@ -72,6 +89,63 @@ export class RustCoreClient {
   }): Promise<T> {
     const { search = '', page = 1 } = params || {}
     return this.wrap(() => parseJson<T>(this.core.listLookupItems(this.dbPath, kind, search, page)))
+  }
+
+  async getProgramSearchOptions<T>(): Promise<T> {
+    return this.wrap(() => parseJson<T>(this.core.getProgramSearchOptions(this.dbPath)))
+  }
+
+  async searchPrograms<T>(params?: {
+    transcriptQuery?: string
+    page?: number
+    categoryIds?: number[]
+    modeIds?: number[]
+    orchestraIds?: number[]
+    instrumentIds?: number[]
+    singerIds?: number[]
+    poetIds?: number[]
+    announcerIds?: number[]
+    composerIds?: number[]
+    arrangerIds?: number[]
+    performerIds?: number[]
+    orchestraLeaderIds?: number[]
+  }): Promise<T> {
+    const {
+      transcriptQuery,
+      page = 1,
+      categoryIds = [],
+      modeIds = [],
+      orchestraIds = [],
+      instrumentIds = [],
+      singerIds = [],
+      poetIds = [],
+      announcerIds = [],
+      composerIds = [],
+      arrangerIds = [],
+      performerIds = [],
+      orchestraLeaderIds = [],
+    } = params || {}
+
+    return this.wrap(() =>
+      parseJson<T>(
+        this.core.searchPrograms(
+          this.dbPath,
+          transcriptQuery,
+          page,
+          categoryIds,
+          modeIds,
+          orchestraIds,
+          instrumentIds,
+          singerIds,
+          poetIds,
+          announcerIds,
+          composerIds,
+          arrangerIds,
+          performerIds,
+          orchestraLeaderIds,
+        ),
+      ),
+    )
   }
 
   private async wrap<T>(loader: () => T): Promise<T> {
