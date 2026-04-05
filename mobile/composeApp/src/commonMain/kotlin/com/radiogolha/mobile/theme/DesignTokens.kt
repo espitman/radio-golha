@@ -2,7 +2,6 @@ package com.radiogolha.mobile.theme
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,41 +46,32 @@ object GolhaElevation {
 }
 
 object GolhaTypographyTokens {
-    // Replace with bundled Vazirmatn font files when they are added to resources.
-    val Vazirmatn = FontFamily.SansSerif
-
     val AppTitle = TextStyle(
-        fontFamily = Vazirmatn,
         fontWeight = FontWeight.Bold,
         fontSize = 28.sp,
         lineHeight = 34.sp,
     )
     val SectionTitle = TextStyle(
-        fontFamily = Vazirmatn,
         fontWeight = FontWeight.SemiBold,
         fontSize = 20.sp,
         lineHeight = 26.sp,
     )
     val BannerTitle = TextStyle(
-        fontFamily = Vazirmatn,
         fontWeight = FontWeight.Bold,
         fontSize = 30.sp,
         lineHeight = 36.sp,
     )
     val Body = TextStyle(
-        fontFamily = Vazirmatn,
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
         lineHeight = 24.sp,
     )
     val SecondaryBody = TextStyle(
-        fontFamily = Vazirmatn,
         fontWeight = FontWeight.Normal,
         fontSize = 13.sp,
         lineHeight = 18.sp,
     )
     val Tiny = TextStyle(
-        fontFamily = Vazirmatn,
         fontWeight = FontWeight.Normal,
         fontSize = 12.sp,
         lineHeight = 16.sp,

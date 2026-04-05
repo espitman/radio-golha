@@ -6,8 +6,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -188,14 +186,15 @@ fun HeroBanner() {
 fun ProgramsSection(programs: List<ProgramUiModel>) {
     Column(verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large)) {
         SectionTitle(title = "برنامه‌ها")
-        Row(
+        LazyRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(GolhaSpacing.CardGap),
+            contentPadding = PaddingValues(horizontal = 2.dp),
         ) {
-            programs.take(3).forEach { program ->
+            items(programs) { program ->
                 ProgramCard(
                     item = program,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.widthIn(min = 128.dp, max = 164.dp),
                 )
             }
         }
@@ -222,17 +221,16 @@ fun SingersSection(singers: List<SingerUiModel>) {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun DastgahSection(items: List<DastgahUiModel>) {
     Column(verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large)) {
         SectionTitle(title = "دستگاه‌ها")
-        FlowRow(
+        LazyRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            contentPadding = PaddingValues(horizontal = 2.dp),
         ) {
-            items.forEach { item ->
+            items(items) { item ->
                 DastgahChip(name = item.name)
             }
         }

@@ -55,7 +55,6 @@ fn home_json(db_path: &str) -> Result<String, String> {
     let programs = overview
         .category_breakdown
         .into_iter()
-        .take(3)
         .map(|item| AndroidProgramItem {
             title: item.name,
             episode_count: item.total,
@@ -72,7 +71,6 @@ fn home_json(db_path: &str) -> Result<String, String> {
     let dastgahs = mode_lookup
         .rows
         .into_iter()
-        .take(8)
         .map(|item| AndroidNamedItem { name: item.name })
         .collect();
 
