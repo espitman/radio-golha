@@ -78,7 +78,7 @@ export const API_ENDPOINTS: ApiEndpointContract[] = [
     "totalInstruments": 16
   },
   "categoryBreakdown": [
-    { "name": "گلهای رنگارنگ", "total": 492 }
+    { "name": "Colorful Flowers", "total": 492 }
   ]
 }`,
   },
@@ -151,14 +151,14 @@ export const API_ENDPOINTS: ApiEndpointContract[] = [
   "rows": [
     {
       "id": 18,
-      "title": "برگ سبز ۱",
-      "category_name": "برگ سبز",
+      "title": "Green Leaf 1",
+      "category_name": "Green Leaf",
       "no": 1,
       "sub_no": null
     }
   ],
-  "categories": [{ "id": 1, "title_fa": "گلهای جاویدان" }],
-  "singers": [{ "id": 303, "name": "الهه" }]
+  "categories": [{ "id": 1, "title_fa": "Immortal Flowers" }],
+  "singers": [{ "id": 303, "name": "Sample Singer" }]
 }`,
   },
   {
@@ -215,10 +215,10 @@ export const API_ENDPOINTS: ApiEndpointContract[] = [
     requestExample: `GET /api/program/1251`,
     responseExample: `{
   "id": 1251,
-  "title": "گلهای رنگارنگ ۲۴۷",
-  "category_name": "گلهای رنگارنگ",
+  "title": "Colorful Flowers 247",
+  "category_name": "Colorful Flowers",
   "orchestra_leaders": [
-    { "orchestra": "ارکستر گل‌ها", "name": "جواد معروفی" }
+    { "orchestra": "Golha Orchestra", "name": "Sample Conductor" }
   ]
 }`,
   },
@@ -296,7 +296,7 @@ export const API_ENDPOINTS: ApiEndpointContract[] = [
   "rows": [
     {
       "id": 303,
-      "name": "الهه",
+      "name": "Sample Singer",
       "is_singer": 1,
       "is_performer": 0
     }
@@ -342,7 +342,7 @@ export const API_ENDPOINTS: ApiEndpointContract[] = [
 }`,
     requestExample: `GET /api/orchestras?page=1`,
     responseExample: `{
-  "rows": [{ "id": 1, "name": "ارکستر گل‌ها", "usage_count": 1377 }],
+  "rows": [{ "id": 1, "name": "Golha Orchestra", "usage_count": 1377 }],
   "stats": { "total_items": 2, "total_usage": 1440 }
 }`,
   },
@@ -381,7 +381,7 @@ export const API_ENDPOINTS: ApiEndpointContract[] = [
 }`,
     requestExample: `GET /api/instruments?page=1`,
     responseExample: `{
-  "rows": [{ "id": 1, "name": "تار", "usage_count": 400 }],
+  "rows": [{ "id": 1, "name": "Tar", "usage_count": 400 }],
   "stats": { "total_items": 16, "total_usage": 1800 }
 }`,
   },
@@ -420,7 +420,7 @@ export const API_ENDPOINTS: ApiEndpointContract[] = [
 }`,
     requestExample: `GET /api/modes?page=1`,
     responseExample: `{
-  "rows": [{ "id": 1, "name": "سه گاه", "usage_count": 276 }],
+  "rows": [{ "id": 1, "name": "Segah", "usage_count": 276 }],
   "stats": { "total_items": 17, "total_usage": 1840 }
 }`,
   },

@@ -99,7 +99,7 @@ function ApiLabPage() {
               <div>
                 <h1 className="text-2xl font-black tracking-tight text-foreground">API Lab</h1>
                 <p className="text-[12px] font-bold text-muted-foreground">
-                  مرور commandهای Rust core، DTOهای ورودی و خروجی، و اجرای زنده endpointهای ادمین
+                  Browse Rust core bindings, inspect request and response DTOs, and run live Admin endpoints.
                 </p>
               </div>
             </div>
@@ -215,17 +215,17 @@ function ApiLabPage() {
                       className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-[11px] font-black text-white transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <Play className="h-3.5 w-3.5" />
-                      {loading ? 'در حال اجرا...' : 'Run'}
+                      {loading ? 'Running...' : 'Run'}
                     </button>
                     <div className="text-left">
                       <div className="text-[10px] font-black uppercase tracking-[0.24em] text-primary/45">Live Request</div>
-                      <div className="text-[11px] font-bold text-muted-foreground">پارامترها را تغییر بده و endpoint را اجرا کن</div>
+                      <div className="text-[11px] font-bold text-muted-foreground">Change parameters and execute the endpoint.</div>
                     </div>
                   </div>
 
                   {selected.fields.length === 0 ? (
                     <div className="rounded-[1rem] border border-dashed border-primary/12 bg-white/70 px-4 py-5 text-left text-[11px] font-bold text-muted-foreground">
-                      این endpoint پارامتر ورودی ندارد.
+                      This endpoint has no input parameters.
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -274,7 +274,7 @@ function ApiLabPage() {
                 <div className="font-mono text-sm font-black text-primary">{currentUrl}</div>
                 {lastRunUrl && (
                   <div className="mt-2 text-[11px] font-bold text-muted-foreground">
-                    آخرین اجرا: <span className="font-mono">{lastRunUrl}</span>
+                    Last run: <span className="font-mono">{lastRunUrl}</span>
                   </div>
                 )}
               </div>
@@ -338,7 +338,7 @@ function ApiLabPage() {
                 </div>
               )}
               <pre className="min-h-[320px] overflow-auto whitespace-pre-wrap break-words rounded-[1.2rem] bg-[#0e1f26] p-4 text-left text-[12px] font-bold text-[#d4eff5]">
-                {responseText || 'هنوز اجرایی انجام نشده است.'}
+                {responseText || 'No request has been executed yet.'}
               </pre>
             </CardContent>
           </Card>
