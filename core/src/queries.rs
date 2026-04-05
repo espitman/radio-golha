@@ -7,7 +7,7 @@ use crate::{
         ArtistListItem, ArtistListResponse, ArtistStats, CategoryOption, CategoryStat,
         DashboardOverview, DashboardSummary, LookupListItem, LookupListResponse, LookupStats,
         OrchestraLeaderCredit, PerformerCredit, ProgramDetail, ProgramListItem, ProgramListResponse,
-        RankedNameStat, SingerOption, TimelineSegment,
+        RankedNameStat, SingerOption, TimelineSegment, TranscriptVerse,
     },
 };
 
@@ -598,6 +598,7 @@ impl RadioGolhaCore {
                         orchestra_leaders: Vec::new(),
                         performers: Vec::new(),
                         timeline: Vec::new(),
+                        transcript: Vec::new(),
                     })
                 },
             )
@@ -685,8 +686,30 @@ impl RadioGolhaCore {
         detail.orchestra_leaders = self.program_orchestra_leaders(program_id)?;
         detail.performers = self.program_performers(program_id)?;
         detail.timeline = self.program_timeline(program_id)?;
+        detail.transcript = self.program_transcript(program_id)?;
 
         Ok(Some(detail))
+    }
+
+    fn program_transcript(&self, program_id: i64) -> CoreResult<Vec<TranscriptVerse>> {
+        let mut stmt = self.connection().prepare(
+            "
+            SELECT segment_order, verse_order, text
+            FROM program_transcript_verses
+            WHERE program_id = ?1
+            ORDER BY segment_order ASC, verse_order ASC, id ASC
+            ",
+        )?;
+
+        let rows = stmt.query_map([program_id], |row| {
+            Ok(TranscriptVerse {
+                segment_order: row.get(0)?,
+                verse_order: row.get(1)?,
+                text: row.get(2)?,
+            })
+        })?;
+
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 
     fn simple_name_list(&self, sql: &str, program_id: i64) -> CoreResult<Vec<String>> {

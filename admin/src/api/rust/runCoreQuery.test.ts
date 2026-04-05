@@ -19,11 +19,13 @@ describe('RustCoreClient', () => {
       id: number
       title: string
       timeline: unknown[]
+      transcript: Array<{ text: string }>
     } | null>(1251)
 
     expect(payload).not.toBeNull()
     expect(payload?.id).toBe(1251)
     expect(payload?.title).toContain('گلهای رنگارنگ')
     expect(payload?.timeline.length).toBeGreaterThan(0)
+    expect(payload?.transcript.length).toBeGreaterThan(0)
   })
 })

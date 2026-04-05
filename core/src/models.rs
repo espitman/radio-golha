@@ -162,6 +162,13 @@ pub struct TimelineSegment {
 }
 
 #[derive(Debug, Clone, Serialize)]
+pub struct TranscriptVerse {
+    pub segment_order: i64,
+    pub verse_order: i64,
+    pub text: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub struct ProgramDetail {
     pub id: i64,
     pub title: String,
@@ -179,4 +186,5 @@ pub struct ProgramDetail {
     pub orchestra_leaders: Vec<OrchestraLeaderCredit>,
     pub performers: Vec<PerformerCredit>,
     pub timeline: Vec<TimelineSegment>,
+    pub transcript: Vec<TranscriptVerse>,
 }

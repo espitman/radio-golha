@@ -58,6 +58,15 @@ CREATE TABLE program_timeline_announcers (id INTEGER PRIMARY KEY AUTOINCREMENT, 
 CREATE TABLE program_timeline_orchestras (id INTEGER PRIMARY KEY AUTOINCREMENT, timeline_id INTEGER, orchestra_id INTEGER, FOREIGN KEY(timeline_id) REFERENCES program_timeline(id), FOREIGN KEY(orchestra_id) REFERENCES orchestra(id));
 CREATE TABLE program_timeline_orchestra_leaders (id INTEGER PRIMARY KEY AUTOINCREMENT, timeline_id INTEGER, orchestra_id INTEGER, orchestra_leader_id INTEGER, FOREIGN KEY(timeline_id) REFERENCES program_timeline(id), FOREIGN KEY(orchestra_id) REFERENCES orchestra(id), FOREIGN KEY(orchestra_leader_id) REFERENCES orchestra_leader(id));
 CREATE TABLE program_timeline_poets (id INTEGER PRIMARY KEY AUTOINCREMENT, timeline_id INTEGER, poet_id INTEGER, FOREIGN KEY(timeline_id) REFERENCES program_timeline(id), FOREIGN KEY(poet_id) REFERENCES poet(id));
+
+CREATE TABLE program_transcript_verses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    program_id INTEGER,
+    segment_order INTEGER,
+    verse_order INTEGER,
+    text TEXT NOT NULL,
+    FOREIGN KEY(program_id) REFERENCES program(id)
+);
 ''')
 
 _cache = {}
@@ -232,6 +241,25 @@ for en_key, p_list in categories_dict.items():
                     aid = get_id('artist', 'name', name)
                     cursor.execute("INSERT INTO program_timeline_performers (timeline_id, performer_id) VALUES (?, ?)", (tid, get_role_id('performer', aid)))
 
+        transcript_path = f"data/transcripts/{pid}.json"
+        if os.path.exists(transcript_path):
+            with open(transcript_path, 'r') as tf:
+                transcript = json.load(tf)
+
+            for segment_index, segment in enumerate(transcript.get('segments', []), start=1):
+                for verse_index, verse in enumerate(segment.get('verses', []), start=1):
+                    verse_text = str(verse or '').strip()
+                    if not verse_text:
+                        continue
+                    cursor.execute(
+                        """
+                        INSERT INTO program_transcript_verses
+                          (program_id, segment_order, verse_order, text)
+                        VALUES (?, ?, ?, ?)
+                        """,
+                        (pid, segment_index, verse_index, verse_text),
+                    )
+
 conn.commit()
 conn.close()
-print("Granular DB v5.2 - Orchestra leaders normalized and merged.")
+print("Granular DB v5.3 - Transcript verses imported.")

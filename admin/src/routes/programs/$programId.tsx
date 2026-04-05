@@ -115,6 +115,26 @@ function ProgramDetail() {
     ]
   }, [data])
 
+  const transcriptGroups = useMemo(() => {
+    const verses = Array.isArray(data?.transcript) ? data.transcript : []
+    const grouped = new Map<number, Array<{ segment_order: number; verse_order: number; text: string }>>()
+
+    verses.forEach((verse: { segment_order: number; verse_order: number; text: string }) => {
+      const segmentOrder = Number(verse.segment_order) || 0
+      if (!grouped.has(segmentOrder)) {
+        grouped.set(segmentOrder, [])
+      }
+      grouped.get(segmentOrder)!.push(verse)
+    })
+
+    return Array.from(grouped.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([segmentOrder, items]) => ({
+        segmentOrder,
+        verses: items.sort((a, b) => (Number(a.verse_order) || 0) - (Number(b.verse_order) || 0)),
+      }))
+  }, [data])
+
   if (loading) {
     return <div className="p-10 text-center text-primary font-black animate-pulse text-[10px]">در حال بازیابی فایل‌های صوتی...</div>
   }
@@ -197,7 +217,7 @@ function ProgramDetail() {
                 onClick={() => audioRef.current?.play()}
                 className="flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary text-primary shadow-lg shadow-black/15 transition-transform hover:scale-105 active:scale-95"
               >
-                <Play className="w-5 h-5 fill-current rotate-180 translate-x-[2px]" />
+                <Play className="w-5 h-5 fill-current translate-x-[2px]" />
               </button>
             </div>
 
@@ -513,6 +533,67 @@ function ProgramDetail() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="!pt-0 overflow-hidden rounded-[2rem] border-primary/10 bg-white/90 shadow-[0_16px_50px_rgba(31,78,95,0.08)] backdrop-blur-md" dir="rtl">
+          <CardHeader className="border-b border-primary/8 bg-gradient-to-l from-primary/4 to-transparent px-5 py-4 md:px-6" dir="rtl">
+            <div className="flex items-center justify-between gap-4">
+              <CardTitle className="flex items-center justify-end gap-2 text-right text-base font-black text-primary">
+                <BookOpen className="w-4 h-4" />
+                متن برنامه
+              </CardTitle>
+              <div className="text-right">
+                <div className="text-[10px] font-mono uppercase tracking-[0.28em] text-primary/35">Transcript</div>
+                <div className="text-[11px] font-bold text-muted-foreground">ابیات برنامه</div>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-4 p-4 md:p-5">
+            {transcriptGroups.length > 0 ? (
+              transcriptGroups.map((group) => (
+                <section
+                  key={`transcript-segment-${group.segmentOrder}`}
+                  className="rounded-[1.5rem] border border-border/40 bg-white/75 p-4 shadow-sm"
+                >
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div className="text-right">
+                      <div className="text-[10px] font-mono uppercase tracking-[0.24em] text-primary/35">
+                        Segment {group.segmentOrder}
+                      </div>
+                      <div className="text-[11px] font-black text-primary/80">
+                        {group.verses.length} بیت
+                      </div>
+                    </div>
+                    <Badge className="border-none bg-primary px-2.5 py-1 text-[9px] font-black text-white">
+                      بخش {group.segmentOrder}
+                    </Badge>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {group.verses.map((verse) => (
+                      <div
+                        key={`verse-${group.segmentOrder}-${verse.verse_order}`}
+                        className="rounded-[1.1rem] border border-primary/8 bg-primary/[0.03] px-4 py-3 text-right"
+                      >
+                        <div className="mb-1 text-[10px] font-mono text-primary/45">
+                          Verse {verse.verse_order}
+                        </div>
+                        <p className="text-[13px] font-black leading-8 text-foreground/90">
+                          {verse.text}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ))
+            ) : (
+              <div className="rounded-[1.4rem] border border-dashed border-primary/20 bg-primary/[0.03] px-4 py-8 text-center text-[12px] font-black text-primary/55">
+                                متنی برای این برنامه ثبت نشده است.
+
+              </div>
+            )}
+          </CardContent>
+        </Card>
     </div>
   )
 }
