@@ -2,12 +2,13 @@
 
 ## Status
 
-Active contract for the current Admin-to-Rust bridge.
+Active contract for the current Admin-to-Rust `napi-rs` bridge.
 
 This document defines:
 
-- which Rust commands the Admin may call
-- what arguments are passed
+- which HTTP endpoints the browser-facing Admin uses
+- which `RustCoreClient` methods back those endpoints
+- which native addon functions are invoked through `napi-rs`
 - what JSON payload shapes are expected back
 - what responsibilities belong to the Admin adapter vs the Rust core
 
@@ -20,13 +21,14 @@ Instead, it uses:
 - Vite middleware for `/api/*`
 - thin TypeScript service functions
 - a Node-to-Rust bridge in `admin/src/api/rust/runCoreQuery.ts`
-- the Rust CLI in `core/src/main.rs`
+- the native Node addon crate in `core-node/`
+- the shared Rust domain/query crate in `core/`
 
 The Rust core is now the single source of truth for archive querying and response shaping.
 
 ## Bridge Rule
 
-The Admin may only consume JSON returned by Rust.
+The browser-facing Admin may only consume JSON returned by the local `/api/*` adapter.
 
 The Admin adapter must not:
 
@@ -37,35 +39,48 @@ The Admin adapter must not:
 The Admin adapter may:
 
 - parse HTTP query parameters
-- forward them to Rust
-- map process errors to HTTP errors
+- call `RustCoreClient`
+- map addon/runtime errors to HTTP errors
 - return Rust JSON as-is
 
 ## Runtime Resolution
 
-The Admin bridge resolves Rust in this order:
+The Admin bridge resolves Rust by loading a native `.node` addon built from:
 
-1. compiled binary at `core/target/debug/radiogolha-core-cli`
-2. fallback to `cargo run --quiet --bin radiogolha-core-cli -- ...`
+- `core-node/`
 
 Database path passed to Rust:
 
 - `database/golha_database.db`
 
-## Supported Admin Commands
+Addon resolution:
 
-### 1. `admin-dashboard`
+1. `core-node/target/debug/radiogolha_core.node`
+2. `core-node/target/release/radiogolha_core.node`
 
-#### CLI
+## Browser Adapter Note
 
-```bash
-cd /Users/espitman/Documents/Projects/radioGolha/core
-cargo run --quiet -- admin-dashboard
+The `/api/*` layer still exists and is still required.
+
+This is not a separate backend server. It is a local browser adapter because:
+
+- the React UI runs in the browser
+- the browser cannot call the Node native addon directly
+- only the Node/Vite side can load the `napi-rs` addon
+
+So the real flow is:
+
+```text
+Browser UI -> /api/* -> Vite middleware -> RustCoreClient -> napi-rs addon -> Rust core
 ```
 
-#### Used by
+## Supported Admin Endpoints and Native Calls
 
-- `/api/dashboard`
+### 1. Dashboard Overview
+
+- HTTP: `/api/dashboard`
+- TypeScript: `rustCoreClient.getDashboardOverview()`
+- Native addon: `dashboardOverview(dbPath)`
 
 #### Output shape
 
@@ -106,25 +121,18 @@ cargo run --quiet -- admin-dashboard
 }
 ```
 
-## 2. `admin-programs`
+## 2. Programs List
 
-#### CLI
+- HTTP: `/api/programs`
+- TypeScript: `rustCoreClient.listPrograms({ search, page, categoryId, singerId })`
+- Native addon: `listPrograms(dbPath, search, page, categoryId?, singerId?)`
 
-```bash
-cd /Users/espitman/Documents/Projects/radioGolha/core
-cargo run --quiet -- admin-programs --page 1
-```
-
-#### Arguments
+#### Query arguments
 
 - `--search <string>`
 - `--page <number>`
 - `--category-id <number>` optional
 - `--singer-id <number>` optional
-
-#### Used by
-
-- `/api/programs`
 
 #### Output shape
 
@@ -153,22 +161,15 @@ cargo run --quiet -- admin-programs --page 1
 }
 ```
 
-## 3. `admin-program-detail`
+## 3. Program Detail
 
-#### CLI
+- HTTP: `/api/program/:id`
+- TypeScript: `rustCoreClient.getProgramDetail(id)`
+- Native addon: `getProgramDetail(dbPath, id)`
 
-```bash
-cd /Users/espitman/Documents/Projects/radioGolha/core
-cargo run --quiet -- admin-program-detail 1251
-```
-
-#### Arguments
+#### Path arguments
 
 - positional `id`
-
-#### Used by
-
-- `/api/program/:id`
 
 #### Output shape
 
@@ -229,16 +230,13 @@ Inside `timeline`, the field is:
 
 This asymmetry is intentional because the current Admin UI already depends on these names.
 
-## 4. `admin-artists`
+## 4. Artists List
 
-#### CLI
+- HTTP: `/api/artists`
+- TypeScript: `rustCoreClient.listArtists({ search, page, role })`
+- Native addon: `listArtists(dbPath, search, page, role?)`
 
-```bash
-cd /Users/espitman/Documents/Projects/radioGolha/core
-cargo run --quiet -- admin-artists --page 1
-```
-
-#### Arguments
+#### Query arguments
 
 - `--search <string>`
 - `--page <number>`
@@ -252,10 +250,6 @@ Allowed role values:
 - `announcer`
 - `composer`
 - `arranger`
-
-#### Used by
-
-- `/api/artists`
 
 #### Output shape
 
@@ -286,32 +280,23 @@ Allowed role values:
 }
 ```
 
-## 5. `admin-lookup`
+## 5. Lookup Lists
 
-#### CLI
+- HTTP: `/api/orchestras`, `/api/instruments`, `/api/modes`
+- TypeScript: `rustCoreClient.listLookupItems(kind, { search, page })`
+- Native addon: `listLookupItems(dbPath, kind, search, page)`
 
-```bash
-cd /Users/espitman/Documents/Projects/radioGolha/core
-cargo run --quiet -- admin-lookup modes --page 1
-```
+#### Query arguments
 
-#### Arguments
-
-- positional `kind`
-- `--search <string>`
-- `--page <number>`
+- `kind` positional at the adapter level
+- `search <string>`
+- `page <number>`
 
 Allowed `kind` values:
 
 - `orchestras`
 - `instruments`
 - `modes`
-
-#### Used by
-
-- `/api/orchestras`
-- `/api/instruments`
-- `/api/modes`
 
 #### Output shape
 
@@ -338,15 +323,15 @@ Allowed `kind` values:
 
 Current mapping in the Admin:
 
-| HTTP endpoint | Rust command |
-| --- | --- |
-| `/api/dashboard` | `admin-dashboard` |
-| `/api/programs` | `admin-programs` |
-| `/api/program/:id` | `admin-program-detail` |
-| `/api/artists` | `admin-artists` |
-| `/api/orchestras` | `admin-lookup orchestras` |
-| `/api/instruments` | `admin-lookup instruments` |
-| `/api/modes` | `admin-lookup modes` |
+| HTTP endpoint | TypeScript bridge | Native addon |
+| --- | --- | --- |
+| `/api/dashboard` | `rustCoreClient.getDashboardOverview()` | `dashboardOverview(dbPath)` |
+| `/api/programs` | `rustCoreClient.listPrograms(...)` | `listPrograms(dbPath, ...)` |
+| `/api/program/:id` | `rustCoreClient.getProgramDetail(id)` | `getProgramDetail(dbPath, id)` |
+| `/api/artists` | `rustCoreClient.listArtists(...)` | `listArtists(dbPath, ...)` |
+| `/api/orchestras` | `rustCoreClient.listLookupItems('orchestras', ...)` | `listLookupItems(dbPath, kind, ...)` |
+| `/api/instruments` | `rustCoreClient.listLookupItems('instruments', ...)` | `listLookupItems(dbPath, kind, ...)` |
+| `/api/modes` | `rustCoreClient.listLookupItems('modes', ...)` | `listLookupItems(dbPath, kind, ...)` |
 
 ## Error Contract
 
@@ -373,9 +358,9 @@ must be treated as a contract change and must be validated against the Admin UI 
 
 When an Admin page looks wrong:
 
-1. run the Rust command directly in `core/`
-2. inspect the JSON payload
-3. compare it with the expected shape in this document
+1. run `pnpm build:core-addon` in `admin/`
+2. load the addon through `RustCoreClient` or run `pnpm test:core-addon`
+3. compare the returned JSON with the expected shape in this document
 4. only then inspect the React route
 
 This keeps debugging centered on the real source of truth.

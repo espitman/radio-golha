@@ -114,6 +114,15 @@ function ApiLabPage() {
             </Badge>
           </div>
         </div>
+
+        <div className="mt-4 rounded-[1.4rem] border border-primary/10 bg-background/70 p-4 text-left">
+          <div className="mb-2 text-[10px] font-black uppercase tracking-[0.24em] text-primary/45">Transport Note</div>
+          <p className="text-[11px] font-bold leading-6 text-muted-foreground">
+            The browser still talks to local <span className="font-mono text-primary">/api/*</span> routes.
+            This is not a separate backend service; it is a local adapter so the browser can reach the Node-side
+            <span className="font-mono text-primary"> napi-rs </span> addon and the shared Rust core.
+          </p>
+        </div>
       </section>
 
       <div className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">

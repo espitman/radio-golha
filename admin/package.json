@@ -12,7 +12,9 @@
     "prebuild": "pnpm build:core-addon",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "pretest": "pnpm build:core-addon",
+    "test": "vitest run",
+    "test:core-addon": "pnpm build:core-addon && vitest run src/api/rust/runCoreQuery.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",

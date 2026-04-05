@@ -1,12 +1,7 @@
-import path from 'node:path'
 import { createRequire } from 'node:module'
-import { existsSync } from 'node:fs'
+import { CORE_DB_PATH, resolveCoreAddonPath } from './coreRuntime'
 
 const require = createRequire(import.meta.url)
-
-const CORE_DB = path.resolve(process.cwd(), '../database/golha_database.db')
-const CORE_DEBUG_ADDON = path.resolve(process.cwd(), '../core-node/target/debug/radiogolha_core.node')
-const CORE_RELEASE_ADDON = path.resolve(process.cwd(), '../core-node/target/release/radiogolha_core.node')
 
 type NativeCoreModule = {
   dashboardOverview(dbPath: string): string
@@ -22,7 +17,7 @@ let nativeCore: NativeCoreModule | null = null
 
 function loadNativeCore() {
   if (nativeCore) return nativeCore
-  const addonPath = existsSync(CORE_DEBUG_ADDON) ? CORE_DEBUG_ADDON : CORE_RELEASE_ADDON
+  const addonPath = resolveCoreAddonPath()
   nativeCore = require(addonPath) as NativeCoreModule
   return nativeCore
 }
@@ -34,7 +29,7 @@ function parseJson<T>(payload: string): T {
 export class RustCoreClient {
   private readonly dbPath: string
 
-  constructor(dbPath: string = CORE_DB) {
+  constructor(dbPath: string = CORE_DB_PATH) {
     this.dbPath = dbPath
   }
 
