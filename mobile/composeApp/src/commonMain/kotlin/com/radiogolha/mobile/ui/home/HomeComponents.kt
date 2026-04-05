@@ -501,7 +501,7 @@ private fun AvatarPlaceholder(
     name: String,
     tint: Color,
 ) {
-    val monogram = rememberMonogram(name)
+    val monogramParts = rememberMonogramParts(name)
 
     Box(
         modifier = Modifier
@@ -511,27 +511,39 @@ private fun AvatarPlaceholder(
             .border(1.dp, GolhaColors.Border.copy(alpha = 0.65f), CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = monogram,
-            style = GolhaTypographyTokens.SectionTitle.copy(fontWeight = FontWeight.Bold),
-            color = GolhaColors.PrimaryText.copy(alpha = 0.85f),
-        )
+        if (monogramParts.size > 1) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                monogramParts.forEach { part ->
+                    Text(
+                        text = part,
+                        style = GolhaTypographyTokens.SectionTitle.copy(fontWeight = FontWeight.Bold),
+                        color = GolhaColors.PrimaryText.copy(alpha = 0.85f),
+                    )
+                }
+            }
+        } else {
+            Text(
+                text = monogramParts.firstOrNull().orEmpty(),
+                style = GolhaTypographyTokens.SectionTitle.copy(fontWeight = FontWeight.Bold),
+                color = GolhaColors.PrimaryText.copy(alpha = 0.85f),
+            )
+        }
     }
 }
 
-private fun rememberMonogram(name: String): String {
+private fun rememberMonogramParts(name: String): List<String> {
     val parts = name
         .split(" ")
         .map { it.trim() }
         .filter { it.isNotEmpty() }
 
     return when {
-        parts.size >= 2 -> buildString {
-            append(parts.first().take(1))
-            append(parts.last().take(1))
-        }
-        parts.isNotEmpty() -> parts.first().take(2)
-        else -> ""
+        parts.size >= 2 -> listOf(parts.first().take(1), parts.last().take(1))
+        parts.isNotEmpty() -> listOf(parts.first().take(2))
+        else -> emptyList()
     }
 }
 
