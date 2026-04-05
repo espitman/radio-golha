@@ -1,6 +1,6 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand, ValueEnum};
-use radiogolha_core::{LookupKind, ProgramSearchFilters, RadioGolhaCore};
+use radiogolha_core::{LookupKind, ProgramSearchFilters, RadioGolhaCore, SearchMatchMode};
 use serde_json::to_string;
 
 #[derive(Debug, Parser)]
@@ -62,24 +62,44 @@ enum Command {
         category_ids: Vec<i64>,
         #[arg(long, value_delimiter = ',')]
         mode_ids: Vec<i64>,
+        #[arg(long, value_enum, default_value_t = MatchModeArg::Any)]
+        mode_match: MatchModeArg,
         #[arg(long, value_delimiter = ',')]
         orchestra_ids: Vec<i64>,
+        #[arg(long, value_enum, default_value_t = MatchModeArg::Any)]
+        orchestra_match: MatchModeArg,
         #[arg(long, value_delimiter = ',')]
         instrument_ids: Vec<i64>,
+        #[arg(long, value_enum, default_value_t = MatchModeArg::Any)]
+        instrument_match: MatchModeArg,
         #[arg(long, value_delimiter = ',')]
         singer_ids: Vec<i64>,
+        #[arg(long, value_enum, default_value_t = MatchModeArg::Any)]
+        singer_match: MatchModeArg,
         #[arg(long, value_delimiter = ',')]
         poet_ids: Vec<i64>,
+        #[arg(long, value_enum, default_value_t = MatchModeArg::Any)]
+        poet_match: MatchModeArg,
         #[arg(long, value_delimiter = ',')]
         announcer_ids: Vec<i64>,
+        #[arg(long, value_enum, default_value_t = MatchModeArg::Any)]
+        announcer_match: MatchModeArg,
         #[arg(long, value_delimiter = ',')]
         composer_ids: Vec<i64>,
+        #[arg(long, value_enum, default_value_t = MatchModeArg::Any)]
+        composer_match: MatchModeArg,
         #[arg(long, value_delimiter = ',')]
         arranger_ids: Vec<i64>,
+        #[arg(long, value_enum, default_value_t = MatchModeArg::Any)]
+        arranger_match: MatchModeArg,
         #[arg(long, value_delimiter = ',')]
         performer_ids: Vec<i64>,
+        #[arg(long, value_enum, default_value_t = MatchModeArg::Any)]
+        performer_match: MatchModeArg,
         #[arg(long, value_delimiter = ',')]
         orchestra_leader_ids: Vec<i64>,
+        #[arg(long, value_enum, default_value_t = MatchModeArg::Any)]
+        orchestra_leader_match: MatchModeArg,
     },
     ProgramDetail {
         id: i64,
@@ -91,6 +111,21 @@ enum LookupKindArg {
     Orchestras,
     Instruments,
     Modes,
+}
+
+#[derive(Clone, Copy, Debug, ValueEnum)]
+enum MatchModeArg {
+    Any,
+    All,
+}
+
+impl From<MatchModeArg> for SearchMatchMode {
+    fn from(value: MatchModeArg) -> Self {
+        match value {
+            MatchModeArg::Any => SearchMatchMode::Any,
+            MatchModeArg::All => SearchMatchMode::All,
+        }
+    }
 }
 
 impl From<LookupKindArg> for LookupKind {
@@ -164,29 +199,49 @@ fn main() -> Result<()> {
             page,
             category_ids,
             mode_ids,
+            mode_match,
             orchestra_ids,
+            orchestra_match,
             instrument_ids,
+            instrument_match,
             singer_ids,
+            singer_match,
             poet_ids,
+            poet_match,
             announcer_ids,
+            announcer_match,
             composer_ids,
+            composer_match,
             arranger_ids,
+            arranger_match,
             performer_ids,
+            performer_match,
             orchestra_leader_ids,
+            orchestra_leader_match,
         } => {
             let filters = ProgramSearchFilters {
                 transcript_query,
                 category_ids,
                 mode_ids,
+                mode_match: mode_match.into(),
                 orchestra_ids,
+                orchestra_match: orchestra_match.into(),
                 instrument_ids,
+                instrument_match: instrument_match.into(),
                 singer_ids,
+                singer_match: singer_match.into(),
                 poet_ids,
+                poet_match: poet_match.into(),
                 announcer_ids,
+                announcer_match: announcer_match.into(),
                 composer_ids,
+                composer_match: composer_match.into(),
                 arranger_ids,
+                arranger_match: arranger_match.into(),
                 performer_ids,
+                performer_match: performer_match.into(),
                 orchestra_leader_ids,
+                orchestra_leader_match: orchestra_leader_match.into(),
             };
             println!("{}", to_string(&core.admin_program_search(&filters, page)?)?);
         }

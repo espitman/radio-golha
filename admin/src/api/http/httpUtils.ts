@@ -23,6 +23,10 @@ export function getIntListParam(value: string | null) {
     .filter((item) => Number.isFinite(item) && item > 0)
 }
 
+export function getMatchModeParam(value: string | null): 'any' | 'all' {
+  return value === 'all' ? 'all' : 'any'
+}
+
 export async function respondWithJson(
   res: ServerResponse,
   loader: () => Promise<unknown>,

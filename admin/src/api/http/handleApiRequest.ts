@@ -4,7 +4,7 @@ import { getDashboardOverview } from '../services/DashboardService'
 import { listLookupItems } from '../services/LookupService'
 import { getProgramDetail, listPrograms } from '../services/ProgramService'
 import { getProgramSearchOptions, searchPrograms } from '../services/SearchService'
-import { getIntListParam, getIntParam, respondWithJson } from './httpUtils'
+import { getIntListParam, getIntParam, getMatchModeParam, respondWithJson } from './httpUtils'
 
 type IncomingMessage = {
   method?: string
@@ -36,15 +36,25 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
         transcriptQuery,
         categoryIds: getIntListParam(url.searchParams.get('categoryIds')),
         modeIds: getIntListParam(url.searchParams.get('modeIds')),
+        modeMatch: getMatchModeParam(url.searchParams.get('modeMatch')),
         orchestraIds: getIntListParam(url.searchParams.get('orchestraIds')),
+        orchestraMatch: getMatchModeParam(url.searchParams.get('orchestraMatch')),
         instrumentIds: getIntListParam(url.searchParams.get('instrumentIds')),
+        instrumentMatch: getMatchModeParam(url.searchParams.get('instrumentMatch')),
         singerIds: getIntListParam(url.searchParams.get('singerIds')),
+        singerMatch: getMatchModeParam(url.searchParams.get('singerMatch')),
         poetIds: getIntListParam(url.searchParams.get('poetIds')),
+        poetMatch: getMatchModeParam(url.searchParams.get('poetMatch')),
         announcerIds: getIntListParam(url.searchParams.get('announcerIds')),
+        announcerMatch: getMatchModeParam(url.searchParams.get('announcerMatch')),
         composerIds: getIntListParam(url.searchParams.get('composerIds')),
+        composerMatch: getMatchModeParam(url.searchParams.get('composerMatch')),
         arrangerIds: getIntListParam(url.searchParams.get('arrangerIds')),
+        arrangerMatch: getMatchModeParam(url.searchParams.get('arrangerMatch')),
         performerIds: getIntListParam(url.searchParams.get('performerIds')),
+        performerMatch: getMatchModeParam(url.searchParams.get('performerMatch')),
         orchestraLeaderIds: getIntListParam(url.searchParams.get('orchestraLeaderIds')),
+        orchestraLeaderMatch: getMatchModeParam(url.searchParams.get('orchestraLeaderMatch')),
       }),
     )
     return true

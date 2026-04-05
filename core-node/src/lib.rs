@@ -1,7 +1,36 @@
 use napi::Result as NapiResult;
 use napi::bindgen_prelude::Error as NapiError;
 use napi_derive::napi;
-use radiogolha_core::{LookupKind, ProgramSearchFilters, RadioGolhaCore};
+use radiogolha_core::{LookupKind, ProgramSearchFilters, RadioGolhaCore, SearchMatchMode};
+use serde::Deserialize;
+
+#[derive(Debug, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+struct SearchProgramsPayload {
+    transcript_query: Option<String>,
+    page: Option<i64>,
+    category_ids: Option<Vec<i64>>,
+    mode_ids: Option<Vec<i64>>,
+    mode_match: Option<String>,
+    orchestra_ids: Option<Vec<i64>>,
+    orchestra_match: Option<String>,
+    instrument_ids: Option<Vec<i64>>,
+    instrument_match: Option<String>,
+    singer_ids: Option<Vec<i64>>,
+    singer_match: Option<String>,
+    poet_ids: Option<Vec<i64>>,
+    poet_match: Option<String>,
+    announcer_ids: Option<Vec<i64>>,
+    announcer_match: Option<String>,
+    composer_ids: Option<Vec<i64>>,
+    composer_match: Option<String>,
+    arranger_ids: Option<Vec<i64>>,
+    arranger_match: Option<String>,
+    performer_ids: Option<Vec<i64>>,
+    performer_match: Option<String>,
+    orchestra_leader_ids: Option<Vec<i64>>,
+    orchestra_leader_match: Option<String>,
+}
 
 fn open_core(db_path: String) -> NapiResult<RadioGolhaCore> {
     RadioGolhaCore::open(db_path).map_err(|error| NapiError::from_reason(error.to_string()))
@@ -17,6 +46,13 @@ fn parse_lookup_kind(kind: String) -> NapiResult<LookupKind> {
         "instruments" => Ok(LookupKind::Instruments),
         "modes" => Ok(LookupKind::Modes),
         _ => Err(NapiError::from_reason(format!("Unsupported lookup kind: {kind}"))),
+    }
+}
+
+fn parse_match_mode(mode: Option<String>) -> SearchMatchMode {
+    match mode.as_deref() {
+        Some("all") => SearchMatchMode::All,
+        _ => SearchMatchMode::Any,
     }
 }
 
@@ -84,41 +120,39 @@ pub fn get_program_search_options(db_path: String) -> NapiResult<String> {
 }
 
 #[napi(js_name = "searchPrograms")]
-#[allow(clippy::too_many_arguments)]
-pub fn search_programs(
-    db_path: String,
-    transcript_query: Option<String>,
-    page: i64,
-    category_ids: Vec<i64>,
-    mode_ids: Vec<i64>,
-    orchestra_ids: Vec<i64>,
-    instrument_ids: Vec<i64>,
-    singer_ids: Vec<i64>,
-    poet_ids: Vec<i64>,
-    announcer_ids: Vec<i64>,
-    composer_ids: Vec<i64>,
-    arranger_ids: Vec<i64>,
-    performer_ids: Vec<i64>,
-    orchestra_leader_ids: Vec<i64>,
-) -> NapiResult<String> {
+pub fn search_programs(db_path: String, payload_json: String) -> NapiResult<String> {
     let core = open_core(db_path)?;
+    let payload: SearchProgramsPayload =
+        serde_json::from_str(&payload_json).map_err(|error| NapiError::from_reason(error.to_string()))?;
     let filters = ProgramSearchFilters {
-        transcript_query: transcript_query.filter(|value| !value.trim().is_empty()),
-        category_ids,
-        mode_ids,
-        orchestra_ids,
-        instrument_ids,
-        singer_ids,
-        poet_ids,
-        announcer_ids,
-        composer_ids,
-        arranger_ids,
-        performer_ids,
-        orchestra_leader_ids,
+        transcript_query: payload
+            .transcript_query
+            .filter(|value| !value.trim().is_empty()),
+        category_ids: payload.category_ids.unwrap_or_default(),
+        mode_ids: payload.mode_ids.unwrap_or_default(),
+        mode_match: parse_match_mode(payload.mode_match),
+        orchestra_ids: payload.orchestra_ids.unwrap_or_default(),
+        orchestra_match: parse_match_mode(payload.orchestra_match),
+        instrument_ids: payload.instrument_ids.unwrap_or_default(),
+        instrument_match: parse_match_mode(payload.instrument_match),
+        singer_ids: payload.singer_ids.unwrap_or_default(),
+        singer_match: parse_match_mode(payload.singer_match),
+        poet_ids: payload.poet_ids.unwrap_or_default(),
+        poet_match: parse_match_mode(payload.poet_match),
+        announcer_ids: payload.announcer_ids.unwrap_or_default(),
+        announcer_match: parse_match_mode(payload.announcer_match),
+        composer_ids: payload.composer_ids.unwrap_or_default(),
+        composer_match: parse_match_mode(payload.composer_match),
+        arranger_ids: payload.arranger_ids.unwrap_or_default(),
+        arranger_match: parse_match_mode(payload.arranger_match),
+        performer_ids: payload.performer_ids.unwrap_or_default(),
+        performer_match: parse_match_mode(payload.performer_match),
+        orchestra_leader_ids: payload.orchestra_leader_ids.unwrap_or_default(),
+        orchestra_leader_match: parse_match_mode(payload.orchestra_leader_match),
     };
     serialize(
         &core
-            .admin_program_search(&filters, page)
+            .admin_program_search(&filters, payload.page.unwrap_or(1))
             .map_err(|error| NapiError::from_reason(error.to_string()))?,
     )
 }

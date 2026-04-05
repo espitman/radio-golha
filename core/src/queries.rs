@@ -13,6 +13,13 @@ use crate::{
     },
 };
 
+#[derive(Debug, Clone, Copy, Default)]
+pub enum SearchMatchMode {
+    #[default]
+    Any,
+    All,
+}
+
 #[derive(Debug, Clone, Copy)]
 pub enum LookupKind {
     Orchestras,
@@ -103,15 +110,25 @@ pub struct ProgramSearchFilters {
     pub transcript_query: Option<String>,
     pub category_ids: Vec<i64>,
     pub mode_ids: Vec<i64>,
+    pub mode_match: SearchMatchMode,
     pub orchestra_ids: Vec<i64>,
+    pub orchestra_match: SearchMatchMode,
     pub instrument_ids: Vec<i64>,
+    pub instrument_match: SearchMatchMode,
     pub singer_ids: Vec<i64>,
+    pub singer_match: SearchMatchMode,
     pub poet_ids: Vec<i64>,
+    pub poet_match: SearchMatchMode,
     pub announcer_ids: Vec<i64>,
+    pub announcer_match: SearchMatchMode,
     pub composer_ids: Vec<i64>,
+    pub composer_match: SearchMatchMode,
     pub arranger_ids: Vec<i64>,
+    pub arranger_match: SearchMatchMode,
     pub performer_ids: Vec<i64>,
+    pub performer_match: SearchMatchMode,
     pub orchestra_leader_ids: Vec<i64>,
+    pub orchestra_leader_match: SearchMatchMode,
 }
 
 impl RadioGolhaCore {
@@ -582,71 +599,86 @@ impl RadioGolhaCore {
             params.push(Value::Text(query));
         }
 
-        self.append_id_filters(
-            &mut sql,
-            &mut params,
-            &filters.category_ids,
-            |idx| format!("AND p.category_id = ? /* category {idx} */ "),
-        );
-        self.append_exists_filters(
+        self.append_in_filter(&mut sql, &mut params, &filters.category_ids, "p.category_id");
+        self.append_exists_group_filter(
             &mut sql,
             &mut params,
             &filters.mode_ids,
-            "SELECT 1 FROM program_modes pm WHERE pm.program_id = p.id AND pm.mode_id = ?",
+            filters.mode_match,
+            "SELECT 1 FROM program_modes pm WHERE pm.program_id = p.id",
+            "pm.mode_id",
         );
-        self.append_exists_filters(
+        self.append_exists_group_filter(
             &mut sql,
             &mut params,
             &filters.orchestra_ids,
-            "SELECT 1 FROM program_orchestras po WHERE po.program_id = p.id AND po.orchestra_id = ?",
+            filters.orchestra_match,
+            "SELECT 1 FROM program_orchestras po WHERE po.program_id = p.id",
+            "po.orchestra_id",
         );
-        self.append_exists_filters(
+        self.append_exists_group_filter(
             &mut sql,
             &mut params,
             &filters.instrument_ids,
-            "SELECT 1 FROM program_performers pp WHERE pp.program_id = p.id AND pp.instrument_id = ?",
+            filters.instrument_match,
+            "SELECT 1 FROM program_performers pp WHERE pp.program_id = p.id",
+            "pp.instrument_id",
         );
-        self.append_exists_filters(
+        self.append_exists_group_filter(
             &mut sql,
             &mut params,
             &filters.singer_ids,
-            "SELECT 1 FROM program_singers ps WHERE ps.program_id = p.id AND ps.singer_id = ?",
+            filters.singer_match,
+            "SELECT 1 FROM program_singers ps WHERE ps.program_id = p.id",
+            "ps.singer_id",
         );
-        self.append_exists_filters(
+        self.append_exists_group_filter(
             &mut sql,
             &mut params,
             &filters.poet_ids,
-            "SELECT 1 FROM program_poets pp WHERE pp.program_id = p.id AND pp.poet_id = ?",
+            filters.poet_match,
+            "SELECT 1 FROM program_poets pp WHERE pp.program_id = p.id",
+            "pp.poet_id",
         );
-        self.append_exists_filters(
+        self.append_exists_group_filter(
             &mut sql,
             &mut params,
             &filters.announcer_ids,
-            "SELECT 1 FROM program_announcers pa WHERE pa.program_id = p.id AND pa.announcer_id = ?",
+            filters.announcer_match,
+            "SELECT 1 FROM program_announcers pa WHERE pa.program_id = p.id",
+            "pa.announcer_id",
         );
-        self.append_exists_filters(
+        self.append_exists_group_filter(
             &mut sql,
             &mut params,
             &filters.composer_ids,
-            "SELECT 1 FROM program_composers pc WHERE pc.program_id = p.id AND pc.composer_id = ?",
+            filters.composer_match,
+            "SELECT 1 FROM program_composers pc WHERE pc.program_id = p.id",
+            "pc.composer_id",
         );
-        self.append_exists_filters(
+        self.append_exists_group_filter(
             &mut sql,
             &mut params,
             &filters.arranger_ids,
-            "SELECT 1 FROM program_arrangers pa WHERE pa.program_id = p.id AND pa.arranger_id = ?",
+            filters.arranger_match,
+            "SELECT 1 FROM program_arrangers pa WHERE pa.program_id = p.id",
+            "pa.arranger_id",
         );
-        self.append_exists_filters(
+        self.append_exists_group_filter(
             &mut sql,
             &mut params,
             &filters.performer_ids,
-            "SELECT 1 FROM program_performers pp WHERE pp.program_id = p.id AND pp.performer_id = ?",
+            filters.performer_match,
+            "SELECT 1 FROM program_performers pp WHERE pp.program_id = p.id",
+            "pp.performer_id",
         );
-        self.append_exists_filters(
+        self.append_exists_group_filter(
             &mut sql,
             &mut params,
             &filters.orchestra_leader_ids,
-            "SELECT 1 FROM program_orchestra_leaders pol WHERE pol.program_id = p.id AND pol.orchestra_leader_id = ?",
+            filters.orchestra_leader_match,
+            "SELECT 1 FROM program_orchestra_leaders pol WHERE pol.program_id = p.id",
+            "pol.orchestra_leader_id",
         );
 
         if include_ordering {
@@ -656,33 +688,69 @@ impl RadioGolhaCore {
         (sql, params)
     }
 
-    fn append_exists_filters(
+    fn append_in_filter(
         &self,
         sql: &mut String,
         params: &mut Vec<Value>,
         ids: &[i64],
-        exists_sql: &str,
+        column: &str,
     ) {
-        for id in ids {
-            sql.push_str(" AND EXISTS (");
-            sql.push_str(exists_sql);
-            sql.push(')');
+        if ids.is_empty() {
+            return;
+        }
+
+        sql.push_str(" AND ");
+        sql.push_str(column);
+        sql.push_str(" IN (");
+        for (index, id) in ids.iter().enumerate() {
+            if index > 0 {
+                sql.push_str(", ");
+            }
+            sql.push('?');
             params.push(Value::Integer(*id));
         }
+        sql.push(')');
     }
 
-    fn append_id_filters<F>(
+    fn append_exists_group_filter(
         &self,
         sql: &mut String,
         params: &mut Vec<Value>,
         ids: &[i64],
-        fragment: F,
-    ) where
-        F: Fn(usize) -> String,
-    {
-        for (index, id) in ids.iter().enumerate() {
-            sql.push_str(&fragment(index));
-            params.push(Value::Integer(*id));
+        match_mode: SearchMatchMode,
+        relation_sql: &str,
+        relation_column: &str,
+    ) {
+        if ids.is_empty() {
+            return;
+        }
+
+        match match_mode {
+            SearchMatchMode::Any => {
+                sql.push_str(" AND EXISTS (");
+                sql.push_str(relation_sql);
+                sql.push_str(" AND ");
+                sql.push_str(relation_column);
+                sql.push_str(" IN (");
+                for (index, id) in ids.iter().enumerate() {
+                    if index > 0 {
+                        sql.push_str(", ");
+                    }
+                    sql.push('?');
+                    params.push(Value::Integer(*id));
+                }
+                sql.push_str("))");
+            }
+            SearchMatchMode::All => {
+                for id in ids {
+                    sql.push_str(" AND EXISTS (");
+                    sql.push_str(relation_sql);
+                    sql.push_str(" AND ");
+                    sql.push_str(relation_column);
+                    sql.push_str(" = ?)");
+                    params.push(Value::Integer(*id));
+                }
+            }
         }
     }
 

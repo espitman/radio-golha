@@ -1,4 +1,4 @@
-use radiogolha_core::{LookupKind, ProgramSearchFilters, RadioGolhaCore};
+use radiogolha_core::{LookupKind, ProgramSearchFilters, RadioGolhaCore, SearchMatchMode};
 
 fn open_core() -> RadioGolhaCore {
     RadioGolhaCore::open("../database/golha_database.db").expect("database should open")
@@ -102,4 +102,46 @@ fn program_search_options_and_filters_work_with_and_logic() {
         .expect("program search should succeed");
 
     assert_eq!(response.rows.first().map(|row| row.id), Some(1));
+}
+
+#[test]
+fn program_search_supports_any_and_all_modes_by_group() {
+    let core = open_core();
+    let options = core
+        .program_search_options()
+        .expect("search options should load");
+
+    let singer_ids = options
+        .singers
+        .iter()
+        .filter(|item| item.name == "غلامحسین بنان" || item.name == "محمدرضا شجریان")
+        .map(|item| item.id)
+        .collect::<Vec<_>>();
+
+    assert_eq!(singer_ids.len(), 2);
+
+    let any_response = core
+        .admin_program_search(
+            &ProgramSearchFilters {
+                singer_ids: singer_ids.clone(),
+                singer_match: SearchMatchMode::Any,
+                ..ProgramSearchFilters::default()
+            },
+            1,
+        )
+        .expect("program search with any should succeed");
+
+    let all_response = core
+        .admin_program_search(
+            &ProgramSearchFilters {
+                singer_ids,
+                singer_match: SearchMatchMode::All,
+                ..ProgramSearchFilters::default()
+            },
+            1,
+        )
+        .expect("program search with all should succeed");
+
+    assert!(any_response.total > 0);
+    assert_eq!(all_response.total, 0);
 }

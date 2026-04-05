@@ -19,7 +19,6 @@ import {
   LibraryBig,
   Mic2,
   Search,
-  Sparkles,
   Waves,
   X,
 } from 'lucide-react'
@@ -63,11 +62,15 @@ type SearchResultsResponse = {
   totalPages: number
 }
 
+type MatchMode = 'any' | 'all'
+
 type MultiSelectProps = {
   label: string
   placeholder: string
   options: SearchOption[]
   selectedIds: number[]
+  matchMode?: MatchMode
+  onMatchModeChange?(mode: MatchMode): void
   loading?: boolean
   disabled?: boolean
   onChange(ids: number[]): void
@@ -103,6 +106,8 @@ function MultiSelectFilter({
   placeholder,
   options,
   selectedIds,
+  matchMode = 'any',
+  onMatchModeChange,
   loading = false,
   disabled = false,
   onChange,
@@ -150,8 +155,41 @@ function MultiSelectFilter({
   }
 
   return (
-    <div className={`relative space-y-2 ${open ? 'z-[80]' : 'z-10'}`} ref={rootRef}>
-      <div className="text-[10px] font-black text-muted-foreground">{label}</div>
+    <div className={`relative space-y-2.5 ${open ? 'z-[80]' : 'z-10'}`} ref={rootRef}>
+      <div className="flex min-h-7 items-center justify-between gap-3">
+        <div className="text-right text-[10px] font-black text-muted-foreground">{label}</div>
+        {onMatchModeChange ? (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => onMatchModeChange('all')}
+              className={`rounded-full px-2.5 py-1 text-[10px] font-black transition-colors ${
+                matchMode === 'all'
+                  ? 'bg-primary text-white'
+                  : 'bg-primary/5 text-primary hover:bg-primary/10'
+              } ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
+            >
+              همه
+            </button>
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => onMatchModeChange('any')}
+              className={`rounded-full px-2.5 py-1 text-[10px] font-black transition-colors ${
+                matchMode === 'any'
+                  ? 'bg-primary text-white'
+                  : 'bg-primary/5 text-primary hover:bg-primary/10'
+              } ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
+            >
+              هرکدام
+            </button>
+          </div>
+        ) : (
+          <div className="h-6" />
+        )}
+      </div>
+
       <button
         type="button"
         disabled={disabled}
@@ -171,7 +209,7 @@ function MultiSelectFilter({
       </button>
 
       {selectedNames.length > 0 && (
-        <div className="flex flex-wrap justify-start gap-1.5">
+        <div className="flex min-h-8 flex-wrap content-start justify-start gap-1.5">
           {selectedNames.map((item) => (
             <Badge
               key={item.id}
@@ -190,6 +228,10 @@ function MultiSelectFilter({
             </Badge>
           ))}
         </div>
+      )}
+
+      {selectedNames.length === 0 && (
+        <div className="min-h-8" />
       )}
 
       {open && (
@@ -253,15 +295,25 @@ function SearchPage() {
 
   const [categoryIds, setCategoryIds] = useState<number[]>([])
   const [modeIds, setModeIds] = useState<number[]>([])
+  const [modeMatch, setModeMatch] = useState<MatchMode>('any')
   const [orchestraIds, setOrchestraIds] = useState<number[]>([])
+  const [orchestraMatch, setOrchestraMatch] = useState<MatchMode>('any')
   const [instrumentIds, setInstrumentIds] = useState<number[]>([])
+  const [instrumentMatch, setInstrumentMatch] = useState<MatchMode>('any')
   const [singerIds, setSingerIds] = useState<number[]>([])
+  const [singerMatch, setSingerMatch] = useState<MatchMode>('any')
   const [poetIds, setPoetIds] = useState<number[]>([])
+  const [poetMatch, setPoetMatch] = useState<MatchMode>('any')
   const [announcerIds, setAnnouncerIds] = useState<number[]>([])
+  const [announcerMatch, setAnnouncerMatch] = useState<MatchMode>('any')
   const [composerIds, setComposerIds] = useState<number[]>([])
+  const [composerMatch, setComposerMatch] = useState<MatchMode>('any')
   const [arrangerIds, setArrangerIds] = useState<number[]>([])
+  const [arrangerMatch, setArrangerMatch] = useState<MatchMode>('any')
   const [performerIds, setPerformerIds] = useState<number[]>([])
+  const [performerMatch, setPerformerMatch] = useState<MatchMode>('any')
   const [orchestraLeaderIds, setOrchestraLeaderIds] = useState<number[]>([])
+  const [orchestraLeaderMatch, setOrchestraLeaderMatch] = useState<MatchMode>('any')
 
   useEffect(() => {
     fetch('/api/program-search/options')
@@ -301,15 +353,25 @@ function SearchPage() {
     deferredTranscriptQuery.trim(),
     categoryIds.join(','),
     modeIds.join(','),
+    modeMatch,
     orchestraIds.join(','),
+    orchestraMatch,
     instrumentIds.join(','),
+    instrumentMatch,
     singerIds.join(','),
+    singerMatch,
     poetIds.join(','),
+    poetMatch,
     announcerIds.join(','),
+    announcerMatch,
     composerIds.join(','),
+    composerMatch,
     arrangerIds.join(','),
+    arrangerMatch,
     performerIds.join(','),
+    performerMatch,
     orchestraLeaderIds.join(','),
+    orchestraLeaderMatch,
   ].join('|')
 
   useEffect(() => {
@@ -324,16 +386,46 @@ function SearchPage() {
 
     if (deferredTranscriptQuery.trim()) params.set('transcriptQuery', deferredTranscriptQuery.trim())
     if (categoryIds.length) params.set('categoryIds', categoryIds.join(','))
-    if (modeIds.length) params.set('modeIds', modeIds.join(','))
-    if (orchestraIds.length) params.set('orchestraIds', orchestraIds.join(','))
-    if (instrumentIds.length) params.set('instrumentIds', instrumentIds.join(','))
-    if (singerIds.length) params.set('singerIds', singerIds.join(','))
-    if (poetIds.length) params.set('poetIds', poetIds.join(','))
-    if (announcerIds.length) params.set('announcerIds', announcerIds.join(','))
-    if (composerIds.length) params.set('composerIds', composerIds.join(','))
-    if (arrangerIds.length) params.set('arrangerIds', arrangerIds.join(','))
-    if (performerIds.length) params.set('performerIds', performerIds.join(','))
-    if (orchestraLeaderIds.length) params.set('orchestraLeaderIds', orchestraLeaderIds.join(','))
+    if (modeIds.length) {
+      params.set('modeIds', modeIds.join(','))
+      params.set('modeMatch', modeMatch)
+    }
+    if (orchestraIds.length) {
+      params.set('orchestraIds', orchestraIds.join(','))
+      params.set('orchestraMatch', orchestraMatch)
+    }
+    if (instrumentIds.length) {
+      params.set('instrumentIds', instrumentIds.join(','))
+      params.set('instrumentMatch', instrumentMatch)
+    }
+    if (singerIds.length) {
+      params.set('singerIds', singerIds.join(','))
+      params.set('singerMatch', singerMatch)
+    }
+    if (poetIds.length) {
+      params.set('poetIds', poetIds.join(','))
+      params.set('poetMatch', poetMatch)
+    }
+    if (announcerIds.length) {
+      params.set('announcerIds', announcerIds.join(','))
+      params.set('announcerMatch', announcerMatch)
+    }
+    if (composerIds.length) {
+      params.set('composerIds', composerIds.join(','))
+      params.set('composerMatch', composerMatch)
+    }
+    if (arrangerIds.length) {
+      params.set('arrangerIds', arrangerIds.join(','))
+      params.set('arrangerMatch', arrangerMatch)
+    }
+    if (performerIds.length) {
+      params.set('performerIds', performerIds.join(','))
+      params.set('performerMatch', performerMatch)
+    }
+    if (orchestraLeaderIds.length) {
+      params.set('orchestraLeaderIds', orchestraLeaderIds.join(','))
+      params.set('orchestraLeaderMatch', orchestraLeaderMatch)
+    }
 
     fetch(`/api/program-search?${params.toString()}`)
       .then((res) => res.json())
@@ -351,15 +443,25 @@ function SearchPage() {
     deferredTranscriptQuery,
     categoryIds,
     modeIds,
+    modeMatch,
     orchestraIds,
+    orchestraMatch,
     instrumentIds,
+    instrumentMatch,
     singerIds,
+    singerMatch,
     poetIds,
+    poetMatch,
     announcerIds,
+    announcerMatch,
     composerIds,
+    composerMatch,
     arrangerIds,
+    arrangerMatch,
     performerIds,
+    performerMatch,
     orchestraLeaderIds,
+    orchestraLeaderMatch,
   ])
 
   const activeFilterCount = [
@@ -385,15 +487,25 @@ function SearchPage() {
     setTranscriptQuery('')
     setCategoryIds([])
     setModeIds([])
+    setModeMatch('any')
     setOrchestraIds([])
+    setOrchestraMatch('any')
     setInstrumentIds([])
+    setInstrumentMatch('any')
     setSingerIds([])
+    setSingerMatch('any')
     setPoetIds([])
+    setPoetMatch('any')
     setAnnouncerIds([])
+    setAnnouncerMatch('any')
     setComposerIds([])
+    setComposerMatch('any')
     setArrangerIds([])
+    setArrangerMatch('any')
     setPerformerIds([])
+    setPerformerMatch('any')
     setOrchestraLeaderIds([])
+    setOrchestraLeaderMatch('any')
     setPage(1)
   }
 
@@ -472,16 +584,6 @@ function SearchPage() {
 
           <div className="rounded-[1.5rem] border border-primary/10 bg-background/70 p-4">
             <div className="space-y-5">
-              <div className="rounded-[1.3rem] border border-primary/8 bg-primary/[0.03] p-4">
-                <div className="mb-2 flex items-center justify-start gap-2 text-[11px] font-black text-primary">
-                  <Sparkles className="h-4 w-4" />
-                  منطق جست‌وجو
-                </div>
-                <p className="text-[12px] font-bold leading-7 text-muted-foreground">
-                  همه‌ی انتخاب‌ها با هم AND می‌شوند. اگر دو خواننده، یک دستگاه و یک ساز انتخاب کنی، فقط برنامه‌هایی می‌آیند که همه‌ی آن‌ها را با هم داشته باشند.
-                </p>
-              </div>
-
               <div className="space-y-3">
                 <div className="flex items-center justify-start gap-2 text-[11px] font-black text-primary">
                   <Waves className="h-4 w-4" />
@@ -500,16 +602,16 @@ function SearchPage() {
 
               <div className="grid gap-4 xl:grid-cols-4 lg:grid-cols-3 md:grid-cols-2">
                 <MultiSelectFilter label="دسته برنامه" placeholder="انتخاب دسته..." options={categorySearchOptions} selectedIds={categoryIds} loading={loadingOptions} disabled={optionsError} onChange={setCategoryIds} />
-                <MultiSelectFilter label="دستگاه" placeholder="انتخاب دستگاه..." options={options.modes} selectedIds={modeIds} loading={loadingOptions} disabled={optionsError} onChange={setModeIds} />
-                <MultiSelectFilter label="ارکستر" placeholder="انتخاب ارکستر..." options={options.orchestras} selectedIds={orchestraIds} loading={loadingOptions} disabled={optionsError} onChange={setOrchestraIds} />
-                <MultiSelectFilter label="ساز" placeholder="انتخاب ساز..." options={options.instruments} selectedIds={instrumentIds} loading={loadingOptions} disabled={optionsError} onChange={setInstrumentIds} />
-                <MultiSelectFilter label="خواننده" placeholder="انتخاب خواننده..." options={options.singers} selectedIds={singerIds} loading={loadingOptions} disabled={optionsError} onChange={setSingerIds} />
-                <MultiSelectFilter label="شاعر" placeholder="انتخاب شاعر..." options={options.poets} selectedIds={poetIds} loading={loadingOptions} disabled={optionsError} onChange={setPoetIds} />
-                <MultiSelectFilter label="گوینده" placeholder="انتخاب گوینده..." options={options.announcers} selectedIds={announcerIds} loading={loadingOptions} disabled={optionsError} onChange={setAnnouncerIds} />
-                <MultiSelectFilter label="آهنگساز" placeholder="انتخاب آهنگساز..." options={options.composers} selectedIds={composerIds} loading={loadingOptions} disabled={optionsError} onChange={setComposerIds} />
-                <MultiSelectFilter label="تنظیم‌کننده" placeholder="انتخاب تنظیم‌کننده..." options={options.arrangers} selectedIds={arrangerIds} loading={loadingOptions} disabled={optionsError} onChange={setArrangerIds} />
-                <MultiSelectFilter label="نوازنده" placeholder="انتخاب نوازنده..." options={options.performers} selectedIds={performerIds} loading={loadingOptions} disabled={optionsError} onChange={setPerformerIds} />
-                <MultiSelectFilter label="رهبر ارکستر" placeholder="انتخاب رهبر..." options={options.orchestraLeaders} selectedIds={orchestraLeaderIds} loading={loadingOptions} disabled={optionsError} onChange={setOrchestraLeaderIds} />
+                <MultiSelectFilter label="دستگاه" placeholder="انتخاب دستگاه..." options={options.modes} selectedIds={modeIds} matchMode={modeMatch} onMatchModeChange={setModeMatch} loading={loadingOptions} disabled={optionsError} onChange={setModeIds} />
+                <MultiSelectFilter label="ارکستر" placeholder="انتخاب ارکستر..." options={options.orchestras} selectedIds={orchestraIds} matchMode={orchestraMatch} onMatchModeChange={setOrchestraMatch} loading={loadingOptions} disabled={optionsError} onChange={setOrchestraIds} />
+                <MultiSelectFilter label="ساز" placeholder="انتخاب ساز..." options={options.instruments} selectedIds={instrumentIds} matchMode={instrumentMatch} onMatchModeChange={setInstrumentMatch} loading={loadingOptions} disabled={optionsError} onChange={setInstrumentIds} />
+                <MultiSelectFilter label="خواننده" placeholder="انتخاب خواننده..." options={options.singers} selectedIds={singerIds} matchMode={singerMatch} onMatchModeChange={setSingerMatch} loading={loadingOptions} disabled={optionsError} onChange={setSingerIds} />
+                <MultiSelectFilter label="شاعر" placeholder="انتخاب شاعر..." options={options.poets} selectedIds={poetIds} matchMode={poetMatch} onMatchModeChange={setPoetMatch} loading={loadingOptions} disabled={optionsError} onChange={setPoetIds} />
+                <MultiSelectFilter label="گوینده" placeholder="انتخاب گوینده..." options={options.announcers} selectedIds={announcerIds} matchMode={announcerMatch} onMatchModeChange={setAnnouncerMatch} loading={loadingOptions} disabled={optionsError} onChange={setAnnouncerIds} />
+                <MultiSelectFilter label="آهنگساز" placeholder="انتخاب آهنگساز..." options={options.composers} selectedIds={composerIds} matchMode={composerMatch} onMatchModeChange={setComposerMatch} loading={loadingOptions} disabled={optionsError} onChange={setComposerIds} />
+                <MultiSelectFilter label="تنظیم‌کننده" placeholder="انتخاب تنظیم‌کننده..." options={options.arrangers} selectedIds={arrangerIds} matchMode={arrangerMatch} onMatchModeChange={setArrangerMatch} loading={loadingOptions} disabled={optionsError} onChange={setArrangerIds} />
+                <MultiSelectFilter label="نوازنده" placeholder="انتخاب نوازنده..." options={options.performers} selectedIds={performerIds} matchMode={performerMatch} onMatchModeChange={setPerformerMatch} loading={loadingOptions} disabled={optionsError} onChange={setPerformerIds} />
+                <MultiSelectFilter label="رهبر ارکستر" placeholder="انتخاب رهبر..." options={options.orchestraLeaders} selectedIds={orchestraLeaderIds} matchMode={orchestraLeaderMatch} onMatchModeChange={setOrchestraLeaderMatch} loading={loadingOptions} disabled={optionsError} onChange={setOrchestraLeaderIds} />
               </div>
 
               {optionsError && (
