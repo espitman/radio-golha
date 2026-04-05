@@ -45,6 +45,7 @@ function ApiLabPage() {
   const [responseText, setResponseText] = useState('')
   const [errorText, setErrorText] = useState('')
   const [lastRunUrl, setLastRunUrl] = useState('')
+  const [lastDurationMs, setLastDurationMs] = useState<number | null>(null)
 
   useEffect(() => {
     if (!selected) return
@@ -53,6 +54,7 @@ function ApiLabPage() {
     setResponseText('')
     setErrorText('')
     setLastRunUrl('')
+    setLastDurationMs(null)
   }, [selected])
 
   if (!selected) return null
@@ -60,6 +62,7 @@ function ApiLabPage() {
   const currentUrl = buildRequestUrl(selected, values)
 
   const runRequest = async () => {
+    const startedAt = performance.now()
     setLoading(true)
     setErrorText('')
     setStatus(null)
@@ -68,6 +71,7 @@ function ApiLabPage() {
     try {
       const response = await fetch(currentUrl)
       const text = await response.text()
+      setLastDurationMs(Math.round(performance.now() - startedAt))
       setStatus(response.status)
       try {
         const parsed = JSON.parse(text)
@@ -324,11 +328,18 @@ function ApiLabPage() {
                   <div className="text-[10px] font-black uppercase tracking-[0.24em] text-primary/45">Live Output</div>
                   <CardTitle className="mt-1 text-left text-sm font-black text-primary">Real Response</CardTitle>
                 </div>
-                {status !== null && (
-                  <Badge className={`rounded-full px-3 py-1 text-[10px] font-black ${status >= 200 && status < 300 ? 'border-none bg-emerald-600 text-white' : 'border-none bg-red-600 text-white'}`}>
-                    HTTP {status}
-                  </Badge>
-                )}
+                <div className="flex items-center gap-2">
+                  {lastDurationMs !== null && (
+                    <Badge className="rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-[10px] font-black text-primary">
+                      {lastDurationMs}ms
+                    </Badge>
+                  )}
+                  {status !== null && (
+                    <Badge className={`rounded-full px-3 py-1 text-[10px] font-black ${status >= 200 && status < 300 ? 'border-none bg-emerald-600 text-white' : 'border-none bg-red-600 text-white'}`}>
+                      HTTP {status}
+                    </Badge>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-3 p-5">
