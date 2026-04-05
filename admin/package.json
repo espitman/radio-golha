@@ -6,7 +6,10 @@
     "#/*": "./src/*"
   },
   "scripts": {
+    "build:core-addon": "node ./scripts/build-rust-addon.mjs",
+    "predev": "pnpm build:core-addon",
     "dev": "vite dev --port 3336",
+    "prebuild": "pnpm build:core-addon",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run"
