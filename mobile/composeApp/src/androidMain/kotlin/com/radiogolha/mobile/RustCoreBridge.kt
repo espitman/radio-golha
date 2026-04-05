@@ -6,4 +6,5 @@ object RustCoreBridge {
     }
 
     external fun getCategoriesJson(dbPath: String): String
+    external fun getHomeFeedJson(dbPath: String): String
 }
