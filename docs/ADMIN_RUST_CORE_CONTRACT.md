@@ -306,7 +306,111 @@ Allowed role values:
 }
 ```
 
-## 5. Lookup Lists
+## 5. Program Search Options
+
+- HTTP: `/api/program-search/options`
+- TypeScript: `rustCoreClient.getProgramSearchOptions()`
+- Native addon: `getProgramSearchOptions(dbPath)`
+
+#### Output shape
+
+```json
+{
+  "categories": [
+    { "id": 1, "title_fa": "برگ سبز" }
+  ],
+  "singers": [
+    { "id": 1, "name": "غلامحسین بنان" }
+  ],
+  "poets": [
+    { "id": 3, "name": "محیط قمی" }
+  ],
+  "announcers": [
+    { "id": 1, "name": "بهرام سلطانی" }
+  ],
+  "composers": [
+    { "id": 1, "name": "حسین یاحقی" }
+  ],
+  "arrangers": [
+    { "id": 1, "name": "جواد معروفی" }
+  ],
+  "performers": [
+    { "id": 1, "name": "فرهنگ شریف" }
+  ],
+  "orchestraLeaders": [
+    { "id": 1, "name": "روح‌الله خالقی" }
+  ],
+  "modes": [
+    { "id": 1, "name": "سه گاه" }
+  ],
+  "orchestras": [
+    { "id": 1, "name": "ارکستر گل‌ها" }
+  ],
+  "instruments": [
+    { "id": 1, "name": "سنتور" }
+  ]
+}
+```
+
+## 6. Program Search
+
+- HTTP: `/api/program-search`
+- TypeScript: `rustCoreClient.searchPrograms({...})`
+- Runtime implementation: `RustCoreClient` currently executes the Rust CLI subcommand `admin-program-search`
+
+#### Search rule
+
+- groups are combined with `AND`
+- category IDs are always matched with `OR`
+- transcript query is full-text against transcript verses only
+- the following groups support per-group `any` / `all` matching:
+  - modes
+  - orchestras
+  - instruments
+  - singers
+  - poets
+  - announcers
+  - composers
+  - arrangers
+  - performers
+  - orchestra leaders
+
+#### Query arguments
+
+- `page`
+- `transcriptQuery`
+- `categoryIds`
+- `modeIds`, `modeMatch`
+- `orchestraIds`, `orchestraMatch`
+- `instrumentIds`, `instrumentMatch`
+- `singerIds`, `singerMatch`
+- `poetIds`, `poetMatch`
+- `announcerIds`, `announcerMatch`
+- `composerIds`, `composerMatch`
+- `arrangerIds`, `arrangerMatch`
+- `performerIds`, `performerMatch`
+- `orchestraLeaderIds`, `orchestraLeaderMatch`
+
+#### Output shape
+
+```json
+{
+  "rows": [
+    {
+      "id": 1,
+      "title": "برگ سبز ۸۳",
+      "category_name": "برگ سبز",
+      "no": 83,
+      "sub_no": null
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "totalPages": 1
+}
+```
+
+## 7. Lookup Lists
 
 - HTTP: `/api/orchestras`, `/api/instruments`, `/api/modes`
 - TypeScript: `rustCoreClient.listLookupItems(kind, { search, page })`
@@ -355,6 +459,8 @@ Current mapping in the Admin:
 | `/api/programs` | `rustCoreClient.listPrograms(...)` | `listPrograms(dbPath, ...)` |
 | `/api/program/:id` | `rustCoreClient.getProgramDetail(id)` | `getProgramDetail(dbPath, id)` |
 | `/api/artists` | `rustCoreClient.listArtists(...)` | `listArtists(dbPath, ...)` |
+| `/api/program-search/options` | `rustCoreClient.getProgramSearchOptions()` | `getProgramSearchOptions(dbPath)` |
+| `/api/program-search` | `rustCoreClient.searchPrograms(...)` | `admin-program-search` CLI fallback |
 | `/api/orchestras` | `rustCoreClient.listLookupItems('orchestras', ...)` | `listLookupItems(dbPath, kind, ...)` |
 | `/api/instruments` | `rustCoreClient.listLookupItems('instruments', ...)` | `listLookupItems(dbPath, kind, ...)` |
 | `/api/modes` | `rustCoreClient.listLookupItems('modes', ...)` | `listLookupItems(dbPath, kind, ...)` |

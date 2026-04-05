@@ -15,7 +15,7 @@ export type ApiField = {
 export type ApiEndpointContract = {
   id: string
   label: string
-  group: 'dashboard' | 'programs' | 'artists' | 'lookups'
+  group: 'dashboard' | 'programs' | 'artists' | 'lookups' | 'search'
   method: 'GET'
   pathTemplate: string
   bridgeMethod: string
@@ -29,6 +29,125 @@ export type ApiEndpointContract = {
 }
 
 export const API_ENDPOINTS: ApiEndpointContract[] = [
+  {
+    id: 'program-search-options',
+    label: 'Program Search Options',
+    group: 'search',
+    method: 'GET',
+    pathTemplate: '/api/program-search/options',
+    bridgeMethod: 'rustCoreClient.getProgramSearchOptions()',
+    nativeFunction: 'getProgramSearchOptions(dbPath)',
+    description: 'Loads all structured search option sets used by the advanced program search screen.',
+    fields: [],
+    requestDto: 'No request DTO. Plain GET request with no query params.',
+    responseDto: `type ProgramSearchOptions = {
+  categories: Array<{ id: number; title_fa: string }>
+  singers: Array<{ id: number; name: string }>
+  poets: Array<{ id: number; name: string }>
+  announcers: Array<{ id: number; name: string }>
+  composers: Array<{ id: number; name: string }>
+  arrangers: Array<{ id: number; name: string }>
+  performers: Array<{ id: number; name: string }>
+  orchestraLeaders: Array<{ id: number; name: string }>
+  modes: Array<{ id: number; name: string }>
+  orchestras: Array<{ id: number; name: string }>
+  instruments: Array<{ id: number; name: string }>
+}`,
+    requestExample: `GET /api/program-search/options`,
+    responseExample: `{
+  "categories": [{ "id": 1, "title_fa": "Green Leaf" }],
+  "singers": [{ "id": 1, "name": "Sample Singer" }],
+  "poets": [{ "id": 3, "name": "Sample Poet" }],
+  "instruments": [{ "id": 1, "name": "Santur" }]
+}`,
+  },
+  {
+    id: 'program-search',
+    label: 'Program Search',
+    group: 'search',
+    method: 'GET',
+    pathTemplate: '/api/program-search',
+    bridgeMethod: 'rustCoreClient.searchPrograms({ transcriptQuery, page, categoryIds, modeIds, modeMatch, orchestraIds, orchestraMatch, instrumentIds, instrumentMatch, singerIds, singerMatch, poetIds, poetMatch, announcerIds, announcerMatch, composerIds, composerMatch, arrangerIds, arrangerMatch, performerIds, performerMatch, orchestraLeaderIds, orchestraLeaderMatch })',
+    nativeFunction: 'CLI fallback: admin-program-search --page ... --*-ids ... --*-match any|all',
+    description: 'Runs structured AND-based program search with per-group any/all behavior, plus transcript full-text search.',
+    fields: [
+      { key: 'page', label: 'Page', type: 'number', defaultValue: '1', location: 'query' },
+      { key: 'transcriptQuery', label: 'Transcript Query', type: 'string', defaultValue: '', placeholder: 'Text inside transcript verses', location: 'query' },
+      { key: 'categoryIds', label: 'Category IDs', type: 'string', defaultValue: '', placeholder: 'Comma-separated ids, OR within category', location: 'query' },
+      { key: 'modeIds', label: 'Mode IDs', type: 'string', defaultValue: '', placeholder: 'Comma-separated ids', location: 'query' },
+      { key: 'modeMatch', label: 'Mode Match', type: 'enum', defaultValue: 'any', location: 'query', options: [{ label: 'Any', value: 'any' }, { label: 'All', value: 'all' }] },
+      { key: 'orchestraIds', label: 'Orchestra IDs', type: 'string', defaultValue: '', placeholder: 'Comma-separated ids', location: 'query' },
+      { key: 'orchestraMatch', label: 'Orchestra Match', type: 'enum', defaultValue: 'any', location: 'query', options: [{ label: 'Any', value: 'any' }, { label: 'All', value: 'all' }] },
+      { key: 'instrumentIds', label: 'Instrument IDs', type: 'string', defaultValue: '', placeholder: 'Comma-separated ids', location: 'query' },
+      { key: 'instrumentMatch', label: 'Instrument Match', type: 'enum', defaultValue: 'any', location: 'query', options: [{ label: 'Any', value: 'any' }, { label: 'All', value: 'all' }] },
+      { key: 'singerIds', label: 'Singer IDs', type: 'string', defaultValue: '', placeholder: 'Comma-separated ids', location: 'query' },
+      { key: 'singerMatch', label: 'Singer Match', type: 'enum', defaultValue: 'any', location: 'query', options: [{ label: 'Any', value: 'any' }, { label: 'All', value: 'all' }] },
+      { key: 'poetIds', label: 'Poet IDs', type: 'string', defaultValue: '', placeholder: 'Comma-separated ids', location: 'query' },
+      { key: 'poetMatch', label: 'Poet Match', type: 'enum', defaultValue: 'any', location: 'query', options: [{ label: 'Any', value: 'any' }, { label: 'All', value: 'all' }] },
+      { key: 'announcerIds', label: 'Announcer IDs', type: 'string', defaultValue: '', placeholder: 'Comma-separated ids', location: 'query' },
+      { key: 'announcerMatch', label: 'Announcer Match', type: 'enum', defaultValue: 'any', location: 'query', options: [{ label: 'Any', value: 'any' }, { label: 'All', value: 'all' }] },
+      { key: 'composerIds', label: 'Composer IDs', type: 'string', defaultValue: '', placeholder: 'Comma-separated ids', location: 'query' },
+      { key: 'composerMatch', label: 'Composer Match', type: 'enum', defaultValue: 'any', location: 'query', options: [{ label: 'Any', value: 'any' }, { label: 'All', value: 'all' }] },
+      { key: 'arrangerIds', label: 'Arranger IDs', type: 'string', defaultValue: '', placeholder: 'Comma-separated ids', location: 'query' },
+      { key: 'arrangerMatch', label: 'Arranger Match', type: 'enum', defaultValue: 'any', location: 'query', options: [{ label: 'Any', value: 'any' }, { label: 'All', value: 'all' }] },
+      { key: 'performerIds', label: 'Performer IDs', type: 'string', defaultValue: '', placeholder: 'Comma-separated ids', location: 'query' },
+      { key: 'performerMatch', label: 'Performer Match', type: 'enum', defaultValue: 'any', location: 'query', options: [{ label: 'Any', value: 'any' }, { label: 'All', value: 'all' }] },
+      { key: 'orchestraLeaderIds', label: 'Orchestra Leader IDs', type: 'string', defaultValue: '', placeholder: 'Comma-separated ids', location: 'query' },
+      { key: 'orchestraLeaderMatch', label: 'Orchestra Leader Match', type: 'enum', defaultValue: 'any', location: 'query', options: [{ label: 'Any', value: 'any' }, { label: 'All', value: 'all' }] },
+    ],
+    requestDto: `type ProgramSearchRequest = {
+  page?: number
+  transcriptQuery?: string
+  categoryIds?: string
+  modeIds?: string
+  modeMatch?: 'any' | 'all'
+  orchestraIds?: string
+  orchestraMatch?: 'any' | 'all'
+  instrumentIds?: string
+  instrumentMatch?: 'any' | 'all'
+  singerIds?: string
+  singerMatch?: 'any' | 'all'
+  poetIds?: string
+  poetMatch?: 'any' | 'all'
+  announcerIds?: string
+  announcerMatch?: 'any' | 'all'
+  composerIds?: string
+  composerMatch?: 'any' | 'all'
+  arrangerIds?: string
+  arrangerMatch?: 'any' | 'all'
+  performerIds?: string
+  performerMatch?: 'any' | 'all'
+  orchestraLeaderIds?: string
+  orchestraLeaderMatch?: 'any' | 'all'
+}`,
+    responseDto: `type ProgramSearchResponse = {
+  rows: Array<{
+    id: number
+    title: string
+    category_name: string
+    no: number
+    sub_no: string | null
+  }>
+  total: number
+  page: number
+  totalPages: number
+}`,
+    requestExample: `GET /api/program-search?page=1&transcriptQuery=sample&singerIds=1,3&singerMatch=any&instrumentIds=1&instrumentMatch=all`,
+    responseExample: `{
+  "rows": [
+    {
+      "id": 1,
+      "title": "Green Leaf 83",
+      "category_name": "Green Leaf",
+      "no": 83,
+      "sub_no": null
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "totalPages": 1
+}`,
+  },
   {
     id: 'dashboard',
     label: 'Dashboard Overview',
