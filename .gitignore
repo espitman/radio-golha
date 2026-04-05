@@ -58,3 +58,8 @@ database/*.db
 *.db-shm
 
 downloads/
+
+# Kotlin / Android
+.gradle/
+**/build/
+local.properties
