@@ -18,7 +18,8 @@ export type ApiEndpointContract = {
   group: 'dashboard' | 'programs' | 'artists' | 'lookups'
   method: 'GET'
   pathTemplate: string
-  rustCommand: string
+  bridgeMethod: string
+  nativeFunction: string
   description: string
   fields: ApiField[]
   requestDto: string
@@ -34,8 +35,9 @@ export const API_ENDPOINTS: ApiEndpointContract[] = [
     group: 'dashboard',
     method: 'GET',
     pathTemplate: '/api/dashboard',
-    rustCommand: 'admin-dashboard',
-    description: 'Loads the real dashboard aggregates, rankings, category breakdown, and recent programs.',
+    bridgeMethod: 'rustCoreClient.getDashboardOverview()',
+    nativeFunction: 'dashboardOverview(dbPath)',
+    description: 'Loads the real dashboard aggregates, rankings, category breakdown, and recent programs through the Vite /api adapter and the napi-rs addon.',
     fields: [],
     requestDto: 'No request DTO. Plain GET request with no query params.',
     responseDto: `type DashboardOverview = {
@@ -86,8 +88,9 @@ export const API_ENDPOINTS: ApiEndpointContract[] = [
     group: 'programs',
     method: 'GET',
     pathTemplate: '/api/programs',
-    rustCommand: 'admin-programs --search <search> --page <page> --category-id <categoryId> --singer-id <singerId>',
-    description: 'Returns the paginated archive list plus singer/category filter options.',
+    bridgeMethod: 'rustCoreClient.listPrograms({ search, page, categoryId, singerId })',
+    nativeFunction: 'listPrograms(dbPath, search, page, categoryId?, singerId?)',
+    description: 'Returns the paginated archive list plus singer/category filter options via the napi-rs bridge.',
     fields: [
       {
         key: 'search',
@@ -164,8 +167,9 @@ export const API_ENDPOINTS: ApiEndpointContract[] = [
     group: 'programs',
     method: 'GET',
     pathTemplate: '/api/program/:id',
-    rustCommand: 'admin-program-detail <id>',
-    description: 'Loads the full metadata and timeline payload for a single program.',
+    bridgeMethod: 'rustCoreClient.getProgramDetail(id)',
+    nativeFunction: 'getProgramDetail(dbPath, id)',
+    description: 'Loads the full metadata and timeline payload for a single program through the browser -> /api -> Node addon -> Rust flow.',
     fields: [
       {
         key: 'id',
@@ -224,8 +228,9 @@ export const API_ENDPOINTS: ApiEndpointContract[] = [
     group: 'artists',
     method: 'GET',
     pathTemplate: '/api/artists',
-    rustCommand: 'admin-artists --search <search> --page <page> --role <role>',
-    description: 'Returns paginated artists plus aggregate role stats.',
+    bridgeMethod: 'rustCoreClient.listArtists({ search, page, role })',
+    nativeFunction: 'listArtists(dbPath, search, page, role?)',
+    description: 'Returns paginated artists plus aggregate role stats via the napi-rs bridge.',
     fields: [
       {
         key: 'search',
@@ -308,8 +313,9 @@ export const API_ENDPOINTS: ApiEndpointContract[] = [
     group: 'lookups',
     method: 'GET',
     pathTemplate: '/api/orchestras',
-    rustCommand: 'admin-lookup orchestras --search <search> --page <page>',
-    description: 'Returns canonical orchestra rows and program counts.',
+    bridgeMethod: "rustCoreClient.listLookupItems('orchestras', { search, page })",
+    nativeFunction: 'listLookupItems(dbPath, kind, search, page)',
+    description: 'Returns canonical orchestra rows and program counts via the napi-rs bridge.',
     fields: [
       {
         key: 'search',
@@ -346,8 +352,9 @@ export const API_ENDPOINTS: ApiEndpointContract[] = [
     group: 'lookups',
     method: 'GET',
     pathTemplate: '/api/instruments',
-    rustCommand: 'admin-lookup instruments --search <search> --page <page>',
-    description: 'Returns instruments and the number of programs using each one.',
+    bridgeMethod: "rustCoreClient.listLookupItems('instruments', { search, page })",
+    nativeFunction: 'listLookupItems(dbPath, kind, search, page)',
+    description: 'Returns instruments and the number of programs using each one via the napi-rs bridge.',
     fields: [
       {
         key: 'search',
@@ -384,8 +391,9 @@ export const API_ENDPOINTS: ApiEndpointContract[] = [
     group: 'lookups',
     method: 'GET',
     pathTemplate: '/api/modes',
-    rustCommand: 'admin-lookup modes --search <search> --page <page>',
-    description: 'Returns modes and distinct program counts for each one.',
+    bridgeMethod: "rustCoreClient.listLookupItems('modes', { search, page })",
+    nativeFunction: 'listLookupItems(dbPath, kind, search, page)',
+    description: 'Returns modes and distinct program counts for each one via the napi-rs bridge.',
     fields: [
       {
         key: 'search',

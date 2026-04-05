@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
-import { Braces, FileJson2, Play, TerminalSquare, Waves } from 'lucide-react'
+import { Braces, FileJson2, Network, Play, TerminalSquare, Waves } from 'lucide-react'
 import { API_ENDPOINTS, type ApiEndpointContract } from '@/features/api-lab/contracts'
 
 export const Route = createFileRoute('/api-lab/')({
@@ -182,10 +182,18 @@ function ApiLabPage() {
 
                   <div className="rounded-[1.4rem] border border-primary/10 bg-background/70 p-4 text-left">
                     <div className="mb-2 flex items-center justify-between">
-                      <span className="text-[10px] font-black uppercase tracking-[0.24em] text-primary/45">Rust Command</span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.24em] text-primary/45">Admin Bridge</span>
                       <TerminalSquare className="h-4 w-4 text-primary/55" />
                     </div>
-                    <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded-[1rem] bg-[#102a33] p-3 text-left text-[11px] font-bold text-[#d6edf2]">{selected.rustCommand}</pre>
+                    <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded-[1rem] bg-[#102a33] p-3 text-left text-[11px] font-bold text-[#d6edf2]">{selected.bridgeMethod}</pre>
+                  </div>
+
+                  <div className="rounded-[1.4rem] border border-primary/10 bg-background/70 p-4 text-left">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-[10px] font-black uppercase tracking-[0.24em] text-primary/45">Native Addon</span>
+                      <Network className="h-4 w-4 text-primary/55" />
+                    </div>
+                    <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded-[1rem] bg-[#102a33] p-3 text-left text-[11px] font-bold text-[#d6edf2]">{selected.nativeFunction}</pre>
                   </div>
                 </div>
 
