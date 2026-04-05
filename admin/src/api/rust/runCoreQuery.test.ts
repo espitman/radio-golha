@@ -28,4 +28,34 @@ describe('RustCoreClient', () => {
     expect(payload?.timeline.length).toBeGreaterThan(0)
     expect(payload?.transcript.length).toBeGreaterThan(0)
   })
+
+  it('loads program search options from the native addon', async () => {
+    const payload = await rustCoreClient.getProgramSearchOptions<{
+      categories: Array<{ id: number; title_fa: string }>
+      singers: Array<{ id: number; name: string }>
+      modes: Array<{ id: number; name: string }>
+    }>()
+
+    expect(payload.categories.length).toBeGreaterThan(0)
+    expect(payload.singers.length).toBeGreaterThan(0)
+    expect(payload.modes.length).toBeGreaterThan(0)
+  })
+
+  it('loads search results from the native addon', async () => {
+    const payload = await rustCoreClient.searchPrograms<{
+      rows: Array<{ id: number; title: string }>
+      total: number
+      page: number
+      totalPages: number
+    }>({
+      page: 1,
+      transcriptQuery: 'گل',
+    })
+
+    expect(payload.page).toBe(1)
+    expect(payload.total).toBeGreaterThan(0)
+    expect(payload.totalPages).toBeGreaterThan(0)
+    expect(payload.rows.length).toBeGreaterThan(0)
+    expect(payload.rows[0]?.title).toBeTruthy()
+  })
 })

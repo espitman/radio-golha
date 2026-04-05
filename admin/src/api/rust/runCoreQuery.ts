@@ -1,6 +1,5 @@
 import { createRequire } from 'node:module'
-import { execFileSync } from 'node:child_process'
-import { CORE_DB_PATH, CORE_DIR, resolveCoreAddonPath } from './coreRuntime'
+import { CORE_DB_PATH, resolveCoreAddonPath } from './coreRuntime'
 
 const require = createRequire(import.meta.url)
 
@@ -37,24 +36,6 @@ function loadNativeCore() {
 
 function parseJson<T>(payload: string): T {
   return JSON.parse(payload) as T
-}
-
-function pushListFlag(args: string[], flag: string, values?: number[]) {
-  if (!values || values.length === 0) return
-  args.push(flag, values.join(','))
-}
-
-function pushMatchFlag(args: string[], flag: string, mode: SearchMatchMode, values?: number[]) {
-  if (!values || values.length === 0) return
-  args.push(flag, mode)
-}
-
-function runCoreCli<T>(args: string[]) {
-  const output = execFileSync('cargo', ['run', '--quiet', '--', '--db', CORE_DB_PATH, ...args], {
-    cwd: CORE_DIR,
-    encoding: 'utf8',
-  })
-  return parseJson<T>(output)
 }
 
 export class RustCoreClient {
@@ -183,38 +164,40 @@ export class RustCoreClient {
       sortDirection = 'asc',
     } = params || {}
 
-    return this.wrap(() => {
-      const args = ['admin-program-search', '--page', String(page)]
-
-      if (transcriptQuery?.trim()) {
-        args.push('--transcript-query', transcriptQuery.trim())
-      }
-
-      pushListFlag(args, '--category-ids', categoryIds)
-      pushListFlag(args, '--mode-ids', modeIds)
-      pushMatchFlag(args, '--mode-match', modeMatch, modeIds)
-      pushListFlag(args, '--orchestra-ids', orchestraIds)
-      pushMatchFlag(args, '--orchestra-match', orchestraMatch, orchestraIds)
-      pushListFlag(args, '--instrument-ids', instrumentIds)
-      pushMatchFlag(args, '--instrument-match', instrumentMatch, instrumentIds)
-      pushListFlag(args, '--singer-ids', singerIds)
-      pushMatchFlag(args, '--singer-match', singerMatch, singerIds)
-      pushListFlag(args, '--poet-ids', poetIds)
-      pushMatchFlag(args, '--poet-match', poetMatch, poetIds)
-      pushListFlag(args, '--announcer-ids', announcerIds)
-      pushMatchFlag(args, '--announcer-match', announcerMatch, announcerIds)
-      pushListFlag(args, '--composer-ids', composerIds)
-      pushMatchFlag(args, '--composer-match', composerMatch, composerIds)
-      pushListFlag(args, '--arranger-ids', arrangerIds)
-      pushMatchFlag(args, '--arranger-match', arrangerMatch, arrangerIds)
-      pushListFlag(args, '--performer-ids', performerIds)
-      pushMatchFlag(args, '--performer-match', performerMatch, performerIds)
-      pushListFlag(args, '--orchestra-leader-ids', orchestraLeaderIds)
-      pushMatchFlag(args, '--orchestra-leader-match', orchestraLeaderMatch, orchestraLeaderIds)
-      args.push('--sort-field', sortField, '--sort-direction', sortDirection)
-
-      return runCoreCli<T>(args)
-    })
+    return this.wrap(() =>
+      parseJson<T>(
+        this.core.searchPrograms(
+          this.dbPath,
+          JSON.stringify({
+            transcriptQuery: transcriptQuery?.trim() || undefined,
+            page,
+            categoryIds,
+            modeIds,
+            modeMatch,
+            orchestraIds,
+            orchestraMatch,
+            instrumentIds,
+            instrumentMatch,
+            singerIds,
+            singerMatch,
+            poetIds,
+            poetMatch,
+            announcerIds,
+            announcerMatch,
+            composerIds,
+            composerMatch,
+            arrangerIds,
+            arrangerMatch,
+            performerIds,
+            performerMatch,
+            orchestraLeaderIds,
+            orchestraLeaderMatch,
+            sortField,
+            sortDirection,
+          }),
+        ),
+      ),
+    )
   }
 
   private async wrap<T>(loader: () => T): Promise<T> {

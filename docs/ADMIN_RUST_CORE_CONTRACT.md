@@ -21,7 +21,7 @@ Instead, it uses:
 - Vite middleware for `/api/*`
 - thin TypeScript service functions
 - a Node-to-Rust bridge in `admin/src/api/rust/runCoreQuery.ts`
-- the native Node addon crate in `core-node/`
+- the native Node addon crate in `core/adapters/node/`
 - the shared Rust domain/query crate in `core/`
 
 The Rust core is now the single source of truth for archive querying and response shaping.
@@ -47,7 +47,7 @@ The Admin adapter may:
 
 The Admin bridge resolves Rust by loading a native `.node` addon built from:
 
-- `core-node/`
+- `core/adapters/node/`
 
 Database path passed to Rust:
 
@@ -55,8 +55,8 @@ Database path passed to Rust:
 
 Addon resolution:
 
-1. `core-node/target/debug/radiogolha_core.node`
-2. `core-node/target/release/radiogolha_core.node`
+1. `core/adapters/node/target/debug/radiogolha_core.node`
+2. `core/adapters/node/target/release/radiogolha_core.node`
 
 ## Browser Adapter Note
 

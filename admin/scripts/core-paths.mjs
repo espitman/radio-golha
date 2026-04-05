@@ -5,7 +5,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export const adminDir = path.resolve(__dirname, '..')
 export const rootDir = path.resolve(adminDir, '..')
-export const coreNodeDir = path.resolve(rootDir, 'core-node')
+export const coreNodeDir = path.resolve(rootDir, 'core/adapters/node')
 
 export const profile = process.env.NODE_ENV === 'production' ? 'release' : 'debug'
 export const targetDir = path.join(coreNodeDir, 'target', profile)
