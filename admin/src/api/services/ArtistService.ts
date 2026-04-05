@@ -1,7 +1,9 @@
-import { runCoreQuery } from '../rust/runCoreQuery'
+import { rustCoreClient } from '../rust/runCoreQuery'
 
 export function listArtists(search: string = '', page: number = 1, role?: string) {
-  const args = ['--search', search, '--page', page.toString()]
-  if (role) args.push('--role', role)
-  return runCoreQuery('admin-artists', args)
+  return rustCoreClient.listArtists({
+    search,
+    page,
+    role,
+  })
 }

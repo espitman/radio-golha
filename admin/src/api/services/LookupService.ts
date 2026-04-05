@@ -1,7 +1,8 @@
-import { runCoreQuery } from '../rust/runCoreQuery'
-
-export type LookupKind = 'orchestras' | 'instruments' | 'modes'
+import { rustCoreClient, type LookupKind } from '../rust/runCoreQuery'
 
 export function listLookupItems(kind: LookupKind, search: string = '', page: number = 1) {
-  return runCoreQuery('admin-lookup', [kind, '--search', search, '--page', page.toString()])
+  return rustCoreClient.listLookupItems(kind, {
+    search,
+    page,
+  })
 }

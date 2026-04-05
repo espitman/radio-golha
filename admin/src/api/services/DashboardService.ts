@@ -1,5 +1,5 @@
-import { runCoreQuery } from '../rust/runCoreQuery'
+import { rustCoreClient } from '../rust/runCoreQuery'
 
 export function getDashboardOverview() {
-  return runCoreQuery('admin-dashboard')
+  return rustCoreClient.getDashboardOverview()
 }

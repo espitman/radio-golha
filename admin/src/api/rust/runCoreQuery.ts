@@ -8,13 +8,6 @@ const CORE_DB = path.resolve(process.cwd(), '../database/golha_database.db')
 const CORE_DEBUG_ADDON = path.resolve(process.cwd(), '../core-node/target/debug/radiogolha_core.node')
 const CORE_RELEASE_ADDON = path.resolve(process.cwd(), '../core-node/target/release/radiogolha_core.node')
 
-type CoreCommand =
-  | 'admin-dashboard'
-  | 'admin-programs'
-  | 'admin-program-detail'
-  | 'admin-artists'
-  | 'admin-lookup'
-
 type NativeCoreModule = {
   dashboardOverview(dbPath: string): string
   listPrograms(dbPath: string, search: string, page: number, categoryId?: number, singerId?: number): string
@@ -22,6 +15,8 @@ type NativeCoreModule = {
   listArtists(dbPath: string, search: string, page: number, role?: string): string
   listLookupItems(dbPath: string, kind: string, search: string, page: number): string
 }
+
+export type LookupKind = 'orchestras' | 'instruments' | 'modes'
 
 let nativeCore: NativeCoreModule | null = null
 
@@ -32,64 +27,65 @@ function loadNativeCore() {
   return nativeCore
 }
 
-function parseNumericArg(args: string[], key: string) {
-  const index = args.indexOf(key)
-  if (index === -1) return undefined
-  const value = args[index + 1]
-  if (!value) return undefined
-  const parsed = Number.parseInt(value, 10)
-  return Number.isFinite(parsed) ? parsed : undefined
+function parseJson<T>(payload: string): T {
+  return JSON.parse(payload) as T
 }
 
-function parseStringArg(args: string[], key: string) {
-  const index = args.indexOf(key)
-  if (index === -1) return undefined
-  return args[index + 1] ?? undefined
-}
+export class RustCoreClient {
+  private readonly dbPath: string
 
-export async function runCoreQuery<T>(command: CoreCommand, args: string[] = []): Promise<T> {
-  const core = loadNativeCore()
+  constructor(dbPath: string = CORE_DB) {
+    this.dbPath = dbPath
+  }
 
-  try {
-    switch (command) {
-      case 'admin-dashboard':
-        return JSON.parse(core.dashboardOverview(CORE_DB)) as T
+  private get core() {
+    return loadNativeCore()
+  }
 
-      case 'admin-programs':
-        return JSON.parse(
-          core.listPrograms(
-            CORE_DB,
-            parseStringArg(args, '--search') ?? '',
-            parseNumericArg(args, '--page') ?? 1,
-            parseNumericArg(args, '--category-id'),
-            parseNumericArg(args, '--singer-id')
-          )
-        ) as T
+  async getDashboardOverview<T>(): Promise<T> {
+    return this.wrap(() => parseJson<T>(this.core.dashboardOverview(this.dbPath)))
+  }
 
-      case 'admin-program-detail':
-        return JSON.parse(core.getProgramDetail(CORE_DB, Number.parseInt(args[0] || '0', 10))) as T
+  async listPrograms<T>(params?: {
+    search?: string
+    page?: number
+    categoryId?: number
+    singerId?: number
+  }): Promise<T> {
+    const { search = '', page = 1, categoryId, singerId } = params || {}
+    return this.wrap(() =>
+      parseJson<T>(this.core.listPrograms(this.dbPath, search, page, categoryId, singerId))
+    )
+  }
 
-      case 'admin-artists':
-        return JSON.parse(
-          core.listArtists(
-            CORE_DB,
-            parseStringArg(args, '--search') ?? '',
-            parseNumericArg(args, '--page') ?? 1,
-            parseStringArg(args, '--role')
-          )
-        ) as T
+  async getProgramDetail<T>(id: number): Promise<T> {
+    return this.wrap(() => parseJson<T>(this.core.getProgramDetail(this.dbPath, id)))
+  }
 
-      case 'admin-lookup':
-        return JSON.parse(
-          core.listLookupItems(
-            CORE_DB,
-            args[0] || '',
-            parseStringArg(args, '--search') ?? '',
-            parseNumericArg(args, '--page') ?? 1
-          )
-        ) as T
+  async listArtists<T>(params?: {
+    search?: string
+    page?: number
+    role?: string
+  }): Promise<T> {
+    const { search = '', page = 1, role } = params || {}
+    return this.wrap(() => parseJson<T>(this.core.listArtists(this.dbPath, search, page, role)))
+  }
+
+  async listLookupItems<T>(kind: LookupKind, params?: {
+    search?: string
+    page?: number
+  }): Promise<T> {
+    const { search = '', page = 1 } = params || {}
+    return this.wrap(() => parseJson<T>(this.core.listLookupItems(this.dbPath, kind, search, page)))
+  }
+
+  private async wrap<T>(loader: () => T): Promise<T> {
+    try {
+      return loader()
+    } catch (error: any) {
+      throw new Error(error?.message || 'Failed to run Rust core native query')
     }
-  } catch (error: any) {
-    throw new Error(error?.message || 'Failed to run Rust core native query')
   }
 }
+
+export const rustCoreClient = new RustCoreClient()
