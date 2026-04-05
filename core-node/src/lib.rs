@@ -161,6 +161,8 @@ pub fn search_programs(db_path: String, payload_json: String) -> NapiResult<Stri
         performer_match: parse_match_mode(payload.performer_match),
         orchestra_leader_ids: payload.orchestra_leader_ids.unwrap_or_default(),
         orchestra_leader_match: parse_match_mode(payload.orchestra_leader_match),
+        sort_field: ProgramSortField::No,
+        sort_direction: SortDirection::Asc,
     };
     serialize(
         &core

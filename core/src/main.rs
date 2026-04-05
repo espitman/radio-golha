@@ -107,6 +107,10 @@ enum Command {
         orchestra_leader_ids: Vec<i64>,
         #[arg(long, value_enum, default_value_t = MatchModeArg::Any)]
         orchestra_leader_match: MatchModeArg,
+        #[arg(long, default_value = "no")]
+        sort_field: String,
+        #[arg(long, default_value = "asc")]
+        sort_direction: String,
     },
     ProgramDetail {
         id: i64,
@@ -234,6 +238,8 @@ fn main() -> Result<()> {
             performer_match,
             orchestra_leader_ids,
             orchestra_leader_match,
+            sort_field,
+            sort_direction,
         } => {
             let filters = ProgramSearchFilters {
                 transcript_query,
@@ -258,6 +264,8 @@ fn main() -> Result<()> {
                 performer_match: performer_match.into(),
                 orchestra_leader_ids,
                 orchestra_leader_match: orchestra_leader_match.into(),
+                sort_field: ProgramSortField::from_str(&sort_field),
+                sort_direction: SortDirection::from_str(&sort_direction),
             };
             println!("{}", to_string(&core.admin_program_search(&filters, page)?)?);
         }

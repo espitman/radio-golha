@@ -167,6 +167,8 @@ pub struct ProgramSearchFilters {
     pub performer_match: SearchMatchMode,
     pub orchestra_leader_ids: Vec<i64>,
     pub orchestra_leader_match: SearchMatchMode,
+    pub sort_field: ProgramSortField,
+    pub sort_direction: SortDirection,
 }
 
 impl RadioGolhaCore {
@@ -634,11 +636,7 @@ impl RadioGolhaCore {
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 
-    fn build_program_search_sql(
-        &self,
-        filters: &ProgramSearchFilters,
-        include_ordering: bool,
-    ) -> (String, Vec<Value>) {
+    fn build_program_search_sql(&self, filters: &ProgramSearchFilters) -> (String, Vec<Value>) {
         let mut sql = String::from(
             "
             SELECT p.id, p.title, c.title_fa, p.no, p.sub_no
@@ -744,9 +742,21 @@ impl RadioGolhaCore {
             "pol.orchestra_leader_id",
         );
 
-        if include_ordering {
-            sql.push_str(" ORDER BY p.no ASC, COALESCE(p.sub_no, '') ASC, p.id ASC ");
-        }
+        let order_by = match (filters.sort_field, filters.sort_direction) {
+            (ProgramSortField::Id, SortDirection::Asc) => "p.id ASC",
+            (ProgramSortField::Id, SortDirection::Desc) => "p.id DESC",
+            (ProgramSortField::No, SortDirection::Asc) => "p.no ASC, COALESCE(p.sub_no, '') ASC, p.id ASC",
+            (ProgramSortField::No, SortDirection::Desc) => "p.no DESC, COALESCE(p.sub_no, '') DESC, p.id DESC",
+            (ProgramSortField::SubNo, SortDirection::Asc) => "COALESCE(p.sub_no, '') ASC, p.no ASC, p.id ASC",
+            (ProgramSortField::SubNo, SortDirection::Desc) => "COALESCE(p.sub_no, '') DESC, p.no DESC, p.id DESC",
+            (ProgramSortField::Title, SortDirection::Asc) => "p.title COLLATE NOCASE ASC, p.id ASC",
+            (ProgramSortField::Title, SortDirection::Desc) => "p.title COLLATE NOCASE DESC, p.id DESC",
+            (ProgramSortField::CategoryName, SortDirection::Asc) => "c.title_fa COLLATE NOCASE ASC, p.no ASC, p.id ASC",
+            (ProgramSortField::CategoryName, SortDirection::Desc) => "c.title_fa COLLATE NOCASE DESC, p.no DESC, p.id DESC",
+        };
+        sql.push_str(" ORDER BY ");
+        sql.push_str(order_by);
+        sql.push(' ');
 
         (sql, params)
     }
@@ -818,7 +828,7 @@ impl RadioGolhaCore {
     }
 
     fn count_program_search(&self, filters: &ProgramSearchFilters) -> CoreResult<i64> {
-        let (base_sql, params) = self.build_program_search_sql(filters, false);
+        let (base_sql, params) = self.build_program_search_sql(filters);
         let sql = format!("SELECT COUNT(*) FROM ({base_sql}) filtered");
         let total = self
             .connection()
@@ -834,7 +844,7 @@ impl RadioGolhaCore {
     ) -> CoreResult<Vec<ProgramListItem>> {
         let page = page.max(1);
         let offset = (page - 1) * limit.max(1);
-        let (mut sql, mut params) = self.build_program_search_sql(filters, true);
+        let (mut sql, mut params) = self.build_program_search_sql(filters);
         sql.push_str(" LIMIT ? OFFSET ? ");
         params.push(Value::Integer(limit.max(1)));
         params.push(Value::Integer(offset));

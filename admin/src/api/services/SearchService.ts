@@ -28,6 +28,8 @@ export function searchPrograms(params?: {
   performerMatch?: 'any' | 'all'
   orchestraLeaderIds?: number[]
   orchestraLeaderMatch?: 'any' | 'all'
+  sortField?: 'id' | 'no' | 'sub_no' | 'title' | 'category_name'
+  sortDirection?: 'asc' | 'desc'
 }) {
   return rustCoreClient.searchPrograms(params)
 }

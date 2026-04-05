@@ -24,6 +24,7 @@ type NativeCoreModule = {
 
 export type LookupKind = 'orchestras' | 'instruments' | 'modes'
 export type SearchMatchMode = 'any' | 'all'
+export type ProgramSortField = 'id' | 'no' | 'sub_no' | 'title' | 'category_name'
 
 let nativeCore: NativeCoreModule | null = null
 
@@ -151,6 +152,8 @@ export class RustCoreClient {
     performerMatch?: SearchMatchMode
     orchestraLeaderIds?: number[]
     orchestraLeaderMatch?: SearchMatchMode
+    sortField?: ProgramSortField
+    sortDirection?: 'asc' | 'desc'
   }): Promise<T> {
     const {
       transcriptQuery,
@@ -176,6 +179,8 @@ export class RustCoreClient {
       performerMatch = 'any',
       orchestraLeaderIds = [],
       orchestraLeaderMatch = 'any',
+      sortField = 'no',
+      sortDirection = 'asc',
     } = params || {}
 
     return this.wrap(() => {
@@ -206,6 +211,7 @@ export class RustCoreClient {
       pushMatchFlag(args, '--performer-match', performerMatch, performerIds)
       pushListFlag(args, '--orchestra-leader-ids', orchestraLeaderIds)
       pushMatchFlag(args, '--orchestra-leader-match', orchestraLeaderMatch, orchestraLeaderIds)
+      args.push('--sort-field', sortField, '--sort-direction', sortDirection)
 
       return runCoreCli<T>(args)
     })

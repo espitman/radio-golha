@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/pagination"
 import {
   Check,
+  ChevronDown,
+  ChevronUp,
   ChevronsUpDown,
   ExternalLink,
   Hash,
@@ -63,6 +65,8 @@ type SearchResultsResponse = {
 }
 
 type MatchMode = 'any' | 'all'
+type SortField = 'id' | 'no' | 'sub_no' | 'title' | 'category_name'
+type SortDirection = 'asc' | 'desc'
 
 type MultiSelectProps = {
   label: string
@@ -290,6 +294,8 @@ function SearchPage() {
   const [loadingResults, setLoadingResults] = useState(true)
   const [optionsError, setOptionsError] = useState(false)
   const [page, setPage] = useState(1)
+  const [sortField, setSortField] = useState<SortField>('no')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [transcriptQuery, setTranscriptQuery] = useState('')
   const deferredTranscriptQuery = useDeferredValue(transcriptQuery)
 
@@ -372,6 +378,8 @@ function SearchPage() {
     performerMatch,
     orchestraLeaderIds.join(','),
     orchestraLeaderMatch,
+    sortField,
+    sortDirection,
   ].join('|')
 
   useEffect(() => {
@@ -382,6 +390,8 @@ function SearchPage() {
     setLoadingResults(true)
     const params = new URLSearchParams({
       page: page.toString(),
+      sortField,
+      sortDirection,
     })
 
     if (deferredTranscriptQuery.trim()) params.set('transcriptQuery', deferredTranscriptQuery.trim())
@@ -462,6 +472,8 @@ function SearchPage() {
     performerMatch,
     orchestraLeaderIds,
     orchestraLeaderMatch,
+    sortField,
+    sortDirection,
   ])
 
   const activeFilterCount = [
@@ -506,7 +518,28 @@ function SearchPage() {
     setPerformerMatch('any')
     setOrchestraLeaderIds([])
     setOrchestraLeaderMatch('any')
+    setSortField('no')
+    setSortDirection('asc')
     setPage(1)
+  }
+
+  const toggleSort = (field: SortField) => {
+    setPage(1)
+    if (sortField === field) {
+      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
+      return
+    }
+    setSortField(field)
+    setSortDirection('asc')
+  }
+
+  const renderSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <ChevronsUpDown className="h-3.5 w-3.5 opacity-45" />
+    }
+    return sortDirection === 'asc'
+      ? <ChevronUp className="h-3.5 w-3.5" />
+      : <ChevronDown className="h-3.5 w-3.5" />
   }
 
   const renderPagination = () => {
@@ -657,11 +690,36 @@ function SearchPage() {
             </colgroup>
             <thead className="bg-primary/[0.03]">
               <tr>
-                <th className="px-5 py-4 text-center text-[11px] font-black text-primary"><Hash className="mx-auto h-3.5 w-3.5" /></th>
-                <th className="px-3 py-4 text-center text-[11px] font-black text-primary whitespace-nowrap">شماره برنامه</th>
-                <th className="px-3 py-4 text-center text-[11px] font-black text-primary whitespace-nowrap">ساب‌نامبر</th>
-                <th className="px-5 py-4 text-right text-[11px] font-black text-primary">عنوان برنامه</th>
-                <th className="px-5 py-4 text-center text-[11px] font-black text-primary">دسته</th>
+                <th className="px-5 py-4 text-center text-[11px] font-black text-primary">
+                  <button type="button" onClick={() => toggleSort('id')} className="inline-flex items-center justify-center gap-1.5">
+                    <Hash className="h-3.5 w-3.5" />
+                    {renderSortIcon('id')}
+                  </button>
+                </th>
+                <th className="px-3 py-4 text-center text-[11px] font-black text-primary whitespace-nowrap">
+                  <button type="button" onClick={() => toggleSort('no')} className="inline-flex items-center justify-center gap-1.5">
+                    <span>شماره برنامه</span>
+                    {renderSortIcon('no')}
+                  </button>
+                </th>
+                <th className="px-3 py-4 text-center text-[11px] font-black text-primary whitespace-nowrap">
+                  <button type="button" onClick={() => toggleSort('sub_no')} className="inline-flex items-center justify-center gap-1.5">
+                    <span>ساب‌نامبر</span>
+                    {renderSortIcon('sub_no')}
+                  </button>
+                </th>
+                <th className="px-5 py-4 text-right text-[11px] font-black text-primary">
+                  <button type="button" onClick={() => toggleSort('title')} className="inline-flex items-center gap-1.5">
+                    {renderSortIcon('title')}
+                    <span>عنوان برنامه</span>
+                  </button>
+                </th>
+                <th className="px-5 py-4 text-center text-[11px] font-black text-primary">
+                  <button type="button" onClick={() => toggleSort('category_name')} className="inline-flex items-center justify-center gap-1.5">
+                    <span>دسته</span>
+                    {renderSortIcon('category_name')}
+                  </button>
+                </th>
                 <th className="px-5 py-4 text-center text-[11px] font-black text-primary">مشاهده</th>
               </tr>
             </thead>

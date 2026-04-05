@@ -29,6 +29,11 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
   if (req.method === 'GET' && url.pathname === '/api/program-search') {
     const page = getIntParam(url.searchParams.get('page'), 1)
     const transcriptQuery = url.searchParams.get('transcriptQuery') || undefined
+    const allowedSortFields = new Set(['id', 'no', 'sub_no', 'title', 'category_name'])
+    const sortField = allowedSortFields.has(url.searchParams.get('sortField') || '')
+      ? (url.searchParams.get('sortField') as 'id' | 'no' | 'sub_no' | 'title' | 'category_name')
+      : 'no'
+    const sortDirection = url.searchParams.get('sortDirection') === 'desc' ? 'desc' : 'asc'
 
     await respondWithJson(res, () =>
       searchPrograms({
@@ -55,6 +60,8 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
         performerMatch: getMatchModeParam(url.searchParams.get('performerMatch')),
         orchestraLeaderIds: getIntListParam(url.searchParams.get('orchestraLeaderIds')),
         orchestraLeaderMatch: getMatchModeParam(url.searchParams.get('orchestraLeaderMatch')),
+        sortField,
+        sortDirection,
       }),
     )
     return true
