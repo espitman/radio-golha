@@ -35,10 +35,10 @@ fn program_detail_exposes_sub_number_and_orchestra_leaders() {
 }
 
 #[test]
-fn admin_artist_list_returns_stats_and_rows() {
+fn artist_browse_returns_stats_and_rows() {
     let core = open_core();
     let response = core
-        .admin_artist_list("", 1, Some("singer"))
+        .browse_artists("", 1, Some("singer"))
         .expect("artist list should succeed");
 
     assert!(response.stats.total_artists > 100);
@@ -47,10 +47,10 @@ fn admin_artist_list_returns_stats_and_rows() {
 }
 
 #[test]
-fn admin_lookup_list_returns_program_counts() {
+fn lookup_browse_returns_program_counts() {
     let core = open_core();
     let response = core
-        .admin_lookup_list(LookupKind::Modes, "", 1)
+        .browse_lookup_items(LookupKind::Modes, "", 1)
         .expect("lookup list should succeed");
 
     assert!(response.stats.total_items > 0);
@@ -98,7 +98,7 @@ fn program_search_options_and_filters_work_with_and_logic() {
     };
 
     let response = core
-        .admin_program_search(&filters, 1)
+        .search_programs(&filters, 1)
         .expect("program search should succeed");
 
     assert_eq!(response.rows.first().map(|row| row.id), Some(1));
@@ -121,7 +121,7 @@ fn program_search_supports_any_and_all_modes_by_group() {
     assert_eq!(singer_ids.len(), 2);
 
     let any_response = core
-        .admin_program_search(
+        .search_programs(
             &ProgramSearchFilters {
                 singer_ids: singer_ids.clone(),
                 singer_match: SearchMatchMode::Any,
@@ -132,7 +132,7 @@ fn program_search_supports_any_and_all_modes_by_group() {
         .expect("program search with any should succeed");
 
     let all_response = core
-        .admin_program_search(
+        .search_programs(
             &ProgramSearchFilters {
                 singer_ids,
                 singer_match: SearchMatchMode::All,

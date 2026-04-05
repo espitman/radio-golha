@@ -68,7 +68,7 @@ export const API_ENDPOINTS: ApiEndpointContract[] = [
     method: 'GET',
     pathTemplate: '/api/program-search',
     bridgeMethod: 'rustCoreClient.searchPrograms({ transcriptQuery, page, categoryIds, modeIds, modeMatch, orchestraIds, orchestraMatch, instrumentIds, instrumentMatch, singerIds, singerMatch, poetIds, poetMatch, announcerIds, announcerMatch, composerIds, composerMatch, arrangerIds, arrangerMatch, performerIds, performerMatch, orchestraLeaderIds, orchestraLeaderMatch })',
-    nativeFunction: 'CLI fallback: admin-program-search --page ... --*-ids ... --*-match any|all',
+    nativeFunction: 'CLI fallback: search-programs --page ... --*-ids ... --*-match any|all',
     description: 'Runs structured AND-based program search with per-group any/all behavior, plus transcript full-text search.',
     fields: [
       { key: 'page', label: 'Page', type: 'number', defaultValue: '1', location: 'query' },

@@ -62,7 +62,7 @@ fn parse_match_mode(mode: Option<String>) -> SearchMatchMode {
 #[napi(js_name = "dashboardOverview")]
 pub fn dashboard_overview(db_path: String) -> NapiResult<String> {
     let core = open_core(db_path)?;
-    serialize(&core.admin_dashboard_overview().map_err(|error| NapiError::from_reason(error.to_string()))?)
+    serialize(&core.dashboard_overview().map_err(|error| NapiError::from_reason(error.to_string()))?)
 }
 
 #[napi(js_name = "listPrograms")]
@@ -78,7 +78,7 @@ pub fn list_programs(
     let core = open_core(db_path)?;
     serialize(
         &core
-            .admin_program_list(
+            .browse_programs(
                 &search,
                 page,
                 category_id,
@@ -105,7 +105,7 @@ pub fn list_artists(db_path: String, search: String, page: i64, role: Option<Str
     let core = open_core(db_path)?;
     serialize(
         &core
-            .admin_artist_list(&search, page, role.as_deref())
+            .browse_artists(&search, page, role.as_deref())
             .map_err(|error| NapiError::from_reason(error.to_string()))?,
     )
 }
@@ -116,7 +116,7 @@ pub fn list_lookup_items(db_path: String, kind: String, search: String, page: i6
     let kind = parse_lookup_kind(kind)?;
     serialize(
         &core
-            .admin_lookup_list(kind, &search, page)
+            .browse_lookup_items(kind, &search, page)
             .map_err(|error| NapiError::from_reason(error.to_string()))?,
     )
 }
@@ -166,7 +166,7 @@ pub fn search_programs(db_path: String, payload_json: String) -> NapiResult<Stri
     };
     serialize(
         &core
-            .admin_program_search(&filters, payload.page.unwrap_or(1))
+            .search_programs(&filters, payload.page.unwrap_or(1))
             .map_err(|error| NapiError::from_reason(error.to_string()))?,
     )
 }

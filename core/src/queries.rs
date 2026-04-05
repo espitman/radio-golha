@@ -468,7 +468,7 @@ impl RadioGolhaCore {
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 
-    pub fn admin_dashboard_overview(&self) -> CoreResult<DashboardOverview> {
+    pub fn dashboard_overview(&self) -> CoreResult<DashboardOverview> {
         Ok(DashboardOverview {
             summary: self.dashboard_summary()?,
             category_breakdown: self.category_breakdown()?,
@@ -479,7 +479,7 @@ impl RadioGolhaCore {
         })
     }
 
-    pub fn admin_program_list(
+    pub fn browse_programs(
         &self,
         search: &str,
         page: i64,
@@ -606,7 +606,7 @@ impl RadioGolhaCore {
         })
     }
 
-    pub fn admin_program_search(
+    pub fn search_programs(
         &self,
         filters: &ProgramSearchFilters,
         page: i64,
@@ -970,7 +970,7 @@ impl RadioGolhaCore {
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 
-    pub fn admin_artist_list(&self, search: &str, page: i64, role: Option<&str>) -> CoreResult<ArtistListResponse> {
+    pub fn browse_artists(&self, search: &str, page: i64, role: Option<&str>) -> CoreResult<ArtistListResponse> {
         let limit = 24_i64;
         let safe_page = page.max(1);
         let normalized_role = role.map(str::trim).filter(|value| !value.is_empty());
@@ -1058,7 +1058,7 @@ impl RadioGolhaCore {
         Ok(stats)
     }
 
-    pub fn admin_lookup_list(&self, kind: LookupKind, search: &str, page: i64) -> CoreResult<LookupListResponse> {
+    pub fn browse_lookup_items(&self, kind: LookupKind, search: &str, page: i64) -> CoreResult<LookupListResponse> {
         let limit = 24_i64;
         let safe_page = page.max(1);
         let total = self.count_lookup_items(kind, search)?;

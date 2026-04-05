@@ -356,7 +356,7 @@ Allowed role values:
 
 - HTTP: `/api/program-search`
 - TypeScript: `rustCoreClient.searchPrograms({...})`
-- Runtime implementation: `RustCoreClient` currently executes the Rust CLI subcommand `admin-program-search`
+- Runtime implementation previously used the Rust CLI subcommand `search-programs`
 
 #### Search rule
 
@@ -460,7 +460,7 @@ Current mapping in the Admin:
 | `/api/program/:id` | `rustCoreClient.getProgramDetail(id)` | `getProgramDetail(dbPath, id)` |
 | `/api/artists` | `rustCoreClient.listArtists(...)` | `listArtists(dbPath, ...)` |
 | `/api/program-search/options` | `rustCoreClient.getProgramSearchOptions()` | `getProgramSearchOptions(dbPath)` |
-| `/api/program-search` | `rustCoreClient.searchPrograms(...)` | `admin-program-search` CLI fallback |
+| `/api/program-search` | `rustCoreClient.searchPrograms(...)` | `search-programs` CLI fallback |
 | `/api/orchestras` | `rustCoreClient.listLookupItems('orchestras', ...)` | `listLookupItems(dbPath, kind, ...)` |
 | `/api/instruments` | `rustCoreClient.listLookupItems('instruments', ...)` | `listLookupItems(dbPath, kind, ...)` |
 | `/api/modes` | `rustCoreClient.listLookupItems('modes', ...)` | `listLookupItems(dbPath, kind, ...)` |
@@ -470,7 +470,7 @@ Current mapping in the Admin:
 At the Admin HTTP layer:
 
 - successful Rust JSON returns HTTP `200`
-- `null` from `admin-program-detail` returns HTTP `404`
+- `null` from `program-detail-json` returns HTTP `404`
 - process failures or parse failures return HTTP `500`
 
 The Admin currently does not expose a richer structured error schema.

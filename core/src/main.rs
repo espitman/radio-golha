@@ -19,14 +19,14 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum Command {
     Dashboard,
-    AdminDashboard,
+    DashboardOverview,
     Programs {
         #[arg(long, default_value_t = 10)]
         limit: usize,
         #[arg(long, default_value_t = 0)]
         offset: usize,
     },
-    AdminPrograms {
+    BrowsePrograms {
         #[arg(long, default_value = "")]
         search: String,
         #[arg(long, default_value_t = 1)]
@@ -40,10 +40,10 @@ enum Command {
         #[arg(long, default_value = "asc")]
         sort_direction: String,
     },
-    AdminProgramDetail {
+    ProgramDetailJson {
         id: i64,
     },
-    AdminArtists {
+    BrowseArtists {
         #[arg(long, default_value = "")]
         search: String,
         #[arg(long, default_value_t = 1)]
@@ -51,7 +51,7 @@ enum Command {
         #[arg(long)]
         role: Option<String>,
     },
-    AdminLookup {
+    BrowseLookup {
         #[arg(value_enum)]
         kind: LookupKindArg,
         #[arg(long, default_value = "")]
@@ -59,8 +59,8 @@ enum Command {
         #[arg(long, default_value_t = 1)]
         page: i64,
     },
-    AdminProgramSearchOptions,
-    AdminProgramSearch {
+    ProgramSearchOptions,
+    SearchPrograms {
         #[arg(long)]
         transcript_query: Option<String>,
         #[arg(long, default_value_t = 1)]
@@ -161,8 +161,8 @@ fn main() -> Result<()> {
             println!("{:#?}", core.top_singers(5)?);
             println!("{:#?}", core.top_modes(5)?);
         }
-        Command::AdminDashboard => {
-            println!("{}", to_string(&core.admin_dashboard_overview()?)?);
+        Command::DashboardOverview => {
+            println!("{}", to_string(&core.dashboard_overview()?)?);
         }
         Command::Programs { limit, offset } => {
             for item in core.list_programs(limit, offset)? {
@@ -176,7 +176,7 @@ fn main() -> Result<()> {
                 );
             }
         }
-        Command::AdminPrograms {
+        Command::BrowsePrograms {
             search,
             page,
             category_id,
@@ -186,7 +186,7 @@ fn main() -> Result<()> {
         } => {
             println!(
                 "{}",
-                to_string(&core.admin_program_list(
+                to_string(&core.browse_programs(
                     &search,
                     page,
                     category_id,
@@ -196,25 +196,25 @@ fn main() -> Result<()> {
                 )?)?
             );
         }
-        Command::AdminProgramDetail { id } => {
+        Command::ProgramDetailJson { id } => {
             println!("{}", to_string(&core.get_program_detail(id)?)?);
         }
-        Command::AdminArtists { search, page, role } => {
+        Command::BrowseArtists { search, page, role } => {
             println!(
                 "{}",
-                to_string(&core.admin_artist_list(&search, page, role.as_deref())?)?
+                to_string(&core.browse_artists(&search, page, role.as_deref())?)?
             );
         }
-        Command::AdminLookup { kind, search, page } => {
+        Command::BrowseLookup { kind, search, page } => {
             println!(
                 "{}",
-                to_string(&core.admin_lookup_list(kind.into(), &search, page)?)?
+                to_string(&core.browse_lookup_items(kind.into(), &search, page)?)?
             );
         }
-        Command::AdminProgramSearchOptions => {
+        Command::ProgramSearchOptions => {
             println!("{}", to_string(&core.program_search_options()?)?);
         }
-        Command::AdminProgramSearch {
+        Command::SearchPrograms {
             transcript_query,
             page,
             category_ids,
@@ -267,7 +267,7 @@ fn main() -> Result<()> {
                 sort_field: ProgramSortField::from_str(&sort_field),
                 sort_direction: SortDirection::from_str(&sort_direction),
             };
-            println!("{}", to_string(&core.admin_program_search(&filters, page)?)?);
+            println!("{}", to_string(&core.search_programs(&filters, page)?)?);
         }
         Command::ProgramDetail { id } => {
             println!("{:#?}", core.get_program_detail(id)?);
