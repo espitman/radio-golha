@@ -191,6 +191,46 @@ ACTIVITY com.radiogolha.mobile/.MainActivity
 
 ---
 
+## 8. Update The Database Without Reinstall
+
+Debug builds now include a database import tool under `حساب من`.
+
+How it works:
+
+- Push a fresh `golha_database.db` into the app's external debug path.
+- Open the app.
+- Go to `حساب من`.
+- Tap `دریافت دیتابیس جدید`.
+- The app copies that database into internal storage and refreshes the in-app data without reinstall.
+
+Push command:
+
+```bash
+cd /Users/espitman/Documents/Projects/radioGolha
+make mobile-push-db
+```
+
+The path shown inside the app should match:
+
+```text
+/storage/emulated/0/Android/data/com.radiogolha.mobile/files/golha_database.db
+```
+
+Notes:
+
+- This import tool is intended for `debug` builds only.
+- This flow is the preferred way to test database-only changes quickly.
+- Reinstall is still the canonical path when you also need a new APK or bundled asset changes.
+- `make mobile-push-db` uses `database/golha_database.db` and pushes it to `emulator-5554` by default.
+- If needed, you can override the target device:
+
+```bash
+cd /Users/espitman/Documents/Projects/radioGolha
+make mobile-push-db ANDROID_DEVICE=emulator-5554
+```
+
+---
+
 ## One-Shot Flow
 
 If you want the shortest repeatable debug flow:

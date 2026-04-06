@@ -27,6 +27,7 @@ function ArtistEdit() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
@@ -105,11 +106,44 @@ function ArtistEdit() {
       }
 
       const result = await res.json()
-      setAvatarUrl(result.url)
+      console.log('[Upload] Server response:', result)
+      
+      const newUrl = result.url || result.data?.url
+      if (newUrl) {
+        setAvatarUrl(newUrl)
+        console.log('[Upload] New avatar URL set:', newUrl)
+      } else {
+        throw new Error('فیلد آدرس در پاسخ سرور یافت نشد')
+      }
     } catch (err: any) {
       setError(err.message)
     } finally {
       setUploading(false)
+    }
+  }
+
+  const onDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  const onDragLeave = () => {
+    setIsDragging(false)
+  }
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+    
+    const file = e.dataTransfer.files?.[0]
+    if (file && file.type.startsWith('image/')) {
+      const input = document.getElementById('file-upload') as HTMLInputElement
+      if (input) {
+        const dataTransfer = new DataTransfer()
+        dataTransfer.items.add(file)
+        input.files = dataTransfer.files
+        handleFileUpload({ target: input } as any)
+      }
     }
   }
 
@@ -194,53 +228,24 @@ function ArtistEdit() {
                 <label htmlFor="avatar" className="block text-[13px] font-black text-primary/70 px-1">
                   آدرس تصویر (URL)
                 </label>
-                <div className="flex gap-3">
-                  <div className="relative group flex-1">
-                    <Input
-                      id="avatar"
-                      value={avatarUrl}
-                      onChange={(e) => setAvatarUrl(e.target.value)}
-                      placeholder="https://example.com/image.jpg"
-                      dir="ltr"
-                      className="h-16 rounded-[1.2rem] border-primary/15 bg-primary/[0.02] pr-5 text-lg font-mono shadow-none focus-visible:ring-primary/20 ring-offset-background transition-all"
-                    />
-                    {avatarUrl && (
-                      <button 
-                        type="button"
-                        onClick={() => setAvatarUrl('')}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-xl bg-destructive/5 text-destructive opacity-0 group-hover:opacity-100 transition-all hover:bg-destructive hover:text-white"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </div>
-                  
-                  <div className="relative">
-                    <input
-                      type="file"
-                      id="file-upload"
-                      className="hidden"
-                      accept="image/*"
-                      onChange={handleFileUpload}
-                      disabled={uploading}
-                    />
-                    <Button
+                <div className="relative group">
+                  <Input
+                    id="avatar"
+                    value={avatarUrl}
+                    onChange={(e) => setAvatarUrl(e.target.value)}
+                    placeholder="https://example.com/image.jpg"
+                    dir="ltr"
+                    className="h-16 rounded-[1.2rem] border-primary/15 bg-primary/[0.02] pr-5 text-lg font-mono shadow-none focus-visible:ring-primary/20 ring-offset-background transition-all"
+                  />
+                  {avatarUrl && (
+                    <button 
                       type="button"
-                      variant="secondary"
-                      disabled={uploading}
-                      onClick={() => document.getElementById('file-upload')?.click()}
-                      className="h-16 px-6 rounded-[1.2rem] border-primary/10 bg-primary/5 text-primary font-black hover:bg-primary/10 transition-all shadow-none"
+                      onClick={() => setAvatarUrl('')}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-xl bg-destructive/5 text-destructive opacity-0 group-hover:opacity-100 transition-all hover:bg-destructive hover:text-white"
                     >
-                      {uploading ? (
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <ImagePlus className="h-5 w-5" />
-                          <span>آپلود</span>
-                        </div>
-                      )}
-                    </Button>
-                  </div>
+                      ×
+                    </button>
+                  )}
                 </div>
                 <p className="px-2 text-[11px] font-bold text-muted-foreground/60 leading-relaxed">
                   لینک مستقیم به تصویر هنرمند جهت نمایش در اپلیکیشن.
@@ -248,31 +253,86 @@ function ArtistEdit() {
               </div>
             </div>
 
-            {/* Avatar Preview Column */}
+            {/* Avatar Preview & Upload Zone Column */}
             <div className="flex flex-col items-center gap-4">
               <div className="text-[13px] font-black text-primary/70 w-full text-center">
-                پیش‌نمایش تصویر
+                پیش‌نمایش و آپلود
               </div>
-              <div className="relative aspect-square w-full max-w-[240px] overflow-hidden rounded-[2.2rem] border-4 border-white bg-primary/5 shadow-2xl shadow-primary/10 transition-transform hover:scale-[1.02]">
+              
+              <div 
+                className={`relative group aspect-square w-full max-w-[240px] overflow-hidden rounded-[2.2rem] border-4 transition-all duration-300 ${
+                  isDragging 
+                    ? 'border-primary bg-primary/10 scale-105 shadow-2xl' 
+                    : 'border-white bg-primary/5 shadow-2xl shadow-primary/10'
+                }`}
+                onDragOver={onDragOver}
+                onDragLeave={onDragLeave}
+                onDrop={onDrop}
+              >
+                {/* Hidden File Input */}
+                <input
+                  type="file"
+                  id="file-upload"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  disabled={uploading}
+                />
+
+                {/* Current Image or Placeholder */}
                 {avatarUrl ? (
                   <img 
+                    key={avatarUrl}
                     src={avatarUrl} 
                     alt={name} 
-                    className="h-full w-full object-cover animate-in fade-in zoom-in duration-500"
+                    className={`h-full w-full object-cover transition-all duration-500 ${isDragging ? 'blur-sm opacity-50' : 'animate-in fade-in zoom-in'}`}
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'https://placehold.co/400x400/1f4e5f/ffffff?text=Error'
+                      console.error('[Upload] Image preview error for URL:', avatarUrl);
+                      const target = e.target as HTMLImageElement;
+                      target.src = 'https://placehold.co/400x400/1f4e5f/ffffff?text=Error';
                     }}
                   />
                 ) : (
-                  <div className="flex h-full w-full flex-col items-center justify-center text-primary/20">
+                  <div className={`flex h-full w-full flex-col items-center justify-center transition-all ${isDragging ? 'opacity-20' : 'text-primary/20'}`}>
                     <User className="h-20 w-20" />
-                    <span className="mt-2 text-[10px] font-black uppercase opacity-40">No Image</span>
+                    <span className="mt-2 text-[10px] font-black uppercase opacity-40">Drop Image Here</span>
                   </div>
                 )}
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/20 to-transparent h-1/3 opacity-40 pointer-events-none"></div>
+
+                {/* Upload Overlay */}
+                <div 
+                  className={`absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px] transition-all duration-300 ${
+                    uploading || isDragging ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 cursor-pointer'
+                  }`}
+                  onClick={() => !uploading && document.getElementById('file-upload')?.click()}
+                >
+                  {uploading ? (
+                    <div className="flex flex-col items-center gap-2 text-white">
+                      <Loader2 className="h-10 w-10 animate-spin" />
+                      <span className="text-[10px] font-black uppercase tracking-wider">Uploading...</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 text-white">
+                      <div className="rounded-full bg-white/20 p-4 transition-transform group-hover:scale-110">
+                        <ImagePlus className="h-8 w-8" />
+                      </div>
+                      <span className="text-[11px] font-black uppercase tracking-widest mt-2 px-4 py-1.5 bg-white/10 rounded-full border border-white/20">
+                        {isDragging ? 'Release to Upload' : (avatarUrl ? 'Change Photo' : 'Upload Photo')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Success Indicator Overlay */}
+                {success && !uploading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-teal-500/80 text-white animate-in zoom-in fade-in duration-300">
+                    <CheckCircle2 className="h-16 w-16" />
+                  </div>
+                )}
               </div>
+
               <div className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-tighter">
-                Square Aspect Ratio (1:1)
+                Click or Drag & Drop (1:1 Aspect)
               </div>
             </div>
           </div>

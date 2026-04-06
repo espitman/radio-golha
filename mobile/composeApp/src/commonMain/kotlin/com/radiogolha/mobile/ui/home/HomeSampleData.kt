@@ -39,10 +39,10 @@ internal val sampleTracks = listOf(
 )
 
 internal val sampleBottomNav = listOf(
-    BottomNavItemUiModel(label = "خانه", icon = GolhaIcon.Home, selected = true),
-    BottomNavItemUiModel(label = "جستجو", icon = GolhaIcon.Search),
-    BottomNavItemUiModel(label = "کتابخانه", icon = GolhaIcon.Library),
-    BottomNavItemUiModel(label = "حساب من", icon = GolhaIcon.Account),
+    BottomNavItemUiModel(label = "خانه", icon = GolhaIcon.Home, tab = AppTab.Home, selected = true),
+    BottomNavItemUiModel(label = "جستجو", icon = GolhaIcon.Search, tab = AppTab.Search),
+    BottomNavItemUiModel(label = "کتابخانه", icon = GolhaIcon.Library, tab = AppTab.Library),
+    BottomNavItemUiModel(label = "حساب من", icon = GolhaIcon.Account, tab = AppTab.Account),
 )
 
 fun sampleHomeUiState(): HomeUiState = HomeUiState(

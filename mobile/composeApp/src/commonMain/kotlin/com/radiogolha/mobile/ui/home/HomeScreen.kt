@@ -20,6 +20,7 @@ import com.radiogolha.mobile.theme.GolhaSpacing
 @Composable
 fun HomeScreen(
     state: HomeUiState,
+    onBottomNavSelected: (AppTab) -> Unit = {},
 ) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         Scaffold(
@@ -28,7 +29,10 @@ fun HomeScreen(
                 .background(GolhaColors.ScreenBackground),
             containerColor = GolhaColors.ScreenBackground,
             bottomBar = {
-                BottomNavigationBar(items = state.bottomNavItems)
+                BottomNavigationBar(
+                    items = state.bottomNavItems,
+                    onItemSelected = onBottomNavSelected,
+                )
             },
         ) { innerPadding ->
             LazyColumn(

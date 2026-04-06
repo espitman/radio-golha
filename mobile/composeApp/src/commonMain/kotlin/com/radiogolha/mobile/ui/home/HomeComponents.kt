@@ -3,6 +3,7 @@ package com.radiogolha.mobile.ui.home
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -304,7 +306,10 @@ fun TopTracksSection(tracks: List<TrackUiModel>, modifier: Modifier = Modifier) 
 }
 
 @Composable
-fun BottomNavigationBar(items: List<BottomNavItemUiModel>) {
+fun BottomNavigationBar(
+    items: List<BottomNavItemUiModel>,
+    onItemSelected: (AppTab) -> Unit,
+) {
     Surface(
         tonalElevation = 0.dp,
         shadowElevation = 0.dp,
@@ -319,12 +324,47 @@ fun BottomNavigationBar(items: List<BottomNavItemUiModel>) {
                 Box(
                     modifier = Modifier
                         .weight(1f)
+                        .clickable { onItemSelected(item.tab) }
                         .padding(vertical = 12.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     BottomNavItem(item = item)
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun SmallPrimaryButton(
+    label: String,
+    enabled: Boolean = true,
+    loading: Boolean = false,
+    onClick: () -> Unit,
+) {
+    Surface(
+        shape = RoundedCornerShape(GolhaRadius.Pill),
+        color = if (enabled) GolhaColors.PrimaryAccent else GolhaColors.Border,
+        shadowElevation = if (enabled) 2.dp else 0.dp,
+        modifier = Modifier.clickable(enabled = enabled, onClick = onClick),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            if (loading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    color = GolhaColors.Surface,
+                    strokeWidth = 2.dp,
+                )
+            }
+            Text(
+                text = if (loading) "در حال وارد کردن..." else label,
+                color = GolhaColors.Surface,
+                style = MaterialTheme.typography.labelLarge,
+            )
         }
     }
 }

@@ -30,8 +30,16 @@ data class TrackUiModel(
 data class BottomNavItemUiModel(
     val label: String,
     val icon: GolhaIcon,
+    val tab: AppTab,
     val selected: Boolean = false,
 )
+
+enum class AppTab {
+    Home,
+    Search,
+    Library,
+    Account,
+}
 
 data class HomeUiState(
     val programs: List<ProgramUiModel>,
