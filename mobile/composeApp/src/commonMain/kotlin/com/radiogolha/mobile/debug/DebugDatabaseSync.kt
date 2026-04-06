@@ -9,4 +9,4 @@ expect fun isDebugDatabaseToolsEnabled(): Boolean
 
 expect fun debugDatabaseExternalPath(): String?
 
-expect fun importDebugDatabase(): DebugDatabaseImportResult
+expect suspend fun importDebugDatabase(): DebugDatabaseImportResult

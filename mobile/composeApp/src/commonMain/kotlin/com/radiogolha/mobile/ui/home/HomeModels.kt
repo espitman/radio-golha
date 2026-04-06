@@ -48,6 +48,7 @@ data class HomeUiState(
     val musicians: List<MusicianUiModel>,
     val topTracks: List<TrackUiModel>,
     val bottomNavItems: List<BottomNavItemUiModel>,
+    val isDatabaseSyncing: Boolean = false,
 )
 
 enum class GolhaIcon {
