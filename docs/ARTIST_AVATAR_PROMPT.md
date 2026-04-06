@@ -2,7 +2,9 @@ Restore and colorize this photo while preserving the exact facial features with 
 
 identical face, do not reinterpret or regenerate face
 
-Do not change identity, face shape, eyes, nose, or expression.
+Do not change identity, face shape, eyes, nose, expression, or age.
+
+Preserve original clothing exactly as is. Do not modify, replace, or enhance outfit in any way.
 
 Convert to a high-quality studio portrait with:
 - warm brown gradient studio background
@@ -11,12 +13,7 @@ Convert to a high-quality studio portrait with:
 - natural skin tones
 - clean, sharp details
 
-Keep original pose and composition.
-
-Outfit enhancement:
-- elegant white suit jacket
-- black and white checkered shirt
-- light neutral tie
+Keep original pose, composition, and proportions.
 
 Style:
 - classic vintage studio portrait
@@ -25,3 +22,5 @@ Style:
 Framing:
 - square portrait (1:1 ratio)
 - centered composition, chest-up crop
+
+use original face texture and structure, no face reconstruction
