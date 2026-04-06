@@ -928,6 +928,7 @@ impl RadioGolhaCore {
             SELECT
               a.id,
               a.name,
+              a.avatar,
               EXISTS(SELECT 1 FROM singer s WHERE s.artist_id = a.id) AS is_singer,
               EXISTS(SELECT 1 FROM performer p WHERE p.artist_id = a.id) AS is_performer,
               EXISTS(SELECT 1 FROM poet po WHERE po.artist_id = a.id) AS is_poet,
@@ -957,12 +958,13 @@ impl RadioGolhaCore {
                 Ok(ArtistListItem {
                     id: row.get(0)?,
                     name: row.get(1)?,
-                    is_singer: row.get(2)?,
-                    is_performer: row.get(3)?,
-                    is_poet: row.get(4)?,
-                    is_announcer: row.get(5)?,
-                    is_composer: row.get(6)?,
-                    is_arranger: row.get(7)?,
+                    avatar: row.get(2)?,
+                    is_singer: row.get(3)?,
+                    is_performer: row.get(4)?,
+                    is_poet: row.get(5)?,
+                    is_announcer: row.get(6)?,
+                    is_composer: row.get(7)?,
+                    is_arranger: row.get(8)?,
                 })
             },
         )?;

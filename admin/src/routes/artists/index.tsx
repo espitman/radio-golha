@@ -20,6 +20,7 @@ import {
   Search,
   Shapes,
   Sparkles,
+  User,
   UserRound,
   Users,
 } from 'lucide-react'
@@ -27,6 +28,7 @@ import {
 type ArtistRow = {
   id: number
   name: string
+  avatar?: string
   is_singer: number
   is_performer: number
   is_poet: number
@@ -321,8 +323,26 @@ function ArtistsList() {
                       </div>
                     </td>
                     <td className="px-5 py-4">
-                      <div className="text-sm font-black text-foreground transition-colors group-hover:text-primary">
-                        {artist.name}
+                      <div className="flex items-center gap-3">
+                        <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-primary/10 bg-primary/5">
+                          {artist.avatar ? (
+                            <img 
+                              src={artist.avatar} 
+                              alt={artist.name} 
+                              className="h-full w-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://placehold.co/100x100/1f4e5f/ffffff?text=' + artist.name[0]
+                              }}
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-primary/5 text-primary/30">
+                              <User className="h-5 w-5" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-sm font-black text-foreground transition-colors group-hover:text-primary">
+                          {artist.name}
+                        </div>
                       </div>
                     </td>
                     <td className="w-[280px] px-5 py-4">

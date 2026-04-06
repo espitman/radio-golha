@@ -56,6 +56,7 @@ pub struct SingerOption {
 pub struct ArtistListItem {
     pub id: i64,
     pub name: String,
+    pub avatar: Option<String>,
     pub is_singer: i64,
     pub is_performer: i64,
     pub is_poet: i64,

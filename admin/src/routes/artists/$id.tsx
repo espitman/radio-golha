@@ -71,6 +71,7 @@ function ArtistEdit() {
         throw new Error(data.error || 'خطا در ذخیره‌سازی')
       }
 
+      setArtist(prev => prev ? ({ ...prev, name: name.trim(), avatar: avatarUrl.trim() || undefined }) : null)
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
     } catch (err: any) {
@@ -140,40 +141,82 @@ function ArtistEdit() {
 
       {/* Main Content Card */}
       <section className="rounded-[1.8rem] border border-primary/10 bg-white/80 backdrop-blur-md p-8 shadow-[0_18px_50px_rgba(31,78,95,0.06)]">
-        <form onSubmit={handleSave} className="space-y-10 max-w-2xl">
-          <div className="space-y-8">
-            <div className="space-y-4 text-right">
-              <label htmlFor="name" className="block text-[13px] font-black text-primary/70 px-1">
-                نام هنرمند
-              </label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="مثلاً: محمدرضا شجریان"
-                className="h-16 rounded-[1.2rem] border-primary/15 bg-primary/[0.02] pr-5 text-xl font-black shadow-none focus-visible:ring-primary/20 ring-offset-background transition-all"
-              />
+        <form onSubmit={handleSave} className="space-y-10">
+          <div className="grid gap-10 lg:grid-cols-[1fr_240px]">
+            {/* Fields Column */}
+            <div className="space-y-8">
+              <div className="space-y-4 text-right">
+                <label htmlFor="name" className="block text-[13px] font-black text-primary/70 px-1">
+                  نام هنرمند
+                </label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="مثلاً: محمدرضا شجریان"
+                  className="h-16 rounded-[1.2rem] border-primary/15 bg-primary/[0.02] pr-5 text-xl font-black shadow-none focus-visible:ring-primary/20 ring-offset-background transition-all"
+                />
+              </div>
+
+              <div className="space-y-4 text-right">
+                <label htmlFor="avatar" className="block text-[13px] font-black text-primary/70 px-1">
+                  آدرس تصویر (URL)
+                </label>
+                <div className="relative group">
+                  <Input
+                    id="avatar"
+                    value={avatarUrl}
+                    onChange={(e) => setAvatarUrl(e.target.value)}
+                    placeholder="https://example.com/image.jpg"
+                    dir="ltr"
+                    className="h-16 rounded-[1.2rem] border-primary/15 bg-primary/[0.02] pr-5 text-lg font-mono shadow-none focus-visible:ring-primary/20 ring-offset-background transition-all"
+                  />
+                  {avatarUrl && (
+                    <button 
+                      type="button"
+                      onClick={() => setAvatarUrl('')}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-xl bg-destructive/5 text-destructive opacity-0 group-hover:opacity-100 transition-all hover:bg-destructive hover:text-white"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+                <p className="px-2 text-[11px] font-bold text-muted-foreground/60 leading-relaxed">
+                  لینک مستقیم به تصویر هنرمند جهت نمایش در اپلیکیشن.
+                </p>
+              </div>
             </div>
 
-            <div className="space-y-4 text-right">
-              <label htmlFor="avatar" className="block text-[13px] font-black text-primary/70 px-1">
-                آدرس تصویر (URL)
-              </label>
-              <Input
-                id="avatar"
-                value={avatarUrl}
-                onChange={(e) => setAvatarUrl(e.target.value)}
-                placeholder="https://example.com/image.jpg"
-                dir="ltr"
-                className="h-16 rounded-[1.2rem] border-primary/15 bg-primary/[0.02] pr-5 text-lg font-mono shadow-none focus-visible:ring-primary/20 ring-offset-background transition-all"
-              />
-              <p className="px-2 text-[11px] font-bold text-muted-foreground/60 leading-relaxed">
-                لینک مستقیم به تصویر هنرمند جهت نمایش در اپلیکیشن.
-              </p>
+            {/* Avatar Preview Column */}
+            <div className="flex flex-col items-center gap-4">
+              <div className="text-[13px] font-black text-primary/70 w-full text-center">
+                پیش‌نمایش تصویر
+              </div>
+              <div className="relative aspect-square w-full max-w-[240px] overflow-hidden rounded-[2.2rem] border-4 border-white bg-primary/5 shadow-2xl shadow-primary/10 transition-transform hover:scale-[1.02]">
+                {avatarUrl ? (
+                  <img 
+                    src={avatarUrl} 
+                    alt={name} 
+                    className="h-full w-full object-cover animate-in fade-in zoom-in duration-500"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://placehold.co/400x400/1f4e5f/ffffff?text=Error'
+                    }}
+                  />
+                ) : (
+                  <div className="flex h-full w-full flex-col items-center justify-center text-primary/20">
+                    <User className="h-20 w-20" />
+                    <span className="mt-2 text-[10px] font-black uppercase opacity-40">No Image</span>
+                  </div>
+                )}
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/20 to-transparent h-1/3 opacity-40 pointer-events-none"></div>
+              </div>
+              <div className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-tighter">
+                Square Aspect Ratio (1:1)
+              </div>
             </div>
           </div>
 
-          <div className="pt-4 border-t border-primary/5">
+          <div className="pt-8 border-t border-primary/5">
             <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-wrap items-center gap-3 min-h-[44px]">
                 {success && (
