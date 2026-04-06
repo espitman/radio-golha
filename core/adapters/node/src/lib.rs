@@ -170,3 +170,23 @@ pub fn search_programs(db_path: String, payload_json: String) -> NapiResult<Stri
             .map_err(|error| NapiError::from_reason(error.to_string()))?,
     )
 }
+
+#[napi(js_name = "getArtistDetail")]
+pub fn get_artist_detail(db_path: String, id: i64) -> NapiResult<String> {
+    let core = open_core(db_path)?;
+    serialize(
+        &core
+            .get_artist_detail(id)
+            .map_err(|error| NapiError::from_reason(error.to_string()))?,
+    )
+}
+
+#[napi(js_name = "updateArtist")]
+pub fn update_artist(db_path: String, id: i64, name: String) -> NapiResult<()> {
+    let core =
+        RadioGolhaCore::open_rw(db_path).map_err(|error| NapiError::from_reason(error.to_string()))?;
+    core.update_artist(id, &name)
+        .map_err(|error| NapiError::from_reason(error.to_string()))?;
+    Ok(())
+}
+

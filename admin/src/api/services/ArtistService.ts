@@ -7,3 +7,11 @@ export function listArtists(search: string = '', page: number = 1, role?: string
     role,
   })
 }
+
+export function getArtistDetail(id: number) {
+  return rustCoreClient.getArtistDetail(id)
+}
+
+export function updateArtist(id: number, name: string) {
+  return rustCoreClient.updateArtist(id, name)
+}

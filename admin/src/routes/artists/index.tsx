@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useEffect, useMemo, useState } from 'react'
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -12,6 +12,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 import {
+  Edit3,
   Mic,
   Music2,
   PenTool,
@@ -282,12 +283,14 @@ function ArtistsList() {
               <col className="w-[96px]" />
               <col />
               <col className="w-[280px]" />
+              <col className="w-[120px]" />
             </colgroup>
             <thead className="bg-primary/[0.03]">
               <tr>
                 <th className="w-[96px] px-5 py-4 text-center text-[11px] font-black text-primary">شناسه</th>
                 <th className="px-5 py-4 text-[11px] font-black text-primary">نام هنرمند</th>
                 <th className="w-[280px] px-5 py-4 text-center text-[11px] font-black text-primary">نقش‌ها</th>
+                <th className="w-[120px] px-5 py-4 text-center text-[11px] font-black text-primary">عملیات</th>
               </tr>
             </thead>
 
@@ -295,12 +298,12 @@ function ArtistsList() {
               {loading ? (
                 [...Array(12)].map((_, index) => (
                   <tr key={index} className="animate-pulse">
-                    <td colSpan={3} className="h-16 bg-white/40" />
+                    <td colSpan={4} className="h-16 bg-white/40" />
                   </tr>
                 ))
               ) : data.rows.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="px-6 py-20 text-center">
+                  <td colSpan={4} className="px-6 py-20 text-center">
                     <div className="space-y-2">
                       <div className="text-lg font-black text-primary">هنرمندی پیدا نشد</div>
                       <p className="text-sm font-bold text-muted-foreground">عبارت جستجو یا فیلتر نقش را تغییر بده.</p>
@@ -335,6 +338,17 @@ function ArtistsList() {
                         ))}
                       </div>
                     </td>
+                    <td className="w-[120px] px-5 py-4">
+                      <div className="flex justify-center">
+                        <Link 
+                          to="/artists/$id" 
+                          params={{ id: artist.id.toString() }}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-primary/10 bg-white text-primary shadow-sm transition-all hover:bg-primary hover:text-white"
+                        >
+                          <Edit3 className="h-4 w-4" />
+                        </Link>
+                      </div>
+                    </td>
                   </tr>
                 ))
               )}
@@ -348,6 +362,7 @@ function ArtistsList() {
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
+                size="default"
                 onClick={() => setPage((current) => Math.max(1, current - 1))}
                 className={`cursor-pointer ${page === 1 ? 'pointer-events-none opacity-30' : ''}`}
               />
@@ -357,6 +372,7 @@ function ArtistsList() {
 
             <PaginationItem>
               <PaginationNext
+                size="default"
                 onClick={() => setPage((current) => Math.min(data.totalPages, current + 1))}
                 className={`cursor-pointer ${page === data.totalPages ? 'pointer-events-none opacity-30' : ''}`}
               />

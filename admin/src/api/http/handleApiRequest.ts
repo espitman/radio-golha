@@ -1,10 +1,10 @@
 import { URL } from 'url'
-import { listArtists } from '../services/ArtistService'
+import { getArtistDetail, listArtists, updateArtist } from '../services/ArtistService'
 import { getDashboardOverview } from '../services/DashboardService'
 import { listLookupItems } from '../services/LookupService'
 import { getProgramDetail, listPrograms } from '../services/ProgramService'
 import { getProgramSearchOptions, searchPrograms } from '../services/SearchService'
-import { getIntListParam, getIntParam, getMatchModeParam, respondWithJson } from './httpUtils'
+import { getIntListParam, getIntParam, getMatchModeParam, readBody, respondWithJson, sendJson } from './httpUtils'
 
 type IncomingMessage = {
   method?: string
@@ -129,6 +129,29 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
     await respondWithJson(res, () => getProgramDetail(id), {
       notFoundWhen: (payload) => payload == null,
     })
+    return true
+  }
+
+  if (req.method === 'GET' && url.pathname.startsWith('/api/artist/')) {
+    const segments = url.pathname.split('/')
+    const idStr = segments.pop() || segments.pop() // Try pop again if empty (trailing slash)
+    const id = getIntParam(idStr || null, 0)
+    console.log(`[API] Artist GET for ID: ${id} (from ${idStr})`)
+    await respondWithJson(res, () => getArtistDetail(id), {
+      notFoundWhen: (payload) => payload == null,
+    })
+    return true
+  }
+
+  if (req.method === 'POST' && url.pathname.startsWith('/api/artist/')) {
+    const id = getIntParam(url.pathname.split('/').pop() || null, 0)
+    try {
+      const payload = await readBody<{ name: string }>(req)
+      await updateArtist(id, payload.name)
+      sendJson(res, { success: true })
+    } catch (error: any) {
+      sendJson(res, { error: error?.message || 'Update failed' }, 500)
+    }
     return true
   }
 

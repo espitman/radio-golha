@@ -40,8 +40,29 @@ export async function respondWithJson(
     }
     sendJson(res, payload)
   } catch (error: any) {
+    console.error('[API] Error in respondWithJson:', error.message)
+    if (error.stack) console.error(error.stack)
     sendJson(res, { error: error?.message || 'Unexpected error' }, 500)
   }
+}
+
+export async function readBody<T>(req: any): Promise<T> {
+  return new Promise((resolve, reject) => {
+    let body = ''
+    req.on('data', (chunk: string) => {
+      body += chunk
+    })
+    req.on('end', () => {
+      try {
+        resolve(JSON.parse(body) as T)
+      } catch (error) {
+        reject(error)
+      }
+    })
+    req.on('error', (error: any) => {
+      reject(error)
+    })
+  })
 }
 
 export type { ServerResponse }

@@ -219,3 +219,15 @@ pub struct ProgramDetail {
     pub timeline: Vec<TimelineSegment>,
     pub transcript: Vec<TranscriptVerse>,
 }
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ArtistDetail {
+    pub id: i64,
+    pub name: String,
+    pub avatar: Option<String>,
+}
+
+#[derive(Debug, Clone, serde::Deserialize)]
+pub struct ArtistUpdatePayload {
+    pub name: String,
+}

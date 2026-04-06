@@ -20,6 +20,7 @@ import { Route as DatabaseIndexRouteImport } from './routes/database/index'
 import { Route as ArtistsIndexRouteImport } from './routes/artists/index'
 import { Route as ApiLabIndexRouteImport } from './routes/api-lab/index'
 import { Route as ProgramsProgramIdRouteImport } from './routes/programs/$programId'
+import { Route as ArtistsIdRouteImport } from './routes/artists/$id'
 
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
@@ -76,10 +77,16 @@ const ProgramsProgramIdRoute = ProgramsProgramIdRouteImport.update({
   path: '/programs/$programId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ArtistsIdRoute = ArtistsIdRouteImport.update({
+  id: '/artists/$id',
+  path: '/artists/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/artists/$id': typeof ArtistsIdRoute
   '/programs/$programId': typeof ProgramsProgramIdRoute
   '/api-lab/': typeof ApiLabIndexRoute
   '/artists/': typeof ArtistsIndexRoute
@@ -93,6 +100,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/artists/$id': typeof ArtistsIdRoute
   '/programs/$programId': typeof ProgramsProgramIdRoute
   '/api-lab': typeof ApiLabIndexRoute
   '/artists': typeof ArtistsIndexRoute
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/artists/$id': typeof ArtistsIdRoute
   '/programs/$programId': typeof ProgramsProgramIdRoute
   '/api-lab/': typeof ApiLabIndexRoute
   '/artists/': typeof ArtistsIndexRoute
@@ -122,6 +131,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/artists/$id'
     | '/programs/$programId'
     | '/api-lab/'
     | '/artists/'
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/artists/$id'
     | '/programs/$programId'
     | '/api-lab'
     | '/artists'
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/about'
+    | '/artists/$id'
     | '/programs/$programId'
     | '/api-lab/'
     | '/artists/'
@@ -162,6 +174,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  ArtistsIdRoute: typeof ArtistsIdRoute
   ProgramsProgramIdRoute: typeof ProgramsProgramIdRoute
   ApiLabIndexRoute: typeof ApiLabIndexRoute
   ArtistsIndexRoute: typeof ArtistsIndexRoute
@@ -252,12 +265,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProgramsProgramIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/artists/$id': {
+      id: '/artists/$id'
+      path: '/artists/$id'
+      fullPath: '/artists/$id'
+      preLoaderRoute: typeof ArtistsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  ArtistsIdRoute: ArtistsIdRoute,
   ProgramsProgramIdRoute: ProgramsProgramIdRoute,
   ApiLabIndexRoute: ApiLabIndexRoute,
   ArtistsIndexRoute: ArtistsIndexRoute,

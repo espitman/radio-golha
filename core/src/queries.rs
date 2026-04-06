@@ -5,11 +5,11 @@ use crate::{
     db::RadioGolhaCore,
     error::CoreResult,
     models::{
-        ArtistListItem, ArtistListResponse, ArtistStats, CategoryOption, CategoryStat,
-        DashboardOverview, DashboardSummary, LookupListItem, LookupListResponse, LookupStats,
-        OrchestraLeaderCredit, PerformerCredit, ProgramDetail, ProgramListItem, ProgramListResponse,
-        ProgramSearchOptions, ProgramSearchResponse, RankedNameStat, SearchOption, SingerOption,
-        TimelineSegment, TranscriptVerse,
+        ArtistDetail, ArtistListItem, ArtistListResponse, ArtistStats, CategoryOption,
+        CategoryStat, DashboardOverview, DashboardSummary, LookupListItem, LookupListResponse,
+        LookupStats, OrchestraLeaderCredit, PerformerCredit, ProgramDetail, ProgramListItem,
+        ProgramListResponse, ProgramSearchOptions, ProgramSearchResponse, RankedNameStat,
+        SearchOption, SingerOption, TimelineSegment, TranscriptVerse,
     },
 };
 
@@ -1411,5 +1411,32 @@ impl RadioGolhaCore {
         })?;
 
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    pub fn get_artist_detail(&self, id: i64) -> CoreResult<Option<ArtistDetail>> {
+        let artist = self.connection().query_row(
+            "SELECT id, name, avatar FROM artist WHERE id = ?1",
+            [id],
+            |row| {
+                Ok(ArtistDetail {
+                    id: row.get(0)?,
+                    name: row.get(1)?,
+                    avatar: row.get(2)?,
+                })
+            },
+        ).optional().map_err(|e| {
+            println!("[CORE] Database error in get_artist_detail: {}", e);
+            e
+        })?;
+
+        Ok(artist)
+    }
+
+    pub fn update_artist(&self, id: i64, name: &str) -> CoreResult<()> {
+        self.connection().execute(
+            "UPDATE artist SET name = ?1 WHERE id = ?2",
+            params![name.trim(), id],
+        )?;
+        Ok(())
     }
 }
