@@ -23,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,9 +36,11 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.radiogolha.mobile.theme.GolhaColors
 import com.radiogolha.mobile.theme.GolhaElevation
@@ -270,33 +273,25 @@ fun MusiciansSection(musicians: List<MusicianUiModel>) {
     }
 }
 
-// Tracks are shown in a calm list container to keep the section compact.
 @Composable
 fun TopTracksSection(tracks: List<TrackUiModel>, modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = GolhaSpacing.ScreenHorizontal),
+        modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large)
     ) {
-        SectionTitle(title = "ترک‌های برتر", modifier = Modifier.padding(horizontal = 0.dp))
-        Surface(
-            shape = RoundedCornerShape(GolhaRadius.Card),
-            color = GolhaColors.Surface,
-            tonalElevation = GolhaElevation.Card,
-            shadowElevation = GolhaElevation.Card,
-            border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border),
-        ) {
+        SectionTitle(title = "ترک‌های برتر")
+        
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                    .padding(horizontal = GolhaSpacing.ScreenHorizontal),
             ) {
                 tracks.forEachIndexed { index, track ->
                     TrackRow(track = track)
                     if (index != tracks.lastIndex) {
                         HorizontalDivider(
-                            modifier = Modifier.padding(vertical = 8.dp),
+                            modifier = Modifier.padding(vertical = 4.dp),
                             color = GolhaColors.Border.copy(alpha = 0.65f),
                         )
                     }
@@ -627,12 +622,6 @@ private fun TrackRow(track: TrackUiModel) {
             iconTint = GolhaColors.Surface,
             background = GolhaColors.PrimaryAccent,
             borderColor = GolhaColors.PrimaryAccent,
-        )
-        SmallCircularIconButton(
-            icon = GolhaIcon.More,
-            iconTint = GolhaColors.SecondaryText,
-            background = GolhaColors.Surface,
-            borderColor = GolhaColors.Border,
         )
     }
 }
