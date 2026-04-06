@@ -144,10 +144,13 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
   }
 
   if (req.method === 'POST' && url.pathname.startsWith('/api/artist/')) {
-    const id = getIntParam(url.pathname.split('/').pop() || null, 0)
+    const segments = url.pathname.split('/')
+    const idStr = segments.pop() || segments.pop()
+    const id = getIntParam(idStr || null, 0)
+
     try {
-      const payload = await readBody<{ name: string }>(req)
-      await updateArtist(id, payload.name)
+      const payload = await readBody<{ name: string; avatar?: string }>(req)
+      await updateArtist(id, payload.name, payload.avatar)
       sendJson(res, { success: true })
     } catch (error: any) {
       sendJson(res, { error: error?.message || 'Update failed' }, 500)

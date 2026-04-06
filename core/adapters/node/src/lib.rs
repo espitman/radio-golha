@@ -182,10 +182,10 @@ pub fn get_artist_detail(db_path: String, id: i64) -> NapiResult<String> {
 }
 
 #[napi(js_name = "updateArtist")]
-pub fn update_artist(db_path: String, id: i64, name: String) -> NapiResult<()> {
+pub fn update_artist(db_path: String, id: i64, name: String, avatar: Option<String>) -> NapiResult<()> {
     let core =
         RadioGolhaCore::open_rw(db_path).map_err(|error| NapiError::from_reason(error.to_string()))?;
-    core.update_artist(id, &name)
+    core.update_artist(id, &name, avatar.as_deref())
         .map_err(|error| NapiError::from_reason(error.to_string()))?;
     Ok(())
 }

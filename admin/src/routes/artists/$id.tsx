@@ -22,6 +22,7 @@ function ArtistEdit() {
   const navigate = useNavigate()
   const [artist, setArtist] = useState<ArtistDetail | null>(null)
   const [name, setName] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -38,6 +39,7 @@ function ArtistEdit() {
         if (!data) throw new Error('هنرمند در آرشیو یافت نشد')
         setArtist(data)
         setName(data.name)
+        setAvatarUrl(data.avatar || '')
         setLoading(false)
       })
       .catch((err) => {
@@ -58,7 +60,10 @@ function ArtistEdit() {
       const res = await fetch(`/api/artist/${id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim() }),
+        body: JSON.stringify({ 
+          name: name.trim(),
+          avatar: avatarUrl.trim() || null
+        }),
       })
 
       if (!res.ok) {
@@ -136,20 +141,36 @@ function ArtistEdit() {
       {/* Main Content Card */}
       <section className="rounded-[1.8rem] border border-primary/10 bg-white/80 backdrop-blur-md p-8 shadow-[0_18px_50px_rgba(31,78,95,0.06)]">
         <form onSubmit={handleSave} className="space-y-10 max-w-2xl">
-          <div className="space-y-4 text-right">
-            <label htmlFor="name" className="block text-[13px] font-black text-primary/70 px-1">
-              نام هنرمند
-            </label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="مثلاً: محمدرضا شجریان"
-              className="h-16 rounded-[1.2rem] border-primary/15 bg-primary/[0.02] pr-5 text-xl font-black shadow-none focus-visible:ring-primary/20 ring-offset-background transition-all"
-            />
-            <p className="px-2 text-[11px] font-bold text-muted-foreground/60 leading-relaxed">
-              تغییر نام باعث به‌روزرسانی نام این هنرمند در تمام برنامه‌ها، تیتراژها و نتایج جستجو می‌شود.
-            </p>
+          <div className="space-y-8">
+            <div className="space-y-4 text-right">
+              <label htmlFor="name" className="block text-[13px] font-black text-primary/70 px-1">
+                نام هنرمند
+              </label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="مثلاً: محمدرضا شجریان"
+                className="h-16 rounded-[1.2rem] border-primary/15 bg-primary/[0.02] pr-5 text-xl font-black shadow-none focus-visible:ring-primary/20 ring-offset-background transition-all"
+              />
+            </div>
+
+            <div className="space-y-4 text-right">
+              <label htmlFor="avatar" className="block text-[13px] font-black text-primary/70 px-1">
+                آدرس تصویر (URL)
+              </label>
+              <Input
+                id="avatar"
+                value={avatarUrl}
+                onChange={(e) => setAvatarUrl(e.target.value)}
+                placeholder="https://example.com/image.jpg"
+                dir="ltr"
+                className="h-16 rounded-[1.2rem] border-primary/15 bg-primary/[0.02] pr-5 text-lg font-mono shadow-none focus-visible:ring-primary/20 ring-offset-background transition-all"
+              />
+              <p className="px-2 text-[11px] font-bold text-muted-foreground/60 leading-relaxed">
+                لینک مستقیم به تصویر هنرمند جهت نمایش در اپلیکیشن.
+              </p>
+            </div>
           </div>
 
           <div className="pt-4 border-t border-primary/5">
@@ -171,7 +192,7 @@ function ArtistEdit() {
 
               <Button 
                 type="submit" 
-                disabled={saving || !name.trim() || name === artist?.name}
+                disabled={saving || !name.trim() || (name === artist?.name && avatarUrl === (artist?.avatar || ''))}
                 className="h-16 min-w-[200px] rounded-[1.2rem] bg-primary px-8 text-[15px] font-black text-white shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-30"
               >
                 {saving ? (

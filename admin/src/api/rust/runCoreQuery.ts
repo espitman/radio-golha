@@ -20,7 +20,7 @@ type NativeCoreModule = {
   getProgramSearchOptions(dbPath: string): string
   searchPrograms(dbPath: string, payloadJson: string): string
   getArtistDetail(dbPath: string, id: number): string
-  updateArtist(dbPath: string, id: number, name: string): void
+  updateArtist(dbPath: string, id: number, name: string, avatar: string | null): void
 }
 
 export type LookupKind = 'orchestras' | 'instruments' | 'modes'
@@ -109,8 +109,8 @@ export class RustCoreClient {
     return this.wrap(() => parseJson<ArtistDetail | null>(this.core.getArtistDetail(this.dbPath, id)))
   }
 
-  async updateArtist(id: number, name: string): Promise<void> {
-    return this.wrap(() => this.core.updateArtist(this.dbPath, id, name))
+  async updateArtist(id: number, name: string, avatar?: string | null): Promise<void> {
+    return this.wrap(() => this.core.updateArtist(this.dbPath, id, name, avatar || null))
   }
 
   async listLookupItems<T>(kind: LookupKind, params?: {

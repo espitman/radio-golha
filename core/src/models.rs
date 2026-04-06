@@ -230,4 +230,5 @@ pub struct ArtistDetail {
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct ArtistUpdatePayload {
     pub name: String,
+    pub avatar: Option<String>,
 }

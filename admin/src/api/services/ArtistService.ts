@@ -12,6 +12,6 @@ export function getArtistDetail(id: number) {
   return rustCoreClient.getArtistDetail(id)
 }
 
-export function updateArtist(id: number, name: string) {
-  return rustCoreClient.updateArtist(id, name)
+export function updateArtist(id: number, name: string, avatar?: string | null) {
+  return rustCoreClient.updateArtist(id, name, avatar)
 }

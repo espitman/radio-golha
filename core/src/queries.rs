@@ -1432,10 +1432,10 @@ impl RadioGolhaCore {
         Ok(artist)
     }
 
-    pub fn update_artist(&self, id: i64, name: &str) -> CoreResult<()> {
+    pub fn update_artist(&self, id: i64, name: &str, avatar: Option<&str>) -> CoreResult<()> {
         self.connection().execute(
-            "UPDATE artist SET name = ?1 WHERE id = ?2",
-            params![name.trim(), id],
+            "UPDATE artist SET name = ?1, avatar = ?2 WHERE id = ?3",
+            (name, avatar, id),
         )?;
         Ok(())
     }
