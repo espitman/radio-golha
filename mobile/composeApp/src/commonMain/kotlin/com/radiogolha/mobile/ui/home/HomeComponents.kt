@@ -310,13 +310,18 @@ fun BottomNavigationBar(items: List<BottomNavItemUiModel>) {
         border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.8f)),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             items.forEach { item ->
-                BottomNavItem(item = item)
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(vertical = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    BottomNavItem(item = item)
+                }
             }
         }
     }
@@ -673,16 +678,18 @@ private fun SmallCircularIconButton(
 private fun BottomNavItem(item: BottomNavItemUiModel) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         GolhaLineIcon(
             icon = item.icon,
-            modifier = Modifier.size(20.dp),
+            modifier = Modifier.size(26.dp),
             tint = if (item.selected) GolhaColors.PrimaryAccent else GolhaColors.SecondaryText,
         )
         Text(
             text = item.label,
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontWeight = if (item.selected) FontWeight.Medium else FontWeight.Normal
+            ),
             color = if (item.selected) GolhaColors.PrimaryAccent else GolhaColors.SecondaryText,
         )
     }
