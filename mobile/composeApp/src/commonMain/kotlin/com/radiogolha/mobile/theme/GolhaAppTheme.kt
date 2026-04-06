@@ -57,7 +57,7 @@ private fun golhaTypography(): Typography {
         labelLarge = TextStyle.Default.copy(
             fontFamily = vazirmatn,
             fontWeight = GolhaTypographyTokens.SectionTitle.fontWeight,
-            fontSize = 14.sp,
+            fontSize = 13.sp,
         ),
         labelMedium = GolhaTypographyTokens.SecondaryBody.copy(fontFamily = vazirmatn),
         labelSmall = GolhaTypographyTokens.Tiny.copy(fontFamily = vazirmatn),

@@ -130,7 +130,16 @@ dependencies {
     debugImplementation(compose.uiTooling)
 }
 
-tasks.matching { it.name in setOf("mergeDebugJniLibFolders", "mergeDebugNativeLibs", "mergeDebugAssets") }
+tasks.matching {
+    it.name in setOf(
+        "mergeDebugJniLibFolders",
+        "mergeDebugNativeLibs",
+        "mergeDebugAssets",
+        "mergeReleaseJniLibFolders",
+        "mergeReleaseNativeLibs",
+        "mergeReleaseAssets",
+    )
+}
     .configureEach {
         dependsOn(buildRustAndroid)
         dependsOn(syncArchiveDb)
