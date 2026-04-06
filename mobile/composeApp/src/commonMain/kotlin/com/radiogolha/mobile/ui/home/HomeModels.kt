@@ -26,6 +26,13 @@ data class MusicianUiModel(
     val imageUrl: String? = null,
 )
 
+data class MusicianListItemUiModel(
+    val name: String,
+    val instrument: String,
+    val imageUrl: String? = null,
+    val programCount: Int,
+)
+
 data class TrackUiModel(
     val title: String,
     val artist: String,

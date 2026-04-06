@@ -36,6 +36,14 @@ pub struct RankedNameStat {
 }
 
 #[derive(Debug, Clone, Serialize)]
+pub struct RankedPerformerStat {
+    pub name: String,
+    pub avatar: Option<String>,
+    pub instrument: Option<String>,
+    pub total: i64,
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub struct CategoryOption {
     pub id: i64,
     pub title_fa: String,

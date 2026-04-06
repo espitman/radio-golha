@@ -278,11 +278,14 @@ fun DastgahSection(items: List<DastgahUiModel>) {
 }
 
 @Composable
-fun MusiciansSection(musicians: List<MusicianUiModel>) {
+fun MusiciansSection(
+    musicians: List<MusicianUiModel>,
+    onSeeAllClick: () -> Unit,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large)) {
         SectionTitle(
             title = "نوازندگان برجسته",
-            onSeeAllClick = { /* TODO: Open musicians browse screen */ }
+            onSeeAllClick = onSeeAllClick,
         )
         LazyRow(
             modifier = Modifier.fillMaxWidth(),

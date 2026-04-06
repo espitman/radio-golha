@@ -21,6 +21,7 @@ import com.radiogolha.mobile.theme.GolhaSpacing
 fun HomeScreen(
     state: HomeUiState,
     onOpenAllSingers: () -> Unit = {},
+    onOpenAllMusicians: () -> Unit = {},
     onBottomNavSelected: (AppTab) -> Unit = {},
 ) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
@@ -54,7 +55,12 @@ fun HomeScreen(
                     )
                 }
                 item { DastgahSection(items = state.dastgahs) }
-                item { MusiciansSection(musicians = state.musicians) }
+                item {
+                    MusiciansSection(
+                        musicians = state.musicians,
+                        onSeeAllClick = onOpenAllMusicians,
+                    )
+                }
                 item { TopTracksSection(tracks = state.topTracks) }
             }
         }

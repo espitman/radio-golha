@@ -9,7 +9,7 @@ use crate::{
         CategoryStat, DashboardOverview, DashboardSummary, LookupListItem, LookupListResponse,
         LookupStats, OrchestraLeaderCredit, PerformerCredit, ProgramDetail, ProgramListItem,
         ProgramListResponse, ProgramSearchOptions, ProgramSearchResponse, RankedNameStat,
-        SearchOption, SingerOption, TimelineSegment, TranscriptVerse,
+        RankedPerformerStat, SearchOption, SingerOption, TimelineSegment, TranscriptVerse,
     },
 };
 
@@ -267,6 +267,43 @@ impl RadioGolhaCore {
                 name: row.get(0)?,
                 avatar: None,
                 total: row.get(1)?,
+            })
+        })?;
+
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    pub fn top_performers(&self, limit: usize) -> CoreResult<Vec<RankedPerformerStat>> {
+        let mut stmt = self.connection().prepare(
+            "
+            SELECT
+              a.name,
+              a.avatar,
+              (
+                SELECT i.name
+                FROM program_performers pp2
+                LEFT JOIN instrument i ON i.id = pp2.instrument_id
+                WHERE pp2.performer_id = p.id AND i.name IS NOT NULL AND TRIM(i.name) <> ''
+                GROUP BY i.id, i.name
+                ORDER BY COUNT(*) DESC, i.name ASC
+                LIMIT 1
+              ) AS instrument_name,
+              COUNT(DISTINCT pp.program_id) AS total
+            FROM program_performers pp
+            JOIN performer p ON p.id = pp.performer_id
+            JOIN artist a ON a.id = p.artist_id
+            GROUP BY p.id
+            ORDER BY total DESC, a.name ASC
+            LIMIT ?1
+            ",
+        )?;
+
+        let rows = stmt.query_map([limit as i64], |row| {
+            Ok(RankedPerformerStat {
+                name: row.get(0)?,
+                avatar: row.get(1)?,
+                instrument: row.get(2)?,
+                total: row.get(3)?,
             })
         })?;
 

@@ -47,6 +47,14 @@ struct AndroidMusicianItem {
 }
 
 #[derive(Serialize)]
+struct AndroidMusicianListItem {
+    name: String,
+    instrument: String,
+    avatar: Option<String>,
+    program_count: i64,
+}
+
+#[derive(Serialize)]
 struct AndroidTrackItem {
     title: String,
     artist: String,
@@ -187,6 +195,26 @@ fn singers_json(db_path: &str) -> Result<String, String> {
     to_string(&singers).map_err(|error| error.to_string())
 }
 
+fn musicians_json(db_path: &str) -> Result<String, String> {
+    let core = RadioGolhaCore::open(db_path).map_err(|error| error.to_string())?;
+    let musicians = core
+        .top_performers(256)
+        .map_err(|error| error.to_string())?
+        .into_iter()
+        .map(|item| AndroidMusicianListItem {
+            name: item.name,
+            instrument: item
+                .instrument
+                .filter(|value| !value.trim().is_empty())
+                .unwrap_or_else(|| "نوازنده".to_string()),
+            avatar: item.avatar,
+            program_count: item.total,
+        })
+        .collect::<Vec<_>>();
+
+    to_string(&musicians).map_err(|error| error.to_string())
+}
+
 fn jni_json_response(
     env: &mut JNIEnv,
     db_path: JString,
@@ -234,4 +262,13 @@ pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getSingersJson(
     db_path: JString,
 ) -> jstring {
     jni_json_response(&mut env, db_path, singers_json)
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getMusiciansJson(
+    mut env: JNIEnv,
+    _class: JClass,
+    db_path: JString,
+) -> jstring {
+    jni_json_response(&mut env, db_path, musicians_json)
 }
