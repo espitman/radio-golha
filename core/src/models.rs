@@ -31,6 +31,7 @@ pub struct CategoryStat {
 #[derive(Debug, Clone, Serialize)]
 pub struct RankedNameStat {
     pub name: String,
+    pub avatar: Option<String>,
     pub total: i64,
 }
 
@@ -168,6 +169,7 @@ pub struct DashboardOverview {
 #[derive(Debug, Clone, Serialize)]
 pub struct PerformerCredit {
     pub name: String,
+    pub avatar: Option<String>,
     pub instrument: Option<String>,
 }
 

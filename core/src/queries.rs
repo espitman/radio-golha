@@ -229,7 +229,7 @@ impl RadioGolhaCore {
     pub fn top_singers(&self, limit: usize) -> CoreResult<Vec<RankedNameStat>> {
         let mut stmt = self.connection().prepare(
             "
-            SELECT a.name, COUNT(*) AS total
+            SELECT a.name, a.avatar, COUNT(*) AS total
             FROM program_singers ps
             JOIN singer s ON s.id = ps.singer_id
             JOIN artist a ON a.id = s.artist_id
@@ -242,7 +242,8 @@ impl RadioGolhaCore {
         let rows = stmt.query_map([limit as i64], |row| {
             Ok(RankedNameStat {
                 name: row.get(0)?,
-                total: row.get(1)?,
+                avatar: row.get(1)?,
+                total: row.get(2)?,
             })
         })?;
 
@@ -264,6 +265,7 @@ impl RadioGolhaCore {
         let rows = stmt.query_map([limit as i64], |row| {
             Ok(RankedNameStat {
                 name: row.get(0)?,
+                avatar: None,
                 total: row.get(1)?,
             })
         })?;
@@ -286,6 +288,7 @@ impl RadioGolhaCore {
         let rows = stmt.query_map([limit as i64], |row| {
             Ok(RankedNameStat {
                 name: row.get(0)?,
+                avatar: None,
                 total: row.get(1)?,
             })
         })?;
@@ -1250,7 +1253,7 @@ impl RadioGolhaCore {
     fn program_performers(&self, program_id: i64) -> CoreResult<Vec<PerformerCredit>> {
         let mut stmt = self.connection().prepare(
             "
-            SELECT a.name, i.name
+            SELECT a.name, a.avatar, i.name
             FROM program_performers pp
             JOIN performer p ON p.id = pp.performer_id
             JOIN artist a ON a.id = p.artist_id
@@ -1263,7 +1266,8 @@ impl RadioGolhaCore {
         let rows = stmt.query_map([program_id], |row| {
             Ok(PerformerCredit {
                 name: row.get(0)?,
-                instrument: row.get(1)?,
+                avatar: row.get(1)?,
+                instrument: row.get(2)?,
             })
         })?;
 
@@ -1393,7 +1397,7 @@ impl RadioGolhaCore {
     fn timeline_performers(&self, timeline_id: i64, program_id: i64) -> CoreResult<Vec<PerformerCredit>> {
         let mut stmt = self.connection().prepare(
             "
-            SELECT a.name, i.name
+            SELECT a.name, a.avatar, i.name
             FROM program_timeline_performers ptp
             JOIN performer p ON p.id = ptp.performer_id
             JOIN artist a ON a.id = p.artist_id
@@ -1408,7 +1412,8 @@ impl RadioGolhaCore {
         let rows = stmt.query_map(params![timeline_id, program_id], |row| {
             Ok(PerformerCredit {
                 name: row.get(0)?,
-                instrument: row.get(1)?,
+                avatar: row.get(1)?,
+                instrument: row.get(2)?,
             })
         })?;
 

@@ -60,7 +60,13 @@ private fun JSONArray.toProgramModels(): List<ProgramUiModel> = buildList {
 
 private fun JSONArray.toSingerModels(): List<SingerUiModel> = buildList {
     for (index in 0 until length()) {
-        add(SingerUiModel(name = getJSONObject(index).getString("name")))
+        val item = getJSONObject(index)
+        add(
+            SingerUiModel(
+                name = item.getString("name"),
+                imageUrl = item.optNullableString("avatar"),
+            )
+        )
     }
 }
 
@@ -93,4 +99,11 @@ private fun JSONArray.toTrackModels(): List<TrackUiModel> = buildList {
             )
         )
     }
+}
+
+private fun JSONObject.optNullableString(key: String): String? {
+    if (isNull(key)) return null
+    return optString(key)
+        .trim()
+        .takeUnless { it.isEmpty() || it.equals("null", ignoreCase = true) }
 }

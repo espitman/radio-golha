@@ -9,7 +9,7 @@ use std::collections::HashSet;
 #[derive(Serialize)]
 struct AndroidHomePayload {
     programs: Vec<AndroidProgramItem>,
-    singers: Vec<AndroidNamedItem>,
+    singers: Vec<AndroidSingerItem>,
     dastgahs: Vec<AndroidNamedItem>,
     musicians: Vec<AndroidMusicianItem>,
     top_tracks: Vec<AndroidTrackItem>,
@@ -24,6 +24,12 @@ struct AndroidProgramItem {
 #[derive(Serialize)]
 struct AndroidNamedItem {
     name: String,
+}
+
+#[derive(Serialize)]
+struct AndroidSingerItem {
+    name: String,
+    avatar: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -51,6 +57,7 @@ fn home_json(db_path: &str) -> Result<String, String> {
     let mode_lookup = core
         .browse_lookup_items(LookupKind::Modes, "", 1)
         .map_err(|error| error.to_string())?;
+    let mut top_singers = core.top_singers(24).map_err(|error| error.to_string())?;
 
     let programs = overview
         .category_breakdown
@@ -61,11 +68,31 @@ fn home_json(db_path: &str) -> Result<String, String> {
         })
         .collect();
 
-    let singers = overview
-        .top_singers
+    top_singers.sort_by(|left, right| {
+        let left_has_avatar = left
+            .avatar
+            .as_deref()
+            .map(str::trim)
+            .is_some_and(|value| !value.is_empty());
+        let right_has_avatar = right
+            .avatar
+            .as_deref()
+            .map(str::trim)
+            .is_some_and(|value| !value.is_empty());
+
+        right_has_avatar
+            .cmp(&left_has_avatar)
+            .then_with(|| right.total.cmp(&left.total))
+            .then_with(|| left.name.cmp(&right.name))
+    });
+
+    let singers = top_singers
         .into_iter()
         .take(8)
-        .map(|item| AndroidNamedItem { name: item.name })
+        .map(|item| AndroidSingerItem {
+            name: item.name,
+            avatar: item.avatar,
+        })
         .collect();
 
     let dastgahs = mode_lookup

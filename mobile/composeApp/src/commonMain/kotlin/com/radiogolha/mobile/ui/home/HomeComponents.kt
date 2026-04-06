@@ -230,6 +230,7 @@ fun SingersSection(singers: List<SingerUiModel>) {
                 AvatarNameItem(
                     title = singer.name,
                     subtitle = null,
+                    imageUrl = singer.imageUrl,
                     tint = GolhaColors.SoftBlue,
                 )
             }
@@ -266,6 +267,7 @@ fun MusiciansSection(musicians: List<MusicianUiModel>) {
                 AvatarNameItem(
                     title = musician.name,
                     subtitle = musician.instrument,
+                    imageUrl = musician.imageUrl,
                     tint = GolhaColors.SoftRose,
                 )
             }
@@ -482,6 +484,7 @@ private fun ProgramCard(item: ProgramUiModel, modifier: Modifier = Modifier) {
 private fun AvatarNameItem(
     title: String,
     subtitle: String?,
+    imageUrl: String?,
     tint: Color,
 ) {
     Column(
@@ -489,9 +492,11 @@ private fun AvatarNameItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        AvatarPlaceholder(
+        ArtistAvatar(
             name = title,
+            imageUrl = imageUrl,
             tint = tint,
+            modifier = Modifier.size(78.dp),
         )
         Text(
             text = title,
@@ -515,15 +520,15 @@ private fun AvatarNameItem(
 }
 
 @Composable
-private fun AvatarPlaceholder(
+internal fun AvatarPlaceholder(
     name: String,
     tint: Color,
+    modifier: Modifier = Modifier,
 ) {
     val monogramParts = rememberMonogramParts(name)
 
     Box(
-        modifier = Modifier
-            .size(78.dp)
+        modifier = modifier
             .clip(CircleShape)
             .background(tint)
             .border(1.dp, GolhaColors.Border.copy(alpha = 0.65f), CircleShape),

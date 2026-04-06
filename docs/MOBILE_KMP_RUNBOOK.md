@@ -2,6 +2,11 @@
 
 This document explains how to open the Android phone emulator and run the debug build for the Kotlin Multiplatform mobile app in this repository.
 
+Canonical rule for this repo:
+
+- Every time Codex runs the mobile app on the emulator, it must reinstall the app first so the bundled database is copied fresh from APK assets into app storage.
+- Do not rely on `am start` alone after a database change, because the app only copies `golha_database.db` on first launch for a given install.
+
 ---
 
 ## Project Location
@@ -105,7 +110,22 @@ When boot is complete:
 
 ---
 
-## 5. Install The Debug APK
+## 5. Reinstall The Debug APK
+
+Always reinstall before launch.
+
+First uninstall the currently installed app:
+
+```bash
+export ANDROID_HOME="/Users/espitman/Library/Android/sdk"
+export ANDROID_SDK_ROOT="/Users/espitman/Library/Android/sdk"
+
+"$HOME/Library/Android/sdk/platform-tools/adb" \
+  -s emulator-5554 \
+  uninstall com.radiogolha.mobile || true
+```
+
+Then install the debug APK:
 
 ```bash
 export ANDROID_HOME="/Users/espitman/Library/Android/sdk"
@@ -123,6 +143,11 @@ Expected result:
 Performing Streamed Install
 Success
 ```
+
+Why this is required:
+
+- The app copies `golha_database.db` from APK assets into internal storage only when that file does not already exist.
+- Reinstalling guarantees the next launch starts from the database bundled into the current APK.
 
 ---
 
@@ -180,6 +205,7 @@ export ANDROID_SDK_ROOT="/Users/espitman/Library/Android/sdk"
 
 ./gradlew :composeApp:assembleDebug
 "$HOME/Library/Android/sdk/emulator/emulator" -avd Medium_Phone_API_36.0 -gpu swiftshader_indirect -no-snapshot-load
+"$HOME/Library/Android/sdk/platform-tools/adb" -s emulator-5554 uninstall com.radiogolha.mobile || true
 "$HOME/Library/Android/sdk/platform-tools/adb" -s emulator-5554 install -r -t ./composeApp/build/outputs/apk/debug/composeApp-debug.apk
 "$HOME/Library/Android/sdk/platform-tools/adb" -s emulator-5554 shell am start -W -n com.radiogolha.mobile/.MainActivity
 ```
