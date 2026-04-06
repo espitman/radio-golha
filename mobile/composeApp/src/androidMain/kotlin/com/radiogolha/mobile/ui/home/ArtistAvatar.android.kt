@@ -3,7 +3,10 @@ package com.radiogolha.mobile.ui.home
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -33,63 +36,63 @@ actual fun ArtistAvatar(
         ?.trim()
         ?.takeUnless { it.isEmpty() || it.equals("null", ignoreCase = true) }
 
-    if (normalizedUrl == null) {
-        AvatarPlaceholder(
-            name = name,
-            tint = tint,
-            modifier = modifier,
-        )
-        return
-    }
-
-    val context = LocalContext.current
-    val avatarSizePx = with(LocalDensity.current) { 96.dp.roundToPx() }
-    val imageRequest = remember(normalizedUrl, avatarSizePx, context) {
-        ImageRequest.Builder(context)
-            .data(normalizedUrl)
-            .size(Size(avatarSizePx, avatarSizePx))
-            .crossfade(false)
-            .memoryCachePolicy(CachePolicy.ENABLED)
-            .diskCachePolicy(CachePolicy.ENABLED)
-            .networkCachePolicy(CachePolicy.ENABLED)
-            .memoryCacheKey(normalizedUrl)
-            .diskCacheKey(normalizedUrl)
-            .build()
-    }
-    val painter = rememberAsyncImagePainter(
-        model = imageRequest,
-        imageLoader = AndroidAppContext.imageLoader(),
-    )
-
-    Box(
-        modifier = modifier
-            .clip(CircleShape)
-            .border(1.dp, GolhaColors.Border.copy(alpha = 0.65f), CircleShape),
-        contentAlignment = Alignment.Center,
+    Surface(
+        modifier = modifier,
+        shape = CircleShape,
+        color = Color.White,
+        shadowElevation = 6.dp,
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color.Black.copy(alpha = 0.08f))
     ) {
-        when (painter.state) {
-            is AsyncImagePainter.State.Success -> {
-                Image(
-                    painter = painter,
-                    contentDescription = name,
-                    modifier = Modifier.matchParentSize(),
-                    contentScale = ContentScale.Crop,
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(3.dp) // Maintain the thick white frame
+                .clip(CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            val context = LocalContext.current
+            val avatarSizePx = with(LocalDensity.current) { 96.dp.roundToPx() }
+            
+            if (normalizedUrl != null) {
+                val imageRequest = remember(normalizedUrl, avatarSizePx, context) {
+                    ImageRequest.Builder(context)
+                        .data(normalizedUrl)
+                        .size(coil.size.Size(avatarSizePx, avatarSizePx))
+                        .crossfade(false)
+                        .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+                        .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+                        .networkCachePolicy(coil.request.CachePolicy.ENABLED)
+                        .memoryCacheKey(normalizedUrl)
+                        .diskCacheKey(normalizedUrl)
+                        .build()
+                }
+                val painter = rememberAsyncImagePainter(
+                    model = imageRequest,
+                    imageLoader = AndroidAppContext.imageLoader(),
                 )
-            }
 
-            is AsyncImagePainter.State.Error -> {
+                when (painter.state) {
+                    is AsyncImagePainter.State.Success -> {
+                        Image(
+                            painter = painter,
+                            contentDescription = name,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop,
+                        )
+                    }
+                    else -> {
+                        AvatarPlaceholder(
+                            name = name,
+                            tint = tint,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
+            } else {
                 AvatarPlaceholder(
                     name = name,
                     tint = tint,
-                    modifier = Modifier.matchParentSize(),
-                )
-            }
-
-            else -> {
-                AvatarPlaceholder(
-                    name = name,
-                    tint = tint,
-                    modifier = Modifier.matchParentSize(),
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
         }

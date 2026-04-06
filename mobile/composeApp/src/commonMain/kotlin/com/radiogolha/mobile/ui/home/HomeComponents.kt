@@ -568,14 +568,13 @@ internal fun AvatarPlaceholder(
     Box(
         modifier = modifier
             .clip(CircleShape)
-            .background(GolhaColors.Border.copy(alpha = 0.4f))
-            .border(1.dp, GolhaColors.Border.copy(alpha = 0.65f), CircleShape),
+            .background(GolhaColors.Border.copy(alpha = 0.15f)),
         contentAlignment = Alignment.Center,
     ) {
         GolhaLineIcon(
             icon = GolhaIcon.Profile,
-            modifier = Modifier.fillMaxSize(0.45f),
-            tint = GolhaColors.PrimaryText.copy(alpha = 0.45f),
+            modifier = Modifier.fillMaxSize(0.42f),
+            tint = GolhaColors.PrimaryText.copy(alpha = 0.35f),
         )
     }
 }
