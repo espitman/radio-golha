@@ -495,10 +495,10 @@ private fun AvatarNameItem(
         )
         Text(
             text = title,
-            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Normal),
             textAlign = TextAlign.Center,
-            color = GolhaColors.PrimaryText,
-            maxLines = 2,
+            color = GolhaColors.SecondaryText,
+            maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
         if (subtitle != null) {
