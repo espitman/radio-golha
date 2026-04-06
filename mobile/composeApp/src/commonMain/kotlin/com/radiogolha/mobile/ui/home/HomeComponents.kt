@@ -619,9 +619,10 @@ private fun TrackRow(track: TrackUiModel) {
 
         SmallCircularIconButton(
             icon = GolhaIcon.Play,
-            iconTint = GolhaColors.Surface,
-            background = GolhaColors.PrimaryAccent,
-            borderColor = GolhaColors.PrimaryAccent,
+            iconTint = GolhaColors.PrimaryText,
+            iconSize = 18.dp,
+            background = GolhaColors.BadgeBackground,
+            borderColor = GolhaColors.Border,
         )
     }
 }
@@ -650,6 +651,7 @@ private fun SmallCircularIconButton(
     iconTint: Color,
     background: Color,
     borderColor: Color,
+    iconSize: androidx.compose.ui.unit.Dp = 14.dp,
 ) {
     Surface(
         modifier = Modifier.size(36.dp),
@@ -660,7 +662,7 @@ private fun SmallCircularIconButton(
         Box(contentAlignment = Alignment.Center) {
             GolhaLineIcon(
                 icon = icon,
-                modifier = Modifier.size(14.dp),
+                modifier = Modifier.size(iconSize),
                 tint = iconTint,
             )
         }
