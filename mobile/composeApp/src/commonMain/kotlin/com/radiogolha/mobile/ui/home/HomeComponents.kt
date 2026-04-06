@@ -52,7 +52,11 @@ import com.radiogolha.mobile.theme.GolhaTypographyTokens
 import kotlin.math.min
 
 @Composable
-fun SectionTitle(title: String, modifier: Modifier = Modifier) {
+fun SectionTitle(
+    title: String,
+    onSeeAllClick: (() -> Unit)? = null,
+    modifier: Modifier = Modifier,
+) {
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -70,6 +74,17 @@ fun SectionTitle(title: String, modifier: Modifier = Modifier) {
             color = GolhaColors.Border,
             thickness = 1.dp,
         )
+        if (onSeeAllClick != null) {
+            Text(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(GolhaRadius.Small))
+                    .clickable { onSeeAllClick() }
+                    .padding(horizontal = 8.dp, vertical = 2.dp),
+                text = "همه",
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Medium),
+                color = GolhaColors.SecondaryText,
+            )
+        }
     }
 }
 
@@ -222,7 +237,10 @@ fun ProgramsSection(programs: List<ProgramUiModel>) {
 @Composable
 fun SingersSection(singers: List<SingerUiModel>) {
     Column(verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large)) {
-        SectionTitle(title = "خواننده‌ها")
+        SectionTitle(
+            title = "خواننده‌ها",
+            onSeeAllClick = { /* TODO: Open singers browse screen */ }
+        )
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(18.dp),
@@ -259,7 +277,10 @@ fun DastgahSection(items: List<DastgahUiModel>) {
 @Composable
 fun MusiciansSection(musicians: List<MusicianUiModel>) {
     Column(verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large)) {
-        SectionTitle(title = "نوازندگان برجسته")
+        SectionTitle(
+            title = "نوازندگان برجسته",
+            onSeeAllClick = { /* TODO: Open musicians browse screen */ }
+        )
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(18.dp),
