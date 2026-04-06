@@ -47,18 +47,19 @@ private fun golhaTypography(): Typography {
     val vazirmatn = golhaFontFamily()
 
     return Typography(
+        displayLarge = TextStyle(fontFamily = vazirmatn),
+        displayMedium = TextStyle(fontFamily = vazirmatn),
         displaySmall = GolhaTypographyTokens.BannerTitle.copy(fontFamily = vazirmatn),
         headlineLarge = GolhaTypographyTokens.AppTitle.copy(fontFamily = vazirmatn),
         headlineMedium = GolhaTypographyTokens.SectionTitle.copy(fontFamily = vazirmatn),
+        headlineSmall = TextStyle(fontFamily = vazirmatn),
         titleLarge = GolhaTypographyTokens.SectionTitle.copy(fontFamily = vazirmatn),
+        titleMedium = TextStyle(fontFamily = vazirmatn),
+        titleSmall = TextStyle(fontFamily = vazirmatn),
         bodyLarge = GolhaTypographyTokens.Body.copy(fontFamily = vazirmatn),
         bodyMedium = GolhaTypographyTokens.Body.copy(fontFamily = vazirmatn),
         bodySmall = GolhaTypographyTokens.SecondaryBody.copy(fontFamily = vazirmatn),
-        labelLarge = TextStyle.Default.copy(
-            fontFamily = vazirmatn,
-            fontWeight = GolhaTypographyTokens.SectionTitle.fontWeight,
-            fontSize = 13.sp,
-        ),
+        labelLarge = TextStyle(fontFamily = vazirmatn, fontWeight = FontWeight.Medium, fontSize = 14.sp),
         labelMedium = GolhaTypographyTokens.SecondaryBody.copy(fontFamily = vazirmatn),
         labelSmall = GolhaTypographyTokens.Tiny.copy(fontFamily = vazirmatn),
     )

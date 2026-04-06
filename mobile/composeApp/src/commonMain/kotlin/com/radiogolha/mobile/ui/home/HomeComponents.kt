@@ -50,7 +50,9 @@ import kotlin.math.min
 fun SectionTitle(title: String, modifier: Modifier = Modifier) {
     Text(
         text = title,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = GolhaSpacing.ScreenHorizontal),
         style = MaterialTheme.typography.titleLarge,
         textAlign = TextAlign.Start,
         color = GolhaColors.PrimaryText,
@@ -58,15 +60,17 @@ fun SectionTitle(title: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun HeaderSection() {
+fun HeaderSection(modifier: Modifier = Modifier) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = GolhaSpacing.ScreenHorizontal),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = "گل‌ها",
-            style = GolhaTypographyTokens.AppTitle,
+            style = MaterialTheme.typography.headlineLarge,
             color = GolhaColors.PrimaryText,
         )
 
@@ -81,10 +85,11 @@ fun HeaderSection() {
 
 // Premium hero banner with a restrained Persian visual accent.
 @Composable
-fun HeroBanner() {
+fun HeroBanner(modifier: Modifier = Modifier) {
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
+            .padding(horizontal = GolhaSpacing.ScreenHorizontal)
             .requiredHeight(220.dp),
         shape = RoundedCornerShape(GolhaRadius.Banner),
         color = GolhaColors.BannerBackground,
@@ -157,7 +162,7 @@ fun HeroBanner() {
                 ) {
                     Text(
                         text = "گل‌های رنگارنگ",
-                        style = GolhaTypographyTokens.BannerTitle,
+                        style = MaterialTheme.typography.displaySmall,
                         color = GolhaColors.PrimaryText,
                     )
                     Text(
@@ -189,7 +194,7 @@ fun ProgramsSection(programs: List<ProgramUiModel>) {
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(GolhaSpacing.CardGap),
-            contentPadding = PaddingValues(horizontal = 2.dp),
+            contentPadding = PaddingValues(horizontal = GolhaSpacing.ScreenHorizontal),
         ) {
             items(programs) { program ->
                 ProgramCard(
@@ -208,7 +213,7 @@ fun SingersSection(singers: List<SingerUiModel>) {
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(18.dp),
-            contentPadding = PaddingValues(horizontal = 2.dp),
+            contentPadding = PaddingValues(horizontal = GolhaSpacing.ScreenHorizontal),
         ) {
             items(singers) { singer ->
                 AvatarNameItem(
@@ -228,7 +233,7 @@ fun DastgahSection(items: List<DastgahUiModel>) {
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
-            contentPadding = PaddingValues(horizontal = 2.dp),
+            contentPadding = PaddingValues(horizontal = GolhaSpacing.ScreenHorizontal),
         ) {
             items(items) { item ->
                 DastgahChip(name = item.name)
@@ -244,7 +249,7 @@ fun MusiciansSection(musicians: List<MusicianUiModel>) {
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(18.dp),
-            contentPadding = PaddingValues(horizontal = 2.dp),
+            contentPadding = PaddingValues(horizontal = GolhaSpacing.ScreenHorizontal),
         ) {
             items(musicians) { musician ->
                 AvatarNameItem(
@@ -259,9 +264,14 @@ fun MusiciansSection(musicians: List<MusicianUiModel>) {
 
 // Tracks are shown in a calm list container to keep the section compact.
 @Composable
-fun TopTracksSection(tracks: List<TrackUiModel>) {
-    Column(verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large)) {
-        SectionTitle(title = "ترک‌های برتر")
+fun TopTracksSection(tracks: List<TrackUiModel>, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = GolhaSpacing.ScreenHorizontal),
+        verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large)
+    ) {
+        SectionTitle(title = "ترک‌های برتر", modifier = Modifier.padding(horizontal = 0.dp))
         Surface(
             shape = RoundedCornerShape(GolhaRadius.Card),
             color = GolhaColors.Surface,
@@ -519,7 +529,7 @@ private fun AvatarPlaceholder(
                 monogramParts.forEach { part ->
                     Text(
                         text = part,
-                        style = GolhaTypographyTokens.SectionTitle.copy(fontWeight = FontWeight.Bold),
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                         color = GolhaColors.PrimaryText.copy(alpha = 0.85f),
                     )
                 }
@@ -527,7 +537,7 @@ private fun AvatarPlaceholder(
         } else {
             Text(
                 text = monogramParts.firstOrNull().orEmpty(),
-                style = GolhaTypographyTokens.SectionTitle.copy(fontWeight = FontWeight.Bold),
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                 color = GolhaColors.PrimaryText.copy(alpha = 0.85f),
             )
         }

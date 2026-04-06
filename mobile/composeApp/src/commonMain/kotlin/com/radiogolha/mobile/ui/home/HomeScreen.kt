@@ -34,8 +34,6 @@ fun HomeScreen(
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
-                    start = GolhaSpacing.ScreenHorizontal,
-                    end = GolhaSpacing.ScreenHorizontal,
                     top = 18.dp,
                     bottom = innerPadding.calculateBottomPadding() + 18.dp,
                 ),
