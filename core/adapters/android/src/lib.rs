@@ -36,6 +36,7 @@ struct AndroidSingerItem {
 struct AndroidMusicianItem {
     name: String,
     instrument: String,
+    avatar: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -139,6 +140,7 @@ fn home_json(db_path: &str) -> Result<String, String> {
                     .instrument
                     .filter(|value| !value.trim().is_empty())
                     .unwrap_or_else(|| "نوازنده".to_string()),
+                avatar: performer.avatar,
             });
 
             if musicians.len() >= 8 {

@@ -83,6 +83,7 @@ private fun JSONArray.toMusicianModels(): List<MusicianUiModel> = buildList {
             MusicianUiModel(
                 name = item.getString("name"),
                 instrument = item.getString("instrument"),
+                imageUrl = item.optNullableString("avatar"),
             )
         )
     }
