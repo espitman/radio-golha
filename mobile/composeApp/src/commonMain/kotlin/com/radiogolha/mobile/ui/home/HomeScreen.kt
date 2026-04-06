@@ -20,6 +20,7 @@ import com.radiogolha.mobile.theme.GolhaSpacing
 @Composable
 fun HomeScreen(
     state: HomeUiState,
+    onOpenAllSingers: () -> Unit = {},
     onBottomNavSelected: (AppTab) -> Unit = {},
 ) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
@@ -46,7 +47,12 @@ fun HomeScreen(
                 item { HeaderSection() }
                 item { HeroBanner() }
                 item { ProgramsSection(programs = state.programs) }
-                item { SingersSection(singers = state.singers) }
+                item {
+                    SingersSection(
+                        singers = state.singers,
+                        onSeeAllClick = onOpenAllSingers,
+                    )
+                }
                 item { DastgahSection(items = state.dastgahs) }
                 item { MusiciansSection(musicians = state.musicians) }
                 item { TopTracksSection(tracks = state.topTracks) }

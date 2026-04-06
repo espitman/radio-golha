@@ -31,7 +31,7 @@ actual fun loadHomeUiState(): HomeUiState? {
     )
 }
 
-private fun requireArchiveDbPath(): String {
+internal fun requireArchiveDbPath(): String {
     val context = AndroidAppContext.require()
     val dbFile = File(context.filesDir, "golha_database.db")
 
@@ -102,7 +102,7 @@ private fun JSONArray.toTrackModels(): List<TrackUiModel> = buildList {
     }
 }
 
-private fun JSONObject.optNullableString(key: String): String? {
+internal fun JSONObject.optNullableString(key: String): String? {
     if (isNull(key)) return null
     return optString(key)
         .trim()

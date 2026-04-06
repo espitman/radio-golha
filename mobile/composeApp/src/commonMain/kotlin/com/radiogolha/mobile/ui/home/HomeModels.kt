@@ -10,6 +10,12 @@ data class SingerUiModel(
     val imageUrl: String? = null,
 )
 
+data class SingerListItemUiModel(
+    val name: String,
+    val imageUrl: String? = null,
+    val programCount: Int,
+)
+
 data class DastgahUiModel(
     val name: String,
 )

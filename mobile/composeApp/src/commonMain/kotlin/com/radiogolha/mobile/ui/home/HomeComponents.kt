@@ -235,11 +235,14 @@ fun ProgramsSection(programs: List<ProgramUiModel>) {
 }
 
 @Composable
-fun SingersSection(singers: List<SingerUiModel>) {
+fun SingersSection(
+    singers: List<SingerUiModel>,
+    onSeeAllClick: () -> Unit,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large)) {
         SectionTitle(
             title = "خواننده‌ها",
-            onSeeAllClick = { /* TODO: Open singers browse screen */ }
+            onSeeAllClick = onSeeAllClick,
         )
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
