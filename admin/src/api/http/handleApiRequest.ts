@@ -4,6 +4,7 @@ import { getDashboardOverview } from '../services/DashboardService'
 import { listLookupItems } from '../services/LookupService'
 import { getProgramDetail, listPrograms } from '../services/ProgramService'
 import { getProgramSearchOptions, searchPrograms } from '../services/SearchService'
+import { uploadToImgLink } from '../services/UploadService'
 import { getIntListParam, getIntParam, getMatchModeParam, readBody, respondWithJson, sendJson } from './httpUtils'
 
 type IncomingMessage = {
@@ -140,6 +141,18 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
     await respondWithJson(res, () => getArtistDetail(id), {
       notFoundWhen: (payload) => payload == null,
     })
+    return true
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/upload') {
+    try {
+      console.log(`[API] Upload request received`)
+      const result = await uploadToImgLink(req as any)
+      sendJson(res, result)
+    } catch (error: any) {
+      console.error(`[API] Upload error: ${error.message}`)
+      sendJson(res, { error: error?.message || 'Upload failed' }, 500)
+    }
     return true
   }
 

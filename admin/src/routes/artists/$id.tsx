@@ -9,7 +9,8 @@ import {
   Loader2, 
   CheckCircle2, 
   AlertCircle,
-  ChevronLeft
+  ChevronLeft,
+  ImagePlus
 } from 'lucide-react'
 import type { ArtistDetail } from '@/api/rust/runCoreQuery'
 
@@ -25,6 +26,7 @@ function ArtistEdit() {
   const [avatarUrl, setAvatarUrl] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
@@ -78,6 +80,36 @@ function ArtistEdit() {
       setError(err.message)
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    setError(null)
+
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'خطا در آپلود تصویر')
+      }
+
+      const result = await res.json()
+      setAvatarUrl(result.url)
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -162,24 +194,53 @@ function ArtistEdit() {
                 <label htmlFor="avatar" className="block text-[13px] font-black text-primary/70 px-1">
                   آدرس تصویر (URL)
                 </label>
-                <div className="relative group">
-                  <Input
-                    id="avatar"
-                    value={avatarUrl}
-                    onChange={(e) => setAvatarUrl(e.target.value)}
-                    placeholder="https://example.com/image.jpg"
-                    dir="ltr"
-                    className="h-16 rounded-[1.2rem] border-primary/15 bg-primary/[0.02] pr-5 text-lg font-mono shadow-none focus-visible:ring-primary/20 ring-offset-background transition-all"
-                  />
-                  {avatarUrl && (
-                    <button 
+                <div className="flex gap-3">
+                  <div className="relative group flex-1">
+                    <Input
+                      id="avatar"
+                      value={avatarUrl}
+                      onChange={(e) => setAvatarUrl(e.target.value)}
+                      placeholder="https://example.com/image.jpg"
+                      dir="ltr"
+                      className="h-16 rounded-[1.2rem] border-primary/15 bg-primary/[0.02] pr-5 text-lg font-mono shadow-none focus-visible:ring-primary/20 ring-offset-background transition-all"
+                    />
+                    {avatarUrl && (
+                      <button 
+                        type="button"
+                        onClick={() => setAvatarUrl('')}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-xl bg-destructive/5 text-destructive opacity-0 group-hover:opacity-100 transition-all hover:bg-destructive hover:text-white"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                  
+                  <div className="relative">
+                    <input
+                      type="file"
+                      id="file-upload"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      disabled={uploading}
+                    />
+                    <Button
                       type="button"
-                      onClick={() => setAvatarUrl('')}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-xl bg-destructive/5 text-destructive opacity-0 group-hover:opacity-100 transition-all hover:bg-destructive hover:text-white"
+                      variant="secondary"
+                      disabled={uploading}
+                      onClick={() => document.getElementById('file-upload')?.click()}
+                      className="h-16 px-6 rounded-[1.2rem] border-primary/10 bg-primary/5 text-primary font-black hover:bg-primary/10 transition-all shadow-none"
                     >
-                      ×
-                    </button>
-                  )}
+                      {uploading ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <ImagePlus className="h-5 w-5" />
+                          <span>آپلود</span>
+                        </div>
+                      )}
+                    </Button>
+                  </div>
                 </div>
                 <p className="px-2 text-[11px] font-bold text-muted-foreground/60 leading-relaxed">
                   لینک مستقیم به تصویر هنرمند جهت نمایش در اپلیکیشن.
