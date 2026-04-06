@@ -565,48 +565,18 @@ internal fun AvatarPlaceholder(
     tint: Color,
     modifier: Modifier = Modifier,
 ) {
-    val monogramParts = rememberMonogramParts(name)
-
     Box(
         modifier = modifier
             .clip(CircleShape)
-            .background(tint)
+            .background(GolhaColors.Border.copy(alpha = 0.4f))
             .border(1.dp, GolhaColors.Border.copy(alpha = 0.65f), CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        if (monogramParts.size > 1) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                monogramParts.forEach { part ->
-                    Text(
-                        text = part,
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                        color = GolhaColors.PrimaryText.copy(alpha = 0.85f),
-                    )
-                }
-            }
-        } else {
-            Text(
-                text = monogramParts.firstOrNull().orEmpty(),
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                color = GolhaColors.PrimaryText.copy(alpha = 0.85f),
-            )
-        }
-    }
-}
-
-private fun rememberMonogramParts(name: String): List<String> {
-    val parts = name
-        .split(" ")
-        .map { it.trim() }
-        .filter { it.isNotEmpty() }
-
-    return when {
-        parts.size >= 2 -> listOf(parts.first().take(1), parts.last().take(1))
-        parts.isNotEmpty() -> listOf(parts.first().take(2))
-        else -> emptyList()
+        GolhaLineIcon(
+            icon = GolhaIcon.Profile,
+            modifier = Modifier.fillMaxSize(0.45f),
+            tint = GolhaColors.PrimaryText.copy(alpha = 0.45f),
+        )
     }
 }
 
@@ -791,19 +761,28 @@ fun GolhaLineIcon(
 
             GolhaIcon.Profile,
             GolhaIcon.Account -> {
+                // Head
                 drawCircle(
                     color = tint,
-                    radius = size.minDimension * 0.20f,
-                    center = Offset(size.width * 0.50f, size.height * 0.30f),
-                    style = Stroke(width = stroke),
+                    radius = size.minDimension * 0.18f,
+                    center = Offset(size.width * 0.50f, size.height * 0.28f),
+                    style = Stroke(width = stroke)
                 )
-                drawRoundRect(
-                    color = tint,
-                    topLeft = Offset(size.width * 0.20f, size.height * 0.54f),
-                    size = Size(size.width * 0.60f, size.height * 0.22f),
-                    cornerRadius = CornerRadius(8.dp.toPx(), 8.dp.toPx()),
-                    style = Stroke(width = stroke),
-                )
+                // Shoulders / Chest
+                val body = Path().apply {
+                    moveTo(size.width * 0.18f, size.height * 0.82f)
+                    cubicTo(
+                        size.width * 0.18f, size.height * 0.62f,
+                        size.width * 0.32f, size.height * 0.52f,
+                        size.width * 0.50f, size.height * 0.52f
+                    )
+                    cubicTo(
+                        size.width * 0.68f, size.height * 0.52f,
+                        size.width * 0.82f, size.height * 0.62f,
+                        size.width * 0.82f, size.height * 0.82f
+                    )
+                }
+                drawPath(body, tint, style = Stroke(width = stroke, cap = StrokeCap.Round))
             }
 
             GolhaIcon.Home -> {
