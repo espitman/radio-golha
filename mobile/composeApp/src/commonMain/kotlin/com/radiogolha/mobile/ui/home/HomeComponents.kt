@@ -48,15 +48,24 @@ import kotlin.math.min
 
 @Composable
 fun SectionTitle(title: String, modifier: Modifier = Modifier) {
-    Text(
-        text = title,
+    Row(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = GolhaSpacing.ScreenHorizontal),
-        style = MaterialTheme.typography.titleLarge,
-        textAlign = TextAlign.Start,
-        color = GolhaColors.PrimaryText,
-    )
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            color = GolhaColors.PrimaryText,
+        )
+        HorizontalDivider(
+            modifier = Modifier.weight(1f),
+            color = GolhaColors.Border,
+            thickness = 1.dp,
+        )
+    }
 }
 
 @Composable
