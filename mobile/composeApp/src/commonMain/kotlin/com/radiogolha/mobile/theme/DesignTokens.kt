@@ -34,8 +34,8 @@ object GolhaSpacing {
 }
 
 object GolhaRadius {
-    val Small = 4.dp
-    val Card = 0.dp
+    val Small = 8.dp
+    val Card = 18.dp
     val Banner = 0.dp
     val Pill = 999.dp
 }

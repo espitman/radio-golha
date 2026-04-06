@@ -89,9 +89,8 @@ fun HeroBanner(modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = GolhaSpacing.ScreenHorizontal)
             .requiredHeight(220.dp),
-        shape = RoundedCornerShape(GolhaRadius.Banner),
+        shape = RoundedCornerShape(0.dp),
         color = GolhaColors.BannerBackground,
         tonalElevation = GolhaElevation.Banner,
         shadowElevation = GolhaElevation.Banner,
@@ -444,7 +443,7 @@ private fun ProgramCard(item: ProgramUiModel, modifier: Modifier = Modifier) {
         modifier = modifier,
         shape = RoundedCornerShape(GolhaRadius.Card),
         color = GolhaColors.Surface,
-        tonalElevation = GolhaElevation.Card,
+        tonalElevation = 0.dp,
         shadowElevation = GolhaElevation.Card,
         border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border),
     ) {
