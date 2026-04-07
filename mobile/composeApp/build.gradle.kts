@@ -139,6 +139,10 @@ tasks.matching {
         "mergeReleaseJniLibFolders",
         "mergeReleaseNativeLibs",
         "mergeReleaseAssets",
+        "lintVitalAnalyzeRelease",
+        "generateReleaseLintVitalReportModel",
+        "generateDebugLintModel",
+        "generateReleaseLintModel"
     )
 }
     .configureEach {

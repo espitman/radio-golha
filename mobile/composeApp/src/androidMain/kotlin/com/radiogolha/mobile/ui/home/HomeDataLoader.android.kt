@@ -22,12 +22,13 @@ actual fun loadHomeUiState(): HomeUiState? {
     val musicians = root.getJSONArray("musicians").toMusicianModels()
     val tracks = root.getJSONArray("top_tracks").toTrackModels()
 
-    return sampleHomeUiState().copy(
-        programs = programs.ifEmpty { samplePrograms },
-        singers = singers.ifEmpty { sampleSingers },
-        dastgahs = dastgahs.ifEmpty { sampleDastgahs },
-        musicians = musicians.ifEmpty { sampleMusicians },
-        topTracks = tracks.ifEmpty { sampleTracks },
+    return HomeUiState(
+        programs = programs,
+        singers = singers,
+        dastgahs = dastgahs,
+        musicians = musicians,
+        topTracks = tracks,
+        bottomNavItems = emptyList(),
     )
 }
 

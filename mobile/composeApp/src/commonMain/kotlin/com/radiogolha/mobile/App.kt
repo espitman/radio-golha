@@ -15,10 +15,8 @@ import com.radiogolha.mobile.ui.home.AppTab
 import com.radiogolha.mobile.ui.home.BottomNavItemUiModel
 import com.radiogolha.mobile.ui.home.GolhaIcon
 import com.radiogolha.mobile.ui.home.HomeScreen
-import com.radiogolha.mobile.ui.home.MusicianListItemUiModel
-import com.radiogolha.mobile.ui.home.SingerListItemUiModel
+import com.radiogolha.mobile.ui.home.HomeUiState
 import com.radiogolha.mobile.ui.home.loadHomeUiState
-import com.radiogolha.mobile.ui.home.sampleHomeUiState
 import com.radiogolha.mobile.ui.musicians.MusiciansScreen
 import com.radiogolha.mobile.ui.musicians.loadMusiciansUiState
 import com.radiogolha.mobile.ui.settings.SettingsScreen
@@ -36,43 +34,37 @@ fun App() {
     var isImportingDatabase by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
-    val homeState by produceState(initialValue = sampleHomeUiState(), key1 = reloadToken) {
-        value = runCatching { loadHomeUiState() }
-            .getOrNull()
-            ?: sampleHomeUiState()
+    val homeState by produceState<HomeUiState?>(initialValue = null, key1 = reloadToken) {
+        value = runCatching { loadHomeUiState() }.getOrNull()
     }
 
     val singers by produceState(
-        initialValue = sampleSingerBrowseItems(),
+        initialValue = emptyList(),
         key1 = reloadToken,
         key2 = overlayScreen,
     ) {
         if (overlayScreen != AppOverlayScreen.Singers) {
-            value = sampleSingerBrowseItems()
+            value = emptyList()
             return@produceState
         }
 
         value = runCatching {
             withContext(Dispatchers.Default) { loadSingersUiState() }
-        }.getOrNull()
-            ?.ifEmpty { sampleSingerBrowseItems() }
-            ?: sampleSingerBrowseItems()
+        }.getOrNull() ?: emptyList()
     }
     val musicians by produceState(
-        initialValue = sampleMusicianBrowseItems(),
+        initialValue = emptyList(),
         key1 = reloadToken,
         key2 = overlayScreen,
     ) {
         if (overlayScreen != AppOverlayScreen.Musicians) {
-            value = sampleMusicianBrowseItems()
+            value = emptyList()
             return@produceState
         }
 
         value = runCatching {
             withContext(Dispatchers.Default) { loadMusiciansUiState() }
-        }.getOrNull()
-            ?.ifEmpty { sampleMusicianBrowseItems() }
-            ?: sampleMusicianBrowseItems()
+        }.getOrNull() ?: emptyList()
     }
 
     val bottomNavItems = remember(selectedTab) {
@@ -109,7 +101,8 @@ fun App() {
                 when (selectedTab) {
                     AppTab.Home, AppTab.Search, AppTab.Library -> {
                         HomeScreen(
-                            state = homeState.copy(bottomNavItems = bottomNavItems),
+                            state = homeState?.copy(bottomNavItems = bottomNavItems),
+                            bottomNavItems = bottomNavItems,
                             onOpenAllSingers = { overlayScreen = AppOverlayScreen.Singers },
                             onOpenAllMusicians = { overlayScreen = AppOverlayScreen.Musicians },
                             onBottomNavSelected = {
@@ -181,18 +174,4 @@ private fun buildBottomNavItems(selectedTab: AppTab): List<BottomNavItemUiModel>
         tab = AppTab.Account,
         selected = selectedTab == AppTab.Account,
     ),
-)
-
-private fun sampleSingerBrowseItems(): List<SingerListItemUiModel> = listOf(
-    SingerListItemUiModel(name = "محمدرضا شجریان", programCount = 99),
-    SingerListItemUiModel(name = "محمدرضا بنان", programCount = 96),
-    SingerListItemUiModel(name = "مرضیه", programCount = 173),
-    SingerListItemUiModel(name = "دلکش", programCount = 72),
-)
-
-private fun sampleMusicianBrowseItems(): List<MusicianListItemUiModel> = listOf(
-    MusicianListItemUiModel(name = "جلیل شهناز", instrument = "تار", programCount = 118),
-    MusicianListItemUiModel(name = "حسن کسایی", instrument = "نی", programCount = 96),
-    MusicianListItemUiModel(name = "فرامرز پایور", instrument = "سنتور", programCount = 88),
-    MusicianListItemUiModel(name = "اصغر بهاری", instrument = "کمانچه", programCount = 72),
 )

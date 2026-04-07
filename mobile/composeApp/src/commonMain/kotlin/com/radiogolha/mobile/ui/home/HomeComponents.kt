@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
@@ -360,6 +362,249 @@ fun BottomNavigationBar(
             }
         }
     }
+}
+
+@Composable
+fun HeroBannerSkeleton(modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .requiredHeight(220.dp),
+        shape = RoundedCornerShape(0.dp),
+        color = GolhaColors.BannerBackground,
+        tonalElevation = GolhaElevation.Banner,
+        shadowElevation = GolhaElevation.Banner,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 22.dp, vertical = 20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                SkeletonBlock(
+                    widthFraction = 0.72f,
+                    height = 30.dp,
+                    color = GolhaColors.BannerDetail.copy(alpha = 0.14f),
+                )
+                SkeletonBlock(
+                    widthFraction = 0.46f,
+                    height = 16.dp,
+                    color = GolhaColors.BannerDetail.copy(alpha = 0.12f),
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                SkeletonPill(
+                    width = 96.dp,
+                    height = 42.dp,
+                    color = GolhaColors.PrimaryAccent.copy(alpha = 0.20f),
+                )
+            }
+
+            SkeletonRoundedRect(
+                width = 136.dp,
+                height = 146.dp,
+                radius = 30.dp,
+                color = GolhaColors.Surface.copy(alpha = 0.75f),
+            )
+        }
+    }
+}
+
+@Composable
+fun ProgramsSectionSkeleton() {
+    Column(verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large)) {
+        SectionTitle(title = "برنامه‌ها")
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(GolhaSpacing.CardGap),
+            contentPadding = PaddingValues(horizontal = GolhaSpacing.ScreenHorizontal),
+        ) {
+            items(6) {
+                SkeletonRoundedRect(
+                    width = 148.dp,
+                    height = 92.dp,
+                    radius = GolhaRadius.Card,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SingersSectionSkeleton() {
+    Column(verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large)) {
+        SectionTitle(title = "خواننده‌ها")
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(18.dp),
+            contentPadding = PaddingValues(horizontal = GolhaSpacing.ScreenHorizontal),
+        ) {
+            items(6) {
+                Column(
+                    modifier = Modifier.widthIn(min = 76.dp, max = 88.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    SkeletonCircle(size = 78.dp)
+                    SkeletonBlock(width = 62.dp, height = 12.dp)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DastgahSectionSkeleton() {
+    Column(verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large)) {
+        SectionTitle(title = "دستگاه‌ها")
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            contentPadding = PaddingValues(horizontal = GolhaSpacing.ScreenHorizontal),
+        ) {
+            items(listOf(74.dp, 88.dp, 64.dp, 84.dp, 58.dp, 102.dp)) { width ->
+                SkeletonPill(width = width, height = 40.dp)
+            }
+        }
+    }
+}
+
+@Composable
+fun MusiciansSectionSkeleton() {
+    Column(verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large)) {
+        SectionTitle(title = "نوازندگان برجسته")
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(18.dp),
+            contentPadding = PaddingValues(horizontal = GolhaSpacing.ScreenHorizontal),
+        ) {
+            items(6) {
+                Column(
+                    modifier = Modifier.widthIn(min = 76.dp, max = 88.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    SkeletonCircle(size = 78.dp, color = GolhaColors.SoftRose.copy(alpha = 0.18f))
+                    SkeletonBlock(width = 58.dp, height = 12.dp)
+                    SkeletonBlock(width = 38.dp, height = 10.dp)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TopTracksSectionSkeleton() {
+    Column(verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large)) {
+        SectionTitle(title = "ترک‌های برتر")
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = GolhaSpacing.ScreenHorizontal),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            repeat(3) { index ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        SkeletonRoundedRect(width = 58.dp, height = 58.dp, radius = 16.dp)
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            SkeletonBlock(widthFraction = 0.72f, height = 14.dp)
+                            SkeletonBlock(widthFraction = 0.42f, height = 11.dp)
+                        }
+                    }
+
+                    SkeletonBlock(width = 36.dp, height = 11.dp)
+                    SkeletonCircle(size = 36.dp)
+                }
+
+                if (index != 2) {
+                    HorizontalDivider(color = GolhaColors.Border.copy(alpha = 0.65f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SkeletonRoundedRect(
+    width: androidx.compose.ui.unit.Dp,
+    height: androidx.compose.ui.unit.Dp,
+    radius: androidx.compose.ui.unit.Dp,
+    color: Color = GolhaColors.Border.copy(alpha = 0.42f),
+) {
+    Box(
+        modifier = Modifier
+            .size(width = width, height = height)
+            .clip(RoundedCornerShape(radius))
+            .background(color),
+    )
+}
+
+@Composable
+private fun SkeletonCircle(
+    size: androidx.compose.ui.unit.Dp,
+    color: Color = GolhaColors.Border.copy(alpha = 0.34f),
+) {
+    Box(
+        modifier = Modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(color),
+    )
+}
+
+@Composable
+private fun SkeletonPill(
+    width: androidx.compose.ui.unit.Dp,
+    height: androidx.compose.ui.unit.Dp,
+    color: Color = GolhaColors.BadgeBackground,
+) {
+    Box(
+        modifier = Modifier
+            .size(width = width, height = height)
+            .clip(RoundedCornerShape(GolhaRadius.Pill))
+            .background(color)
+            .border(1.dp, GolhaColors.Border.copy(alpha = 0.72f), RoundedCornerShape(GolhaRadius.Pill)),
+    )
+}
+
+@Composable
+private fun SkeletonBlock(
+    width: androidx.compose.ui.unit.Dp? = null,
+    widthFraction: Float? = null,
+    height: androidx.compose.ui.unit.Dp,
+    color: Color = GolhaColors.Border.copy(alpha = 0.38f),
+) {
+    val modifier = when {
+        width != null -> Modifier.size(width = width, height = height)
+        widthFraction != null -> Modifier.fillMaxWidth(widthFraction).height(height)
+        else -> Modifier.fillMaxWidth().height(height)
+    }
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(999.dp))
+            .background(color),
+    )
 }
 
 @Composable

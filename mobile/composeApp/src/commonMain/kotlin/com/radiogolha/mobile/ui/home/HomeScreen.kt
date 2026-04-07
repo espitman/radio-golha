@@ -19,7 +19,8 @@ import com.radiogolha.mobile.theme.GolhaSpacing
 
 @Composable
 fun HomeScreen(
-    state: HomeUiState,
+    state: HomeUiState?,
+    bottomNavItems: List<BottomNavItemUiModel>,
     onOpenAllSingers: () -> Unit = {},
     onOpenAllMusicians: () -> Unit = {},
     onBottomNavSelected: (AppTab) -> Unit = {},
@@ -32,7 +33,7 @@ fun HomeScreen(
             containerColor = GolhaColors.ScreenBackground,
             bottomBar = {
                 BottomNavigationBar(
-                    items = state.bottomNavItems,
+                    items = bottomNavItems,
                     onItemSelected = onBottomNavSelected,
                 )
             },
@@ -45,23 +46,33 @@ fun HomeScreen(
                 ),
                 verticalArrangement = Arrangement.spacedBy(GolhaSpacing.SectionGap),
             ) {
-                item { HeaderSection() }
-                item { HeroBanner() }
-                item { ProgramsSection(programs = state.programs) }
-                item {
-                    SingersSection(
-                        singers = state.singers,
-                        onSeeAllClick = onOpenAllSingers,
-                    )
+                if (state == null) {
+                    item { HeaderSection() }
+                    item { HeroBannerSkeleton() }
+                    item { ProgramsSectionSkeleton() }
+                    item { SingersSectionSkeleton() }
+                    item { DastgahSectionSkeleton() }
+                    item { MusiciansSectionSkeleton() }
+                    item { TopTracksSectionSkeleton() }
+                } else {
+                    item { HeaderSection() }
+                    item { HeroBanner() }
+                    item { ProgramsSection(programs = state.programs) }
+                    item {
+                        SingersSection(
+                            singers = state.singers,
+                            onSeeAllClick = onOpenAllSingers,
+                        )
+                    }
+                    item { DastgahSection(items = state.dastgahs) }
+                    item {
+                        MusiciansSection(
+                            musicians = state.musicians,
+                            onSeeAllClick = onOpenAllMusicians,
+                        )
+                    }
+                    item { TopTracksSection(tracks = state.topTracks) }
                 }
-                item { DastgahSection(items = state.dastgahs) }
-                item {
-                    MusiciansSection(
-                        musicians = state.musicians,
-                        onSeeAllClick = onOpenAllMusicians,
-                    )
-                }
-                item { TopTracksSection(tracks = state.topTracks) }
             }
         }
     }
@@ -73,6 +84,7 @@ private fun HomeScreenPreview() {
     GolhaAppTheme {
         HomeScreen(
             state = rememberSampleHomeUiState(),
+            bottomNavItems = rememberSampleHomeUiState().bottomNavItems,
         )
     }
 }
