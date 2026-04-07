@@ -26,6 +26,7 @@ import com.radiogolha.mobile.ui.home.HomeUiState
 import com.radiogolha.mobile.ui.home.loadHomeUiState
 import com.radiogolha.mobile.ui.musicians.MusiciansScreen
 import com.radiogolha.mobile.ui.musicians.loadMusiciansUiState
+import com.radiogolha.mobile.ui.root.TabRootScreen
 import com.radiogolha.mobile.ui.settings.SettingsScreen
 import com.radiogolha.mobile.ui.singers.SingersScreen
 import com.radiogolha.mobile.ui.singers.loadSingersUiState
@@ -80,14 +81,10 @@ fun AndroidApp() {
             }
 
             composable(AndroidRoute.Search.route) {
-                val homeState by produceState<HomeUiState?>(initialValue = null, key1 = reloadToken) {
-                    value = runCatching { loadHomeUiState() }.getOrNull()
-                }
-                HomeScreen(
-                    state = homeState?.copy(bottomNavItems = bottomNavItems),
+                TabRootScreen(
+                    title = "جستجو",
+                    subtitle = "جستجو و فیلترهای اپ در این تب قرار می‌گیرد.",
                     bottomNavItems = bottomNavItems,
-                    onOpenAllSingers = { navController.navigate(AndroidRoute.Singers.route) },
-                    onOpenAllMusicians = { navController.navigate(AndroidRoute.Musicians.route) },
                     onBottomNavSelected = { tab ->
                         navController.navigate(tab.toRoute().route) {
                             popUpTo(navController.graph.findStartDestination().id) {
@@ -101,14 +98,10 @@ fun AndroidApp() {
             }
 
             composable(AndroidRoute.Library.route) {
-                val homeState by produceState<HomeUiState?>(initialValue = null, key1 = reloadToken) {
-                    value = runCatching { loadHomeUiState() }.getOrNull()
-                }
-                HomeScreen(
-                    state = homeState?.copy(bottomNavItems = bottomNavItems),
+                TabRootScreen(
+                    title = "کتابخانه",
+                    subtitle = "لیست‌های ذخیره‌شده و بخش‌های شخصی اینجا می‌آیند.",
                     bottomNavItems = bottomNavItems,
-                    onOpenAllSingers = { navController.navigate(AndroidRoute.Singers.route) },
-                    onOpenAllMusicians = { navController.navigate(AndroidRoute.Musicians.route) },
                     onBottomNavSelected = { tab ->
                         navController.navigate(tab.toRoute().route) {
                             popUpTo(navController.graph.findStartDestination().id) {
