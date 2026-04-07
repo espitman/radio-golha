@@ -9,7 +9,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         AndroidAppContext.initialize(this)
         setContent {
-            App()
+            AndroidApp()
         }
     }
 }
