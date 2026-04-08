@@ -2,8 +2,8 @@ package com.radiogolha.mobile.ui.people
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -14,6 +14,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -25,6 +28,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,6 +37,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.radiogolha.mobile.theme.GolhaColors
@@ -41,6 +47,7 @@ import com.radiogolha.mobile.ui.home.AppTab
 import com.radiogolha.mobile.ui.home.ArtistAvatar
 import com.radiogolha.mobile.ui.home.BottomNavItemUiModel
 import com.radiogolha.mobile.ui.home.BottomNavigationBar
+import kotlinx.coroutines.launch
 
 data class FeaturedPersonCardUiModel(
     val name: String,
@@ -295,40 +302,134 @@ private fun SpacerCard(modifier: Modifier = Modifier) {
     Box(modifier = modifier)
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun PeopleListCard(
     people: List<BrowsePersonRowUiModel>,
     tint: androidx.compose.ui.graphics.Color,
 ) {
+    val groupedPeople = rememberGroupedPeople(people)
+    val scope = rememberCoroutineScope()
+    val listState = rememberLazyListState()
+    val headerIndexes = remember(groupedPeople) {
+        buildMap {
+            var index = 0
+            groupedPeople.forEach { group ->
+                put(group.label, index)
+                index += 1 + group.items.size
+            }
+        }
+    }
+
     Surface(
         shape = RoundedCornerShape(26.dp),
         color = GolhaColors.Surface,
         shadowElevation = 8.dp,
         border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.78f)),
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(640.dp),
         ) {
-            Box(
+            LazyColumn(
+                state = listState,
                 modifier = Modifier
-                    .padding(start = 22.dp, top = 16.dp)
-                    .width(3.dp)
-                    .height(28.dp)
-                    .clip(RoundedCornerShape(999.dp))
-                    .background(GolhaColors.SecondaryText.copy(alpha = 0.85f)),
-            )
+                    .fillMaxWidth()
+                    .padding(end = 42.dp),
+                contentPadding = PaddingValues(vertical = 8.dp),
+            ) {
+                groupedPeople.forEachIndexed { groupIndex, group ->
+                    stickyHeader(key = "header-${group.label}") {
+                        AlphabetGroupHeader(label = group.label)
+                    }
 
-            people.forEachIndexed { index, person ->
-                PeopleListRow(
-                    item = person,
-                    tint = tint,
-                )
-                if (index != people.lastIndex) {
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 20.dp),
-                        color = GolhaColors.Border.copy(alpha = 0.72f),
-                    )
+                    itemsIndexed(
+                        items = group.items,
+                        key = { index, person -> "${group.label}-${person.name}-${index}" },
+                    ) { index, person ->
+                        PeopleListRow(item = person, tint = tint)
+                        val isLastInGroup = index == group.items.lastIndex
+                        val isLastGroup = groupIndex == groupedPeople.lastIndex
+                        if (!(isLastInGroup && isLastGroup)) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 20.dp),
+                                color = GolhaColors.Border.copy(alpha = 0.72f),
+                            )
+                        }
+                    }
                 }
+            }
+
+            AlphabetJumpRail(
+                labels = groupedPeople.map { it.label },
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 10.dp),
+                onJump = { label ->
+                    scope.launch {
+                        headerIndexes[label]?.let { target ->
+                            listState.animateScrollToItem(target)
+                        }
+                    }
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun AlphabetGroupHeader(
+    label: String,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        contentAlignment = Alignment.CenterEnd,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            color = GolhaColors.SecondaryText,
+        )
+    }
+}
+
+@Composable
+private fun AlphabetJumpRail(
+    labels: List<String>,
+    onJump: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (labels.isEmpty()) return
+
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        color = GolhaColors.ScreenBackground.copy(alpha = 0.9f),
+        shadowElevation = 2.dp,
+        border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.5f)),
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            labels.forEach { label ->
+                Text(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable { onJump(label) }
+                        .padding(horizontal = 4.dp, vertical = 1.dp),
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 11.sp,
+                    ),
+                    color = GolhaColors.SecondaryText,
+                )
             }
         }
     }
@@ -388,11 +489,6 @@ private fun PeopleListRow(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                text = item.groupLabel,
-                style = MaterialTheme.typography.bodyLarge,
-                color = GolhaColors.SecondaryText.copy(alpha = 0.95f),
-            )
-            Text(
                 text = "‹",
                 style = MaterialTheme.typography.headlineSmall,
                 color = GolhaColors.SecondaryText.copy(alpha = 0.8f),
@@ -402,7 +498,80 @@ private fun PeopleListRow(
 }
 
 fun browseGroupLabel(name: String): String =
-    name.trim()
-        .firstOrNull()
+    firstPersianLetter(name) ?: "•"
+
+private data class PeopleGroupUiModel(
+    val label: String,
+    val items: List<BrowsePersonRowUiModel>,
+)
+
+@Composable
+private fun rememberGroupedPeople(people: List<BrowsePersonRowUiModel>): List<PeopleGroupUiModel> {
+    return androidx.compose.runtime.remember(people) {
+        people
+            .sortedWith(compareByPersianName())
+            .groupBy { browseGroupLabel(it.name) }
+            .entries
+            .sortedBy { persianAlphabetIndex(it.key) }
+            .map { (label, items) ->
+                PeopleGroupUiModel(label = label, items = items)
+            }
+    }
+}
+
+private val persianAlphabet = listOf(
+    "ا", "ب", "پ", "ت", "ث", "ج", "چ", "ح", "خ",
+    "د", "ذ", "ر", "ز", "ژ", "س", "ش", "ص", "ض", "ط",
+    "ظ", "ع", "غ", "ف", "ق", "ک", "گ", "ل", "م", "ن",
+    "و", "ه", "ی",
+)
+
+private fun compareByPersianName(): Comparator<BrowsePersonRowUiModel> = Comparator { left, right ->
+    comparePersianTexts(left.name, right.name)
+}
+
+private fun comparePersianTexts(left: String, right: String): Int {
+    val leftChars = normalizePersianText(left)
+    val rightChars = normalizePersianText(right)
+    val commonLength = minOf(leftChars.length, rightChars.length)
+
+    for (index in 0 until commonLength) {
+        val comparison = persianAlphabetIndex(leftChars[index]) - persianAlphabetIndex(rightChars[index])
+        if (comparison != 0) return comparison
+    }
+
+    return leftChars.length - rightChars.length
+}
+
+private fun persianAlphabetIndex(charOrLabel: Char): Int =
+    persianAlphabetIndex(charOrLabel.toString())
+
+private fun persianAlphabetIndex(charOrLabel: String): Int {
+    val normalized = normalizePersianText(charOrLabel)
+    val first = normalized.firstOrNull()?.toString() ?: return Int.MAX_VALUE
+    return persianAlphabet.indexOf(first).takeIf { it >= 0 } ?: Int.MAX_VALUE
+}
+
+private fun firstPersianLetter(value: String): String? =
+    normalizePersianText(value)
+        .firstOrNull { candidate ->
+            persianAlphabet.contains(candidate.toString())
+        }
         ?.toString()
-        ?: "•"
+
+private fun normalizePersianText(value: String): String =
+    buildString {
+        value.trim().forEach { char ->
+            append(
+                when (char) {
+                    'ي', 'ى' -> 'ی'
+                    'ك' -> 'ک'
+                    'آ', 'أ', 'إ' -> 'ا'
+                    'ؤ' -> 'و'
+                    'ۀ', 'ة' -> 'ه'
+                    'ئ' -> 'ی'
+                    else -> char
+                }
+            )
+        }
+    }
