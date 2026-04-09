@@ -14,8 +14,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -67,11 +69,13 @@ data class BrowsePersonRowUiModel(
 @Composable
 fun PeopleBrowseScreen(
     title: String,
-    featuredTitle: String,
+    featuredTitle: String? = null,
     countLabel: String,
     tint: androidx.compose.ui.graphics.Color,
-    featuredPeople: List<FeaturedPersonCardUiModel>,
-    people: List<BrowsePersonRowUiModel>,
+    featuredPeople: List<FeaturedPersonCardUiModel> = emptyList(),
+    topSectionContent: (@Composable () -> Unit)? = null,
+    customContent: (@Composable () -> Unit)? = null,
+    people: List<BrowsePersonRowUiModel> = emptyList(),
     bottomNavItems: List<BottomNavItemUiModel>,
     onBottomNavSelected: (AppTab) -> Unit,
     onBackClick: () -> Unit,
@@ -92,8 +96,6 @@ fun PeopleBrowseScreen(
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
-                    start = GolhaSpacing.ScreenHorizontal,
-                    end = GolhaSpacing.ScreenHorizontal,
                     top = 22.dp,
                     bottom = innerPadding.calculateBottomPadding() + 18.dp,
                 ),
@@ -103,10 +105,15 @@ fun PeopleBrowseScreen(
                     PeopleHeader(
                         title = title,
                         onBackClick = onBackClick,
+                        modifier = Modifier.padding(horizontal = GolhaSpacing.ScreenHorizontal)
                     )
                 }
 
-                if (featuredPeople.isNotEmpty()) {
+                if (topSectionContent != null) {
+                    item {
+                        topSectionContent()
+                    }
+                } else if (!featuredTitle.isNullOrBlank() && featuredPeople.isNotEmpty()) {
                     item {
                         FeaturedPeopleSection(
                             title = featuredTitle,
@@ -116,19 +123,99 @@ fun PeopleBrowseScreen(
                     }
                 }
 
-                item {
-                    Text(
-                        text = countLabel,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = GolhaColors.SecondaryText,
-                    )
+                if (!countLabel.isNullOrBlank()) {
+                    item {
+                        Text(
+                            text = countLabel,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = GolhaColors.SecondaryText,
+                            modifier = Modifier.padding(horizontal = GolhaSpacing.ScreenHorizontal)
+                        )
+                    }
                 }
 
                 item {
-                    PeopleListCard(
-                        people = people,
+                    if (customContent != null) {
+                        customContent()
+                    } else {
+                        PeopleListCard(
+                            people = people,
+                            tint = tint,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PeopleCarouselSection(
+    title: String,
+    tint: androidx.compose.ui.graphics.Color,
+    items: List<FeaturedPersonCardUiModel>,
+) {
+    if (items.isEmpty()) return
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
+            color = GolhaColors.PrimaryText,
+            modifier = Modifier.padding(horizontal = GolhaSpacing.ScreenHorizontal),
+        )
+
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            contentPadding = PaddingValues(horizontal = GolhaSpacing.ScreenHorizontal),
+        ) {
+            items(items.take(10), key = { "${it.name}-${it.metaTop}-${it.metaBottom}" }) { person ->
+                Column(
+                    modifier = Modifier.width(108.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    ArtistAvatar(
+                        name = person.name,
+                        imageUrl = person.imageUrl,
                         tint = tint,
+                        modifier = Modifier.size(90.dp),
                     )
+
+                    Text(
+                        text = person.name,
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                        color = GolhaColors.PrimaryText,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center,
+                    )
+
+                    if (person.metaTop != null) {
+                        Text(
+                            text = person.metaTop,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = GolhaColors.SecondaryText,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+
+                    if (person.metaBottom != null) {
+                        Text(
+                            text = person.metaBottom,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = GolhaColors.SecondaryText,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
                 }
             }
         }
@@ -139,9 +226,10 @@ fun PeopleBrowseScreen(
 private fun PeopleHeader(
     title: String,
     onBackClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -436,7 +524,7 @@ private fun AlphabetJumpRail(
 }
 
 @Composable
-private fun PeopleListRow(
+internal fun PeopleListRow(
     item: BrowsePersonRowUiModel,
     tint: androidx.compose.ui.graphics.Color,
 ) {
@@ -456,7 +544,7 @@ private fun PeopleListRow(
 
         Column(
             modifier = Modifier.weight(1f),
-            horizontalAlignment = Alignment.End,
+            horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
@@ -465,14 +553,18 @@ private fun PeopleListRow(
                 color = GolhaColors.PrimaryText,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Start,
             )
-            Text(
-                text = item.primaryMeta,
-                style = MaterialTheme.typography.titleMedium,
-                color = GolhaColors.SecondaryText,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            if (!item.primaryMeta.isNullOrBlank()) {
+                Text(
+                    text = item.primaryMeta,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = GolhaColors.SecondaryText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Start,
+                )
+            }
             if (item.secondaryMeta != null) {
                 Text(
                     text = item.secondaryMeta,
@@ -480,19 +572,9 @@ private fun PeopleListRow(
                     color = GolhaColors.SecondaryText,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Start,
                 )
             }
-        }
-
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(
-                text = "‹",
-                style = MaterialTheme.typography.headlineSmall,
-                color = GolhaColors.SecondaryText.copy(alpha = 0.8f),
-            )
         }
     }
 }
@@ -519,18 +601,22 @@ private fun rememberGroupedPeople(people: List<BrowsePersonRowUiModel>): List<Pe
     }
 }
 
-private val persianAlphabet = listOf(
+internal val persianAlphabet = listOf(
     "ا", "ب", "پ", "ت", "ث", "ج", "چ", "ح", "خ",
     "د", "ذ", "ر", "ز", "ژ", "س", "ش", "ص", "ض", "ط",
     "ظ", "ع", "غ", "ف", "ق", "ک", "گ", "ل", "م", "ن",
     "و", "ه", "ی",
 )
 
+internal fun compareByPersianText(): Comparator<String> = Comparator { left, right ->
+    comparePersianTexts(left, right)
+}
+
 private fun compareByPersianName(): Comparator<BrowsePersonRowUiModel> = Comparator { left, right ->
     comparePersianTexts(left.name, right.name)
 }
 
-private fun comparePersianTexts(left: String, right: String): Int {
+internal fun comparePersianTexts(left: String, right: String): Int {
     val leftChars = normalizePersianText(left)
     val rightChars = normalizePersianText(right)
     val commonLength = minOf(leftChars.length, rightChars.length)
@@ -559,7 +645,7 @@ private fun firstPersianLetter(value: String): String? =
         }
         ?.toString()
 
-private fun normalizePersianText(value: String): String =
+internal fun normalizePersianText(value: String): String =
     buildString {
         value.trim().forEach { char ->
             append(
