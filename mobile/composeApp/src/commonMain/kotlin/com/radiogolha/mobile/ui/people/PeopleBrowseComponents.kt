@@ -49,6 +49,8 @@ import com.radiogolha.mobile.ui.home.AppTab
 import com.radiogolha.mobile.ui.home.ArtistAvatar
 import com.radiogolha.mobile.ui.home.BottomNavItemUiModel
 import com.radiogolha.mobile.ui.home.BottomNavigationBar
+import com.radiogolha.mobile.ui.home.CircularActionButton
+import com.radiogolha.mobile.ui.home.GolhaIcon
 import kotlinx.coroutines.launch
 
 data class FeaturedPersonCardUiModel(
@@ -239,24 +241,10 @@ private fun PeopleHeader(
             color = GolhaColors.PrimaryText,
         )
 
-        Surface(
-            modifier = Modifier.clickable { onBackClick() },
-            shape = CircleShape,
-            color = GolhaColors.Surface.copy(alpha = 0.92f),
-            shadowElevation = 6.dp,
-            border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.75f)),
-        ) {
-            Box(
-                modifier = Modifier.size(42.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "‹",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = GolhaColors.SecondaryText,
-                )
-            }
-        }
+        CircularActionButton(
+            icon = GolhaIcon.Back,
+            onClick = onBackClick
+        )
     }
 }
 

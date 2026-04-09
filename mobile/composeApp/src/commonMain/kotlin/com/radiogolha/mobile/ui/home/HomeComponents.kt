@@ -642,9 +642,15 @@ fun SmallPrimaryButton(
 }
 
 @Composable
-private fun CircularActionButton(icon: GolhaIcon) {
+internal fun CircularActionButton(
+    icon: GolhaIcon,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {},
+) {
     Surface(
-        modifier = Modifier.size(42.dp),
+        modifier = modifier
+            .size(42.dp)
+            .clickable { onClick() },
         shape = CircleShape,
         color = GolhaColors.Surface,
         tonalElevation = 0.dp,
@@ -1142,6 +1148,15 @@ fun GolhaLineIcon(
                     strokeWidth = stroke,
                     cap = StrokeCap.Round,
                 )
+            }
+
+            GolhaIcon.Back -> {
+                val path = Path().apply {
+                    moveTo(size.width * 0.62f, size.height * 0.32f)
+                    lineTo(size.width * 0.42f, size.height * 0.50f)
+                    lineTo(size.width * 0.62f, size.height * 0.68f)
+                }
+                drawPath(path, tint, style = Stroke(width = stroke, cap = StrokeCap.Round))
             }
         }
     }

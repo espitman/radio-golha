@@ -74,4 +74,5 @@ enum class GolhaIcon {
     Play,
     More,
     Download,
+    Back,
 }
