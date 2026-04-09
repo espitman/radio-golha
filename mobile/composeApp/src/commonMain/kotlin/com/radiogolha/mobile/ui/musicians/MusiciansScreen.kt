@@ -36,6 +36,16 @@ import com.radiogolha.mobile.ui.people.PeopleCarouselSection
 import com.radiogolha.mobile.ui.people.PeopleBrowseScreen
 import com.radiogolha.mobile.ui.people.PeopleListRow
 import com.radiogolha.mobile.ui.people.compareByPersianText
+import com.radiogolha.mobile.ui.home.GolhaIcon
+import com.radiogolha.mobile.ui.home.GolhaLineIcon
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.Alignment
 import com.radiogolha.mobile.ui.people.comparePersianTexts
 
 @Composable
@@ -45,15 +55,26 @@ fun MusiciansScreen(
     onBottomNavSelected: (AppTab) -> Unit,
     onBackClick: () -> Unit,
 ) {
-    val instruments = remember(musicians) {
-        musicians.map { it.instrument }.distinct().sortedWith(compareByPersianText())
-    }
-    var selectedInstrument by remember(instruments) { 
-        mutableStateOf(instruments.firstOrNull() ?: "") 
+    var searchQuery by remember { mutableStateOf("") }
+
+    val filteredBySearch = remember(musicians, searchQuery) {
+        if (searchQuery.isEmpty()) musicians
+        else musicians.filter {
+            it.name.contains(searchQuery, ignoreCase = true) ||
+            it.instrument.contains(searchQuery, ignoreCase = true)
+        }
     }
 
-    val filteredMusicians = remember(musicians, selectedInstrument) {
-        musicians.filter { it.instrument == selectedInstrument }
+    val instruments = remember(filteredBySearch) {
+        filteredBySearch.map { it.instrument }.distinct().sortedWith(compareByPersianText())
+    }
+
+    var selectedInstrument by remember(instruments) {
+        mutableStateOf(instruments.firstOrNull() ?: "")
+    }
+
+    val filteredMusicians = remember(filteredBySearch, selectedInstrument) {
+        filteredBySearch.filter { it.instrument == selectedInstrument }
             .sortedWith { a, b -> comparePersianTexts(a.name, b.name) }
     }
 
@@ -62,18 +83,27 @@ fun MusiciansScreen(
         countLabel = "",
         tint = GolhaColors.SoftRose,
         topSectionContent = {
-            PeopleCarouselSection(
-                title = "برترین‌ها",
-                tint = GolhaColors.SoftRose,
-                items = musicians.take(10).map { musician ->
-                    FeaturedPersonCardUiModel(
-                        name = musician.name,
-                        imageUrl = musician.imageUrl,
-                        metaTop = musician.instrument,
-                        metaBottom = "",
+            Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                MusicianSearchBar(
+                    query = searchQuery,
+                    onQueryChange = { searchQuery = it }
+                )
+
+                if (searchQuery.isEmpty()) {
+                    PeopleCarouselSection(
+                        title = "برترین‌ها",
+                        tint = GolhaColors.SoftRose,
+                        items = musicians.take(10).map { musician ->
+                            FeaturedPersonCardUiModel(
+                                name = musician.name,
+                                imageUrl = musician.imageUrl,
+                                metaTop = musician.instrument,
+                                metaBottom = "",
+                            )
+                        },
                     )
-                },
-            )
+                }
+            }
         },
         customContent = {
             InstrumentsTabbedList(
@@ -96,6 +126,57 @@ fun MusiciansScreen(
         onBottomNavSelected = onBottomNavSelected,
         onBackClick = onBackClick,
     )
+}
+
+@Composable
+private fun MusicianSearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = GolhaSpacing.ScreenHorizontal),
+        shape = RoundedCornerShape(16.dp),
+        color = GolhaColors.Surface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.6f)),
+        shadowElevation = 2.dp,
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            GolhaLineIcon(
+                icon = GolhaIcon.Search,
+                modifier = Modifier.size(20.dp),
+                tint = GolhaColors.SecondaryText
+            )
+
+            Box(modifier = Modifier.weight(1f)) {
+                if (query.isEmpty()) {
+                    Text(
+                        text = "جستجوی نوازنده یا ساز...",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = GolhaColors.SecondaryText.copy(alpha = 0.6f)
+                    )
+                }
+                BasicTextField(
+                    value = query,
+                    onValueChange = onQueryChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    textStyle = TextStyle(
+                        color = GolhaColors.PrimaryText,
+                        fontSize = MaterialTheme.typography.bodyLarge.fontSize,
+                        fontFamily = MaterialTheme.typography.bodyLarge.fontFamily
+                    ),
+                    cursorBrush = SolidColor(GolhaColors.PrimaryAccent),
+                    singleLine = true,
+                )
+            }
+        }
+    }
 }
 
 @Composable
