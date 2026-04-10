@@ -131,7 +131,7 @@ fn home_json(db_path: &str) -> Result<String, String> {
             top_tracks.push(AndroidTrackItem {
                 title: detail.title.clone(),
                 artist: detail.singers.join(" و "),
-                duration: "05:42".to_string(),
+                duration: rp.duration.clone().unwrap_or_else(|| "نامشخص".to_string()),
             });
         }
     }

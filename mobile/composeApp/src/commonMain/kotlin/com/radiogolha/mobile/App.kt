@@ -43,7 +43,9 @@ fun App() {
     }
 
     val homeState by produceState<HomeUiState?>(initialValue = null, key1 = reloadToken) {
-        value = runCatching { loadHomeUiState() }.getOrNull()
+        value = withContext(Dispatchers.Default) {
+            runCatching { loadHomeUiState() }.getOrNull()
+        }
     }
 
     val singers by produceState(

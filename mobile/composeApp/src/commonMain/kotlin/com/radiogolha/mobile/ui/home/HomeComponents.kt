@@ -318,7 +318,7 @@ fun TopTracksSection(
     modifier: Modifier = Modifier
 ) {
     val displayedTracks = remember(tracks) {
-        tracks.take(10)
+        tracks.take(5)
     }
 
     Column(
@@ -342,22 +342,21 @@ fun TopTracksSection(
                 modifier = Modifier.weight(1f),
                 color = GolhaColors.Border.copy(alpha = 0.6f),
             )
-            // Refresh / shuffle button
-            Surface(
+            // Refresh button
+            Box(
                 modifier = Modifier
-                    .size(30.dp)
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(GolhaColors.BadgeBackground)
+                    .border(1.dp, GolhaColors.Border, CircleShape)
                     .clickable { onRefresh() },
-                shape = CircleShape,
-                color = GolhaColors.BadgeBackground,
-                border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border),
+                contentAlignment = Alignment.Center
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    GolhaLineIcon(
-                        icon = GolhaIcon.Refresh,
-                        modifier = Modifier.size(14.dp),
-                        tint = GolhaColors.SecondaryText,
-                    )
-                }
+                GolhaLineIcon(
+                    icon = GolhaIcon.Refresh,
+                    modifier = Modifier.size(16.dp),
+                    tint = GolhaColors.SecondaryText,
+                )
             }
         }
 

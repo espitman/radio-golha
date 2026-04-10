@@ -351,6 +351,7 @@ impl RadioGolhaCore {
                 category_name: row.get(2)?,
                 no: row.get(3)?,
                 sub_no: row.get(4)?,
+                duration: None,
             })
         })?;
 
@@ -375,6 +376,7 @@ impl RadioGolhaCore {
                 category_name: row.get(2)?,
                 no: row.get(3)?,
                 sub_no: row.get(4)?,
+                duration: None,
             })
         })?;
 
@@ -384,7 +386,8 @@ impl RadioGolhaCore {
     pub fn random_vocal_tracks(&self, limit: usize) -> CoreResult<Vec<ProgramListItem>> {
         let mut stmt = self.connection().prepare(
             "
-            SELECT p.id, p.title, c.title_fa, p.no, p.sub_no
+            SELECT p.id, p.title, c.title_fa, p.no, p.sub_no,
+                   (SELECT MAX(end_time) FROM program_timeline WHERE program_id = p.id)
             FROM program p
             JOIN category c ON c.id = p.category_id
             WHERE p.audio_url IS NOT NULL AND TRIM(p.audio_url) <> ''
@@ -401,6 +404,7 @@ impl RadioGolhaCore {
                 category_name: row.get(2)?,
                 no: row.get(3)?,
                 sub_no: row.get(4)?,
+                duration: row.get(5)?,
             })
         })?;
 
@@ -527,6 +531,7 @@ impl RadioGolhaCore {
                     category_name: row.get(2)?,
                     no: row.get(3)?,
                     sub_no: row.get(4)?,
+                duration: None,
                 })
             },
         )?;
@@ -923,6 +928,7 @@ impl RadioGolhaCore {
                 category_name: row.get(2)?,
                 no: row.get(3)?,
                 sub_no: row.get(4)?,
+                duration: None,
             })
         })?;
 

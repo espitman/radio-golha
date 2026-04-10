@@ -123,6 +123,7 @@ pub struct ProgramListItem {
     pub category_name: String,
     pub no: i64,
     pub sub_no: Option<String>,
+    pub duration: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
