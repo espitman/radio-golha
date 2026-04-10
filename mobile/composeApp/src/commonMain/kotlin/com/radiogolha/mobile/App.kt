@@ -17,7 +17,9 @@ import com.radiogolha.mobile.ui.home.BottomNavItemUiModel
 import com.radiogolha.mobile.ui.home.GolhaIcon
 import com.radiogolha.mobile.ui.home.HomeScreen
 import com.radiogolha.mobile.ui.home.HomeUiState
+import com.radiogolha.mobile.ui.home.TrackUiModel
 import com.radiogolha.mobile.ui.home.loadHomeUiState
+import com.radiogolha.mobile.ui.home.loadTopTracks
 import com.radiogolha.mobile.ui.musicians.MusiciansScreen
 import com.radiogolha.mobile.ui.musicians.loadMusiciansUiState
 import com.radiogolha.mobile.ui.settings.SettingsScreen
@@ -43,16 +45,40 @@ fun App() {
         }
     }
 
+    var trackPool by remember { mutableStateOf<List<TrackUiModel>>(emptyList()) }
     var isTopTracksRefreshing by remember { mutableStateOf(false) }
 
     val homeState by produceState<HomeUiState?>(initialValue = null, key1 = reloadToken) {
-        isTopTracksRefreshing = true
-        val newState = withContext(Dispatchers.Default) {
-            delay(100)
-            runCatching { loadHomeUiState() }.getOrNull()
+        if (value != null && trackPool.isNotEmpty()) {
+            // 1. Show stored 5 instantly
+            val currentReserve = trackPool
+            value = value?.copy(topTracks = currentReserve)
+            
+            // 2. Refresh icon animation
+            isTopTracksRefreshing = true
+            
+            // 3. Get 5 more and replace stored ones (refill pool)
+            val newReserve = withContext(Dispatchers.Default) {
+                delay(100) 
+                runCatching { loadTopTracks() }.getOrNull()
+            }
+            if (newReserve != null) {
+                trackPool = newReserve
+            }
+            isTopTracksRefreshing = false
+        } else {
+            // Initial load: Get 10, show 5, store 5
+            isTopTracksRefreshing = true
+            val newState = withContext(Dispatchers.Default) {
+                runCatching { loadHomeUiState() }.getOrNull()
+            }
+            if (newState != null) {
+                val initiallyVisible = newState.topTracks.take(5)
+                trackPool = newState.topTracks.drop(5)
+                value = newState.copy(topTracks = initiallyVisible)
+            }
+            isTopTracksRefreshing = false
         }
-        value = newState
-        isTopTracksRefreshing = false
     }
 
     val singers by produceState(

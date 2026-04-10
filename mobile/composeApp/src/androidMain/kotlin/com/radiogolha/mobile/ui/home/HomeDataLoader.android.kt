@@ -32,7 +32,7 @@ actual fun loadHomeUiState(): HomeUiState? {
     )
 }
 
-fun loadTopTracks(): List<TrackUiModel> {
+actual fun loadTopTracks(): List<TrackUiModel> {
     val payload = RustCoreBridge.getTopTracksJson(requireArchiveDbPath())
     if (payload.trim().startsWith("{")) {
         val error = JSONObject(payload).optString("error")

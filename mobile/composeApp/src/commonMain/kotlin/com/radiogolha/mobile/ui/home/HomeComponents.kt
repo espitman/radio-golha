@@ -387,7 +387,7 @@ fun TopTracksSection(
         }
 
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-            if (isRefreshing) {
+            if (isRefreshing && tracks.isEmpty()) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()

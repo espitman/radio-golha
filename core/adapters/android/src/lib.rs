@@ -154,7 +154,7 @@ fn home_json(db_path: &str) -> Result<String, String> {
 fn top_tracks_json(db_path: &str) -> Result<String, String> {
     let core = RadioGolhaCore::open(db_path).map_err(|error| error.to_string())?;
     let top_tracks = core
-        .random_vocal_track_summaries(10)
+        .random_vocal_track_summaries(5)
         .map_err(|error| error.to_string())?
         .into_iter()
         .map(|item| AndroidTrackItem {

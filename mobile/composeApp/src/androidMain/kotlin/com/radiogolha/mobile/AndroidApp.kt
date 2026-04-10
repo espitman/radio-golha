@@ -32,7 +32,6 @@ import com.radiogolha.mobile.ui.settings.SettingsScreen
 import com.radiogolha.mobile.ui.singers.SingersScreen
 import com.radiogolha.mobile.ui.singers.loadSingersUiState
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -62,35 +61,34 @@ fun AndroidApp() {
             startDestination = AndroidRoute.Home.route,
         ) {
             composable(AndroidRoute.Home.route) {
+                val visibleTrackCount = 5
                 var homeState by remember { mutableStateOf<HomeUiState?>(null) }
                 var isInitialHomeLoading by remember { mutableStateOf(true) }
                 var isRefreshingTopTracks by remember { mutableStateOf(false) }
+                var prefetchedTopTracks by remember { mutableStateOf<List<com.radiogolha.mobile.ui.home.TrackUiModel>>(emptyList()) }
+                var topTracksPrefetchToken by remember { mutableIntStateOf(0) }
 
                 LaunchedEffect(reloadToken) {
                     val loadedState = runCatching {
                         withContext(Dispatchers.Default) { loadHomeUiState() }
                     }.getOrNull()
 
-                    homeState = loadedState
+                    homeState = loadedState?.let { state ->
+                        val currentTracks = state.topTracks.take(visibleTrackCount)
+                        prefetchedTopTracks = state.topTracks.drop(visibleTrackCount).take(visibleTrackCount)
+                        state.copy(topTracks = currentTracks)
+                    }
                     isInitialHomeLoading = false
                 }
 
-                LaunchedEffect(isRefreshingTopTracks) {
-                    if (!isRefreshingTopTracks) return@LaunchedEffect
-
-                    val refreshStartedAt = System.currentTimeMillis()
+                LaunchedEffect(topTracksPrefetchToken) {
+                    if (topTracksPrefetchToken == 0) return@LaunchedEffect
                     val refreshedTracks = runCatching {
                         withContext(Dispatchers.Default) { com.radiogolha.mobile.ui.home.loadTopTracks() }
                     }.getOrNull()
 
-                    val elapsed = System.currentTimeMillis() - refreshStartedAt
-                    val minimumVisibleDuration = 450L
-                    if (elapsed < minimumVisibleDuration) {
-                        delay(minimumVisibleDuration - elapsed)
-                    }
-
                     if (refreshedTracks != null) {
-                        homeState = homeState?.copy(topTracks = refreshedTracks)
+                        prefetchedTopTracks = refreshedTracks.take(visibleTrackCount)
                     }
                     isRefreshingTopTracks = false
                 }
@@ -106,8 +104,11 @@ fun AndroidApp() {
                     onOpenAllMusicians = { navController.navigate(AndroidRoute.Musicians.route) },
                     isRefreshingTopTracks = isRefreshingTopTracks,
                     onRefreshTopTracks = {
-                        if (!isRefreshingTopTracks) {
+                        if (!isRefreshingTopTracks && prefetchedTopTracks.size >= visibleTrackCount) {
+                            homeState = homeState?.copy(topTracks = prefetchedTopTracks.take(visibleTrackCount))
+                            prefetchedTopTracks = emptyList()
                             isRefreshingTopTracks = true
+                            topTracksPrefetchToken += 1
                         }
                     },
                     onBottomNavSelected = { tab ->
