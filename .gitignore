@@ -63,3 +63,7 @@ downloads/
 .gradle/
 **/build/
 local.properties
+mobile/signing/
+*.jks
+*.keystore
+*.p12
