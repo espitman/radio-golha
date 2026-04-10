@@ -46,6 +46,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.radiogolha.mobile.theme.GolhaColors
 import com.radiogolha.mobile.theme.GolhaElevation
 import com.radiogolha.mobile.theme.GolhaRadius
@@ -308,21 +312,62 @@ fun MusiciansSection(
 
 @Composable
 fun TopTracksSection(tracks: List<TrackUiModel>, modifier: Modifier = Modifier) {
+    // Key changes with each shuffle — initial key is random so it's different per app launch
+    var shuffleKey by remember { mutableStateOf(System.currentTimeMillis()) }
+
+    val displayedTracks = remember(tracks, shuffleKey) {
+        tracks.shuffled().take(5)
+    }
+
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large)
     ) {
-        SectionTitle(title = "ترک‌های برتر")
-        
+        // Section title + refresh button
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = GolhaSpacing.ScreenHorizontal),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(
+                text = "ترک‌های برتر",
+                style = MaterialTheme.typography.titleLarge,
+                color = GolhaColors.PrimaryText,
+            )
+            HorizontalDivider(
+                modifier = Modifier.weight(1f),
+                color = GolhaColors.Border.copy(alpha = 0.6f),
+            )
+            // Refresh / shuffle button
+            Surface(
+                modifier = Modifier
+                    .size(30.dp)
+                    .clickable { shuffleKey = System.currentTimeMillis() },
+                shape = CircleShape,
+                color = GolhaColors.BadgeBackground,
+                border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    GolhaLineIcon(
+                        icon = GolhaIcon.Refresh,
+                        modifier = Modifier.size(14.dp),
+                        tint = GolhaColors.SecondaryText,
+                    )
+                }
+            }
+        }
+
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = GolhaSpacing.ScreenHorizontal),
             ) {
-                tracks.forEachIndexed { index, track ->
+                displayedTracks.forEachIndexed { index, track ->
                     TrackRow(track = track)
-                    if (index != tracks.lastIndex) {
+                    if (index != displayedTracks.lastIndex) {
                         HorizontalDivider(
                             modifier = Modifier.padding(vertical = 4.dp),
                             color = GolhaColors.Border.copy(alpha = 0.65f),
@@ -913,11 +958,13 @@ private fun TrackRow(track: TrackUiModel) {
             }
         }
 
-        Text(
-            text = track.duration,
-            style = MaterialTheme.typography.labelMedium,
-            color = GolhaColors.SecondaryText,
-        )
+        if (!track.duration.isNullOrBlank()) {
+            Text(
+                text = track.duration,
+                style = MaterialTheme.typography.labelMedium,
+                color = GolhaColors.SecondaryText,
+            )
+        }
 
         SmallCircularIconButton(
             icon = GolhaIcon.Play,
@@ -1162,6 +1209,29 @@ fun GolhaLineIcon(
                     lineTo(size.width * 0.62f, size.height * 0.68f)
                 }
                 drawPath(path, tint, style = Stroke(width = stroke, cap = StrokeCap.Round))
+            }
+
+            GolhaIcon.Refresh -> {
+                // Circular arrow (refresh)
+                val cx = size.width * 0.50f
+                val cy = size.height * 0.50f
+                val r = size.minDimension * 0.30f
+                drawArc(
+                    color = tint,
+                    startAngle = -220f,
+                    sweepAngle = 280f,
+                    useCenter = false,
+                    topLeft = Offset(cx - r, cy - r),
+                    size = Size(r * 2, r * 2),
+                    style = Stroke(width = stroke, cap = StrokeCap.Round),
+                )
+                // Arrowhead
+                val arrow = Path().apply {
+                    moveTo(cx + r * 0.18f, cy - r * 1.10f)
+                    lineTo(cx + r * 0.58f, cy - r * 0.85f)
+                    lineTo(cx + r * 0.75f, cy - r * 1.28f)
+                }
+                drawPath(arrow, tint, style = Stroke(width = stroke, cap = StrokeCap.Round))
             }
         }
     }

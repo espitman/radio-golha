@@ -129,7 +129,7 @@ fn home_json(db_path: &str) -> Result<String, String> {
             continue;
         };
 
-        if !detail.audio_url.as_deref().unwrap_or("").trim().is_empty() && top_tracks.len() < 5 {
+        if !detail.audio_url.as_deref().unwrap_or("").trim().is_empty() && top_tracks.len() < 20 {
             let artist = detail
                 .singers
                 .first()
@@ -139,7 +139,7 @@ fn home_json(db_path: &str) -> Result<String, String> {
             top_tracks.push(AndroidTrackItem {
                 title: detail.title.clone(),
                 artist,
-                duration: "نامشخص".to_string(),
+                duration: String::new(),
             });
         }
 
@@ -163,7 +163,7 @@ fn home_json(db_path: &str) -> Result<String, String> {
             }
         }
 
-        if musicians.len() >= 8 && top_tracks.len() >= 5 {
+        if musicians.len() >= 8 && top_tracks.len() >= 20 {
             break;
         }
     }

@@ -36,7 +36,7 @@ data class MusicianListItemUiModel(
 data class TrackUiModel(
     val title: String,
     val artist: String,
-    val duration: String,
+    val duration: String? = null,
     val coverUrl: String? = null,
 )
 
@@ -75,4 +75,5 @@ enum class GolhaIcon {
     More,
     Download,
     Back,
+    Refresh,
 }
