@@ -387,22 +387,63 @@ fun TopTracksSection(
         }
 
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = GolhaSpacing.ScreenHorizontal),
-            ) {
-                displayedTracks.forEachIndexed { index, track ->
-                    TrackRow(track = track)
-                    if (index != displayedTracks.lastIndex) {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(vertical = 4.dp),
-                            color = GolhaColors.Border.copy(alpha = 0.65f),
-                        )
+            if (isRefreshing) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = GolhaSpacing.ScreenHorizontal),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    repeat(trackRowCount) { index ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                SkeletonRoundedRect(width = 58.dp, height = 58.dp, radius = 16.dp)
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                                ) {
+                                    SkeletonBlock(widthFraction = 0.72f, height = 14.dp)
+                                    SkeletonBlock(widthFraction = 0.42f, height = 11.dp)
+                                }
+                            }
+
+                            SkeletonBlock(width = 36.dp, height = 11.dp)
+                            SkeletonCircle(size = 36.dp)
+                        }
+
+                        if (index != trackRowCount - 1) {
+                            HorizontalDivider(color = GolhaColors.Border.copy(alpha = 0.65f))
+                        }
                     }
                 }
-                if (displayedTracks.isEmpty()) {
-                    TopTracksEmptyState()
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = GolhaSpacing.ScreenHorizontal),
+                ) {
+                    displayedTracks.forEachIndexed { index, track ->
+                        TrackRow(track = track)
+                        if (index != displayedTracks.lastIndex) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(vertical = 4.dp),
+                                color = GolhaColors.Border.copy(alpha = 0.65f),
+                            )
+                        }
+                    }
+                    if (displayedTracks.isEmpty()) {
+                        TopTracksEmptyState()
+                    }
                 }
             }
         }
