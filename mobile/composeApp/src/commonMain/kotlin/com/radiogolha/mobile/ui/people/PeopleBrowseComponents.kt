@@ -182,7 +182,7 @@ fun PeopleBrowseScreen(
 
                             itemsIndexed(
                                 items = group.items,
-                                key = { _, person -> "${group.label}-${person.name}" },
+                                key = { index, person -> "${group.label}-${person.name}-$index" },
                             ) { index, person ->
                                 PeopleListRow(
                                     item = person,
@@ -578,7 +578,7 @@ private fun AlphabetJumpRail(
         Column(
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             labels.forEach { label ->
                 Text(
@@ -589,7 +589,7 @@ private fun AlphabetJumpRail(
                     text = label,
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 11.sp,
+                        fontSize = 13.sp,
                     ),
                     color = GolhaColors.SecondaryText,
                 )
