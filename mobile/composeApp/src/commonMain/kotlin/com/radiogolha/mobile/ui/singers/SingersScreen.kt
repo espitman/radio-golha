@@ -1,4 +1,4 @@
-ط‍package com.radiogolha.mobile.ui.singers
+package com.radiogolha.mobile.ui.singers
 
 import androidx.compose.runtime.Composable
 import com.radiogolha.mobile.theme.GolhaColors
