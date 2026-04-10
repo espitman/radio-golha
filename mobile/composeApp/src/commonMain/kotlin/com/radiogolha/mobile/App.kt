@@ -43,16 +43,16 @@ fun App() {
         }
     }
 
+    var isTopTracksRefreshing by remember { mutableStateOf(false) }
+
     val homeState by produceState<HomeUiState?>(initialValue = null, key1 = reloadToken) {
-        val lastState = value
-        if (lastState != null) {
-            value = lastState.copy(isRefreshing = true)
-        }
+        isTopTracksRefreshing = true
         val newState = withContext(Dispatchers.Default) {
-            delay(3000) // 3 seconds to be absolutely sure
+            delay(1500)
             runCatching { loadHomeUiState() }.getOrNull()
         }
-        value = newState?.copy(isRefreshing = false)
+        value = newState
+        isTopTracksRefreshing = false
     }
 
     val singers by produceState(
@@ -121,6 +121,7 @@ fun App() {
                             onOpenAllSingers = { navigationStack.push(AppRoute.Singers) },
                             onOpenAllMusicians = { navigationStack.push(AppRoute.Musicians) },
                             onRefreshTopTracks = { reloadToken += 1 },
+                            isRefreshingTopTracks = isTopTracksRefreshing,
                             onBottomNavSelected = {
                                 navigationStack.resetToRoot(it)
                             },

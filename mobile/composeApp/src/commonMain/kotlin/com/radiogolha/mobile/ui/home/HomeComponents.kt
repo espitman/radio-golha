@@ -345,7 +345,6 @@ fun TopTracksSection(
             rotation.snapTo(0f)
         }
     }
-    val refreshRotation = rotation.value
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -381,7 +380,7 @@ fun TopTracksSection(
                     icon = GolhaIcon.Refresh,
                     modifier = Modifier
                         .size(16.dp)
-                        .graphicsLayer { rotationZ = refreshRotation },
+                        .graphicsLayer { rotationZ = rotation.value },
                     tint = GolhaColors.SecondaryText,
                 )
             }
