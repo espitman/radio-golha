@@ -1215,33 +1215,34 @@ fun GolhaLineIcon(
             }
 
             GolhaIcon.Refresh -> {
-                // More premium circular refresh icon
-                val cx = size.width * 0.50f
-                val cy = size.height * 0.50f
-                val r = size.minDimension * 0.28f
-                
-                // Thin stroke for more "luxury" feel
-                val fineStroke = 1.6.dp.toPx()
-                
+                val cx = size.width / 2f
+                val cy = size.height / 2f
+                val r = size.minDimension * 0.30f
+                val sw = 1.6.dp.toPx()
+
+                // Circular loop
                 drawArc(
                     color = tint,
-                    startAngle = -220f,
-                    sweepAngle = 280f,
+                    startAngle = 150f,
+                    sweepAngle = 270f,
                     useCenter = false,
                     topLeft = Offset(cx - r, cy - r),
                     size = Size(r * 2, r * 2),
-                    style = Stroke(width = fineStroke, cap = StrokeCap.Round),
+                    style = Stroke(width = sw, cap = StrokeCap.Round)
                 )
+
+                // Arrowhead at the end of the arc (60 degrees)
+                val angle = 60f * (3.14159f / 180f)
+                val ax = cx + r * kotlin.math.cos(angle)
+                val ay = cy + r * kotlin.math.sin(angle)
                 
-                // Sharp minimalist arrowhead
-                val headSize = r * 0.35f
-                val arrowHeight = r * 1.15f
-                val arrow = Path().apply {
-                    moveTo(cx + r * 0.15f, cy - arrowHeight)
-                    lineTo(cx + r * 0.65f, cy - r * 0.90f)
-                    lineTo(cx + r * 0.55f, cy - r * 1.45f)
+                val hl = r * 0.5f
+                val arrowPath = Path().apply {
+                    moveTo(ax - hl * 0.8f, ay + hl * 0.1f)
+                    lineTo(ax, ay)
+                    lineTo(ax - hl * 0.1f, ay - hl * 0.8f)
                 }
-                drawPath(arrow, tint, style = Stroke(width = fineStroke, cap = StrokeCap.Round, join = StrokeJoin.Round))
+                drawPath(arrowPath, tint, style = Stroke(width = sw, cap = StrokeCap.Round, join = StrokeJoin.Round))
             }
         }
     }
