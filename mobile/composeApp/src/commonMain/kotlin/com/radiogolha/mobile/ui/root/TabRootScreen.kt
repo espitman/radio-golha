@@ -30,7 +30,8 @@ import com.radiogolha.mobile.theme.GolhaRadius
 import com.radiogolha.mobile.theme.GolhaSpacing
 import com.radiogolha.mobile.ui.home.AppTab
 import com.radiogolha.mobile.ui.home.BottomNavItemUiModel
-import com.radiogolha.mobile.ui.home.BottomNavigationBar
+import com.radiogolha.mobile.ui.home.BottomNavigationWithMiniPlayer
+import com.radiogolha.mobile.ui.home.TrackUiModel
 
 @Composable
 fun TabRootScreen(
@@ -38,6 +39,12 @@ fun TabRootScreen(
     subtitle: String,
     bottomNavItems: List<BottomNavItemUiModel>,
     onBottomNavSelected: (AppTab) -> Unit,
+    currentTrack: TrackUiModel? = null,
+    isPlayerPlaying: Boolean = false,
+    isPlayerLoading: Boolean = false,
+    currentPlaybackPositionMs: Long = 0L,
+    currentPlaybackDurationMs: Long = 0L,
+    onTogglePlayerPlayback: () -> Unit = {},
 ) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         Scaffold(
@@ -46,9 +53,15 @@ fun TabRootScreen(
                 .background(GolhaColors.ScreenBackground),
             containerColor = GolhaColors.ScreenBackground,
             bottomBar = {
-                BottomNavigationBar(
+                BottomNavigationWithMiniPlayer(
                     items = bottomNavItems,
                     onItemSelected = onBottomNavSelected,
+                    currentTrack = currentTrack,
+                    isPlaying = isPlayerPlaying,
+                    isLoading = isPlayerLoading,
+                    currentPositionMs = currentPlaybackPositionMs,
+                    durationMs = currentPlaybackDurationMs,
+                    onTogglePlayback = onTogglePlayerPlayback,
                 )
             },
         ) { innerPadding ->

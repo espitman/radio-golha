@@ -75,6 +75,7 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.navigation.compose)
+            implementation(libs.androidx.media3.exoplayer)
             implementation(libs.coil.compose)
         }
         commonMain.dependencies {

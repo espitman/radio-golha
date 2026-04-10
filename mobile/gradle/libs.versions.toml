@@ -6,6 +6,7 @@ android-targetSdk = "35"
 androidx-activity = "1.9.3"
 androidx-lifecycle = "2.8.3"
 androidx-navigation = "2.8.7"
+media3 = "1.5.1"
 coil = "2.7.0"
 compose-multiplatform = "1.7.3"
 kotlin = "2.1.20"
@@ -13,6 +14,7 @@ kotlin = "2.1.20"
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "androidx-navigation" }
+androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coil" }
 
 [plugins]

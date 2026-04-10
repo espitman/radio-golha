@@ -30,6 +30,7 @@ import com.radiogolha.mobile.theme.GolhaSpacing
 import com.radiogolha.mobile.ui.home.AppTab
 import com.radiogolha.mobile.ui.home.BottomNavItemUiModel
 import com.radiogolha.mobile.ui.home.MusicianListItemUiModel
+import com.radiogolha.mobile.ui.home.TrackUiModel
 import com.radiogolha.mobile.ui.people.BrowsePersonRowUiModel
 import com.radiogolha.mobile.ui.people.FeaturedPersonCardUiModel
 import com.radiogolha.mobile.ui.people.PeopleCarouselSection
@@ -54,6 +55,12 @@ fun MusiciansScreen(
     bottomNavItems: List<BottomNavItemUiModel>,
     onBottomNavSelected: (AppTab) -> Unit,
     onBackClick: () -> Unit,
+    currentTrack: TrackUiModel? = null,
+    isPlayerPlaying: Boolean = false,
+    isPlayerLoading: Boolean = false,
+    currentPlaybackPositionMs: Long = 0L,
+    currentPlaybackDurationMs: Long = 0L,
+    onTogglePlayerPlayback: () -> Unit = {},
 ) {
     var searchQuery by remember { mutableStateOf("") }
 
@@ -125,6 +132,12 @@ fun MusiciansScreen(
         bottomNavItems = bottomNavItems,
         onBottomNavSelected = onBottomNavSelected,
         onBackClick = onBackClick,
+        currentTrack = currentTrack,
+        isPlayerPlaying = isPlayerPlaying,
+        isPlayerLoading = isPlayerLoading,
+        currentPlaybackPositionMs = currentPlaybackPositionMs,
+        currentPlaybackDurationMs = currentPlaybackDurationMs,
+        onTogglePlayerPlayback = onTogglePlayerPlayback,
     )
 }
 

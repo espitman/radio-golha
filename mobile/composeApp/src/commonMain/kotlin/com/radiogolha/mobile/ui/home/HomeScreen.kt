@@ -27,6 +27,13 @@ fun HomeScreen(
     onOpenAllMusicians: () -> Unit = {},
     isRefreshingTopTracks: Boolean = false,
     onRefreshTopTracks: () -> Unit = {},
+    currentTrack: TrackUiModel? = null,
+    isPlayerPlaying: Boolean = false,
+    isPlayerLoading: Boolean = false,
+    currentPlaybackPositionMs: Long = 0L,
+    currentPlaybackDurationMs: Long = 0L,
+    onTogglePlayerPlayback: () -> Unit = {},
+    onPlayTrack: (TrackUiModel) -> Unit = {},
     onBottomNavSelected: (AppTab) -> Unit = {},
 ) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
@@ -36,9 +43,15 @@ fun HomeScreen(
                     .fillMaxSize(),
                 containerColor = GolhaColors.ScreenBackground.copy(alpha = 0f),
                 bottomBar = {
-                    BottomNavigationBar(
+                    BottomNavigationWithMiniPlayer(
                         items = bottomNavItems,
                         onItemSelected = onBottomNavSelected,
+                        currentTrack = currentTrack,
+                        isPlaying = isPlayerPlaying,
+                        isLoading = isPlayerLoading,
+                        currentPositionMs = currentPlaybackPositionMs,
+                        durationMs = currentPlaybackDurationMs,
+                        onTogglePlayback = onTogglePlayerPlayback,
                     )
                 },
             ) { innerPadding ->
@@ -81,7 +94,10 @@ fun HomeScreen(
                             TopTracksSection(
                                 tracks = state.topTracks,
                                 isRefreshing = isRefreshingTopTracks,
-                                onRefresh = onRefreshTopTracks
+                                onRefresh = onRefreshTopTracks,
+                                onPlayTrack = onPlayTrack,
+                                currentTrackId = currentTrack?.id,
+                                isPlayerPlaying = isPlayerPlaying,
                             ) 
                         }
                     }

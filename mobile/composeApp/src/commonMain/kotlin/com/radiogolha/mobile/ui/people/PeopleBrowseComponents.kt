@@ -53,9 +53,10 @@ import com.radiogolha.mobile.theme.GolhaSpacing
 import com.radiogolha.mobile.ui.home.AppTab
 import com.radiogolha.mobile.ui.home.ArtistAvatar
 import com.radiogolha.mobile.ui.home.BottomNavItemUiModel
-import com.radiogolha.mobile.ui.home.BottomNavigationBar
+import com.radiogolha.mobile.ui.home.BottomNavigationWithMiniPlayer
 import com.radiogolha.mobile.ui.home.CircularActionButton
 import com.radiogolha.mobile.ui.home.GolhaIcon
+import com.radiogolha.mobile.ui.home.TrackUiModel
 import kotlinx.coroutines.launch
 
 data class FeaturedPersonCardUiModel(
@@ -87,6 +88,12 @@ fun PeopleBrowseScreen(
     bottomNavItems: List<BottomNavItemUiModel>,
     onBottomNavSelected: (AppTab) -> Unit,
     onBackClick: () -> Unit,
+    currentTrack: TrackUiModel? = null,
+    isPlayerPlaying: Boolean = false,
+    isPlayerLoading: Boolean = false,
+    currentPlaybackPositionMs: Long = 0L,
+    currentPlaybackDurationMs: Long = 0L,
+    onTogglePlayerPlayback: () -> Unit = {},
 ) {
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -116,9 +123,15 @@ fun PeopleBrowseScreen(
                     .fillMaxSize(),
                 containerColor = Color.Transparent,
                 bottomBar = {
-                    BottomNavigationBar(
+                    BottomNavigationWithMiniPlayer(
                         items = bottomNavItems,
                         onItemSelected = onBottomNavSelected,
+                        currentTrack = currentTrack,
+                        isPlaying = isPlayerPlaying,
+                        isLoading = isPlayerLoading,
+                        currentPositionMs = currentPlaybackPositionMs,
+                        durationMs = currentPlaybackDurationMs,
+                        onTogglePlayback = onTogglePlayerPlayback,
                     )
                 },
             ) { innerPadding ->

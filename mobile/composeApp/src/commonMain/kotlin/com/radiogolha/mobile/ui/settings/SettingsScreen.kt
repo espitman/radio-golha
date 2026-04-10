@@ -30,10 +30,11 @@ import com.radiogolha.mobile.theme.GolhaRadius
 import com.radiogolha.mobile.theme.GolhaSpacing
 import com.radiogolha.mobile.ui.home.AppTab
 import com.radiogolha.mobile.ui.home.BottomNavItemUiModel
-import com.radiogolha.mobile.ui.home.BottomNavigationBar
+import com.radiogolha.mobile.ui.home.BottomNavigationWithMiniPlayer
 import com.radiogolha.mobile.ui.home.GolhaIcon
 import com.radiogolha.mobile.ui.home.GolhaLineIcon
 import com.radiogolha.mobile.ui.home.SmallPrimaryButton
+import com.radiogolha.mobile.ui.home.TrackUiModel
 
 @Composable
 fun SettingsScreen(
@@ -42,6 +43,12 @@ fun SettingsScreen(
     isDebugDatabaseToolsEnabled: Boolean,
     isImportingDatabase: Boolean,
     onImportDebugDatabase: () -> Unit,
+    currentTrack: TrackUiModel? = null,
+    isPlayerPlaying: Boolean = false,
+    isPlayerLoading: Boolean = false,
+    currentPlaybackPositionMs: Long = 0L,
+    currentPlaybackDurationMs: Long = 0L,
+    onTogglePlayerPlayback: () -> Unit = {},
 ) {
     CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides LayoutDirection.Rtl) {
         GolhaPatternBackground {
@@ -50,9 +57,15 @@ fun SettingsScreen(
                     .fillMaxSize(),
                 containerColor = GolhaColors.ScreenBackground.copy(alpha = 0f),
             bottomBar = {
-                BottomNavigationBar(
+                BottomNavigationWithMiniPlayer(
                     items = bottomNavItems,
                     onItemSelected = onBottomNavSelected,
+                    currentTrack = currentTrack,
+                    isPlaying = isPlayerPlaying,
+                    isLoading = isPlayerLoading,
+                    currentPositionMs = currentPlaybackPositionMs,
+                    durationMs = currentPlaybackDurationMs,
+                    onTogglePlayback = onTogglePlayerPlayback,
                 )
             },
         ) { innerPadding ->

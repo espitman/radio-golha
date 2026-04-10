@@ -45,9 +45,11 @@ pub struct RankedPerformerStat {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct TrackSummary {
+    pub id: i64,
     pub title: String,
     pub artist: String,
     pub duration: Option<String>,
+    pub audio_url: String,
 }
 
 #[derive(Debug, Clone, Serialize)]

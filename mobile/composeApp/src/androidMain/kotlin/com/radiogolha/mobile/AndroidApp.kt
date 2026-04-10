@@ -1,6 +1,7 @@
 package com.radiogolha.mobile
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -9,6 +10,8 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -37,8 +40,18 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun AndroidApp() {
+    val context = LocalContext.current
     val navController = rememberNavController()
     val scope = rememberCoroutineScope()
+    val playerManager = remember(context) { GolhaPlayerManager(context) }
+    DisposableEffect(playerManager) {
+        onDispose { playerManager.release() }
+    }
+    val currentTrack by playerManager.currentTrack.collectAsState()
+    val isPlayerPlaying by playerManager.isPlaying.collectAsState()
+    val isPlayerLoading by playerManager.isLoading.collectAsState()
+    val currentPlaybackPositionMs by playerManager.currentPositionMs.collectAsState()
+    val currentPlaybackDurationMs by playerManager.durationMs.collectAsState()
     var reloadToken by remember { mutableIntStateOf(0) }
     var isImportingDatabase by remember { mutableStateOf(false) }
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -111,6 +124,13 @@ fun AndroidApp() {
                             topTracksPrefetchToken += 1
                         }
                     },
+                    currentTrack = currentTrack,
+                    isPlayerPlaying = isPlayerPlaying,
+                    isPlayerLoading = isPlayerLoading,
+                    currentPlaybackPositionMs = currentPlaybackPositionMs,
+                    currentPlaybackDurationMs = currentPlaybackDurationMs,
+                    onTogglePlayerPlayback = { playerManager.togglePlayback() },
+                    onPlayTrack = { track -> playerManager.play(track) },
                     onBottomNavSelected = { tab ->
                         navController.navigate(tab.toRoute().route) {
                             popUpTo(navController.graph.findStartDestination().id) {
@@ -128,6 +148,12 @@ fun AndroidApp() {
                     title = "جستجو",
                     subtitle = "جستجو و فیلترهای اپ در این تب قرار می‌گیرد.",
                     bottomNavItems = bottomNavItems,
+                    currentTrack = currentTrack,
+                    isPlayerPlaying = isPlayerPlaying,
+                    isPlayerLoading = isPlayerLoading,
+                    currentPlaybackPositionMs = currentPlaybackPositionMs,
+                    currentPlaybackDurationMs = currentPlaybackDurationMs,
+                    onTogglePlayerPlayback = { playerManager.togglePlayback() },
                     onBottomNavSelected = { tab ->
                         navController.navigate(tab.toRoute().route) {
                             popUpTo(navController.graph.findStartDestination().id) {
@@ -145,6 +171,12 @@ fun AndroidApp() {
                     title = "کتابخانه",
                     subtitle = "لیست‌های ذخیره‌شده و بخش‌های شخصی اینجا می‌آیند.",
                     bottomNavItems = bottomNavItems,
+                    currentTrack = currentTrack,
+                    isPlayerPlaying = isPlayerPlaying,
+                    isPlayerLoading = isPlayerLoading,
+                    currentPlaybackPositionMs = currentPlaybackPositionMs,
+                    currentPlaybackDurationMs = currentPlaybackDurationMs,
+                    onTogglePlayerPlayback = { playerManager.togglePlayback() },
                     onBottomNavSelected = { tab ->
                         navController.navigate(tab.toRoute().route) {
                             popUpTo(navController.graph.findStartDestination().id) {
@@ -171,6 +203,12 @@ fun AndroidApp() {
                     },
                     isDebugDatabaseToolsEnabled = isDebugDatabaseToolsEnabled(),
                     isImportingDatabase = isImportingDatabase,
+                    currentTrack = currentTrack,
+                    isPlayerPlaying = isPlayerPlaying,
+                    isPlayerLoading = isPlayerLoading,
+                    currentPlaybackPositionMs = currentPlaybackPositionMs,
+                    currentPlaybackDurationMs = currentPlaybackDurationMs,
+                    onTogglePlayerPlayback = { playerManager.togglePlayback() },
                     onImportDebugDatabase = {
                         if (!isImportingDatabase) {
                             scope.launch {
@@ -203,6 +241,12 @@ fun AndroidApp() {
                 SingersScreen(
                     singers = singers,
                     bottomNavItems = bottomNavItems,
+                    currentTrack = currentTrack,
+                    isPlayerPlaying = isPlayerPlaying,
+                    isPlayerLoading = isPlayerLoading,
+                    currentPlaybackPositionMs = currentPlaybackPositionMs,
+                    currentPlaybackDurationMs = currentPlaybackDurationMs,
+                    onTogglePlayerPlayback = { playerManager.togglePlayback() },
                     onBottomNavSelected = { tab ->
                         navController.navigate(tab.toRoute().route) {
                             popUpTo(navController.graph.findStartDestination().id) {
@@ -225,6 +269,12 @@ fun AndroidApp() {
                 MusiciansScreen(
                     musicians = musicians,
                     bottomNavItems = bottomNavItems,
+                    currentTrack = currentTrack,
+                    isPlayerPlaying = isPlayerPlaying,
+                    isPlayerLoading = isPlayerLoading,
+                    currentPlaybackPositionMs = currentPlaybackPositionMs,
+                    currentPlaybackDurationMs = currentPlaybackDurationMs,
+                    onTogglePlayerPlayback = { playerManager.togglePlayback() },
                     onBottomNavSelected = { tab ->
                         navController.navigate(tab.toRoute().route) {
                             popUpTo(navController.graph.findStartDestination().id) {

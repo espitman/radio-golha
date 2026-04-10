@@ -55,9 +55,11 @@ struct AndroidMusicianListItem {
 
 #[derive(Serialize)]
 struct AndroidTrackItem {
+    id: i64,
     title: String,
     artist: String,
     duration: String,
+    audio_url: String,
 }
 
 fn categories_json(db_path: &str) -> Result<String, String> {
@@ -120,9 +122,11 @@ fn home_json(db_path: &str) -> Result<String, String> {
         .map_err(|error| error.to_string())?
         .into_iter()
         .map(|item| AndroidTrackItem {
+            id: item.id,
             title: item.title,
             artist: item.artist,
             duration: item.duration.unwrap_or_else(|| "نامشخص".to_string()),
+            audio_url: item.audio_url,
         })
         .collect();
 
@@ -158,9 +162,11 @@ fn top_tracks_json(db_path: &str) -> Result<String, String> {
         .map_err(|error| error.to_string())?
         .into_iter()
         .map(|item| AndroidTrackItem {
+            id: item.id,
             title: item.title,
             artist: item.artist,
             duration: item.duration.unwrap_or_else(|| "نامشخص".to_string()),
+            audio_url: item.audio_url,
         })
         .collect::<Vec<_>>();
 

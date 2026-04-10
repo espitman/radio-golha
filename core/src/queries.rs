@@ -416,6 +416,7 @@ impl RadioGolhaCore {
         let mut stmt = self.connection().prepare(
             "
             SELECT
+              p.id,
               p.title,
               COALESCE(
                 (
@@ -431,7 +432,8 @@ impl RadioGolhaCore {
                 ),
                 'نامشخص'
               ) AS artist_names,
-              (SELECT MAX(end_time) FROM program_timeline WHERE program_id = p.id) AS duration
+              (SELECT MAX(end_time) FROM program_timeline WHERE program_id = p.id) AS duration,
+              p.audio_url
             FROM program p
             WHERE p.audio_url IS NOT NULL AND TRIM(p.audio_url) <> ''
               AND EXISTS (SELECT 1 FROM program_singers ps WHERE ps.program_id = p.id)
@@ -442,9 +444,11 @@ impl RadioGolhaCore {
 
         let rows = stmt.query_map([limit as i64], |row| {
             Ok(TrackSummary {
-                title: row.get(0)?,
-                artist: row.get(1)?,
-                duration: row.get(2)?,
+                id: row.get(0)?,
+                title: row.get(1)?,
+                artist: row.get(2)?,
+                duration: row.get(3)?,
+                audio_url: row.get(4)?,
             })
         })?;
 

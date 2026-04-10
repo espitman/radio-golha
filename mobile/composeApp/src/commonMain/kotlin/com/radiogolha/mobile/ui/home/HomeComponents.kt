@@ -327,6 +327,9 @@ fun TopTracksSection(
     tracks: List<TrackUiModel>,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
+    onPlayTrack: (TrackUiModel) -> Unit,
+    currentTrackId: Long? = null,
+    isPlayerPlaying: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val trackRowCount = 5
@@ -430,10 +433,15 @@ fun TopTracksSection(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = GolhaSpacing.ScreenHorizontal),
+                    .padding(horizontal = GolhaSpacing.ScreenHorizontal),
                 ) {
                     displayedTracks.forEachIndexed { index, track ->
-                        TrackRow(track = track)
+                        TrackRow(
+                            track = track,
+                            isActive = track.id == currentTrackId,
+                            isPlaying = track.id == currentTrackId && isPlayerPlaying,
+                            onPlayClick = { onPlayTrack(track) },
+                        )
                         if (index != displayedTracks.lastIndex) {
                             HorizontalDivider(
                                 modifier = Modifier.padding(vertical = 4.dp),
@@ -465,6 +473,148 @@ private fun TopTracksEmptyState() {
             textAlign = TextAlign.Center,
         )
     }
+}
+
+@Composable
+fun BottomNavigationWithMiniPlayer(
+    items: List<BottomNavItemUiModel>,
+    onItemSelected: (AppTab) -> Unit,
+    currentTrack: TrackUiModel?,
+    isPlaying: Boolean,
+    isLoading: Boolean,
+    currentPositionMs: Long,
+    durationMs: Long,
+    onTogglePlayback: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        MiniPlayerBar(
+            currentTrack = currentTrack,
+            isPlaying = isPlaying,
+            isLoading = isLoading,
+            currentPositionMs = currentPositionMs,
+            durationMs = durationMs,
+            onTogglePlayback = onTogglePlayback,
+        )
+        BottomNavigationBar(
+            items = items,
+            onItemSelected = onItemSelected,
+        )
+    }
+}
+
+@Composable
+fun MiniPlayerBar(
+    currentTrack: TrackUiModel?,
+    isPlaying: Boolean,
+    isLoading: Boolean,
+    currentPositionMs: Long,
+    durationMs: Long,
+    onTogglePlayback: () -> Unit,
+) {
+    Surface(
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
+        color = GolhaColors.Surface.copy(alpha = 0.98f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.82f)),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = GolhaSpacing.ScreenHorizontal, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            val playbackProgress = remember(currentTrack?.id, currentPositionMs, durationMs) {
+                if (durationMs > 0L) {
+                    (currentPositionMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
+                } else {
+                    0f
+                }
+            }
+            Box(
+                modifier = Modifier
+                    .size(46.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator(
+                    progress = { playbackProgress },
+                    modifier = Modifier.matchParentSize(),
+                    color = GolhaColors.PrimaryText,
+                    trackColor = GolhaColors.Border.copy(alpha = 0.55f),
+                    strokeWidth = 2.6.dp,
+                )
+
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .background(GolhaColors.BadgeBackground)
+                        .border(1.dp, GolhaColors.Border, CircleShape)
+                        .clickable(enabled = currentTrack?.audioUrl != null) { onTogglePlayback() },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            color = GolhaColors.PrimaryText,
+                            strokeWidth = 2.dp,
+                        )
+                    } else {
+                        GolhaLineIcon(
+                            icon = if (isPlaying) GolhaIcon.Pause else GolhaIcon.Play,
+                            modifier = Modifier.size(18.dp),
+                            tint = if (currentTrack?.audioUrl != null) GolhaColors.PrimaryText else GolhaColors.SecondaryText.copy(alpha = 0.55f),
+                        )
+                    }
+                }
+            }
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(
+                    text = currentTrack?.title ?: "چیزی در حال پخش نیست",
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                    color = GolhaColors.PrimaryText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = currentTrack?.artist ?: "برای شروع، یکی از ترک‌های برتر را پخش کن",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = GolhaColors.SecondaryText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+
+            val formattedPlaybackTime = remember(currentTrack?.id, currentPositionMs, durationMs) {
+                formatMiniPlayerTime(currentPositionMs, durationMs)
+            }
+            if (formattedPlaybackTime != null) {
+                Text(
+                    text = formattedPlaybackTime,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = GolhaColors.SecondaryText,
+                )
+            }
+        }
+    }
+}
+
+private fun formatMiniPlayerTime(currentPositionMs: Long, durationMs: Long): String? {
+    if (durationMs <= 0L) return null
+    return "${formatPlaybackTime(durationMs)} / ${formatPlaybackTime(currentPositionMs)}"
+}
+
+private fun formatPlaybackTime(timeMs: Long): String {
+    val totalSeconds = (timeMs / 1000L).coerceAtLeast(0L)
+    val minutes = totalSeconds / 60L
+    val seconds = totalSeconds % 60L
+    return "%02d:%02d".format(minutes, seconds)
 }
 
 @Composable
@@ -1013,11 +1163,18 @@ private fun DastgahChip(name: String) {
 }
 
 @Composable
-private fun TrackRow(track: TrackUiModel) {
+private fun TrackRow(
+    track: TrackUiModel,
+    isActive: Boolean,
+    isPlaying: Boolean,
+    onPlayClick: () -> Unit,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .clip(RoundedCornerShape(16.dp))
+            .background(if (isActive) GolhaColors.BadgeBackground.copy(alpha = 0.42f) else Color.Transparent)
+            .padding(horizontal = 8.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -1057,11 +1214,12 @@ private fun TrackRow(track: TrackUiModel) {
         }
 
         SmallCircularIconButton(
-            icon = GolhaIcon.Play,
+            icon = if (isActive && isPlaying) GolhaIcon.Pause else GolhaIcon.Play,
             iconTint = GolhaColors.PrimaryText,
             iconSize = 18.dp,
             background = GolhaColors.BadgeBackground,
             borderColor = GolhaColors.Border,
+            onClick = onPlayClick,
         )
     }
 }
@@ -1091,9 +1249,12 @@ private fun SmallCircularIconButton(
     background: Color,
     borderColor: Color,
     iconSize: androidx.compose.ui.unit.Dp = 14.dp,
+    onClick: () -> Unit = {},
 ) {
     Surface(
-        modifier = Modifier.size(36.dp),
+        modifier = Modifier
+            .size(36.dp)
+            .clickable { onClick() },
         shape = CircleShape,
         color = background,
         border = androidx.compose.foundation.BorderStroke(1.dp, borderColor),
@@ -1257,6 +1418,21 @@ fun GolhaLineIcon(
                     close()
                 }
                 drawPath(triangle, tint)
+            }
+
+            GolhaIcon.Pause -> {
+                drawRoundRect(
+                    color = tint,
+                    topLeft = Offset(size.width * 0.26f, size.height * 0.22f),
+                    size = Size(size.width * 0.16f, size.height * 0.56f),
+                    cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx()),
+                )
+                drawRoundRect(
+                    color = tint,
+                    topLeft = Offset(size.width * 0.58f, size.height * 0.22f),
+                    size = Size(size.width * 0.16f, size.height * 0.56f),
+                    cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx()),
+                )
             }
 
             GolhaIcon.More -> {

@@ -107,9 +107,11 @@ internal fun JSONArray.toTrackModels(): List<TrackUiModel> = buildList {
         val item = getJSONObject(index)
         add(
             TrackUiModel(
+                id = item.getLong("id"),
                 title = item.getString("title"),
                 artist = item.getString("artist"),
                 duration = item.getString("duration"),
+                audioUrl = item.optNullableString("audio_url"),
             )
         )
     }

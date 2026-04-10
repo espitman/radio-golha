@@ -33,9 +33,9 @@ internal val sampleMusicians = listOf(
 )
 
 internal val sampleTracks = listOf(
-    TrackUiModel(title = "بهار دلنشین", artist = "الهه", duration = "3:24"),
-    TrackUiModel(title = "تا بهار دلنشین", artist = "بنان", duration = "2:56"),
-    TrackUiModel(title = "خزان جدایی", artist = "مرضیه", duration = "4:12"),
+    TrackUiModel(id = 1, title = "بهار دلنشین", artist = "الهه", duration = "3:24"),
+    TrackUiModel(id = 2, title = "تا بهار دلنشین", artist = "بنان", duration = "2:56"),
+    TrackUiModel(id = 3, title = "خزان جدایی", artist = "مرضیه", duration = "4:12"),
 )
 
 internal val sampleBottomNav = listOf(
