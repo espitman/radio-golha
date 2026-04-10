@@ -59,7 +59,7 @@ fun App() {
             
             // 3. Get 5 more and replace stored ones (refill pool)
             val newReserve = withContext(Dispatchers.Default) {
-                delay(100) 
+                delay(400) 
                 runCatching { loadTopTracks() }.getOrNull()
             }
             if (newReserve != null) {

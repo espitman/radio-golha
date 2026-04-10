@@ -23,6 +23,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -335,12 +337,10 @@ fun TopTracksSection(
     LaunchedEffect(isRefreshing) {
         if (isRefreshing) {
             rotation.animateTo(
-                targetValue = rotation.value + 360f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(1000, easing = LinearEasing),
-                    repeatMode = RepeatMode.Restart
-                )
+                targetValue = 360f,
+                animationSpec = tween(350, easing = FastOutSlowInEasing)
             )
+            rotation.snapTo(0f)
         } else {
             rotation.snapTo(0f)
         }
