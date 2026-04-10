@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.border
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -529,17 +530,33 @@ private fun AlphabetGroupHeader(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = 4.dp, bottom = 0.dp),
-        contentAlignment = Alignment.CenterStart, // Right in RTL context
+            .padding(top = 10.dp, bottom = 4.dp),
+        contentAlignment = Alignment.CenterStart, // Right in RTL
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.W900,
-                fontSize = 18.sp
-            ),
-            color = GolhaColors.PrimaryText,
-        )
+        Box(
+            modifier = Modifier
+                .size(34.dp)
+                .background(
+                    color = GolhaColors.BadgeBackground,
+                    shape = CircleShape
+                )
+                .border(
+                    width = 1.dp,
+                    color = GolhaColors.Border,
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.W900,
+                    fontSize = 16.sp,
+                    textAlign = TextAlign.Center
+                ),
+                color = GolhaColors.SecondaryText,
+            )
+        }
     }
 }
 
