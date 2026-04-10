@@ -846,13 +846,18 @@ internal fun AvatarPlaceholder(
     Box(
         modifier = modifier
             .clip(CircleShape)
-            .background(GolhaColors.Border.copy(alpha = 0.15f)),
+            .background(GolhaColors.SoftSand.copy(alpha = 0.98f))
+            .border(
+                width = 1.5.dp,
+                color = GolhaColors.PrimaryAccent.copy(alpha = 0.72f),
+                shape = CircleShape,
+            ),
         contentAlignment = Alignment.Center,
     ) {
         GolhaLineIcon(
             icon = GolhaIcon.Profile,
-            modifier = Modifier.fillMaxSize(0.42f),
-            tint = GolhaColors.PrimaryText.copy(alpha = 0.35f),
+            modifier = Modifier.fillMaxSize(0.5f),
+            tint = GolhaColors.PrimaryText.copy(alpha = 0.82f),
         )
     }
 }
@@ -994,7 +999,7 @@ fun GolhaLineIcon(
     tint: Color,
 ) {
     Canvas(modifier = modifier) {
-        val stroke = 1.9.dp.toPx()
+        val stroke = 2.4.dp.toPx()
         when (icon) {
             GolhaIcon.Favorites -> {
                 val heart = Path().apply {

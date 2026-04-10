@@ -39,14 +39,14 @@ actual fun ArtistAvatar(
     Surface(
         modifier = modifier,
         shape = CircleShape,
-        color = Color.White,
+        color = GolhaColors.Surface,
         shadowElevation = 6.dp,
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color.Black.copy(alpha = 0.08f))
+        border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.95f))
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(3.dp) // Maintain the thick white frame
+                .padding(3.dp)
                 .clip(CircleShape),
             contentAlignment = Alignment.Center,
         ) {
