@@ -80,7 +80,7 @@ fun HomeScreen(
                         item { 
                             TopTracksSection(
                                 tracks = state.topTracks,
-                                isRefreshing = isRefreshingTopTracks,
+                                isRefreshing = state.isRefreshing,
                                 onRefresh = onRefreshTopTracks
                             ) 
                         }

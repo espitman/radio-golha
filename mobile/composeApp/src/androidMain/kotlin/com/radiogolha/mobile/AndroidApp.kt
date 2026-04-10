@@ -32,6 +32,7 @@ import com.radiogolha.mobile.ui.settings.SettingsScreen
 import com.radiogolha.mobile.ui.singers.SingersScreen
 import com.radiogolha.mobile.ui.singers.loadSingersUiState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -77,9 +78,16 @@ fun AndroidApp() {
                 LaunchedEffect(isRefreshingTopTracks) {
                     if (!isRefreshingTopTracks) return@LaunchedEffect
 
+                    val refreshStartedAt = System.currentTimeMillis()
                     val refreshedTracks = runCatching {
                         withContext(Dispatchers.Default) { com.radiogolha.mobile.ui.home.loadTopTracks() }
                     }.getOrNull()
+
+                    val elapsed = System.currentTimeMillis() - refreshStartedAt
+                    val minimumVisibleDuration = 450L
+                    if (elapsed < minimumVisibleDuration) {
+                        delay(minimumVisibleDuration - elapsed)
+                    }
 
                     if (refreshedTracks != null) {
                         homeState = homeState?.copy(topTracks = refreshedTracks)

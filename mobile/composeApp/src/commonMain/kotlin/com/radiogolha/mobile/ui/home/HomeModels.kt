@@ -61,6 +61,7 @@ data class HomeUiState(
     val musicians: List<MusicianUiModel>,
     val topTracks: List<TrackUiModel>,
     val bottomNavItems: List<BottomNavItemUiModel>,
+    val isRefreshing: Boolean = false,
     val isDatabaseSyncing: Boolean = false,
 )
 

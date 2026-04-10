@@ -22,16 +22,19 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.animation.core.Animatable
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -47,6 +50,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -318,9 +327,25 @@ fun TopTracksSection(
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val trackRowCount = 5
     val displayedTracks = remember(tracks) {
-        tracks.take(5)
+        tracks.take(trackRowCount)
     }
+    val rotation = remember { Animatable(0f) }
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
+            rotation.animateTo(
+                targetValue = rotation.value + 360f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(1000, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart
+                )
+            )
+        } else {
+            rotation.snapTo(0f)
+        }
+    }
+    val refreshRotation = rotation.value
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -343,7 +368,6 @@ fun TopTracksSection(
                 modifier = Modifier.weight(1f),
                 color = GolhaColors.Border.copy(alpha = 0.6f),
             )
-            // Refresh button
             Box(
                 modifier = Modifier
                     .size(32.dp)
@@ -353,80 +377,53 @@ fun TopTracksSection(
                     .clickable(enabled = !isRefreshing) { onRefresh() },
                 contentAlignment = Alignment.Center
             ) {
-                if (isRefreshing) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        color = GolhaColors.SecondaryText,
-                        strokeWidth = 1.8.dp,
-                    )
-                } else {
-                    GolhaLineIcon(
-                        icon = GolhaIcon.Refresh,
-                        modifier = Modifier.size(16.dp),
-                        tint = GolhaColors.SecondaryText,
-                    )
-                }
+                GolhaLineIcon(
+                    icon = GolhaIcon.Refresh,
+                    modifier = Modifier
+                        .size(16.dp)
+                        .graphicsLayer { rotationZ = refreshRotation },
+                    tint = GolhaColors.SecondaryText,
+                )
             }
         }
 
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-            if (isRefreshing) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = GolhaSpacing.ScreenHorizontal),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    repeat(5) { index ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            Row(
-                                modifier = Modifier.weight(1f),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                SkeletonRoundedRect(width = 58.dp, height = 58.dp, radius = 16.dp)
-                                Column(
-                                    modifier = Modifier.weight(1f),
-                                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                                ) {
-                                    SkeletonBlock(widthFraction = 0.72f, height = 14.dp)
-                                    SkeletonBlock(widthFraction = 0.42f, height = 11.dp)
-                                }
-                            }
-
-                            SkeletonBlock(width = 36.dp, height = 11.dp)
-                            SkeletonCircle(size = 36.dp)
-                        }
-
-                        if (index != 4) {
-                            HorizontalDivider(color = GolhaColors.Border.copy(alpha = 0.65f))
-                        }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = GolhaSpacing.ScreenHorizontal),
+            ) {
+                displayedTracks.forEachIndexed { index, track ->
+                    TrackRow(track = track)
+                    if (index != displayedTracks.lastIndex) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 4.dp),
+                            color = GolhaColors.Border.copy(alpha = 0.65f),
+                        )
                     }
                 }
-            } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = GolhaSpacing.ScreenHorizontal),
-                ) {
-                    displayedTracks.forEachIndexed { index, track ->
-                        TrackRow(track = track)
-                        if (index != displayedTracks.lastIndex) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 4.dp),
-                                color = GolhaColors.Border.copy(alpha = 0.65f),
-                            )
-                        }
-                    }
+                if (displayedTracks.isEmpty()) {
+                    TopTracksEmptyState()
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun TopTracksEmptyState() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 18.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = "ترکی برای نمایش پیدا نشد",
+            style = MaterialTheme.typography.bodyMedium,
+            color = GolhaColors.SecondaryText,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 
@@ -597,6 +594,7 @@ fun MusiciansSectionSkeleton() {
 
 @Composable
 fun TopTracksSectionSkeleton() {
+    val skeletonCount = 5
     Column(verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large)) {
         SectionTitle(title = "ترک‌های برتر")
         Column(
@@ -605,7 +603,7 @@ fun TopTracksSectionSkeleton() {
                 .padding(horizontal = GolhaSpacing.ScreenHorizontal),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            repeat(3) { index ->
+            repeat(skeletonCount) { index ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -632,7 +630,7 @@ fun TopTracksSectionSkeleton() {
                     SkeletonCircle(size = 36.dp)
                 }
 
-                if (index != 2) {
+                if (index != skeletonCount - 1) {
                     HorizontalDivider(color = GolhaColors.Border.copy(alpha = 0.65f))
                 }
             }

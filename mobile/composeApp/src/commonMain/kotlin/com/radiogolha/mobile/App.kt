@@ -24,6 +24,7 @@ import com.radiogolha.mobile.ui.settings.SettingsScreen
 import com.radiogolha.mobile.ui.singers.SingersScreen
 import com.radiogolha.mobile.ui.singers.loadSingersUiState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -43,9 +44,15 @@ fun App() {
     }
 
     val homeState by produceState<HomeUiState?>(initialValue = null, key1 = reloadToken) {
-        value = withContext(Dispatchers.Default) {
+        val lastState = value
+        if (lastState != null) {
+            value = lastState.copy(isRefreshing = true)
+        }
+        val newState = withContext(Dispatchers.Default) {
+            delay(3000) // 3 seconds to be absolutely sure
             runCatching { loadHomeUiState() }.getOrNull()
         }
+        value = newState?.copy(isRefreshing = false)
     }
 
     val singers by produceState(
