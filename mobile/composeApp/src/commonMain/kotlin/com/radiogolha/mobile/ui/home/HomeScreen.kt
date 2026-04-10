@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -39,9 +40,11 @@ fun HomeScreen(
             },
         ) { innerPadding ->
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding(),
                 contentPadding = PaddingValues(
-                    top = 18.dp,
+                    top = GolhaSpacing.StatusBarTopGap,
                     bottom = innerPadding.calculateBottomPadding() + 18.dp,
                 ),
                 verticalArrangement = Arrangement.spacedBy(GolhaSpacing.SectionGap),

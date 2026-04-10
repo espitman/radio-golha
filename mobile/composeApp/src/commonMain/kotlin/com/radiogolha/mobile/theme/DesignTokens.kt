@@ -25,6 +25,7 @@ object GolhaColors {
 
 object GolhaSpacing {
     val ScreenHorizontal = 16.dp
+    val StatusBarTopGap = 14.dp
     val SectionGap = 24.dp
     val CardGap = 12.dp
     val Small = 8.dp

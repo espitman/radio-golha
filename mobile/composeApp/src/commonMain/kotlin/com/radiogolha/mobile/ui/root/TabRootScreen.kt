@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -52,11 +53,13 @@ fun TabRootScreen(
             },
         ) { innerPadding ->
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding(),
                 contentPadding = PaddingValues(
                     start = GolhaSpacing.ScreenHorizontal,
                     end = GolhaSpacing.ScreenHorizontal,
-                    top = 22.dp,
+                    top = GolhaSpacing.StatusBarTopGap,
                     bottom = innerPadding.calculateBottomPadding() + 22.dp,
                 ),
                 verticalArrangement = Arrangement.spacedBy(18.dp),
