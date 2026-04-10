@@ -381,6 +381,32 @@ impl RadioGolhaCore {
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 
+    pub fn random_vocal_tracks(&self, limit: usize) -> CoreResult<Vec<ProgramListItem>> {
+        let mut stmt = self.connection().prepare(
+            "
+            SELECT p.id, p.title, c.title_fa, p.no, p.sub_no
+            FROM program p
+            JOIN category c ON c.id = p.category_id
+            WHERE p.audio_url IS NOT NULL AND TRIM(p.audio_url) <> ''
+              AND EXISTS (SELECT 1 FROM program_singers ps WHERE ps.program_id = p.id)
+            ORDER BY RANDOM()
+            LIMIT ?1
+            ",
+        )?;
+
+        let rows = stmt.query_map([limit as i64], |row| {
+            Ok(ProgramListItem {
+                id: row.get(0)?,
+                title: row.get(1)?,
+                category_name: row.get(2)?,
+                no: row.get(3)?,
+                sub_no: row.get(4)?,
+            })
+        })?;
+
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
     pub fn program_categories(&self) -> CoreResult<Vec<CategoryOption>> {
         let mut stmt = self
             .connection()

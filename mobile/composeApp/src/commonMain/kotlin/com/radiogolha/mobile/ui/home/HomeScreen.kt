@@ -25,6 +25,7 @@ fun HomeScreen(
     bottomNavItems: List<BottomNavItemUiModel>,
     onOpenAllSingers: () -> Unit = {},
     onOpenAllMusicians: () -> Unit = {},
+    onRefreshTopTracks: () -> Unit = {},
     onBottomNavSelected: (AppTab) -> Unit = {},
 ) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
@@ -75,7 +76,12 @@ fun HomeScreen(
                                 onSeeAllClick = onOpenAllMusicians,
                             )
                         }
-                        item { TopTracksSection(tracks = state.topTracks) }
+                        item { 
+                            TopTracksSection(
+                                tracks = state.topTracks,
+                                onRefresh = onRefreshTopTracks
+                            ) 
+                        }
                     }
                 }
             }

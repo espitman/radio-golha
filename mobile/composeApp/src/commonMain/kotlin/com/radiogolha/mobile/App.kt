@@ -111,6 +111,7 @@ fun App() {
                             bottomNavItems = bottomNavItems,
                             onOpenAllSingers = { navigationStack.push(AppRoute.Singers) },
                             onOpenAllMusicians = { navigationStack.push(AppRoute.Musicians) },
+                            onRefreshTopTracks = { reloadToken += 1 },
                             onBottomNavSelected = {
                                 navigationStack.resetToRoot(it)
                             },

@@ -121,61 +121,53 @@ fn home_json(db_path: &str) -> Result<String, String> {
     let mut musicians = Vec::new();
     let mut top_tracks = Vec::new();
 
-    // Use a larger pool of programs to find tracks with singers
-    let programs_pool = core
-        .list_programs_filtered(
-            "",
-            1,
-            None,
-            None,
-            ProgramSortField::Id,
-            SortDirection::Desc,
-            200, // Search Pool
-        )
+    // 1. Fetch 10 Truly Random Vocal Tracks
+    let random_programs = core
+        .random_vocal_tracks(10)
         .map_err(|error| error.to_string())?;
 
-    for program in programs_pool {
-        let Some(detail) = core
-            .get_program_detail(program.id)
-            .map_err(|error| error.to_string())?
-        else {
-            continue;
-        };
-
-        if !detail.audio_url.as_deref().unwrap_or("").trim().is_empty() 
-           && !detail.singers.is_empty() 
-           && top_tracks.len() < 60 {
-            
+    for rp in random_programs {
+        if let Some(detail) = core.get_program_detail(rp.id).map_err(|e| e.to_string())? {
             top_tracks.push(AndroidTrackItem {
                 title: detail.title.clone(),
                 artist: detail.singers.join(" و "),
                 duration: "05:42".to_string(),
             });
         }
+    }
 
-        if musicians.len() < 8 {
-            for performer in detail.performers {
-                let key = performer.name.trim().to_string();
-                if key.is_empty() || !seen_musicians.insert(key.clone()) {
-                    continue;
-                }
+    // 2. Fetch Featured Musicians from recent programs
+    // 2. Fetch Featured Musicians from recent programs
+    let programs_pool = core
+        .list_programs_filtered(
+            "", 1, None, None, ProgramSortField::Id, SortDirection::Desc, 100
+        )
+        .map_err(|error| error.to_string())?;
 
-                musicians.push(AndroidMusicianItem {
-                    name: key,
-                    instrument: performer
-                        .instrument
-                        .filter(|value| !value.trim().is_empty())
-                        .unwrap_or_else(|| "نوازنده".to_string()),
-                    avatar: performer.avatar,
-                });
+    for program in programs_pool {
+        let Some(detail) = core.get_program_detail(program.id).map_err(|e| e.to_string())? else { continue };
 
-                if musicians.len() >= 8 {
-                    break;
-                }
+        for performer in detail.performers {
+            let key = performer.name.trim().to_string();
+            if key.is_empty() || !seen_musicians.insert(key.clone()) {
+                continue;
+            }
+
+            musicians.push(AndroidMusicianItem {
+                name: key,
+                instrument: performer
+                    .instrument
+                    .filter(|value| !value.trim().is_empty())
+                    .unwrap_or_else(|| "نوازنده".to_string()),
+                avatar: performer.avatar,
+            });
+
+            if musicians.len() >= 8 {
+                break;
             }
         }
 
-        if musicians.len() >= 8 && top_tracks.len() >= 30 {
+        if musicians.len() >= 8 {
             break;
         }
     }

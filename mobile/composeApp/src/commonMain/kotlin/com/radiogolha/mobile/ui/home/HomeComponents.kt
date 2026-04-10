@@ -312,12 +312,13 @@ fun MusiciansSection(
 }
 
 @Composable
-fun TopTracksSection(tracks: List<TrackUiModel>, modifier: Modifier = Modifier) {
-    // Key changes with each shuffle — initial key is random so it's different per app launch
-    var shuffleKey by remember { mutableStateOf(System.currentTimeMillis()) }
-
-    val displayedTracks = remember(tracks, shuffleKey) {
-        tracks.shuffled().take(10)
+fun TopTracksSection(
+    tracks: List<TrackUiModel>,
+    onRefresh: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val displayedTracks = remember(tracks) {
+        tracks.take(10)
     }
 
     Column(
@@ -345,7 +346,7 @@ fun TopTracksSection(tracks: List<TrackUiModel>, modifier: Modifier = Modifier) 
             Surface(
                 modifier = Modifier
                     .size(30.dp)
-                    .clickable { shuffleKey = System.currentTimeMillis() },
+                    .clickable { onRefresh() },
                 shape = CircleShape,
                 color = GolhaColors.BadgeBackground,
                 border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border),
