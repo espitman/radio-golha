@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.radiogolha.mobile.theme.GolhaColors
 import com.radiogolha.mobile.theme.GolhaElevation
+import com.radiogolha.mobile.theme.GolhaPatternBackground
 import com.radiogolha.mobile.theme.GolhaRadius
 import com.radiogolha.mobile.theme.GolhaSpacing
 import com.radiogolha.mobile.ui.home.AppTab
@@ -43,11 +44,11 @@ fun SettingsScreen(
     onImportDebugDatabase: () -> Unit,
 ) {
     CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides LayoutDirection.Rtl) {
-        Scaffold(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(GolhaColors.ScreenBackground),
-            containerColor = GolhaColors.ScreenBackground,
+        GolhaPatternBackground {
+            Scaffold(
+                modifier = Modifier
+                    .fillMaxSize(),
+                containerColor = GolhaColors.ScreenBackground.copy(alpha = 0f),
             bottomBar = {
                 BottomNavigationBar(
                     items = bottomNavItems,
@@ -94,6 +95,7 @@ fun SettingsScreen(
             }
         }
     }
+}
 }
 
 @Composable

@@ -38,6 +38,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -46,6 +47,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.radiogolha.mobile.theme.GolhaColors
+import com.radiogolha.mobile.theme.GolhaPatternBackground
 import com.radiogolha.mobile.theme.GolhaRadius
 import com.radiogolha.mobile.theme.GolhaSpacing
 import com.radiogolha.mobile.ui.home.AppTab
@@ -108,18 +110,18 @@ fun PeopleBrowseScreen(
     }
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-        Scaffold(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(GolhaColors.ScreenBackground),
-            containerColor = GolhaColors.ScreenBackground,
-            bottomBar = {
-                BottomNavigationBar(
-                    items = bottomNavItems,
-                    onItemSelected = onBottomNavSelected,
-                )
-            },
-        ) { innerPadding ->
+        GolhaPatternBackground {
+            Scaffold(
+                modifier = Modifier
+                    .fillMaxSize(),
+                containerColor = Color.Transparent,
+                bottomBar = {
+                    BottomNavigationBar(
+                        items = bottomNavItems,
+                        onItemSelected = onBottomNavSelected,
+                    )
+                },
+            ) { innerPadding ->
             Box(modifier = Modifier.fillMaxSize()) {
                 LazyColumn(
                     state = listState,
@@ -227,6 +229,7 @@ fun PeopleBrowseScreen(
             }
         }
     }
+}
 }
 
 @Composable

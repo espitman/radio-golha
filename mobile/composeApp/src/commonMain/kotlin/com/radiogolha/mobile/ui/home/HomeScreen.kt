@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.radiogolha.mobile.theme.GolhaAppTheme
 import com.radiogolha.mobile.theme.GolhaColors
+import com.radiogolha.mobile.theme.GolhaPatternBackground
 import com.radiogolha.mobile.theme.GolhaSpacing
 
 @Composable
@@ -27,54 +28,55 @@ fun HomeScreen(
     onBottomNavSelected: (AppTab) -> Unit = {},
 ) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-        Scaffold(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(GolhaColors.ScreenBackground),
-            containerColor = GolhaColors.ScreenBackground,
-            bottomBar = {
-                BottomNavigationBar(
-                    items = bottomNavItems,
-                    onItemSelected = onBottomNavSelected,
-                )
-            },
-        ) { innerPadding ->
-            LazyColumn(
+        GolhaPatternBackground {
+            Scaffold(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .statusBarsPadding(),
-                contentPadding = PaddingValues(
-                    top = GolhaSpacing.StatusBarTopGap,
-                    bottom = innerPadding.calculateBottomPadding() + 18.dp,
-                ),
-                verticalArrangement = Arrangement.spacedBy(GolhaSpacing.SectionGap),
-            ) {
-                if (state == null) {
-                    item { HeaderSection() }
-                    item { HeroBannerSkeleton() }
-                    item { ProgramsSectionSkeleton() }
-                    item { SingersSectionSkeleton() }
-                    item { DastgahSectionSkeleton() }
-                    item { MusiciansSectionSkeleton() }
-                    item { TopTracksSectionSkeleton() }
-                } else {
-                    item { HeaderSection() }
-                    item { HeroBanner() }
-                    item { ProgramsSection(programs = state.programs) }
-                    item {
-                        SingersSection(
-                            singers = state.singers,
-                            onSeeAllClick = onOpenAllSingers,
-                        )
+                    .fillMaxSize(),
+                containerColor = GolhaColors.ScreenBackground.copy(alpha = 0f),
+                bottomBar = {
+                    BottomNavigationBar(
+                        items = bottomNavItems,
+                        onItemSelected = onBottomNavSelected,
+                    )
+                },
+            ) { innerPadding ->
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .statusBarsPadding(),
+                    contentPadding = PaddingValues(
+                        top = GolhaSpacing.StatusBarTopGap,
+                        bottom = innerPadding.calculateBottomPadding() + 18.dp,
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(GolhaSpacing.SectionGap),
+                ) {
+                    if (state == null) {
+                        item { HeaderSection() }
+                        item { HeroBannerSkeleton() }
+                        item { ProgramsSectionSkeleton() }
+                        item { SingersSectionSkeleton() }
+                        item { DastgahSectionSkeleton() }
+                        item { MusiciansSectionSkeleton() }
+                        item { TopTracksSectionSkeleton() }
+                    } else {
+                        item { HeaderSection() }
+                        item { HeroBanner() }
+                        item { ProgramsSection(programs = state.programs) }
+                        item {
+                            SingersSection(
+                                singers = state.singers,
+                                onSeeAllClick = onOpenAllSingers,
+                            )
+                        }
+                        item { DastgahSection(items = state.dastgahs) }
+                        item {
+                            MusiciansSection(
+                                musicians = state.musicians,
+                                onSeeAllClick = onOpenAllMusicians,
+                            )
+                        }
+                        item { TopTracksSection(tracks = state.topTracks) }
                     }
-                    item { DastgahSection(items = state.dastgahs) }
-                    item {
-                        MusiciansSection(
-                            musicians = state.musicians,
-                            onSeeAllClick = onOpenAllMusicians,
-                        )
-                    }
-                    item { TopTracksSection(tracks = state.topTracks) }
                 }
             }
         }
