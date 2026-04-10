@@ -38,6 +38,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -954,6 +955,7 @@ private fun TrackRow(track: TrackUiModel) {
                     style = MaterialTheme.typography.bodySmall,
                     color = GolhaColors.SecondaryText,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
@@ -1212,10 +1214,14 @@ fun GolhaLineIcon(
             }
 
             GolhaIcon.Refresh -> {
-                // Circular arrow (refresh)
+                // More premium circular refresh icon
                 val cx = size.width * 0.50f
                 val cy = size.height * 0.50f
-                val r = size.minDimension * 0.30f
+                val r = size.minDimension * 0.28f
+                
+                // Thin stroke for more "luxury" feel
+                val fineStroke = 1.6.dp.toPx()
+                
                 drawArc(
                     color = tint,
                     startAngle = -220f,
@@ -1223,15 +1229,18 @@ fun GolhaLineIcon(
                     useCenter = false,
                     topLeft = Offset(cx - r, cy - r),
                     size = Size(r * 2, r * 2),
-                    style = Stroke(width = stroke, cap = StrokeCap.Round),
+                    style = Stroke(width = fineStroke, cap = StrokeCap.Round),
                 )
-                // Arrowhead
+                
+                // Sharp minimalist arrowhead
+                val headSize = r * 0.35f
+                val arrowHeight = r * 1.15f
                 val arrow = Path().apply {
-                    moveTo(cx + r * 0.18f, cy - r * 1.10f)
-                    lineTo(cx + r * 0.58f, cy - r * 0.85f)
-                    lineTo(cx + r * 0.75f, cy - r * 1.28f)
+                    moveTo(cx + r * 0.15f, cy - arrowHeight)
+                    lineTo(cx + r * 0.65f, cy - r * 0.90f)
+                    lineTo(cx + r * 0.55f, cy - r * 1.45f)
                 }
-                drawPath(arrow, tint, style = Stroke(width = stroke, cap = StrokeCap.Round))
+                drawPath(arrow, tint, style = Stroke(width = fineStroke, cap = StrokeCap.Round, join = StrokeJoin.Round))
             }
         }
     }

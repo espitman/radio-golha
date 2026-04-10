@@ -130,16 +130,17 @@ fn home_json(db_path: &str) -> Result<String, String> {
         };
 
         if !detail.audio_url.as_deref().unwrap_or("").trim().is_empty() && top_tracks.len() < 20 {
-            let artist = detail
-                .singers
-                .first()
-                .cloned()
-                .or_else(|| detail.performers.first().map(|item| item.name.clone()))
-                .unwrap_or_else(|| detail.category_name.clone());
+            let artist = if detail.singers.is_empty() {
+                detail.performers.first().map(|p| p.name.clone())
+                    .unwrap_or_else(|| detail.category_name.clone())
+            } else {
+                detail.singers.join(" و ")
+            };
+            
             top_tracks.push(AndroidTrackItem {
                 title: detail.title.clone(),
                 artist,
-                duration: String::new(),
+                duration: "05:42".to_string(), // Mock duration for UI
             });
         }
 
