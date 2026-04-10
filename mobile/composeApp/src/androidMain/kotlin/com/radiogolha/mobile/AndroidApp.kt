@@ -1,6 +1,7 @@
 package com.radiogolha.mobile
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -60,14 +61,47 @@ fun AndroidApp() {
             startDestination = AndroidRoute.Home.route,
         ) {
             composable(AndroidRoute.Home.route) {
-                val homeState by produceState<HomeUiState?>(initialValue = null, key1 = reloadToken) {
-                    value = runCatching { loadHomeUiState() }.getOrNull()
+                var homeState by remember { mutableStateOf<HomeUiState?>(null) }
+                var isInitialHomeLoading by remember { mutableStateOf(true) }
+                var isRefreshingTopTracks by remember { mutableStateOf(false) }
+
+                LaunchedEffect(reloadToken) {
+                    val loadedState = runCatching {
+                        withContext(Dispatchers.Default) { loadHomeUiState() }
+                    }.getOrNull()
+
+                    homeState = loadedState
+                    isInitialHomeLoading = false
                 }
+
+                LaunchedEffect(isRefreshingTopTracks) {
+                    if (!isRefreshingTopTracks) return@LaunchedEffect
+
+                    val refreshedTracks = runCatching {
+                        withContext(Dispatchers.Default) { com.radiogolha.mobile.ui.home.loadTopTracks() }
+                    }.getOrNull()
+
+                    if (refreshedTracks != null) {
+                        homeState = homeState?.copy(topTracks = refreshedTracks)
+                    }
+                    isRefreshingTopTracks = false
+                }
+
                 HomeScreen(
-                    state = homeState?.copy(bottomNavItems = bottomNavItems),
+                    state = if (isInitialHomeLoading && homeState == null) {
+                        null
+                    } else {
+                        homeState?.copy(bottomNavItems = bottomNavItems)
+                    },
                     bottomNavItems = bottomNavItems,
                     onOpenAllSingers = { navController.navigate(AndroidRoute.Singers.route) },
                     onOpenAllMusicians = { navController.navigate(AndroidRoute.Musicians.route) },
+                    isRefreshingTopTracks = isRefreshingTopTracks,
+                    onRefreshTopTracks = {
+                        if (!isRefreshingTopTracks) {
+                            isRefreshingTopTracks = true
+                        }
+                    },
                     onBottomNavSelected = { tab ->
                         navController.navigate(tab.toRoute().route) {
                             popUpTo(navController.graph.findStartDestination().id) {

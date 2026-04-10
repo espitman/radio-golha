@@ -25,6 +25,7 @@ fun HomeScreen(
     bottomNavItems: List<BottomNavItemUiModel>,
     onOpenAllSingers: () -> Unit = {},
     onOpenAllMusicians: () -> Unit = {},
+    isRefreshingTopTracks: Boolean = false,
     onRefreshTopTracks: () -> Unit = {},
     onBottomNavSelected: (AppTab) -> Unit = {},
 ) {
@@ -79,6 +80,7 @@ fun HomeScreen(
                         item { 
                             TopTracksSection(
                                 tracks = state.topTracks,
+                                isRefreshing = isRefreshingTopTracks,
                                 onRefresh = onRefreshTopTracks
                             ) 
                         }

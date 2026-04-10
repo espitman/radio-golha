@@ -44,6 +44,13 @@ pub struct RankedPerformerStat {
 }
 
 #[derive(Debug, Clone, Serialize)]
+pub struct TrackSummary {
+    pub title: String,
+    pub artist: String,
+    pub duration: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub struct CategoryOption {
     pub id: i64,
     pub title_fa: String,

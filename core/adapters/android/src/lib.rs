@@ -1,10 +1,9 @@
 use jni::JNIEnv;
 use jni::objects::{JClass, JString};
 use jni::sys::jstring;
-use radiogolha_core::{LookupKind, RadioGolhaCore, ProgramSortField, SortDirection};
+use radiogolha_core::{LookupKind, RadioGolhaCore};
 use serde::Serialize;
 use serde_json::{json, to_string};
-use std::collections::HashSet;
 
 #[derive(Serialize)]
 struct AndroidHomePayload {
@@ -69,14 +68,13 @@ fn categories_json(db_path: &str) -> Result<String, String> {
 
 fn home_json(db_path: &str) -> Result<String, String> {
     let core = RadioGolhaCore::open(db_path).map_err(|error| error.to_string())?;
-    let overview = core.dashboard_overview().map_err(|error| error.to_string())?;
+    let category_breakdown = core.category_breakdown().map_err(|error| error.to_string())?;
     let mode_lookup = core
         .browse_lookup_items(LookupKind::Modes, "", 1)
         .map_err(|error| error.to_string())?;
     let mut top_singers = core.top_singers(24).map_err(|error| error.to_string())?;
 
-    let programs = overview
-        .category_breakdown
+    let programs = category_breakdown
         .into_iter()
         .map(|item| AndroidProgramItem {
             title: item.name,
@@ -117,60 +115,30 @@ fn home_json(db_path: &str) -> Result<String, String> {
         .map(|item| AndroidNamedItem { name: item.name })
         .collect();
 
-    let mut seen_musicians = HashSet::new();
-    let mut musicians = Vec::new();
-    let mut top_tracks = Vec::new();
+    let top_tracks = core
+        .random_vocal_track_summaries(10)
+        .map_err(|error| error.to_string())?
+        .into_iter()
+        .map(|item| AndroidTrackItem {
+            title: item.title,
+            artist: item.artist,
+            duration: item.duration.unwrap_or_else(|| "نامشخص".to_string()),
+        })
+        .collect();
 
-    // 1. Fetch 10 Truly Random Vocal Tracks
-    let random_programs = core
-        .random_vocal_tracks(10)
-        .map_err(|error| error.to_string())?;
-
-    for rp in random_programs {
-        if let Some(detail) = core.get_program_detail(rp.id).map_err(|e| e.to_string())? {
-            top_tracks.push(AndroidTrackItem {
-                title: detail.title.clone(),
-                artist: detail.singers.join(" و "),
-                duration: rp.duration.clone().unwrap_or_else(|| "نامشخص".to_string()),
-            });
-        }
-    }
-
-    // 2. Fetch Featured Musicians from recent programs
-    // 2. Fetch Featured Musicians from recent programs
-    let programs_pool = core
-        .list_programs_filtered(
-            "", 1, None, None, ProgramSortField::Id, SortDirection::Desc, 100
-        )
-        .map_err(|error| error.to_string())?;
-
-    for program in programs_pool {
-        let Some(detail) = core.get_program_detail(program.id).map_err(|e| e.to_string())? else { continue };
-
-        for performer in detail.performers {
-            let key = performer.name.trim().to_string();
-            if key.is_empty() || !seen_musicians.insert(key.clone()) {
-                continue;
-            }
-
-            musicians.push(AndroidMusicianItem {
-                name: key,
-                instrument: performer
-                    .instrument
-                    .filter(|value| !value.trim().is_empty())
-                    .unwrap_or_else(|| "نوازنده".to_string()),
-                avatar: performer.avatar,
-            });
-
-            if musicians.len() >= 8 {
-                break;
-            }
-        }
-
-        if musicians.len() >= 8 {
-            break;
-        }
-    }
+    let musicians = core
+        .top_performers(8)
+        .map_err(|error| error.to_string())?
+        .into_iter()
+        .map(|item| AndroidMusicianItem {
+            name: item.name,
+            instrument: item
+                .instrument
+                .filter(|value| !value.trim().is_empty())
+                .unwrap_or_else(|| "نوازنده".to_string()),
+            avatar: item.avatar,
+        })
+        .collect();
 
     let payload = AndroidHomePayload {
         programs,
@@ -181,6 +149,22 @@ fn home_json(db_path: &str) -> Result<String, String> {
     };
 
     to_string(&payload).map_err(|error| error.to_string())
+}
+
+fn top_tracks_json(db_path: &str) -> Result<String, String> {
+    let core = RadioGolhaCore::open(db_path).map_err(|error| error.to_string())?;
+    let top_tracks = core
+        .random_vocal_track_summaries(10)
+        .map_err(|error| error.to_string())?
+        .into_iter()
+        .map(|item| AndroidTrackItem {
+            title: item.title,
+            artist: item.artist,
+            duration: item.duration.unwrap_or_else(|| "نامشخص".to_string()),
+        })
+        .collect::<Vec<_>>();
+
+    to_string(&top_tracks).map_err(|error| error.to_string())
 }
 
 fn singers_json(db_path: &str) -> Result<String, String> {
@@ -257,6 +241,15 @@ pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getHomeFeedJson
     db_path: JString,
 ) -> jstring {
     jni_json_response(&mut env, db_path, home_json)
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getTopTracksJson(
+    mut env: JNIEnv,
+    _class: JClass,
+    db_path: JString,
+) -> jstring {
+    jni_json_response(&mut env, db_path, top_tracks_json)
 }
 
 #[unsafe(no_mangle)]

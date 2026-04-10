@@ -9,7 +9,8 @@ use crate::{
         CategoryStat, DashboardOverview, DashboardSummary, LookupListItem, LookupListResponse,
         LookupStats, OrchestraLeaderCredit, PerformerCredit, ProgramDetail, ProgramListItem,
         ProgramListResponse, ProgramSearchOptions, ProgramSearchResponse, RankedNameStat,
-        RankedPerformerStat, SearchOption, SingerOption, TimelineSegment, TranscriptVerse,
+        RankedPerformerStat, SearchOption, SingerOption, TimelineSegment, TrackSummary,
+        TranscriptVerse,
     },
 };
 
@@ -405,6 +406,45 @@ impl RadioGolhaCore {
                 no: row.get(3)?,
                 sub_no: row.get(4)?,
                 duration: row.get(5)?,
+            })
+        })?;
+
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    pub fn random_vocal_track_summaries(&self, limit: usize) -> CoreResult<Vec<TrackSummary>> {
+        let mut stmt = self.connection().prepare(
+            "
+            SELECT
+              p.title,
+              COALESCE(
+                (
+                  SELECT GROUP_CONCAT(name, ' و ')
+                  FROM (
+                    SELECT DISTINCT a.name AS name
+                    FROM program_singers ps
+                    JOIN singer s ON s.id = ps.singer_id
+                    JOIN artist a ON a.id = s.artist_id
+                    WHERE ps.program_id = p.id
+                    ORDER BY a.name ASC
+                  )
+                ),
+                'نامشخص'
+              ) AS artist_names,
+              (SELECT MAX(end_time) FROM program_timeline WHERE program_id = p.id) AS duration
+            FROM program p
+            WHERE p.audio_url IS NOT NULL AND TRIM(p.audio_url) <> ''
+              AND EXISTS (SELECT 1 FROM program_singers ps WHERE ps.program_id = p.id)
+            ORDER BY RANDOM()
+            LIMIT ?1
+            ",
+        )?;
+
+        let rows = stmt.query_map([limit as i64], |row| {
+            Ok(TrackSummary {
+                title: row.get(0)?,
+                artist: row.get(1)?,
+                duration: row.get(2)?,
             })
         })?;
 

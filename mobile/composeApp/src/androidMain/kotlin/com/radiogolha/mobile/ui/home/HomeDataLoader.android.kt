@@ -32,6 +32,18 @@ actual fun loadHomeUiState(): HomeUiState? {
     )
 }
 
+fun loadTopTracks(): List<TrackUiModel> {
+    val payload = RustCoreBridge.getTopTracksJson(requireArchiveDbPath())
+    if (payload.trim().startsWith("{")) {
+        val error = JSONObject(payload).optString("error")
+        if (error.isNotBlank()) {
+            throw IllegalStateException(error)
+        }
+    }
+
+    return JSONArray(payload).toTrackModels()
+}
+
 internal fun requireArchiveDbPath(): String {
     val context = AndroidAppContext.require()
     val dbFile = File(context.filesDir, "golha_database.db")
@@ -90,7 +102,7 @@ private fun JSONArray.toMusicianModels(): List<MusicianUiModel> = buildList {
     }
 }
 
-private fun JSONArray.toTrackModels(): List<TrackUiModel> = buildList {
+internal fun JSONArray.toTrackModels(): List<TrackUiModel> = buildList {
     for (index in 0 until length()) {
         val item = getJSONObject(index)
         add(
