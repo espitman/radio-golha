@@ -48,7 +48,7 @@ fun App() {
     val homeState by produceState<HomeUiState?>(initialValue = null, key1 = reloadToken) {
         isTopTracksRefreshing = true
         val newState = withContext(Dispatchers.Default) {
-            delay(1500)
+            delay(100)
             runCatching { loadHomeUiState() }.getOrNull()
         }
         value = newState
