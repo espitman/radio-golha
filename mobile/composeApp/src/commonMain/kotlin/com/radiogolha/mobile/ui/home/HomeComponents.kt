@@ -193,13 +193,13 @@ fun HeroBanner(modifier: Modifier = Modifier) {
                     Text(
                         text = "گل‌های رنگارنگ",
                         style = MaterialTheme.typography.displaySmall,
-                        color = GolhaColors.PrimaryText,
+                        color = GolhaColors.BannerDetail,
                     )
                     Text(
                         text = "برنامه‌ای خاطره‌انگیز",
                         modifier = Modifier.padding(top = 10.dp),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = GolhaColors.SecondaryText,
+                        color = GolhaColors.Surface.copy(alpha = 0.82f),
                     )
 
                     Row(
@@ -402,7 +402,7 @@ fun HeroBannerSkeleton(modifier: Modifier = Modifier) {
                 SkeletonPill(
                     width = 96.dp,
                     height = 42.dp,
-                    color = GolhaColors.PrimaryAccent.copy(alpha = 0.20f),
+                    color = GolhaColors.BannerDetail.copy(alpha = 0.22f),
                 )
             }
 
@@ -628,13 +628,13 @@ fun SmallPrimaryButton(
             if (loading) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(16.dp),
-                    color = GolhaColors.Surface,
+                    color = GolhaColors.OnAccent,
                     strokeWidth = 2.dp,
                 )
             }
             Text(
                 text = if (loading) "در حال وارد کردن..." else label,
-                color = GolhaColors.Surface,
+                color = GolhaColors.OnAccent,
                 style = MaterialTheme.typography.labelLarge,
             )
         }
@@ -682,11 +682,11 @@ private fun PlayPillButton() {
             GolhaLineIcon(
                 icon = GolhaIcon.Play,
                 modifier = Modifier.size(16.dp),
-                tint = GolhaColors.Surface,
+                tint = GolhaColors.OnAccent,
             )
             Text(
                 text = "پخش",
-                color = GolhaColors.Surface,
+                color = GolhaColors.OnAccent,
                 style = MaterialTheme.typography.labelLarge,
             )
         }

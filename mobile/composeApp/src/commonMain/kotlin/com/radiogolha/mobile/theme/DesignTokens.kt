@@ -7,19 +7,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 object GolhaColors {
-    val ScreenBackground = Color(0xFFF7F7FA)
-    val Surface = Color(0xFFFFFFFF)
-    val PrimaryAccent = Color(0xFF0A84FF)
-    val PrimaryText = Color(0xFF1C1C1E)
-    val SecondaryText = Color(0xFF8E8E93)
-    val Border = Color(0xFFE5E5EA)
-    val BadgeBackground = Color(0xFFF2F2F7)
-    val BannerBackground = Color(0xFFFBF4E6)
-    val BannerDetail = Color(0xFFD6C29A)
-    val BannerShadow = Color(0x1A876B2F)
-    val SoftBlue = Color(0xFFEAF4FF)
-    val SoftRose = Color(0xFFF7EEF3)
-    val SoftSand = Color(0xFFF6F1E8)
+    val ScreenBackground = Color(0xFFF7F1E1)
+    val Surface = Color(0xFFFFFBF2)
+    val PrimaryAccent = Color(0xFFE3BF55)
+    val OnAccent = Color(0xFF0B2161)
+    val PrimaryText = Color(0xFF0B2161)
+    val SecondaryText = Color(0xFF5D6B94)
+    val Border = Color(0xFFE4D4A7)
+    val BadgeBackground = Color(0xFFF3E6BF)
+    val BannerBackground = Color(0xFF0B2161)
+    val BannerDetail = Color(0xFFE3BF55)
+    val BannerShadow = Color(0x330B2161)
+    val SoftBlue = Color(0xFFDCE5F6)
+    val SoftRose = Color(0xFFF3DE9A)
+    val SoftSand = Color(0xFFF8EFD3)
 }
 
 object GolhaSpacing {

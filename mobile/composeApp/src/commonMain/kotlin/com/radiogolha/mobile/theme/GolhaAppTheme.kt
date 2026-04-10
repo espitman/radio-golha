@@ -16,7 +16,7 @@ import radiogolha_mobile.composeapp.generated.resources.vazirmatn_regular
 
 private val GolhaLightColors = lightColorScheme(
     primary = GolhaColors.PrimaryAccent,
-    onPrimary = GolhaColors.Surface,
+    onPrimary = GolhaColors.OnAccent,
     background = GolhaColors.ScreenBackground,
     onBackground = GolhaColors.PrimaryText,
     surface = GolhaColors.Surface,
@@ -24,6 +24,10 @@ private val GolhaLightColors = lightColorScheme(
     surfaceVariant = GolhaColors.BadgeBackground,
     onSurfaceVariant = GolhaColors.SecondaryText,
     outline = GolhaColors.Border,
+    primaryContainer = GolhaColors.BadgeBackground,
+    onPrimaryContainer = GolhaColors.PrimaryText,
+    secondary = GolhaColors.PrimaryText,
+    onSecondary = GolhaColors.Surface,
 )
 
 @Composable
