@@ -1,7 +1,7 @@
 use jni::JNIEnv;
 use jni::objects::{JClass, JString};
 use jni::sys::jstring;
-use radiogolha_core::{LookupKind, RadioGolhaCore};
+use radiogolha_core::{LookupKind, RadioGolhaCore, ProgramSortField, SortDirection};
 use serde::Serialize;
 use serde_json::{json, to_string};
 use std::collections::HashSet;
@@ -121,7 +121,20 @@ fn home_json(db_path: &str) -> Result<String, String> {
     let mut musicians = Vec::new();
     let mut top_tracks = Vec::new();
 
-    for program in overview.recent_programs {
+    // Use a larger pool of programs to find tracks with singers
+    let programs_pool = core
+        .list_programs_filtered(
+            "",
+            1,
+            None,
+            None,
+            ProgramSortField::Id,
+            SortDirection::Desc,
+            200, // Search Pool
+        )
+        .map_err(|error| error.to_string())?;
+
+    for program in programs_pool {
         let Some(detail) = core
             .get_program_detail(program.id)
             .map_err(|error| error.to_string())?
@@ -129,42 +142,40 @@ fn home_json(db_path: &str) -> Result<String, String> {
             continue;
         };
 
-        if !detail.audio_url.as_deref().unwrap_or("").trim().is_empty() && top_tracks.len() < 20 {
-            let artist = if detail.singers.is_empty() {
-                detail.performers.first().map(|p| p.name.clone())
-                    .unwrap_or_else(|| detail.category_name.clone())
-            } else {
-                detail.singers.join(" و ")
-            };
+        if !detail.audio_url.as_deref().unwrap_or("").trim().is_empty() 
+           && !detail.singers.is_empty() 
+           && top_tracks.len() < 60 {
             
             top_tracks.push(AndroidTrackItem {
                 title: detail.title.clone(),
-                artist,
-                duration: "05:42".to_string(), // Mock duration for UI
+                artist: detail.singers.join(" و "),
+                duration: "05:42".to_string(),
             });
         }
 
-        for performer in detail.performers {
-            let key = performer.name.trim().to_string();
-            if key.is_empty() || !seen_musicians.insert(key.clone()) {
-                continue;
-            }
+        if musicians.len() < 8 {
+            for performer in detail.performers {
+                let key = performer.name.trim().to_string();
+                if key.is_empty() || !seen_musicians.insert(key.clone()) {
+                    continue;
+                }
 
-            musicians.push(AndroidMusicianItem {
-                name: key,
-                instrument: performer
-                    .instrument
-                    .filter(|value| !value.trim().is_empty())
-                    .unwrap_or_else(|| "نوازنده".to_string()),
-                avatar: performer.avatar,
-            });
+                musicians.push(AndroidMusicianItem {
+                    name: key,
+                    instrument: performer
+                        .instrument
+                        .filter(|value| !value.trim().is_empty())
+                        .unwrap_or_else(|| "نوازنده".to_string()),
+                    avatar: performer.avatar,
+                });
 
-            if musicians.len() >= 8 {
-                break;
+                if musicians.len() >= 8 {
+                    break;
+                }
             }
         }
 
-        if musicians.len() >= 8 && top_tracks.len() >= 20 {
+        if musicians.len() >= 8 && top_tracks.len() >= 30 {
             break;
         }
     }

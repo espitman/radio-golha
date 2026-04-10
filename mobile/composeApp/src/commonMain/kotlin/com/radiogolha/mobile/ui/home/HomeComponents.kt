@@ -317,7 +317,7 @@ fun TopTracksSection(tracks: List<TrackUiModel>, modifier: Modifier = Modifier) 
     var shuffleKey by remember { mutableStateOf(System.currentTimeMillis()) }
 
     val displayedTracks = remember(tracks, shuffleKey) {
-        tracks.shuffled().take(5)
+        tracks.shuffled().take(10)
     }
 
     Column(
