@@ -216,15 +216,15 @@ private fun JSONObject.optTimeline(key: String): List<com.radiogolha.mobile.ui.h
             add(
                 com.radiogolha.mobile.ui.home.TimelineSegmentUiModel(
                     id = item.optLong("id"),
-                    startTime = item.optNullableString("startTime"),
-                    endTime = item.optNullableString("endTime"),
-                    modeName = item.optNullableString("modeName"),
+                    startTime = item.optNullableString("startTime") ?: item.optNullableString("start_time"),
+                    endTime = item.optNullableString("endTime") ?: item.optNullableString("end_time"),
+                    modeName = item.optNullableString("modeName") ?: item.optNullableString("mode_name"),
                     singers = item.optStringList("singers"),
                     poets = item.optStringList("poets"),
                     announcers = item.optStringList("announcers"),
                     orchestras = item.optStringList("orchestras"),
-                    orchestraLeaders = item.optOrchestraLeaders("orchestraLeaders"),
-                    performers = item.optPerformers("performers")
+                    orchestraLeaders = item.optOrchestraLeaders("orchestraLeaders").takeIf { it.isNotEmpty() } ?: item.optOrchestraLeaders("orchestra_leaders"),
+                    performers = item.optPerformers("performers").takeIf { it.isNotEmpty() } ?: item.optPerformers("program_performers")
                 )
             )
         }
@@ -238,8 +238,8 @@ private fun JSONObject.optTranscript(key: String): List<com.radiogolha.mobile.ui
             val item = array.getJSONObject(i)
             add(
                 com.radiogolha.mobile.ui.home.TranscriptVerseUiModel(
-                    segmentOrder = item.optInt("segmentOrder"),
-                    verseOrder = item.optInt("verseOrder"),
+                    segmentOrder = item.optInt("segmentOrder").takeIf { it > 0 } ?: item.optInt("segment_order"),
+                    verseOrder = item.optInt("verseOrder").takeIf { it > 0 } ?: item.optInt("verse_order"),
                     text = item.optString("text", "")
                 )
             )

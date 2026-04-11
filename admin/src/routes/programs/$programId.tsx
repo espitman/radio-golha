@@ -269,11 +269,14 @@ function ProgramDetail() {
               <MetaSection title="خوانندگان اصلی" icon={Mic} accentClass="bg-primary/10 text-primary">
                 <div className="flex flex-wrap justify-start gap-2">
                   {data.singers?.length ? (
-                    data.singers.map((name: string) => (
-                      <Badge key={name} className="rounded-full border-none bg-primary px-3 py-1.5 text-[10px] font-black text-white">
-                        {name}
-                      </Badge>
-                    ))
+                    data.singers.map((artist: any) => {
+                      const name = typeof artist === 'string' ? artist : artist.name
+                      return (
+                        <Badge key={name} className="rounded-full border-none bg-primary px-3 py-1.5 text-[10px] font-black text-white">
+                          {name}
+                        </Badge>
+                      )
+                    })
                   ) : (
                     <div className="text-[11px] font-bold text-muted-foreground">اطلاعاتی ثبت نشده است.</div>
                   )}
@@ -305,14 +308,17 @@ function ProgramDetail() {
               {data.poets?.length > 0 && (
                 <MetaSection title="شاعران" icon={BookOpen} accentClass="bg-amber-100 text-amber-800">
                   <div className="flex w-full flex-wrap justify-start gap-2 text-right">
-                    {data.poets.map((name: string) => (
-                      <Badge
-                        key={name}
-                        className="rounded-full border border-amber-200/70 bg-amber-50 px-3 py-1.5 text-[10px] font-black text-amber-900 shadow-none hover:bg-amber-100 transition-all"
-                      >
-                        {name}
-                      </Badge>
-                    ))}
+                    {data.poets.map((artist: any) => {
+                      const name = typeof artist === 'string' ? artist : artist.name
+                      return (
+                        <Badge
+                          key={name}
+                          className="rounded-full border border-amber-200/70 bg-amber-50 px-3 py-1.5 text-[10px] font-black text-amber-900 shadow-none hover:bg-amber-100 transition-all"
+                        >
+                          {name}
+                        </Badge>
+                      )
+                    })}
                   </div>
                 </MetaSection>
               )}
@@ -320,7 +326,7 @@ function ProgramDetail() {
               {data.composers?.length > 0 && (
                 <MetaSection title="آهنگساز" icon={PenTool} accentClass="bg-primary/10 text-primary">
                   <div className="rounded-[1.2rem] border border-border/35 bg-white/70 p-3 text-[12px] font-black leading-7 text-primary/85">
-                    {data.composers.join('، ')}
+                    {data.composers.map((c: any) => typeof c === 'string' ? c : c.name).join('، ')}
                   </div>
                 </MetaSection>
               )}
@@ -328,7 +334,7 @@ function ProgramDetail() {
               {data.arrangers?.length > 0 && (
                 <MetaSection title="تنظیم‌کننده" icon={Layout} accentClass="bg-secondary/20 text-primary">
                   <div className="rounded-[1.2rem] border border-border/35 bg-white/70 p-3 text-[12px] font-black leading-7 text-primary/80">
-                    {data.arrangers.join('، ')}
+                    {data.arrangers.map((a: any) => typeof a === 'string' ? a : a.name).join('، ')}
                   </div>
                 </MetaSection>
               )}
@@ -338,14 +344,17 @@ function ProgramDetail() {
               {data.announcers?.length > 0 && (
                 <MetaSection title="گویندگان برنامه" icon={Radio} accentClass="bg-sky-100 text-sky-900">
                   <div className="flex w-full flex-wrap justify-start gap-2 text-right">
-                    {data.announcers.map((name: string) => (
-                      <Badge
-                        key={name}
-                        className="rounded-full border border-sky-200/70 bg-sky-50 px-3 py-1.5 text-[10px] font-black text-sky-900 shadow-none hover:bg-sky-100 transition-all"
-                      >
-                        {name}
-                      </Badge>
-                    ))}
+                    {data.announcers.map((artist: any) => {
+                      const name = typeof artist === 'string' ? artist : artist.name
+                      return (
+                        <Badge
+                          key={name}
+                          className="rounded-full border border-sky-200/70 bg-sky-50 px-3 py-1.5 text-[10px] font-black text-sky-900 shadow-none hover:bg-sky-100 transition-all"
+                        >
+                          {name}
+                        </Badge>
+                      )
+                    })}
                   </div>
                 </MetaSection>
               )}
@@ -353,7 +362,8 @@ function ProgramDetail() {
               {data.orchestras?.length > 0 && (
                 <MetaSection title="ارکستر" icon={Library} accentClass="bg-emerald-100 text-emerald-900">
                   <div className="rounded-[1.2rem] border border-emerald-200/65 bg-emerald-50/75 p-3 text-[12px] font-black leading-7 text-emerald-950/70">
-                    {data.orchestras.map((orchestra: string) => {
+                    {data.orchestras.map((orchestraItem: any) => {
+                      const orchestra = typeof orchestraItem === 'string' ? orchestraItem : orchestraItem.name
                       const leaders = (data.orchestra_leaders || [])
                         .filter((leader: any) => leader.orchestra === orchestra)
                         .map((leader: any) => leader.name)

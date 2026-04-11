@@ -185,7 +185,6 @@ pub struct DashboardOverview {
 }
 
 #[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct PerformerCredit {
     pub name: String,
     pub avatar: Option<String>,
@@ -193,7 +192,6 @@ pub struct PerformerCredit {
 }
 
 #[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct OrchestraLeaderCredit {
     pub orchestra: String,
     #[serde(rename = "name")]
@@ -223,14 +221,12 @@ pub struct TranscriptVerse {
 }
 
 #[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct ArtistCredit {
     pub name: String,
     pub avatar: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct ProgramDetail {
     pub id: i64,
     pub title: String,
