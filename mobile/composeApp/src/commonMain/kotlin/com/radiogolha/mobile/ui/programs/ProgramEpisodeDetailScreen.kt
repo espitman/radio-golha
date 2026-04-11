@@ -96,13 +96,37 @@ fun ProgramEpisodeDetailScreen(
                     item { ArtistCarousel(title = "خوانندگان", artists = d.singers) }
                 }
 
-                // Musicians (Performers + Orchestra Leaders)
-                val musicians = buildList {
-                    addAll(d.orchestraLeaders.map { ArtistCreditUiModel(it.name, null) })
-                    addAll(d.performers.map { ArtistCreditUiModel(it.name, it.avatar) })
+                // Orchestras
+                if (d.orchestras.isNotEmpty()) {
+                    item { ArtistCarousel(title = "ارکسترها", artists = d.orchestras) }
                 }
-                if (musicians.isNotEmpty()) {
-                    item { ArtistCarousel(title = "نوازندگان و رهبران", artists = musicians) }
+
+                // Orchestra Leaders
+                if (d.orchestraLeaders.isNotEmpty()) {
+                    val leaders = d.orchestraLeaders.map { ArtistCreditUiModel(it.name, null) }
+                    item { 
+                        ArtistCarousel(
+                            title = "رهبران ارکستر", 
+                            artists = leaders,
+                            subtitleGetter = { leader -> 
+                                d.orchestraLeaders.find { it.name == leader.name }?.orchestra 
+                            }
+                        ) 
+                    }
+                }
+
+                // Musicians (Performers)
+                if (d.performers.isNotEmpty()) {
+                    val musicians = d.performers.map { ArtistCreditUiModel(it.name, it.avatar) }
+                    item { 
+                        ArtistCarousel(
+                            title = "نوازندگان", 
+                            artists = musicians,
+                            subtitleGetter = { m ->
+                                d.performers.find { it.name == m.name }?.instrument ?: "نوازنده"
+                            }
+                        ) 
+                    }
                 }
 
                 // Poets
@@ -123,11 +147,6 @@ fun ProgramEpisodeDetailScreen(
                 // Announcers
                 if (d.announcers.isNotEmpty()) {
                     item { ArtistCarousel(title = "گویندگان", artists = d.announcers) }
-                }
-
-                // Orchestras
-                if (d.orchestras.isNotEmpty()) {
-                    item { ArtistCarousel(title = "ارکسترها", artists = d.orchestras) }
                 }
 
                 // 4. Transcript Section (Keep as is or move to card)
@@ -250,7 +269,7 @@ private fun InfoTile(modifier: Modifier, label: String, value: String, icon: Gol
 }
 
 @Composable
-private fun ArtistCarousel(title: String, artists: List<ArtistCreditUiModel>) {
+private fun ArtistCarousel(title: String, artists: List<ArtistCreditUiModel>, subtitleGetter: ((ArtistCreditUiModel) -> String?)? = null) {
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         SectionTitle(title = title)
         Spacer(modifier = Modifier.height(14.dp))
@@ -259,18 +278,18 @@ private fun ArtistCarousel(title: String, artists: List<ArtistCreditUiModel>) {
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             items(artists) { artist ->
-                ArtistCarouselItem(artist)
+                ArtistCarouselItem(artist, subtitleGetter?.invoke(artist))
             }
         }
     }
 }
 
 @Composable
-private fun ArtistCarouselItem(artist: ArtistCreditUiModel) {
+private fun ArtistCarouselItem(artist: ArtistCreditUiModel, subtitle: String? = null) {
     Column(
         modifier = Modifier.width(88.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         ArtistAvatar(
             name = artist.name,
@@ -278,14 +297,26 @@ private fun ArtistCarouselItem(artist: ArtistCreditUiModel) {
             tint = GolhaColors.SoftRose,
             modifier = Modifier.size(80.dp)
         )
-        Text(
-            text = artist.name,
-            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-            color = GolhaColors.PrimaryText,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center
-        )
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = artist.name,
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                color = GolhaColors.PrimaryText,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = GolhaColors.SecondaryText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
     }
 }
 
