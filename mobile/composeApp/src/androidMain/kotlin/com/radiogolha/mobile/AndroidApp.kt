@@ -340,9 +340,9 @@ fun AndroidApp() {
                     onPlayProgram = { detail ->
                         playerManager.play(com.radiogolha.mobile.ui.home.TrackUiModel(
                             id = detail.id,
-                            title = "${detail.categoryName} شماره ${detail.no}",
-                            artist = detail.singers.joinToString(" و ").takeIf { it.isNotBlank() } ?: "ناشناس",
-                            duration = null, // Can extract from metadata if needed
+                            title = detail.title,
+                            artist = detail.singers.map { it.name }.joinToString(" و ").takeIf { it.isNotBlank() } ?: "ناشناس",
+                            duration = detail.duration, 
                             audioUrl = detail.audioUrl
                         ))
                     }
