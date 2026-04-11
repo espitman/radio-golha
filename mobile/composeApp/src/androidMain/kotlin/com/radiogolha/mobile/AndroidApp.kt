@@ -177,6 +177,9 @@ fun AndroidApp() {
                     currentPlaybackDurationMs = currentPlaybackDurationMs,
                     onTogglePlayerPlayback = { playerManager.togglePlayback() },
                     onPlayTrack = { track -> playerManager.play(track) },
+                    onProgramClick = { program ->
+                        navController.navigate(AndroidRoute.CategoryPrograms.createRoute(program.title))
+                    },
                     onBottomNavSelected = { tab ->
                         navController.navigate(tab.toRoute().route) {
                             popUpTo(navController.graph.findStartDestination().id) {

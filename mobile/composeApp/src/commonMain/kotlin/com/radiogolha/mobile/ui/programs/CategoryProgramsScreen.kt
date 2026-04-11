@@ -58,7 +58,27 @@ fun CategoryProgramsScreen(
         onBackClick = onBackClick,
         content = {
             if (isLoading) {
-                items(8) { SkeletonTrackRow() }
+                item {
+                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(GolhaColors.Surface, RoundedCornerShape(GolhaRadius.Card))
+                                .border(1.dp, GolhaColors.Border.copy(alpha = 0.6f), RoundedCornerShape(GolhaRadius.Card))
+                                .padding(vertical = 8.dp),
+                        ) {
+                            repeat(8) { index ->
+                                SkeletonTrackRow()
+                                if (index != 7) {
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                                        color = GolhaColors.Border.copy(alpha = 0.65f),
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             } else if (programs.isEmpty()) {
                 item {
                     Box(Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
@@ -191,11 +211,41 @@ private fun CategoryProgramTrackRow(
 
 @Composable
 private fun SkeletonTrackRow() {
-    Surface(
-        modifier = Modifier.fillMaxWidth().height(80.dp).padding(vertical = 4.dp),
-        shape = RoundedCornerShape(GolhaRadius.Card),
-        color = GolhaColors.Surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.4f)),
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
+        Box(
+            modifier = Modifier
+                .size(54.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(GolhaColors.Border.copy(alpha = 0.25f))
+        )
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Box(
+                Modifier
+                    .fillMaxWidth(0.6f)
+                    .height(14.dp)
+                    .background(GolhaColors.Border.copy(alpha = 0.25f), RoundedCornerShape(4.dp))
+            )
+            Box(
+                Modifier
+                    .fillMaxWidth(0.3f)
+                    .height(11.dp)
+                    .background(GolhaColors.Border.copy(alpha = 0.15f), RoundedCornerShape(4.dp))
+            )
+        }
+        Box(
+            Modifier
+                .size(38.dp)
+                .clip(CircleShape)
+                .background(GolhaColors.Border.copy(alpha = 0.2f))
+        )
     }
 }

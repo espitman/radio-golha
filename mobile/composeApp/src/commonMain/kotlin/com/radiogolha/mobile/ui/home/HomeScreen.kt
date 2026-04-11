@@ -34,6 +34,7 @@ fun HomeScreen(
     currentPlaybackDurationMs: Long = 0L,
     onTogglePlayerPlayback: () -> Unit = {},
     onPlayTrack: (TrackUiModel) -> Unit = {},
+    onProgramClick: (ProgramUiModel) -> Unit = {},
     onBottomNavSelected: (AppTab) -> Unit = {},
 ) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
@@ -76,7 +77,12 @@ fun HomeScreen(
                     } else {
                         item { HeaderSection() }
                         item { HeroBanner() }
-                        item { ProgramsSection(programs = state.programs) }
+                        item { 
+                            ProgramsSection(
+                                programs = state.programs,
+                                onProgramClick = onProgramClick
+                            ) 
+                        }
                         item {
                             SingersSection(
                                 singers = state.singers,

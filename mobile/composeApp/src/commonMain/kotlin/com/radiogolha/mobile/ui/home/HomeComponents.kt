@@ -234,7 +234,10 @@ fun HeroBanner(modifier: Modifier = Modifier) {
 
 // Programs are intentionally simple white cards with no iconography.
 @Composable
-fun ProgramsSection(programs: List<ProgramUiModel>) {
+fun ProgramsSection(
+    programs: List<ProgramUiModel>,
+    onProgramClick: (ProgramUiModel) -> Unit = {}
+) {
     Column(verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large)) {
         SectionTitle(title = "برنامه‌ها")
         LazyRow(
@@ -246,6 +249,7 @@ fun ProgramsSection(programs: List<ProgramUiModel>) {
                 ProgramCard(
                     item = program,
                     modifier = Modifier.widthIn(min = 128.dp, max = 164.dp),
+                    onClick = { onProgramClick(program) }
                 )
             }
         }
@@ -1051,9 +1055,15 @@ private fun VintageRadioIllustration() {
 }
 
 @Composable
-private fun ProgramCard(item: ProgramUiModel, modifier: Modifier = Modifier) {
+private fun ProgramCard(
+    item: ProgramUiModel,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
+) {
     Surface(
-        modifier = modifier,
+        modifier = modifier
+            .clip(RoundedCornerShape(GolhaRadius.Card))
+            .clickable { onClick() },
         shape = RoundedCornerShape(GolhaRadius.Card),
         color = GolhaColors.Surface,
         tonalElevation = 0.dp,
