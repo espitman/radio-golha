@@ -2,7 +2,13 @@ package com.radiogolha.mobile
 
 import android.content.ComponentName
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.net.Uri
+import androidx.core.content.ContextCompat
+import java.io.ByteArrayOutputStream
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -21,7 +27,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class GolhaPlayerManager(context: Context) {
+class GolhaPlayerManager(private val context: Context) {
     private var controllerFuture: ListenableFuture<MediaController>? = null
     private val player: Player? get() = if (controllerFuture?.isDone == true) controllerFuture?.get() else null
     
@@ -114,7 +120,12 @@ class GolhaPlayerManager(context: Context) {
         val mediaMetadata = MediaMetadata.Builder()
             .setTitle(track.title)
             .setArtist(track.artist)
-            .setArtworkUri(track.coverUrl?.let { Uri.parse(it) })
+            .apply {
+                // User requested to ALWAYS use the app icon for Media Session instead of the track photo
+                getPlaceholderArtworkBytes(context)?.let {
+                    setArtworkData(it, MediaMetadata.PICTURE_TYPE_FRONT_COVER)
+                }
+            }
             .build()
 
         val mediaItem = MediaItem.Builder()
@@ -133,6 +144,29 @@ class GolhaPlayerManager(context: Context) {
         val current = _currentTrack.value ?: return
         if (current.audioUrl.isNullOrBlank()) return
         if (p.isPlaying) p.pause() else p.play()
+    }
+
+    private fun getPlaceholderArtworkBytes(context: Context): ByteArray? {
+        val resId = context.resources.getIdentifier("golha_artwork_placeholder", "drawable", context.packageName)
+        if (resId == 0) return null
+        
+        val drawable = ContextCompat.getDrawable(context, resId) ?: return null
+
+        val bitmap = if (drawable is BitmapDrawable) {
+            drawable.bitmap
+        } else {
+            val width = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 512
+            val height = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 512
+            val b = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(b)
+            drawable.setBounds(0, 0, canvas.width, canvas.height)
+            drawable.draw(canvas)
+            b
+        }
+
+        val stream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+        return stream.toByteArray()
     }
 
     fun release() {
