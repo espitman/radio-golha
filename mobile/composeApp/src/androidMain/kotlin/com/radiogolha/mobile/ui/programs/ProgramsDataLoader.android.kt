@@ -61,10 +61,12 @@ actual fun loadProgramsUiState(): List<ProgramUiModel> {
     }
 
     // Final sorting: By episodeCount Descending, then by Title
-    return merged.sortedWith(
+    val result = merged.sortedWith(
         compareByDescending<ProgramUiModel> { it.episodeCount }
             .thenBy { it.title }
     )
+    println("DEBUG: Loaded ${result.size} programs for Library")
+    return result
 }
 
 private fun extractCount(item: JSONObject): Int {

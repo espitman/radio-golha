@@ -19,6 +19,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
@@ -27,6 +28,14 @@ import com.radiogolha.mobile.theme.GolhaElevation
 import com.radiogolha.mobile.theme.GolhaRadius
 import com.radiogolha.mobile.theme.GolhaSpacing
 import com.radiogolha.mobile.ui.home.ProgramUiModel
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.geometry.Offset
+import org.jetbrains.compose.resources.painterResource
+import radiogolha_mobile.composeapp.generated.resources.Res
+import radiogolha_mobile.composeapp.generated.resources.eslimi_card_bg
 
 @Composable
 fun ProgramsScreen(
@@ -111,40 +120,74 @@ private fun SkeletonProgramListRow() {
 @Composable
 private fun ProgramListRow(item: ProgramUiModel) {
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(105.dp),
         shape = RoundedCornerShape(GolhaRadius.Card),
         color = GolhaColors.Surface,
         shadowElevation = GolhaElevation.Card,
-        border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.8f)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.7f)),
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = item.title,
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = GolhaColors.PrimaryText,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+        Box(modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(GolhaRadius.Card))) {
+            // Eslimi Background Pattern - Lighter alpha for better blending
+            androidx.compose.foundation.Image(
+                painter = painterResource(Res.drawable.eslimi_card_bg),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+                alpha = 0.32f
+            )
+            
+            // Refined Light Gradient Overlay for maximum readability
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(
+                                GolhaColors.Surface.copy(alpha = 0.98f),
+                                GolhaColors.Surface.copy(alpha = 0.35f)
+                            )
+                        )
+                    )
+            )
 
-            Surface(
-                color = GolhaColors.BadgeBackground,
-                shape = RoundedCornerShape(8.dp),
-                border = androidx.compose.foundation.BorderStroke(0.5.dp, GolhaColors.Border)
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 22.dp, vertical = 16.dp),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    text = "${item.episodeCount} برنامه",
-                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
-                    color = GolhaColors.SecondaryText,
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = item.title,
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 25.sp, // Slightly larger
+                            letterSpacing = (-0.5).sp
+                        ),
+                        color = GolhaColors.PrimaryText,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+
+                Surface(
+                    color = GolhaColors.BadgeBackground.copy(alpha = 0.98f),
+                    shape = RoundedCornerShape(10.dp),
+                    border = androidx.compose.foundation.BorderStroke(0.5.dp, GolhaColors.Border)
+                ) {
+                    Text(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        text = "${item.episodeCount} برنامه",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp
+                        ),
+                        color = GolhaColors.PrimaryText,
+                    )
+                }
             }
         }
     }
