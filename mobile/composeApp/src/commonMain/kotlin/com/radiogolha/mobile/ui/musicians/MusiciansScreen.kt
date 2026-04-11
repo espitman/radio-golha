@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -134,30 +136,15 @@ fun MusiciansContent(musicians: List<MusicianListItemUiModel>) {
     PeopleBrowseContent(
         tint = GolhaColors.SoftRose,
         topSectionContent = {
-            Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            Box(modifier = Modifier.padding(bottom = 20.dp)) {
                 MusicianSearchBar(
                     query = searchQuery,
                     onQueryChange = { searchQuery = it }
                 )
-
-                if (searchQuery.isEmpty()) {
-                    PeopleCarouselSection(
-                        title = "برترین‌ها",
-                        tint = GolhaColors.SoftRose,
-                        items = musicians.take(10).map { musician ->
-                            FeaturedPersonCardUiModel(
-                                name = musician.name,
-                                imageUrl = musician.imageUrl,
-                                metaTop = musician.instrument,
-                                metaBottom = "",
-                            )
-                        },
-                    )
-                }
             }
         },
         customContent = {
-            InstrumentsTabbedList(
+            instrumentsTabbedList(
                 instruments = instruments,
                 selectedInstrument = selectedInstrument,
                 onInstrumentSelected = { selectedInstrument = it },
@@ -227,8 +214,8 @@ private fun MusicianSearchBar(
     }
 }
 
-@Composable
-private fun InstrumentsTabbedList(
+@OptIn(ExperimentalFoundationApi::class)
+private fun LazyListScope.instrumentsTabbedList(
     instruments: List<String>,
     selectedInstrument: String,
     onInstrumentSelected: (String) -> Unit,
@@ -237,67 +224,71 @@ private fun InstrumentsTabbedList(
 ) {
     val selectedTabIndex = instruments.indexOf(selectedInstrument).coerceAtLeast(0)
 
-    Column(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        if (instruments.isNotEmpty()) {
-            ScrollableTabRow(
-                selectedTabIndex = selectedTabIndex,
-                containerColor = Color.Transparent,
-                contentColor = GolhaColors.PrimaryAccent,
-                edgePadding = GolhaSpacing.ScreenHorizontal,
-                divider = {},
-                indicator = { tabPositions ->
-                    if (selectedTabIndex < tabPositions.size) {
-                        TabRowDefaults.SecondaryIndicator(
-                            modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
-                            color = GolhaColors.PrimaryAccent
-                        )
-                    }
-                }
+    if (instruments.isNotEmpty()) {
+        stickyHeader(key = "instruments-tabs") {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = GolhaColors.ScreenBackground,
+                shadowElevation = 4.dp
             ) {
-                instruments.forEach { instrument ->
-                    val isSelected = instrument == selectedInstrument
-                    Tab(
-                        selected = isSelected,
-                        onClick = { onInstrumentSelected(instrument) },
-                        text = {
-                            Text(
-                                text = instrument,
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                ),
-                                color = if (isSelected) GolhaColors.PrimaryAccent else GolhaColors.SecondaryText,
-                                modifier = Modifier.padding(vertical = 8.dp)
+                Column {
+                    ScrollableTabRow(
+                        selectedTabIndex = selectedTabIndex,
+                        containerColor = Color.Transparent,
+                        contentColor = GolhaColors.PrimaryAccent,
+                        edgePadding = GolhaSpacing.ScreenHorizontal,
+                        divider = {},
+                        indicator = { tabPositions ->
+                            if (selectedTabIndex < tabPositions.size) {
+                                TabRowDefaults.SecondaryIndicator(
+                                    modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
+                                    color = GolhaColors.PrimaryAccent
+                                )
+                            }
+                        }
+                    ) {
+                        instruments.forEach { instrument ->
+                            val isSelected = instrument == selectedInstrument
+                            Tab(
+                                selected = isSelected,
+                                onClick = { onInstrumentSelected(instrument) },
+                                text = {
+                                    Text(
+                                        text = instrument,
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                        ),
+                                        color = if (isSelected) GolhaColors.PrimaryAccent else GolhaColors.SecondaryText,
+                                        modifier = Modifier.padding(vertical = 8.dp)
+                                    )
+                                }
                             )
                         }
+                    }
+                    HorizontalDivider(
+                        modifier = Modifier.fillMaxWidth(),
+                        thickness = 1.dp,
+                        color = GolhaColors.Border.copy(alpha = 0.5f)
                     )
                 }
             }
         }
+    }
 
-        HorizontalDivider(
-            modifier = Modifier.fillMaxWidth(),
-            thickness = 1.dp,
-            color = GolhaColors.Border.copy(alpha = 0.5f)
+    itemsIndexed(
+        items = musicians,
+        key = { index, person -> "musician-${person.name}-$index" }
+    ) { index, person ->
+        PeopleListRow(
+            item = person,
+            tint = tint,
+            modifier = Modifier.padding(horizontal = GolhaSpacing.ScreenHorizontal)
         )
-
-        // Using a regular Column here because it's inside an 'item' of a LazyColumn in PeopleBrowseScreen.
-        // For very large lists this might have performance issues, but for a filtered instrument list it should be fine.
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp, horizontal = GolhaSpacing.ScreenHorizontal)
-        ) {
-            musicians.forEachIndexed { index, person ->
-                PeopleListRow(item = person, tint = tint)
-                if (index < musicians.lastIndex) {
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 20.dp),
-                        color = GolhaColors.Border.copy(alpha = 0.72f),
-                    )
-                }
-            }
+        if (index < musicians.lastIndex) {
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = GolhaSpacing.ScreenHorizontal + 20.dp),
+                color = GolhaColors.Border.copy(alpha = 0.72f),
+            )
         }
     }
 }

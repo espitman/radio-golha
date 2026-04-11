@@ -40,10 +40,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.layout.ContentScale
+import org.jetbrains.compose.resources.painterResource
+import radiogolha_mobile.composeapp.generated.resources.Res
+import radiogolha_mobile.composeapp.generated.resources.eslimi_card_bg
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.radiogolha.mobile.theme.GolhaColors
@@ -83,7 +90,7 @@ fun PeopleBrowseScreen(
     tint: androidx.compose.ui.graphics.Color,
     featuredPeople: List<FeaturedPersonCardUiModel> = emptyList(),
     topSectionContent: (@Composable () -> Unit)? = null,
-    customContent: (@Composable () -> Unit)? = null,
+    customContent: (androidx.compose.foundation.lazy.LazyListScope.() -> Unit)? = null,
     people: List<BrowsePersonRowUiModel> = emptyList(),
     bottomNavItems: List<BottomNavItemUiModel>,
     onBottomNavSelected: (AppTab) -> Unit,
@@ -139,7 +146,7 @@ fun PeopleBrowseContent(
     tint: androidx.compose.ui.graphics.Color,
     featuredPeople: List<FeaturedPersonCardUiModel> = emptyList(),
     topSectionContent: (@Composable () -> Unit)? = null,
-    customContent: (@Composable () -> Unit)? = null,
+    customContent: (androidx.compose.foundation.lazy.LazyListScope.() -> Unit)? = null,
     people: List<BrowsePersonRowUiModel> = emptyList(),
     onBackClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
@@ -173,8 +180,8 @@ fun PeopleBrowseContent(
                 .fillMaxSize()
                 .statusBarsPadding(),
             contentPadding = PaddingValues(
-                top = if (title != null) GolhaSpacing.StatusBarTopGap else 0.dp,
-                bottom = 16.dp,
+                top = (if (title != null) GolhaSpacing.StatusBarTopGap else 16.dp),
+                bottom = 86.dp,
             ),
             verticalArrangement = Arrangement.Top,
         ) {
@@ -214,11 +221,7 @@ fun PeopleBrowseContent(
             }
 
             if (customContent != null) {
-                item {
-                    Box(modifier = Modifier.padding(top = 8.dp)) {
-                        customContent()
-                    }
-                }
+                customContent()
             } else if (people.isNotEmpty()) {
                 groupedPeople.forEachIndexed { groupIndex, group ->
                     stickyHeader(key = "header-${group.label}") {
@@ -262,14 +265,14 @@ fun PeopleBrowseContent(
         if (customContent == null && people.isNotEmpty() && (title == null || showJumpRail.value)) {
             AlphabetJumpRail(
                 labels = groupedPeople.map { it.label },
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 4.dp, top = 100.dp, bottom = 100.dp),
                 onJump = { label ->
                     scope.launch {
                         headerIndexes[label]?.let { listState.animateScrollToItem(it) }
                     }
-                },
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = 4.dp, top = 80.dp, bottom = 40.dp) 
+                }
             )
         }
     }
@@ -294,53 +297,76 @@ fun PeopleCarouselSection(
             modifier = Modifier.padding(horizontal = GolhaSpacing.ScreenHorizontal),
         )
 
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-            contentPadding = PaddingValues(horizontal = GolhaSpacing.ScreenHorizontal),
+        Surface(
+            modifier = Modifier.fillMaxWidth().height(180.dp),
+            shape = RoundedCornerShape(GolhaRadius.Card),
+            color = GolhaColors.Surface,
+            shadowElevation = 2.dp,
+            border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.6f)),
         ) {
-            items(items.take(10), key = { "${it.name}-${it.metaTop}-${it.metaBottom}" }) { person ->
-                Column(
-                    modifier = Modifier.width(108.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+            Box(modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(GolhaRadius.Card))) {
+                androidx.compose.foundation.Image(
+                    painter = painterResource(Res.drawable.eslimi_card_bg),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                    alpha = 0.28f
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.horizontalGradient(
+                                colors = listOf(
+                                    GolhaColors.Surface.copy(alpha = 0.98f),
+                                    GolhaColors.Surface.copy(alpha = 0.35f)
+                                )
+                            )
+                        )
+                )
+
+                LazyRow(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    ArtistAvatar(
-                        name = person.name,
-                        imageUrl = person.imageUrl,
-                        tint = tint,
-                        modifier = Modifier.size(90.dp),
-                    )
-
-                    Text(
-                        text = person.name,
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-                        color = GolhaColors.PrimaryText,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.Center,
-                    )
-
-                    if (person.metaTop != null) {
-                        Text(
-                            text = person.metaTop,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = GolhaColors.SecondaryText,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-
-                    if (person.metaBottom != null) {
-                        Text(
-                            text = person.metaBottom,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = GolhaColors.SecondaryText,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            textAlign = TextAlign.Center,
-                        )
+                    items(items.take(10), key = { "${it.name}-${it.metaTop}-${it.metaBottom}" }) { person ->
+                        Column(
+                            modifier = Modifier.width(90.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            ArtistAvatar(
+                                name = person.name,
+                                imageUrl = person.imageUrl,
+                                tint = tint,
+                                modifier = Modifier.size(70.dp),
+                            )
+        
+                            Text(
+                                text = person.name,
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp
+                                ),
+                                color = GolhaColors.PrimaryText,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                textAlign = TextAlign.Center,
+                            )
+        
+                            if (person.metaTop != null) {
+                                Text(
+                                    text = person.metaTop,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = GolhaColors.SecondaryText,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    textAlign = TextAlign.Center,
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -382,66 +408,88 @@ private fun FeaturedPeopleSection(
     val pagerState = rememberPagerState(pageCount = { pages.size.coerceAtLeast(1) })
 
     Surface(
-        shape = RoundedCornerShape(28.dp),
+        shape = RoundedCornerShape(GolhaRadius.Card),
         color = GolhaColors.Surface,
-        shadowElevation = 8.dp,
+        shadowElevation = 4.dp,
         border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.72f)),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 18.dp, vertical = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
-                color = GolhaColors.PrimaryText,
+        Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(GolhaRadius.Card))) {
+            androidx.compose.foundation.Image(
+                painter = painterResource(Res.drawable.eslimi_card_bg),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+                alpha = 0.28f
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(
+                                GolhaColors.Surface.copy(alpha = 0.98f),
+                                GolhaColors.Surface.copy(alpha = 0.35f)
+                            )
+                        )
+                    )
             )
 
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Top,
-            ) { page ->
-                Row(
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 18.dp, vertical = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
+                    color = GolhaColors.PrimaryText,
+                )
+    
+                HorizontalPager(
+                    state = pagerState,
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    pages[page].forEach { person ->
-                        FeaturedPersonCard(
-                            item = person,
-                            tint = tint,
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-
-                    repeat(3 - pages[page].size) {
-                        SpacerCard(modifier = Modifier.weight(1f))
+                    verticalAlignment = Alignment.Top,
+                ) { page ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        pages[page].forEach { person ->
+                            FeaturedPersonCard(
+                                item = person,
+                                tint = tint,
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+    
+                        repeat(3 - pages[page].size) {
+                            SpacerCard(modifier = Modifier.weight(1f))
+                        }
                     }
                 }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                repeat(pages.size) { index ->
-                    Box(
-                        modifier = Modifier
-                            .padding(horizontal = 3.dp)
-                            .width(if (index == pagerState.currentPage) 20.dp else 8.dp)
-                            .height(6.dp)
-                            .clip(RoundedCornerShape(999.dp))
-                            .background(
-                                if (index == pagerState.currentPage) {
-                                    GolhaColors.SecondaryText.copy(alpha = 0.72f)
-                                } else {
-                                    GolhaColors.Border
-                                }
-                            ),
-                    )
+    
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    repeat(pages.size) { index ->
+                        Box(
+                            modifier = Modifier
+                                .padding(horizontal = 3.dp)
+                                .width(if (index == pagerState.currentPage) 20.dp else 8.dp)
+                                .height(6.dp)
+                                .clip(RoundedCornerShape(999.dp))
+                                .background(
+                                    if (index == pagerState.currentPage) {
+                                        GolhaColors.SecondaryText.copy(alpha = 0.72f)
+                                    } else {
+                                        GolhaColors.Border
+                                    }
+                                ),
+                        )
+                    }
                 }
             }
         }
@@ -463,12 +511,12 @@ private fun FeaturedPersonCard(
             name = item.name,
             imageUrl = item.imageUrl,
             tint = tint,
-            modifier = Modifier.size(92.dp),
+            modifier = Modifier.size(80.dp),
         )
 
         Text(
             text = item.name,
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
             color = GolhaColors.PrimaryText,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -477,16 +525,6 @@ private fun FeaturedPersonCard(
         if (item.metaTop != null) {
             Text(
                 text = item.metaTop,
-                style = MaterialTheme.typography.bodySmall,
-                color = GolhaColors.SecondaryText,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-            )
-        }
-        if (item.metaBottom != null) {
-            Text(
-                text = item.metaBottom,
                 style = MaterialTheme.typography.bodySmall,
                 color = GolhaColors.SecondaryText,
                 maxLines = 1,
@@ -625,20 +663,23 @@ private fun AlphabetJumpRail(
         border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.5f)),
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 8.dp),
+            modifier = Modifier
+                .padding(horizontal = 4.dp, vertical = 6.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
         ) {
             labels.forEach { label ->
                 Text(
                     modifier = Modifier
                         .clip(CircleShape)
                         .clickable { onJump(label) }
-                        .padding(horizontal = 4.dp, vertical = 1.dp),
+                        .padding(horizontal = 4.dp, vertical = 2.dp),
                     text = label,
                     style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp,
+                        letterSpacing = 0.sp
                     ),
                     color = GolhaColors.SecondaryText,
                 )
@@ -656,25 +697,28 @@ internal fun PeopleListRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 14.dp),
+            .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         ArtistAvatar(
             name = item.name,
             imageUrl = item.imageUrl,
             tint = tint,
-            modifier = Modifier.size(82.dp),
+            modifier = Modifier.size(76.dp),
         )
 
         Column(
             modifier = Modifier.weight(1f),
             horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.Center,
         ) {
             Text(
                 text = item.name,
-                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold),
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 19.sp,
+                ),
                 color = GolhaColors.PrimaryText,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -683,21 +727,17 @@ internal fun PeopleListRow(
             if (!item.primaryMeta.isNullOrBlank()) {
                 Text(
                     text = item.primaryMeta,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = GolhaColors.SecondaryText,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Start,
                 )
             }
-            if (item.secondaryMeta != null) {
+            if (!item.secondaryMeta.isNullOrBlank()) {
                 Text(
                     text = item.secondaryMeta,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = GolhaColors.SecondaryText,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = GolhaColors.SecondaryText.copy(alpha = 0.8f),
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Start,
                 )
             }
         }

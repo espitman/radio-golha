@@ -89,21 +89,6 @@ private fun SingersTopSection(singers: List<SingerListItemUiModel>) {
             query = searchQuery,
             onQueryChange = { searchQuery = it }
         )
-
-        if (searchQuery.isEmpty()) {
-            PeopleCarouselSection(
-                title = "خواننده‌های برجسته",
-                tint = GolhaColors.SoftBlue,
-                items = singers.take(10).map { singer ->
-                    FeaturedPersonCardUiModel(
-                        name = singer.name,
-                        imageUrl = singer.imageUrl,
-                        metaTop = null,
-                        metaBottom = "",
-                    )
-                },
-            )
-        }
     }
 }
 
