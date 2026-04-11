@@ -54,6 +54,11 @@ fun HomeScreen(
                         currentPositionMs = currentPlaybackPositionMs,
                         durationMs = currentPlaybackDurationMs,
                         onTogglePlayback = onTogglePlayerPlayback,
+                        onTrackClick = { trackId -> 
+                            // Find the track in state if needed or just pass the ID
+                            state?.topTracks?.find { it.id == trackId }?.let { onTrackClick(it) }
+                                ?: currentTrack?.takeIf { it.id == trackId }?.let { onTrackClick(it) }
+                        }
                     )
                 },
             ) { innerPadding ->

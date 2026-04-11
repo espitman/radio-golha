@@ -491,6 +491,7 @@ fun BottomNavigationWithMiniPlayer(
     currentPositionMs: Long,
     durationMs: Long,
     onTogglePlayback: () -> Unit,
+    onTrackClick: (Long) -> Unit = {},
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -502,6 +503,7 @@ fun BottomNavigationWithMiniPlayer(
             currentPositionMs = currentPositionMs,
             durationMs = durationMs,
             onTogglePlayback = onTogglePlayback,
+            onTrackClick = onTrackClick,
         )
         BottomNavigationBar(
             items = items,
@@ -518,6 +520,7 @@ fun MiniPlayerBar(
     currentPositionMs: Long,
     durationMs: Long,
     onTogglePlayback: () -> Unit,
+    onTrackClick: (Long) -> Unit = {},
 ) {
     Surface(
         tonalElevation = 0.dp,
@@ -578,7 +581,11 @@ fun MiniPlayerBar(
             }
 
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(enabled = currentTrack != null) { 
+                        currentTrack?.id?.let { onTrackClick(it) } 
+                    },
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(

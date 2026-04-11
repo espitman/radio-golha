@@ -45,6 +45,7 @@ fun LibraryScreen(
     currentPlaybackDurationMs: Long = 0L,
     onTogglePlayerPlayback: () -> Unit = {},
     onProgramClick: (ProgramUiModel) -> Unit = {},
+    onTrackClick: (Long) -> Unit = {},
 ) {
     val tabs = LibraryTab.entries
     val pagerState = rememberPagerState(
@@ -68,6 +69,7 @@ fun LibraryScreen(
                         currentPositionMs = currentPlaybackPositionMs,
                         durationMs = currentPlaybackDurationMs,
                         onTogglePlayback = onTogglePlayerPlayback,
+                        onTrackClick = onTrackClick,
                     )
                 }
             ) { innerPadding ->

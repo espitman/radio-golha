@@ -207,6 +207,9 @@ fun AndroidApp() {
                     currentPlaybackPositionMs = currentPlaybackPositionMs,
                     currentPlaybackDurationMs = currentPlaybackDurationMs,
                     onTogglePlayerPlayback = { playerManager.togglePlayback() },
+                    onTrackClick = { trackId ->
+                        navController.navigate("program_detail/$trackId")
+                    },
                     onBottomNavSelected = { tab ->
                         navController.navigate(tab.toRoute().route) {
                             popUpTo(navController.graph.findStartDestination().id) {
@@ -256,6 +259,9 @@ fun AndroidApp() {
                     onTogglePlayerPlayback = { playerManager.togglePlayback() },
                     onProgramClick = { program ->
                         navController.navigate(AndroidRoute.CategoryPrograms.createRoute(program.title))
+                    },
+                    onTrackClick = { trackId ->
+                        navController.navigate("program_detail/$trackId")
                     }
                 )
             }
@@ -307,7 +313,10 @@ fun AndroidApp() {
                     isPlayerLoading = isPlayerLoading,
                     currentPlaybackPositionMs = currentPlaybackPositionMs,
                     currentPlaybackDurationMs = currentPlaybackDurationMs,
-                    onTogglePlayerPlayback = { playerManager.togglePlayback() }
+                    onTogglePlayerPlayback = { playerManager.togglePlayback() },
+                    onTrackClick = { trackId ->
+                        navController.navigate("program_detail/$trackId")
+                    }
                 )
             }
 
