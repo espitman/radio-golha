@@ -46,6 +46,7 @@ fun ProgramEpisodeDetailScreen(
 ) {
     var detail by remember { mutableStateOf<ProgramEpisodeDetailUiModel?>(null) }
     var isLoading by remember { mutableStateOf(true) }
+    var activeTab by remember { mutableStateOf(DetailTab.Timeline) }
 
     LaunchedEffect(programId) {
         isLoading = true
@@ -149,20 +150,173 @@ fun ProgramEpisodeDetailScreen(
                     item { ArtistCarousel(title = "گویندگان", artists = d.announcers) }
                 }
 
-                // 4. Transcript Section (Keep as is or move to card)
-                if (d.transcript.isNotEmpty()) {
-                    item { Spacer(modifier = Modifier.height(16.dp)) }
-                    item { SectionTitle(title = "متن و اشعار") }
-                    item { Spacer(modifier = Modifier.height(12.dp)) }
-                    item {
-                        TranscriptCard(transcript = d.transcript)
+                // 4. Tab Selector (Timeline / Lyrics)
+                item {
+                    DetailTabSelector(
+                        activeTab = activeTab,
+                        onTabChange = { activeTab = it }
+                    )
+                }
+
+                // 5. Tab Content
+                when (activeTab) {
+                    DetailTab.Timeline -> {
+                        TimelineSection(timeline = d.timeline)
+                    }
+                    DetailTab.Lyrics -> {
+                        LyricsSection(transcript = d.transcript)
                     }
                 }
+                
                 // Spacer
-                item { Spacer(modifier = Modifier.height(16.dp)) }
+                item { Spacer(modifier = Modifier.height(32.dp)) }
             }
         }
     )
+}
+
+private enum class DetailTab(val label: String) {
+    Timeline("تایم‌لاین"),
+    Lyrics("اشعار")
+}
+
+@Composable
+private fun DetailTabSelector(activeTab: DetailTab, onTabChange: (DetailTab) -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        color = Color.Transparent,
+        shape = RoundedCornerShape(GolhaRadius.Pill),
+        border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.5f))
+    ) {
+        Row(modifier = Modifier.fillMaxWidth().height(48.dp)) {
+            DetailTab.entries.forEach { tab ->
+                val selected = activeTab == tab
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(GolhaRadius.Pill))
+                        .background(if (selected) GolhaColors.PrimaryAccent else Color.Transparent)
+                        .clickable { onTabChange(tab) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = tab.label,
+                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                        color = if (selected) Color.White else GolhaColors.SecondaryText
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun androidx.compose.foundation.lazy.LazyListScope.TimelineSection(timeline: List<TimelineSegmentUiModel>) {
+    if (timeline.isEmpty()) {
+        item {
+            EmptyTabState("تایم‌لاین اجرایی برای این برنامه ثبت نشده است.")
+        }
+    } else {
+        items(timeline) { segment ->
+            TimelineSegmentCard(segment)
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+    }
+}
+
+@Composable
+private fun TimelineSegmentCard(segment: TimelineSegmentUiModel) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(GolhaRadius.Card),
+        color = GolhaColors.Surface.copy(alpha = 0.6f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.6f))
+    ) {
+        Row(modifier = Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            // Time & Step
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Surface(
+                    shape = CircleShape,
+                    color = GolhaColors.PrimaryAccent.copy(alpha = 0.1f),
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = segment.startTime ?: "0:00",
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, fontWeight = FontWeight.Black),
+                            color = GolhaColors.PrimaryAccent
+                        )
+                    }
+                }
+                Box(modifier = Modifier.width(2.dp).weight(1f).background(GolhaColors.Border.copy(alpha = 0.5f)))
+            }
+
+            // Info
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = segment.modeName ?: "بخش اجرایی",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                    color = GolhaColors.PrimaryText
+                )
+
+                if (segment.singers.isNotEmpty()) {
+                    TimelineMetaRow(icon = GolhaIcon.People, text = segment.singers.joinToString(" و "))
+                }
+                if (segment.poets.isNotEmpty()) {
+                    TimelineMetaRow(icon = GolhaIcon.Note, text = segment.poets.joinToString(" و "))
+                }
+                if (segment.performers.isNotEmpty()) {
+                    val performersText = segment.performers.joinToString(" و ") { 
+                         "${it.name} (${it.instrument ?: "نوازنده"})" 
+                    }
+                    TimelineMetaRow(icon = GolhaIcon.Note, text = performersText)
+                }
+                if (segment.announcers.isNotEmpty()) {
+                    TimelineMetaRow(icon = GolhaIcon.Account, text = segment.announcers.joinToString(" و "))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimelineMetaRow(icon: GolhaIcon, text: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        GolhaLineIcon(icon = icon, modifier = Modifier.size(14.dp), tint = GolhaColors.SecondaryText.copy(alpha = 0.7f))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            color = GolhaColors.SecondaryText,
+            lineHeight = 16.sp
+        )
+    }
+}
+
+private fun androidx.compose.foundation.lazy.LazyListScope.LyricsSection(transcript: List<TranscriptVerseUiModel>) {
+    if (transcript.isEmpty()) {
+        item {
+            EmptyTabState("متن اشعار برای این برنامه ثبت نشده است.")
+        }
+    } else {
+        item {
+            TranscriptCard(transcript = transcript)
+        }
+    }
+}
+
+@Composable
+private fun EmptyTabState(message: String) {
+    Box(
+        modifier = Modifier.fillMaxWidth().height(200.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = GolhaColors.SecondaryText,
+            textAlign = TextAlign.Center
+        )
+    }
 }
 
 @Composable
