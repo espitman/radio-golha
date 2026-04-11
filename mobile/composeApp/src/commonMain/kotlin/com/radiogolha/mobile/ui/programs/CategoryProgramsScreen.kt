@@ -153,7 +153,7 @@ private fun CategoryProgramTrackRow(
                     Text(
                         text = program.dastgah,
                         style = MaterialTheme.typography.bodySmall,
-                        color = GolhaColors.SoftRose,
+                        color = GolhaColors.SecondaryText,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         textAlign = TextAlign.Start
