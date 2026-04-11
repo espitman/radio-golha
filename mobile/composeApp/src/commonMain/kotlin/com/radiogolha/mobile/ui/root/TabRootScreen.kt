@@ -122,12 +122,14 @@ fun TabRootScreen(
                             }
                         }
                     }
-                    item {
-                        Text(
-                            text = subtitle,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = GolhaColors.SecondaryText,
-                        )
+                    if (subtitle.isNotBlank()) {
+                        item {
+                            Text(
+                                text = subtitle,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = GolhaColors.SecondaryText,
+                            )
+                        }
                     }
                     if (content != null) {
                         content()

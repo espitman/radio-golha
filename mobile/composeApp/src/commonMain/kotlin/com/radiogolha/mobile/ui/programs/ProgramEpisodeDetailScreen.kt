@@ -184,7 +184,7 @@ private fun ProgramHeaderCard(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(
-                text = "${detail.no} — ${detail.title}",
+                text = detail.title,
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                 color = GolhaColors.PrimaryText,
                 textAlign = TextAlign.Center,
