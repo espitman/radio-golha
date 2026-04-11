@@ -171,7 +171,7 @@ fun ProgramEpisodeDetailScreen(
                     }
                 } else if (hasTimeline) {
                     // Only Timeline
-                    item { SectionTitle(title = "تایم‌لاین اجرایی") }
+                    item { SectionTitle(title = "تایم‌لاین") }
                     TimelineSection(timeline = d.timeline)
                 } else if (hasLyrics) {
                     // Only Lyrics
@@ -544,14 +544,36 @@ private fun TranscriptCard(transcript: List<TranscriptVerseUiModel>) {
 
 @Composable
 private fun DetailSkeleton() {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Box(Modifier.fillMaxWidth().height(180.dp).background(GolhaColors.Surface, RoundedCornerShape(GolhaRadius.Card)))
+    Column(
+        modifier = Modifier.padding(horizontal = GolhaSpacing.ScreenHorizontal),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Top Card
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(130.dp)
+                .background(GolhaColors.Surface.copy(alpha = 0.5f), RoundedCornerShape(GolhaRadius.Card))
+                .border(1.dp, GolhaColors.Border.copy(alpha = 0.3f), RoundedCornerShape(GolhaRadius.Card))
+        )
+
+        // Info Grid
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Box(Modifier.weight(1f).height(60.dp).background(GolhaColors.Surface, RoundedCornerShape(12.dp)))
-            Box(Modifier.weight(1f).height(60.dp).background(GolhaColors.Surface, RoundedCornerShape(12.dp)))
+            Box(Modifier.weight(1f).height(64.dp).background(GolhaColors.Surface.copy(alpha = 0.4f), RoundedCornerShape(16.dp)))
+            Box(Modifier.weight(1f).height(64.dp).background(GolhaColors.Surface.copy(alpha = 0.4f), RoundedCornerShape(16.dp)))
         }
-        repeat(3) {
-            Box(Modifier.fillMaxWidth().height(50.dp).background(GolhaColors.Surface, RoundedCornerShape(8.dp)))
+
+        // Carousels
+        repeat(2) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(Modifier.width(100.dp).height(16.dp).background(GolhaColors.Surface.copy(alpha = 0.6f), RoundedCornerShape(4.dp)))
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    repeat(4) {
+                        Box(Modifier.size(80.dp).background(GolhaColors.Surface.copy(alpha = 0.3f), CircleShape))
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }
