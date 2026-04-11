@@ -57,12 +57,65 @@ fun AndroidApp() {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     val selectedTab = remember(currentDestination) {
+        val route = currentDestination?.route ?: ""
         when {
-            currentDestination.isOnRoute(AndroidRoute.Account.route) -> AppTab.Account
-            currentDestination.isOnRoute(AndroidRoute.Library.route) -> AppTab.Library
-            currentDestination.isOnRoute(AndroidRoute.Search.route) -> AppTab.Search
+            route.startsWith(AndroidRoute.Account.route) -> AppTab.Account
+            route.startsWith(AndroidRoute.Library.route) -> AppTab.Library
+            route.startsWith(AndroidRoute.Search.route) -> AppTab.Search
             else -> AppTab.Home
         }
+    }
+    
+    // Move states here to persist across tab changes
+    var homeState by remember { mutableStateOf<HomeUiState?>(null) }
+    var isHomeLoading by remember { mutableStateOf(true) }
+    
+    var singers by remember { mutableStateOf<List<com.radiogolha.mobile.ui.home.SingerListItemUiModel>>(emptyList()) }
+    var isSingersLoading by remember { mutableStateOf(false) }
+    
+    var musicians by remember { mutableStateOf<List<com.radiogolha.mobile.ui.home.MusicianListItemUiModel>>(emptyList()) }
+    var isMusiciansLoading by remember { mutableStateOf(false) }
+    
+    var programs by remember { mutableStateOf<List<com.radiogolha.mobile.ui.home.ProgramUiModel>>(emptyList()) }
+    var isProgramsLoading by remember { mutableStateOf(false) }
+
+    // Load initial home state
+    LaunchedEffect(reloadToken) {
+        if (homeState == null) isHomeLoading = true
+        val loadedState = runCatching {
+            withContext(Dispatchers.Default) { loadHomeUiState() }
+        }.getOrNull()
+
+        if (loadedState != null) {
+            val visibleTrackCount = 5
+            val currentTracks = loadedState.topTracks.take(visibleTrackCount)
+            homeState = loadedState.copy(topTracks = currentTracks)
+        }
+        isHomeLoading = false
+    }
+
+    LaunchedEffect(reloadToken) {
+        isSingersLoading = true
+        singers = runCatching {
+            withContext(Dispatchers.Default) { loadSingersUiState() }
+        }.getOrNull() ?: emptyList()
+        isSingersLoading = false
+    }
+
+    LaunchedEffect(reloadToken) {
+        isMusiciansLoading = true
+        musicians = runCatching {
+            withContext(Dispatchers.Default) { loadMusiciansUiState() }
+        }.getOrNull() ?: emptyList()
+        isMusiciansLoading = false
+    }
+
+    LaunchedEffect(reloadToken) {
+        isProgramsLoading = true
+        programs = runCatching {
+            withContext(Dispatchers.Default) { com.radiogolha.mobile.ui.programs.loadProgramsUiState() }
+        }.getOrNull() ?: emptyList()
+        isProgramsLoading = false
     }
     val bottomNavItems = remember(selectedTab) {
         buildBottomNavItems(selectedTab)
@@ -74,25 +127,10 @@ fun AndroidApp() {
             startDestination = AndroidRoute.Home.route,
         ) {
             composable(AndroidRoute.Home.route) {
-                val visibleTrackCount = 5
-                var homeState by remember { mutableStateOf<HomeUiState?>(null) }
-                var isInitialHomeLoading by remember { mutableStateOf(true) }
                 var isRefreshingTopTracks by remember { mutableStateOf(false) }
-                var prefetchedTopTracks by remember { mutableStateOf<List<com.radiogolha.mobile.ui.home.TrackUiModel>>(emptyList()) }
                 var topTracksPrefetchToken by remember { mutableIntStateOf(0) }
-
-                LaunchedEffect(reloadToken) {
-                    val loadedState = runCatching {
-                        withContext(Dispatchers.Default) { loadHomeUiState() }
-                    }.getOrNull()
-
-                    homeState = loadedState?.let { state ->
-                        val currentTracks = state.topTracks.take(visibleTrackCount)
-                        prefetchedTopTracks = state.topTracks.drop(visibleTrackCount).take(visibleTrackCount)
-                        state.copy(topTracks = currentTracks)
-                    }
-                    isInitialHomeLoading = false
-                }
+                val visibleTrackCount = 5
+                var prefetchedTopTracks by remember { mutableStateOf<List<com.radiogolha.mobile.ui.home.TrackUiModel>>(emptyList()) }
 
                 LaunchedEffect(topTracksPrefetchToken) {
                     if (topTracksPrefetchToken == 0) return@LaunchedEffect
@@ -107,7 +145,7 @@ fun AndroidApp() {
                 }
 
                 HomeScreen(
-                    state = if (isInitialHomeLoading && homeState == null) {
+                    state = if (isHomeLoading && homeState == null) {
                         null
                     } else {
                         homeState?.copy(bottomNavItems = bottomNavItems)
@@ -193,27 +231,14 @@ fun AndroidApp() {
                     it.name.equals(tabName, ignoreCase = true) 
                 } ?: com.radiogolha.mobile.ui.library.LibraryTab.Programs
 
-                val singers by produceState(initialValue = emptyList(), key1 = reloadToken) {
-                    value = runCatching {
-                        withContext(Dispatchers.Default) { loadSingersUiState() }
-                    }.getOrNull() ?: emptyList()
-                }
-                val musicians by produceState(initialValue = emptyList(), key1 = reloadToken) {
-                    value = runCatching {
-                        withContext(Dispatchers.Default) { loadMusiciansUiState() }
-                    }.getOrNull() ?: emptyList()
-                }
-                val programs by produceState(initialValue = emptyList(), key1 = reloadToken) {
-                    value = runCatching {
-                        withContext(Dispatchers.Default) { com.radiogolha.mobile.ui.programs.loadProgramsUiState() }
-                    }.getOrNull() ?: emptyList()
-                }
-
                 com.radiogolha.mobile.ui.library.LibraryScreen(
                     initialTab = initialTab,
                     programs = programs,
                     singers = singers,
                     musicians = musicians,
+                    isProgramsLoading = isProgramsLoading,
+                    isSingersLoading = isSingersLoading,
+                    isMusiciansLoading = isMusiciansLoading,
                     bottomNavItems = bottomNavItems,
                     onBottomNavSelected = { tab ->
                         navController.navigate(tab.toRoute().route) {

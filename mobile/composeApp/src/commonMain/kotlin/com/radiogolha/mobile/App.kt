@@ -38,8 +38,16 @@ fun App() {
     var reloadToken by remember { mutableStateOf(0) }
     var isImportingDatabase by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-    val currentRoute = navigationStack.lastOrNull() ?: AppRoute.Root(AppTab.Home)
-    val selectedTab = (navigationStack.firstOrNull() as? AppRoute.Root)?.tab ?: AppTab.Home
+    val currentRoute by remember {
+        androidx.compose.runtime.derivedStateOf { navigationStack.lastOrNull() ?: AppRoute.Root(AppTab.Home) }
+    }
+    val selectedTab by remember {
+        androidx.compose.runtime.derivedStateOf { (navigationStack.firstOrNull() as? AppRoute.Root)?.tab ?: AppTab.Home }
+    }
+    
+    var isProgramsLoading by remember { mutableStateOf(false) }
+    var isSingersLoading by remember { mutableStateOf(false) }
+    var isMusiciansLoading by remember { mutableStateOf(false) }
 
     PlatformBackHandler(enabled = navigationStack.size > 1) {
         if (navigationStack.size > 1) {
@@ -93,9 +101,11 @@ fun App() {
             return@produceState
         }
 
+        isSingersLoading = true
         value = runCatching {
             withContext(Dispatchers.Default) { loadSingersUiState() }
         }.getOrNull() ?: emptyList()
+        isSingersLoading = false
     }
     val musicians by produceState(
         initialValue = emptyList<com.radiogolha.mobile.ui.home.MusicianListItemUiModel>(),
@@ -107,9 +117,11 @@ fun App() {
             return@produceState
         }
 
+        isMusiciansLoading = true
         value = runCatching {
             withContext(Dispatchers.Default) { loadMusiciansUiState() }
         }.getOrNull() ?: emptyList()
+        isMusiciansLoading = false
     }
     
     val programs by produceState(
@@ -122,9 +134,11 @@ fun App() {
             return@produceState
         }
         
+        isProgramsLoading = true
         value = runCatching {
             withContext(Dispatchers.Default) { loadProgramsUiState() }
         }.getOrNull() ?: emptyList()
+        isProgramsLoading = false
     }
 
     val bottomNavItems = remember(selectedTab) {
@@ -156,7 +170,8 @@ fun App() {
             }
 
             is AppRoute.Root -> {
-                when (currentRoute.tab) {
+                val rootRoute = currentRoute as AppRoute.Root
+                when (rootRoute.tab) {
                     AppTab.Home, AppTab.Search -> {
                         HomeScreen(
                             state = homeState?.copy(bottomNavItems = bottomNavItems),
@@ -176,7 +191,7 @@ fun App() {
                             programs = programs,
                             singers = emptyList(), // Load these properly if needed later
                             musicians = emptyList(),
-                            isProgramsLoading = programs.isEmpty(), // Simplified loading state
+                            isProgramsLoading = isProgramsLoading,
                             bottomNavItems = bottomNavItems,
                             onBottomNavSelected = {
                                 navigationStack.resetToRoot(it)
