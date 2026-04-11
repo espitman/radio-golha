@@ -95,32 +95,10 @@ fun PeopleBrowseScreen(
     currentPlaybackDurationMs: Long = 0L,
     onTogglePlayerPlayback: () -> Unit = {},
 ) {
-    val listState = rememberLazyListState()
-    val scope = rememberCoroutineScope()
-    val groupedPeople = rememberGroupedPeople(people)
-
-    val headerIndexes = remember(groupedPeople, topSectionContent, featuredTitle, featuredPeople, countLabel) {
-        buildMap {
-            var currentIndex = 1 // After Header
-            if (topSectionContent != null || (!featuredTitle.isNullOrBlank() && featuredPeople.isNotEmpty())) {
-                currentIndex++
-            }
-            if (!countLabel.isNullOrBlank()) {
-                currentIndex++
-            }
-
-            groupedPeople.forEach { group ->
-                put(group.label, currentIndex)
-                currentIndex += 1 + group.items.size
-            }
-        }
-    }
-
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         GolhaPatternBackground {
             Scaffold(
-                modifier = Modifier
-                    .fillMaxSize(),
+                modifier = Modifier.fillMaxSize(),
                 containerColor = Color.Transparent,
                 bottomBar = {
                     BottomNavigationWithMiniPlayer(
@@ -135,114 +113,166 @@ fun PeopleBrowseScreen(
                     )
                 },
             ) { innerPadding ->
-            Box(modifier = Modifier.fillMaxSize()) {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .statusBarsPadding(),
-                    contentPadding = PaddingValues(
-                        top = GolhaSpacing.StatusBarTopGap,
-                        bottom = innerPadding.calculateBottomPadding() + 16.dp,
-                    ),
-                    verticalArrangement = Arrangement.Top,
-                ) {
-                    item {
-                        PeopleHeader(
-                            title = title,
-                            onBackClick = onBackClick,
-                            modifier = Modifier
-                                .padding(horizontal = GolhaSpacing.ScreenHorizontal)
-                                .padding(bottom = 12.dp)
-                        )
-                    }
-
-                    if (topSectionContent != null) {
-                        item { topSectionContent() }
-                    } else if (!featuredTitle.isNullOrBlank() && featuredPeople.isNotEmpty()) {
-                        item {
-                            FeaturedPeopleSection(
-                                title = featuredTitle,
-                                tint = tint,
-                                items = featuredPeople,
-                            )
-                        }
-                    }
-
-                    if (!countLabel.isNullOrBlank()) {
-                        item {
-                            Text(
-                                text = countLabel,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = GolhaColors.SecondaryText,
-                                modifier = Modifier.padding(horizontal = GolhaSpacing.ScreenHorizontal)
-                            )
-                        }
-                    }
-
-                    if (customContent != null) {
-                        item {
-                            Box(modifier = Modifier.padding(top = 8.dp)) {
-                                customContent()
-                            }
-                        }
-                    } else if (people.isNotEmpty()) {
-                        groupedPeople.forEachIndexed { groupIndex, group ->
-                            stickyHeader(key = "header-${group.label}") {
-                                AlphabetGroupHeader(
-                                    label = group.label,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .background(GolhaColors.ScreenBackground.copy(alpha = 0.95f))
-                                        .padding(horizontal = GolhaSpacing.ScreenHorizontal)
-                                )
-                            }
-
-                            itemsIndexed(
-                                items = group.items,
-                                key = { index, person -> "${group.label}-${person.name}-$index" },
-                            ) { index, person ->
-                                PeopleListRow(
-                                    item = person,
-                                    tint = tint,
-                                    modifier = Modifier.padding(horizontal = GolhaSpacing.ScreenHorizontal)
-                                )
-                                val isLastInGroup = index == group.items.lastIndex
-                                val isLastGroup = groupIndex == groupedPeople.lastIndex
-                                if (!(isLastInGroup && isLastGroup)) {
-                                    HorizontalDivider(
-                                        modifier = Modifier.padding(horizontal = GolhaSpacing.ScreenHorizontal + 24.dp),
-                                        color = GolhaColors.Border.copy(alpha = 0.5f),
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                val showJumpRail = remember {
-                    derivedStateOf {
-                        listState.firstVisibleItemIndex >= 1 || listState.firstVisibleItemScrollOffset > 0
-                    }
-                }
-
-                if (customContent == null && people.isNotEmpty() && showJumpRail.value) {
-                    AlphabetJumpRail(
-                        labels = groupedPeople.map { it.label },
-                        onJump = { label ->
-                            scope.launch {
-                                headerIndexes[label]?.let { listState.animateScrollToItem(it) }
-                            }
-                        },
-                        modifier = Modifier
-                            .align(Alignment.CenterEnd)
-                            .padding(end = 4.dp, top = 180.dp, bottom = 90.dp) // Balanced padding to avoid tabs and carousel
-                    )
-                }
+                PeopleBrowseContent(
+                    title = title,
+                    featuredTitle = featuredTitle,
+                    countLabel = countLabel,
+                    tint = tint,
+                    featuredPeople = featuredPeople,
+                    topSectionContent = topSectionContent,
+                    customContent = customContent,
+                    people = people,
+                    onBackClick = onBackClick,
+                    modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
+                )
             }
         }
     }
 }
+
+@Composable
+@OptIn(ExperimentalFoundationApi::class)
+fun PeopleBrowseContent(
+    title: String? = null,
+    featuredTitle: String? = null,
+    countLabel: String? = null,
+    tint: androidx.compose.ui.graphics.Color,
+    featuredPeople: List<FeaturedPersonCardUiModel> = emptyList(),
+    topSectionContent: (@Composable () -> Unit)? = null,
+    customContent: (@Composable () -> Unit)? = null,
+    people: List<BrowsePersonRowUiModel> = emptyList(),
+    onBackClick: (() -> Unit)? = null,
+    modifier: Modifier = Modifier,
+) {
+    val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    val groupedPeople = rememberGroupedPeople(people)
+
+    val headerIndexes = remember(groupedPeople, topSectionContent, featuredTitle, featuredPeople, countLabel) {
+        buildMap {
+            var currentIndex = 0
+            if (title != null) currentIndex++
+            if (topSectionContent != null || (!featuredTitle.isNullOrBlank() && featuredPeople.isNotEmpty())) {
+                currentIndex++
+            }
+            if (!countLabel.isNullOrBlank()) {
+                currentIndex++
+            }
+
+            groupedPeople.forEach { group ->
+                put(group.label, currentIndex)
+                currentIndex += 1 + group.items.size
+            }
+        }
+    }
+
+    Box(modifier = modifier.fillMaxSize()) {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding(),
+            contentPadding = PaddingValues(
+                top = if (title != null) GolhaSpacing.StatusBarTopGap else 0.dp,
+                bottom = 16.dp,
+            ),
+            verticalArrangement = Arrangement.Top,
+        ) {
+            if (title != null && onBackClick != null) {
+                item {
+                    PeopleHeader(
+                        title = title,
+                        onBackClick = onBackClick,
+                        modifier = Modifier
+                            .padding(horizontal = GolhaSpacing.ScreenHorizontal)
+                            .padding(bottom = 12.dp)
+                    )
+                }
+            }
+
+            if (topSectionContent != null) {
+                item { topSectionContent() }
+            } else if (!featuredTitle.isNullOrBlank() && featuredPeople.isNotEmpty()) {
+                item {
+                    FeaturedPeopleSection(
+                        title = featuredTitle,
+                        tint = tint,
+                        items = featuredPeople,
+                    )
+                }
+            }
+
+            if (!countLabel.isNullOrBlank()) {
+                item {
+                    Text(
+                        text = countLabel,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = GolhaColors.SecondaryText,
+                        modifier = Modifier.padding(horizontal = GolhaSpacing.ScreenHorizontal)
+                    )
+                }
+            }
+
+            if (customContent != null) {
+                item {
+                    Box(modifier = Modifier.padding(top = 8.dp)) {
+                        customContent()
+                    }
+                }
+            } else if (people.isNotEmpty()) {
+                groupedPeople.forEachIndexed { groupIndex, group ->
+                    stickyHeader(key = "header-${group.label}") {
+                        AlphabetGroupHeader(
+                            label = group.label,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(GolhaColors.ScreenBackground.copy(alpha = 0.95f))
+                                .padding(horizontal = GolhaSpacing.ScreenHorizontal)
+                        )
+                    }
+
+                    itemsIndexed(
+                        items = group.items,
+                        key = { index, person -> "${group.label}-${person.name}-$index" },
+                    ) { index, person ->
+                        PeopleListRow(
+                            item = person,
+                            tint = tint,
+                            modifier = Modifier.padding(horizontal = GolhaSpacing.ScreenHorizontal)
+                        )
+                        val isLastInGroup = index == group.items.lastIndex
+                        val isLastGroup = groupIndex == groupedPeople.lastIndex
+                        if (!(isLastInGroup && isLastGroup)) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = GolhaSpacing.ScreenHorizontal + 24.dp),
+                                color = GolhaColors.Border.copy(alpha = 0.5f),
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        val showJumpRail = remember {
+            derivedStateOf {
+                listState.firstVisibleItemIndex >= 1 || listState.firstVisibleItemScrollOffset > 0
+            }
+        }
+
+        if (customContent == null && people.isNotEmpty() && (title == null || showJumpRail.value)) {
+            AlphabetJumpRail(
+                labels = groupedPeople.map { it.label },
+                onJump = { label ->
+                    scope.launch {
+                        headerIndexes[label]?.let { listState.animateScrollToItem(it) }
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 4.dp, top = 80.dp, bottom = 40.dp) 
+            )
+        }
+    }
 }
 
 @Composable
@@ -319,7 +349,7 @@ fun PeopleCarouselSection(
 }
 
 @Composable
-private fun PeopleHeader(
+fun PeopleHeader(
     title: String,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,

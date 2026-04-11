@@ -113,8 +113,20 @@ fun AndroidApp() {
                         homeState?.copy(bottomNavItems = bottomNavItems)
                     },
                     bottomNavItems = bottomNavItems,
-                    onOpenAllSingers = { navController.navigate(AndroidRoute.Singers.route) },
-                    onOpenAllMusicians = { navController.navigate(AndroidRoute.Musicians.route) },
+                    onOpenAllSingers = {
+                        navController.navigate(AndroidRoute.Library.createRoute("singers")) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onOpenAllMusicians = {
+                        navController.navigate(AndroidRoute.Library.createRoute("musicians")) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
                     isRefreshingTopTracks = isRefreshingTopTracks,
                     onRefreshTopTracks = {
                         if (!isRefreshingTopTracks && prefetchedTopTracks.size >= visibleTrackCount) {
@@ -166,17 +178,43 @@ fun AndroidApp() {
                 )
             }
 
-            composable(AndroidRoute.Library.route) {
-                TabRootScreen(
-                    title = "کتابخانه",
-                    subtitle = "لیست‌های ذخیره‌شده و بخش‌های شخصی اینجا می‌آیند.",
+            composable(
+                route = AndroidRoute.Library.route + "?tab={tab}",
+                arguments = listOf(
+                    androidx.navigation.navArgument("tab") {
+                        type = androidx.navigation.NavType.StringType
+                        nullable = true
+                        defaultValue = "programs"
+                    }
+                )
+            ) { backStackEntry ->
+                val tabName = backStackEntry.arguments?.getString("tab") ?: "programs"
+                val initialTab = com.radiogolha.mobile.ui.library.LibraryTab.entries.find { 
+                    it.name.equals(tabName, ignoreCase = true) 
+                } ?: com.radiogolha.mobile.ui.library.LibraryTab.Programs
+
+                val singers by produceState(initialValue = emptyList(), key1 = reloadToken) {
+                    value = runCatching {
+                        withContext(Dispatchers.Default) { loadSingersUiState() }
+                    }.getOrNull() ?: emptyList()
+                }
+                val musicians by produceState(initialValue = emptyList(), key1 = reloadToken) {
+                    value = runCatching {
+                        withContext(Dispatchers.Default) { loadMusiciansUiState() }
+                    }.getOrNull() ?: emptyList()
+                }
+                val programs by produceState(initialValue = emptyList(), key1 = reloadToken) {
+                    value = runCatching {
+                        withContext(Dispatchers.Default) { com.radiogolha.mobile.ui.programs.loadProgramsUiState() }
+                    }.getOrNull() ?: emptyList()
+                }
+
+                com.radiogolha.mobile.ui.library.LibraryScreen(
+                    initialTab = initialTab,
+                    programs = programs,
+                    singers = singers,
+                    musicians = musicians,
                     bottomNavItems = bottomNavItems,
-                    currentTrack = currentTrack,
-                    isPlayerPlaying = isPlayerPlaying,
-                    isPlayerLoading = isPlayerLoading,
-                    currentPlaybackPositionMs = currentPlaybackPositionMs,
-                    currentPlaybackDurationMs = currentPlaybackDurationMs,
-                    onTogglePlayerPlayback = { playerManager.togglePlayback() },
                     onBottomNavSelected = { tab ->
                         navController.navigate(tab.toRoute().route) {
                             popUpTo(navController.graph.findStartDestination().id) {
@@ -186,6 +224,12 @@ fun AndroidApp() {
                             restoreState = true
                         }
                     },
+                    currentTrack = currentTrack,
+                    isPlayerPlaying = isPlayerPlaying,
+                    isPlayerLoading = isPlayerLoading,
+                    currentPlaybackPositionMs = currentPlaybackPositionMs,
+                    currentPlaybackDurationMs = currentPlaybackDurationMs,
+                    onTogglePlayerPlayback = { playerManager.togglePlayback() },
                 )
             }
 
@@ -294,7 +338,9 @@ fun AndroidApp() {
 private sealed class AndroidRoute(val route: String) {
     data object Home : AndroidRoute("home")
     data object Search : AndroidRoute("search")
-    data object Library : AndroidRoute("library")
+    data object Library : AndroidRoute("library") {
+        fun createRoute(tab: String) = "library?tab=$tab"
+    }
     data object Account : AndroidRoute("account")
     data object Singers : AndroidRoute("singers")
     data object Musicians : AndroidRoute("musicians")

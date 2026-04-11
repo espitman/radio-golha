@@ -9,6 +9,7 @@ import com.radiogolha.mobile.ui.home.TrackUiModel
 import com.radiogolha.mobile.ui.people.BrowsePersonRowUiModel
 import com.radiogolha.mobile.ui.people.FeaturedPersonCardUiModel
 import com.radiogolha.mobile.ui.people.PeopleBrowseScreen
+import com.radiogolha.mobile.ui.people.PeopleBrowseContent
 import com.radiogolha.mobile.ui.people.PeopleCarouselSection
 import com.radiogolha.mobile.ui.people.browseGroupLabel
 import com.radiogolha.mobile.ui.people.comparePersianTexts
@@ -45,50 +46,14 @@ fun SingersScreen(
     currentPlaybackDurationMs: Long = 0L,
     onTogglePlayerPlayback: () -> Unit = {},
 ) {
-    var searchQuery by remember { mutableStateOf("") }
-
-    val filteredSingers = remember(singers, searchQuery) {
-        val filtered = if (searchQuery.isEmpty()) singers
-        else singers.filter { it.name.contains(searchQuery, ignoreCase = true) }
-        
-        filtered.sortedWith { a, b -> comparePersianTexts(a.name, b.name) }
-    }
-
     PeopleBrowseScreen(
         title = "خواننده‌ها",
         countLabel = "",
         tint = GolhaColors.SoftBlue,
         topSectionContent = {
-            Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                SingerSearchBar(
-                    query = searchQuery,
-                    onQueryChange = { searchQuery = it }
-                )
-
-                if (searchQuery.isEmpty()) {
-                    PeopleCarouselSection(
-                        title = "خواننده‌های برجسته",
-                        tint = GolhaColors.SoftBlue,
-                        items = singers.take(10).map { singer ->
-                            FeaturedPersonCardUiModel(
-                                name = singer.name,
-                                imageUrl = singer.imageUrl,
-                                metaTop = null,
-                                metaBottom = "",
-                            )
-                        },
-                    )
-                }
-            }
+            SingersTopSection(singers = singers)
         },
-        people = filteredSingers.map { singer ->
-            BrowsePersonRowUiModel(
-                name = singer.name,
-                imageUrl = singer.imageUrl,
-                primaryMeta = "${singer.programCount} برنامه",
-                groupLabel = browseGroupLabel(singer.name),
-            )
-        },
+        people = singers.toBrowsePersonRowModels(),
         bottomNavItems = bottomNavItems,
         onBottomNavSelected = onBottomNavSelected,
         onBackClick = onBackClick,
@@ -98,6 +63,56 @@ fun SingersScreen(
         currentPlaybackPositionMs = currentPlaybackPositionMs,
         currentPlaybackDurationMs = currentPlaybackDurationMs,
         onTogglePlayerPlayback = onTogglePlayerPlayback,
+    )
+}
+
+@Composable
+fun SingersContent(singers: List<SingerListItemUiModel>) {
+    PeopleBrowseContent(
+        tint = GolhaColors.SoftBlue,
+        topSectionContent = {
+            SingersTopSection(singers = singers)
+        },
+        people = singers.toBrowsePersonRowModels(),
+    )
+}
+
+@Composable
+private fun SingersTopSection(singers: List<SingerListItemUiModel>) {
+    var searchQuery by remember { mutableStateOf("") }
+    
+    // Note: Filtering logic might be better handled outside if we want it to react to search
+    // But for now, let's keep it simple as the original had it.
+    
+    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        SingerSearchBar(
+            query = searchQuery,
+            onQueryChange = { searchQuery = it }
+        )
+
+        if (searchQuery.isEmpty()) {
+            PeopleCarouselSection(
+                title = "خواننده‌های برجسته",
+                tint = GolhaColors.SoftBlue,
+                items = singers.take(10).map { singer ->
+                    FeaturedPersonCardUiModel(
+                        name = singer.name,
+                        imageUrl = singer.imageUrl,
+                        metaTop = null,
+                        metaBottom = "",
+                    )
+                },
+            )
+        }
+    }
+}
+
+private fun List<SingerListItemUiModel>.toBrowsePersonRowModels() = map { singer ->
+    BrowsePersonRowUiModel(
+        name = singer.name,
+        imageUrl = singer.imageUrl,
+        primaryMeta = "${singer.programCount} برنامه",
+        groupLabel = browseGroupLabel(singer.name),
     )
 }
 

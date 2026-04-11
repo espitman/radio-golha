@@ -47,7 +47,17 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Alignment
+import com.radiogolha.mobile.theme.GolhaPatternBackground
+import com.radiogolha.mobile.ui.people.PeopleHeader
+import com.radiogolha.mobile.ui.home.BottomNavigationWithMiniPlayer
+import com.radiogolha.mobile.ui.people.PeopleBrowseContent
 import com.radiogolha.mobile.ui.people.comparePersianTexts
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.material3.Scaffold
 
 @Composable
 fun MusiciansScreen(
@@ -62,6 +72,42 @@ fun MusiciansScreen(
     currentPlaybackDurationMs: Long = 0L,
     onTogglePlayerPlayback: () -> Unit = {},
 ) {
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+        GolhaPatternBackground {
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                containerColor = Color.Transparent,
+                bottomBar = {
+                    BottomNavigationWithMiniPlayer(
+                        items = bottomNavItems,
+                        onItemSelected = onBottomNavSelected,
+                        currentTrack = currentTrack,
+                        isPlaying = isPlayerPlaying,
+                        isLoading = isPlayerLoading,
+                        currentPositionMs = currentPlaybackPositionMs,
+                        durationMs = currentPlaybackDurationMs,
+                        onTogglePlayback = onTogglePlayerPlayback,
+                    )
+                },
+            ) { innerPadding ->
+                Column(modifier = Modifier.fillMaxSize().padding(bottom = innerPadding.calculateBottomPadding())) {
+                    PeopleHeader(
+                        title = "نوازندگان",
+                        onBackClick = onBackClick,
+                        modifier = Modifier
+                            .statusBarsPadding()
+                            .padding(horizontal = GolhaSpacing.ScreenHorizontal)
+                            .padding(top = GolhaSpacing.StatusBarTopGap, bottom = 12.dp)
+                    )
+                    MusiciansContent(musicians = musicians)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MusiciansContent(musicians: List<MusicianListItemUiModel>) {
     var searchQuery by remember { mutableStateOf("") }
 
     val filteredBySearch = remember(musicians, searchQuery) {
@@ -85,9 +131,7 @@ fun MusiciansScreen(
             .sortedWith { a, b -> comparePersianTexts(a.name, b.name) }
     }
 
-    PeopleBrowseScreen(
-        title = "نوازندگان",
-        countLabel = "",
+    PeopleBrowseContent(
         tint = GolhaColors.SoftRose,
         topSectionContent = {
             Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
@@ -128,16 +172,7 @@ fun MusiciansScreen(
                 },
                 tint = GolhaColors.SoftRose
             )
-        },
-        bottomNavItems = bottomNavItems,
-        onBottomNavSelected = onBottomNavSelected,
-        onBackClick = onBackClick,
-        currentTrack = currentTrack,
-        isPlayerPlaying = isPlayerPlaying,
-        isPlayerLoading = isPlayerLoading,
-        currentPlaybackPositionMs = currentPlaybackPositionMs,
-        currentPlaybackDurationMs = currentPlaybackDurationMs,
-        onTogglePlayerPlayback = onTogglePlayerPlayback,
+        }
     )
 }
 
