@@ -158,9 +158,8 @@ fun ProgramEpisodeDetailScreen(
                         TranscriptCard(transcript = d.transcript)
                     }
                 }
-
                 // Spacer
-                item { Spacer(modifier = Modifier.height(32.dp)) }
+                item { Spacer(modifier = Modifier.height(16.dp)) }
             }
         }
     )
@@ -180,13 +179,13 @@ private fun ProgramHeaderCard(
         shadowElevation = GolhaElevation.Card
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(
-                text = "${detail.categoryName} شماره ${detail.no} — ${detail.title}",
-                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                text = "${detail.no} — ${detail.title}",
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                 color = GolhaColors.PrimaryText,
                 textAlign = TextAlign.Center,
                 maxLines = 1,

@@ -79,6 +79,7 @@ fun AndroidApp() {
 
     // Category Programs State
     var categoryPrograms by remember { mutableStateOf<List<com.radiogolha.mobile.ui.home.CategoryProgramUiModel>>(emptyList()) }
+    var lastCategoryTitle by remember { mutableStateOf("") }
     var isCategoryLoading by remember { mutableStateOf(false) }
 
     // Home State
@@ -268,12 +269,17 @@ fun AndroidApp() {
                 val title = backStackEntry.arguments?.getString("title") ?: ""
                 
                 LaunchedEffect(title) {
+                    if (categoryPrograms.isNotEmpty() && lastCategoryTitle == title) {
+                         return@LaunchedEffect
+                    }
+                    
                     isCategoryLoading = true
                     categoryPrograms = withContext(Dispatchers.Default) {
                         runCatching { 
                             com.radiogolha.mobile.ui.programs.loadCategoryPrograms(title) 
                         }.getOrDefault(emptyList())
                     }
+                    lastCategoryTitle = title
                     isCategoryLoading = false
                 }
 
