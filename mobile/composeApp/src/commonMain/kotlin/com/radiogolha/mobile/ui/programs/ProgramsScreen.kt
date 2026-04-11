@@ -160,34 +160,34 @@ private fun ProgramListRow(item: ProgramUiModel) {
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = item.title,
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 25.sp, // Slightly larger
-                            letterSpacing = (-0.5).sp
-                        ),
-                        color = GolhaColors.PrimaryText,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-
-                Surface(
-                    color = GolhaColors.BadgeBackground.copy(alpha = 0.98f),
-                    shape = RoundedCornerShape(10.dp),
-                    border = androidx.compose.foundation.BorderStroke(0.5.dp, GolhaColors.Border)
-                ) {
-                    Text(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                        text = "${item.episodeCount} برنامه",
-                        style = MaterialTheme.typography.labelLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp
-                        ),
-                        color = GolhaColors.PrimaryText,
-                    )
-                }
+                        Text(
+                            text = item.title,
+                            style = MaterialTheme.typography.headlineSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 21.sp, // Reduced for balance
+                                letterSpacing = (-0.2).sp
+                            ),
+                            color = GolhaColors.PrimaryText,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+    
+                    Surface(
+                        color = GolhaColors.BadgeBackground.copy(alpha = 0.98f),
+                        shape = RoundedCornerShape(10.dp),
+                        border = androidx.compose.foundation.BorderStroke(0.5.dp, GolhaColors.Border)
+                    ) {
+                        Text(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                            text = "${item.episodeCount} برنامه",
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp // Balanced
+                            ),
+                            color = GolhaColors.PrimaryText,
+                        )
+                    }
             }
         }
     }
