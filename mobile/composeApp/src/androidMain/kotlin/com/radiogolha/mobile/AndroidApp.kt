@@ -77,6 +77,10 @@ fun AndroidApp() {
     var libraryPrograms by remember { mutableStateOf<List<com.radiogolha.mobile.ui.home.ProgramUiModel>>(emptyList()) }
     var isLibraryLoading by remember { mutableStateOf(false) }
 
+    // Category Programs State
+    var categoryPrograms by remember { mutableStateOf<List<com.radiogolha.mobile.ui.home.CategoryProgramUiModel>>(emptyList()) }
+    var isCategoryLoading by remember { mutableStateOf(false) }
+
     // Home State
     var homeUiState by remember { mutableStateOf<HomeUiState?>(null) }
     var isHomeLoading by remember { mutableStateOf(false) }
@@ -241,12 +245,63 @@ fun AndroidApp() {
                             restoreState = true
                         }
                     },
+                    currentPlaybackDurationMs = currentPlaybackDurationMs,
+                    onTogglePlayerPlayback = { playerManager.togglePlayback() },
+                    onProgramClick = { program ->
+                        navController.navigate(AndroidRoute.CategoryPrograms.createRoute(program.title))
+                    }
+                )
+            }
+
+            composable(
+                route = AndroidRoute.CategoryPrograms.route,
+                arguments = listOf(
+                    androidx.navigation.navArgument("title") { type = androidx.navigation.NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val title = backStackEntry.arguments?.getString("title") ?: ""
+                
+                LaunchedEffect(title) {
+                    isCategoryLoading = true
+                    categoryPrograms = withContext(Dispatchers.Default) {
+                        runCatching { 
+                            com.radiogolha.mobile.ui.programs.loadCategoryPrograms(title) 
+                        }.getOrDefault(emptyList())
+                    }
+                    isCategoryLoading = false
+                }
+
+                com.radiogolha.mobile.ui.programs.CategoryProgramsScreen(
+                    categoryTitle = title,
+                    programs = categoryPrograms,
+                    isLoading = isCategoryLoading,
+                    bottomNavItems = bottomNavItems,
+                    onBottomNavSelected = { tab ->
+                        navController.navigate(tab.toRoute().route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onProgramClick = { program ->
+                        // Play the program
+                        playerManager.play(com.radiogolha.mobile.ui.home.TrackUiModel(
+                            id = program.id,
+                            title = "${title} ${program.programNumber}",
+                            artist = program.singer,
+                            duration = program.duration,
+                            audioUrl = program.audioUrl
+                        ))
+                    },
+                    onBackClick = { navController.popBackStack() },
                     currentTrack = currentTrack,
                     isPlayerPlaying = isPlayerPlaying,
                     isPlayerLoading = isPlayerLoading,
                     currentPlaybackPositionMs = currentPlaybackPositionMs,
                     currentPlaybackDurationMs = currentPlaybackDurationMs,
-                    onTogglePlayerPlayback = { playerManager.togglePlayback() },
+                    onTogglePlayerPlayback = { playerManager.togglePlayback() }
                 )
             }
 
@@ -361,6 +416,9 @@ private sealed class AndroidRoute(val route: String) {
     data object Account : AndroidRoute("account")
     data object Singers : AndroidRoute("singers")
     data object Musicians : AndroidRoute("musicians")
+    data object CategoryPrograms : AndroidRoute("category_programs/{title}") {
+        fun createRoute(title: String) = "category_programs/$title"
+    }
 }
 
 private fun AppTab.toRoute(): AndroidRoute = when (this) {

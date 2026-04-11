@@ -5,6 +5,15 @@ data class ProgramUiModel(
     val episodeCount: Int,
 )
 
+data class CategoryProgramUiModel(
+    val id: Long,
+    val programNumber: String,
+    val singer: String,
+    val duration: String?,
+    val dastgah: String?,
+    val audioUrl: String? = null,
+)
+
 data class SingerUiModel(
     val name: String,
     val imageUrl: String? = null,

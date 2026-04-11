@@ -69,6 +69,54 @@ actual fun loadProgramsUiState(): List<ProgramUiModel> {
     return result
 }
 
+actual fun loadCategoryPrograms(categoryTitle: String): List<com.radiogolha.mobile.ui.home.CategoryProgramUiModel> {
+    // 1. Get initial list from Categories JNI to find ID
+    val catPayload = runCatching { RustCoreBridge.getCategoriesJson(requireArchiveDbPath()) }.getOrNull()
+    val catRoot = if (catPayload != null && catPayload.trim().startsWith("[")) JSONArray(catPayload) else return emptyList()
+    
+    var categoryId: Long = -1
+    for (i in 0 until catRoot.length()) {
+        val cat = catRoot.getJSONObject(i)
+        val title = cat.optString("titleFa").takeIf { it.isNotBlank() }
+                    ?: cat.optString("title_fa").takeIf { it.isNotBlank() }
+                    ?: cat.optString("title")
+        if (title.trim().equals(categoryTitle.trim(), ignoreCase = true)) {
+            categoryId = cat.optLong("id", -1)
+            break
+        }
+    }
+
+    if (categoryId == -1L) return emptyList()
+
+    // 2. Call optimized JNI method
+    val payload = runCatching { 
+        RustCoreBridge.getProgramsByCategoryJson(requireArchiveDbPath(), categoryId) 
+    }.getOrNull()
+    
+    val root = if (payload != null && payload.trim().startsWith("[")) JSONArray(payload) else return emptyList()
+    
+    return buildList {
+        for (i in 0 until root.length()) {
+            val item = root.getJSONObject(i)
+            add(
+                com.radiogolha.mobile.ui.home.CategoryProgramUiModel(
+                    id = item.optLong("id"),
+                    programNumber = item.optLong("no", 0).toString(),
+                    singer = item.optString("artist", "ناشناس"),
+                    duration = item.optNullableString("duration"),
+                    dastgah = item.optNullableString("mode"),
+                    audioUrl = item.optNullableString("audio_url")
+                )
+            )
+        }
+    }
+}
+
+private fun extractProgramNumberText(title: String): String {
+    val regex = """[\d۰-۹]+""".toRegex()
+    return regex.find(title)?.value ?: "0"
+}
+
 private fun extractCount(item: JSONObject): Int {
     val keys = listOf(
         "episodeCount", "episode_count",
@@ -83,4 +131,11 @@ private fun extractCount(item: JSONObject): Int {
         if (c > 0) return c
     }
     return 0
+}
+
+internal fun JSONObject.optNullableString(key: String): String? {
+    if (isNull(key)) return null
+    return optString(key)
+        .trim()
+        .takeUnless { it.isEmpty() || it.equals("null", ignoreCase = true) }
 }

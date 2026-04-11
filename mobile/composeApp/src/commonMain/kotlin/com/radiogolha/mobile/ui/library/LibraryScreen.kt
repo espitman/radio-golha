@@ -44,6 +44,7 @@ fun LibraryScreen(
     currentPlaybackPositionMs: Long = 0L,
     currentPlaybackDurationMs: Long = 0L,
     onTogglePlayerPlayback: () -> Unit = {},
+    onProgramClick: (ProgramUiModel) -> Unit = {},
 ) {
     val tabs = LibraryTab.entries
     val pagerState = rememberPagerState(
@@ -132,7 +133,8 @@ fun LibraryScreen(
                             LibraryTab.Programs -> {
                                 ProgramsScreen(
                                     programs = programs,
-                                    isLoading = isProgramsLoading
+                                    isLoading = isProgramsLoading,
+                                    onProgramClick = onProgramClick
                                 )
                             }
 

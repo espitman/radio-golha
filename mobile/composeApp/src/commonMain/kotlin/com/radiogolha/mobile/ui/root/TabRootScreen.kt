@@ -11,7 +11,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.material3.MaterialTheme
+import com.radiogolha.mobile.ui.home.GolhaIcon
+import com.radiogolha.mobile.ui.home.CircularActionButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -47,6 +53,8 @@ fun TabRootScreen(
     currentPlaybackPositionMs: Long = 0L,
     currentPlaybackDurationMs: Long = 0L,
     onTogglePlayerPlayback: () -> Unit = {},
+    onBackClick: (() -> Unit)? = null,
+    content: (androidx.compose.foundation.lazy.LazyListScope.() -> Unit)? = null,
 ) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         GolhaPatternBackground {
@@ -79,11 +87,38 @@ fun TabRootScreen(
                     verticalArrangement = Arrangement.spacedBy(18.dp),
                 ) {
                     item {
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.headlineLarge,
-                            color = GolhaColors.PrimaryText,
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            if (onBackClick != null) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .background(GolhaColors.Surface, RoundedCornerShape(12.dp))
+                                        .background(
+                                            Brush.linearGradient(
+                                                listOf(GolhaColors.Border.copy(alpha = 0.2f), Color.Transparent)
+                                            ),
+                                            RoundedCornerShape(12.dp)
+                                        )
+                                        .clickable { onBackClick() },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                   CircularActionButton(
+                                       icon = GolhaIcon.Back,
+                                       onClick = onBackClick,
+                                       modifier = Modifier.size(36.dp)
+                                   )
+                                }
+                            }
+
+                            Text(
+                                text = title,
+                                style = MaterialTheme.typography.headlineLarge,
+                                color = GolhaColors.PrimaryText,
+                            )
+                        }
                     }
                     item {
                         Text(
@@ -92,26 +127,30 @@ fun TabRootScreen(
                             color = GolhaColors.SecondaryText,
                         )
                     }
-                    item {
-                        Surface(
-                            shape = RoundedCornerShape(GolhaRadius.Card),
-                            color = GolhaColors.Surface,
-                            tonalElevation = 0.dp,
-                            shadowElevation = GolhaElevation.Card,
-                            border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border),
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 18.dp, vertical = 32.dp),
-                                contentAlignment = Alignment.Center,
+                    if (content != null) {
+                        content()
+                    } else {
+                        item {
+                            Surface(
+                                shape = RoundedCornerShape(GolhaRadius.Card),
+                                color = GolhaColors.Surface,
+                                tonalElevation = 0.dp,
+                                shadowElevation = GolhaElevation.Card,
+                                border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border),
                             ) {
-                                Text(
-                                    text = "این بخش در مرحله‌ی بعد کامل می‌شود.",
-                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-                                    color = GolhaColors.PrimaryText,
-                                    textAlign = TextAlign.Center,
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 18.dp, vertical = 32.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(
+                                        text = "این بخش در مرحله‌ی بعد کامل می‌شود.",
+                                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                                        color = GolhaColors.PrimaryText,
+                                        textAlign = TextAlign.Center,
+                                    )
+                                }
                             }
                         }
                     }

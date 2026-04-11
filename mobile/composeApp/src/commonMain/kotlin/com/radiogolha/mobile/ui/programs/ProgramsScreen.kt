@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import com.radiogolha.mobile.theme.GolhaColors
@@ -42,6 +43,7 @@ fun ProgramsScreen(
     programs: List<ProgramUiModel>,
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
+    onProgramClick: (ProgramUiModel) -> Unit = {},
 ) {
     androidx.compose.runtime.CompositionLocalProvider(
         androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Rtl
@@ -77,7 +79,10 @@ fun ProgramsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(programs) { program ->
-                    ProgramListRow(program)
+                    ProgramListRow(
+                        item = program,
+                        onClick = { onProgramClick(program) }
+                    )
                 }
             }
         }
@@ -118,11 +123,15 @@ private fun SkeletonProgramListRow() {
 }
 
 @Composable
-private fun ProgramListRow(item: ProgramUiModel) {
+private fun ProgramListRow(
+    item: ProgramUiModel,
+    onClick: () -> Unit,
+) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(105.dp),
+            .height(105.dp)
+            .clickable { onClick() },
         shape = RoundedCornerShape(GolhaRadius.Card),
         color = GolhaColors.Surface,
         shadowElevation = GolhaElevation.Card,

@@ -62,6 +62,17 @@ struct AndroidTrackItem {
     audio_url: String,
 }
 
+#[derive(Serialize)]
+struct AndroidCategoryProgramItem {
+    id: i64,
+    title: String,
+    no: i64,
+    artist: String,
+    mode: Option<String>,
+    duration: Option<String>,
+    audio_url: Option<String>,
+}
+
 fn categories_json(db_path: &str) -> Result<String, String> {
     let core = RadioGolhaCore::open(db_path).map_err(|error| error.to_string())?;
     let categories = core.program_categories().map_err(|error| error.to_string())?;
@@ -274,4 +285,61 @@ pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getMusiciansJso
     db_path: JString,
 ) -> jstring {
     jni_json_response(&mut env, db_path, musicians_json)
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getProgramsByCategoryJson(
+    mut env: JNIEnv,
+    _class: JClass,
+    db_path: JString,
+    category_id: i64,
+) -> jstring {
+    jni_json_response(&mut env, db_path, |path| {
+        let core = RadioGolhaCore::open(path).map_err(|error| error.to_string())?;
+        let conn = core.connection();
+        let mut stmt = conn.prepare(
+            "
+            SELECT
+                p.id,
+                p.title,
+                p.no,
+                COALESCE(
+                    (
+                        SELECT GROUP_CONCAT(a.name, ' و ')
+                        FROM program_singers ps
+                        JOIN singer s ON s.id = ps.singer_id
+                        JOIN artist a ON a.id = s.artist_id
+                        WHERE ps.program_id = p.id
+                    ),
+                    'ناشناس'
+                ) AS artist_names,
+                (
+                    SELECT GROUP_CONCAT(m.name, ' و ')
+                    FROM program_modes pm
+                    JOIN mode m ON m.id = pm.mode_id
+                    WHERE pm.program_id = p.id
+                ) AS mode_names,
+                (SELECT MAX(end_time) FROM program_timeline WHERE program_id = p.id) AS duration,
+                p.audio_url
+            FROM program p
+            WHERE p.category_id = ?1
+            ORDER BY p.no ASC, p.id ASC
+            "
+        ).map_err(|error| error.to_string())?;
+
+        let rows = stmt.query_map([category_id], |row| {
+            Ok(AndroidCategoryProgramItem {
+                id: row.get(0)?,
+                title: row.get(1)?,
+                no: row.get(2)?,
+                artist: row.get(3)?,
+                mode: row.get(4)?,
+                duration: row.get(5)?,
+                audio_url: row.get(6)?,
+            })
+        }).map_err(|error| error.to_string())?;
+
+        let items: Vec<_> = rows.collect::<Result<Vec<_>, _>>().map_err(|error| error.to_string())?;
+        to_string(&items).map_err(|error| error.to_string())
+    })
 }
