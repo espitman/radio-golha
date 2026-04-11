@@ -89,4 +89,59 @@ enum class GolhaIcon {
     Download,
     Back,
     Refresh,
+    Timer,
+    Note,
+    History,
+    People,
 }
+
+data class PerformerUiModel(
+    val name: String,
+    val avatar: String?,
+    val instrument: String?
+)
+
+data class OrchestraLeaderUiModel(
+    val orchestra: String,
+    val name: String
+)
+
+data class TimelineSegmentUiModel(
+    val id: Long,
+    val startTime: String?,
+    val endTime: String?,
+    val modeName: String?,
+    val singers: List<String>,
+    val poets: List<String>,
+    val announcers: List<String>,
+    val orchestras: List<String>,
+    val orchestraLeaders: List<OrchestraLeaderUiModel>,
+    val performers: List<PerformerUiModel>,
+)
+
+data class TranscriptVerseUiModel(
+    val segmentOrder: Int,
+    val verseOrder: Int,
+    val text: String
+)
+
+data class ProgramEpisodeDetailUiModel(
+    val id: Long,
+    val title: String,
+    val categoryName: String,
+    val no: Int,
+    val subNo: String?,
+    val duration: String? = null,
+    val audioUrl: String?,
+    val singers: List<String>,
+    val poets: List<String>,
+    val announcers: List<String>,
+    val composers: List<String>,
+    val arrangers: List<String>,
+    val modes: List<String>,
+    val orchestras: List<String>,
+    val orchestraLeaders: List<OrchestraLeaderUiModel>,
+    val performers: List<PerformerUiModel>,
+    val timeline: List<TimelineSegmentUiModel>,
+    val transcript: List<TranscriptVerseUiModel>,
+)

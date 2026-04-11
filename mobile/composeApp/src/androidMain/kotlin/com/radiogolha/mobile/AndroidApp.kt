@@ -177,6 +177,9 @@ fun AndroidApp() {
                     currentPlaybackDurationMs = currentPlaybackDurationMs,
                     onTogglePlayerPlayback = { playerManager.togglePlayback() },
                     onPlayTrack = { track -> playerManager.play(track) },
+                    onTrackClick = { track ->
+                        navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(track.id))
+                    },
                     onProgramClick = { program ->
                         navController.navigate(AndroidRoute.CategoryPrograms.createRoute(program.title))
                     },
@@ -289,15 +292,9 @@ fun AndroidApp() {
                         }
                     },
                     onProgramClick = { program ->
-                        // Play the program
-                        playerManager.play(com.radiogolha.mobile.ui.home.TrackUiModel(
-                            id = program.id,
-                            title = "${title} ${program.programNumber}",
-                            artist = program.singer,
-                            duration = program.duration,
-                            audioUrl = program.audioUrl
-                        ))
+                        navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(program.id))
                     },
+                    onPlayTrack = { track -> playerManager.play(track) },
                     onBackClick = { navController.popBackStack() },
                     currentTrack = currentTrack,
                     isPlayerPlaying = isPlayerPlaying,
@@ -305,6 +302,44 @@ fun AndroidApp() {
                     currentPlaybackPositionMs = currentPlaybackPositionMs,
                     currentPlaybackDurationMs = currentPlaybackDurationMs,
                     onTogglePlayerPlayback = { playerManager.togglePlayback() }
+                )
+            }
+
+            composable(
+                route = AndroidRoute.ProgramEpisodeDetail.route,
+                arguments = listOf(
+                    androidx.navigation.navArgument("id") { type = androidx.navigation.NavType.LongType }
+                )
+            ) { backStackEntry ->
+                val programId = backStackEntry.arguments?.getLong("id") ?: 0L
+                com.radiogolha.mobile.ui.programs.ProgramEpisodeDetailScreen(
+                    programId = programId,
+                    bottomNavItems = bottomNavItems,
+                    onBottomNavSelected = { tab ->
+                        navController.navigate(tab.toRoute().route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onBackClick = { navController.popBackStack() },
+                    currentTrack = currentTrack,
+                    isPlayerPlaying = isPlayerPlaying,
+                    isPlayerLoading = isPlayerLoading,
+                    currentPlaybackPositionMs = currentPlaybackPositionMs,
+                    currentPlaybackDurationMs = currentPlaybackDurationMs,
+                    onTogglePlayerPlayback = { playerManager.togglePlayback() },
+                    onPlayProgram = { detail ->
+                        playerManager.play(com.radiogolha.mobile.ui.home.TrackUiModel(
+                            id = detail.id,
+                            title = "${detail.categoryName} شماره ${detail.no}",
+                            artist = detail.singers.joinToString(" و ").takeIf { it.isNotBlank() } ?: "ناشناس",
+                            duration = null, // Can extract from metadata if needed
+                            audioUrl = detail.audioUrl
+                        ))
+                    }
                 )
             }
 
@@ -421,6 +456,9 @@ private sealed class AndroidRoute(val route: String) {
     data object Musicians : AndroidRoute("musicians")
     data object CategoryPrograms : AndroidRoute("category_programs/{title}") {
         fun createRoute(title: String) = "category_programs/$title"
+    }
+    data object ProgramEpisodeDetail : AndroidRoute("program_episode_detail/{id}") {
+        fun createRoute(id: Long) = "program_episode_detail/$id"
     }
 }
 

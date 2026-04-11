@@ -1196,7 +1196,7 @@ impl RadioGolhaCore {
             .connection()
             .query_row(
                 "
-                SELECT p.id, p.title, c.title_fa, p.no, p.sub_no, p.audio_url
+                SELECT p.id, p.title, c.title_fa, p.no, p.sub_no, (SELECT MAX(end_time) FROM program_timeline WHERE program_id = p.id) AS duration, p.audio_url
                 FROM program p
                 JOIN category c ON c.id = p.category_id
                 WHERE p.id = ?1
@@ -1209,7 +1209,8 @@ impl RadioGolhaCore {
                         category_name: row.get(2)?,
                         no: row.get(3)?,
                         sub_no: row.get(4)?,
-                        audio_url: row.get(5)?,
+                        duration: row.get(5)?,
+                        audio_url: row.get(6)?,
                         singers: Vec::new(),
                         poets: Vec::new(),
                         announcers: Vec::new(),

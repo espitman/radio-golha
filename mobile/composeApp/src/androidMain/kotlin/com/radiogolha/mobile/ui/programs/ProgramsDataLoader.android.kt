@@ -112,6 +112,117 @@ actual fun loadCategoryPrograms(categoryTitle: String): List<com.radiogolha.mobi
     }
 }
 
+actual fun loadProgramEpisodeDetail(programId: Long): com.radiogolha.mobile.ui.home.ProgramEpisodeDetailUiModel? {
+    val payload = runCatching { 
+        RustCoreBridge.getProgramDetailJson(requireArchiveDbPath(), programId) 
+    }.getOrNull() ?: return null
+    
+    if (payload.contains("\"error\"") && !payload.startsWith("{")) return null
+    
+    val root = runCatching { JSONObject(payload) }.getOrNull() ?: return null
+    
+    return com.radiogolha.mobile.ui.home.ProgramEpisodeDetailUiModel(
+        id = root.optLong("id"),
+        title = root.optString("title", ""),
+        categoryName = root.optString("categoryName") ?: "",
+        no = root.optInt("no", 0),
+        subNo = root.optNullableString("subNo"),
+        duration = root.optNullableString("duration"),
+        audioUrl = root.optNullableString("audioUrl"),
+        singers = root.optStringList("singers"),
+        poets = root.optStringList("poets"),
+        announcers = root.optStringList("announcers"),
+        composers = root.optStringList("composers"),
+        arrangers = root.optStringList("arrangers"),
+        modes = root.optStringList("modes"),
+        orchestras = root.optStringList("orchestras"),
+        orchestraLeaders = root.optOrchestraLeaders("orchestraLeaders"),
+        performers = root.optPerformers("performers"),
+        timeline = root.optTimeline("timeline"),
+        transcript = root.optTranscript("transcript")
+    )
+}
+
+private fun JSONObject.optStringList(key: String): List<String> {
+    val array = optJSONArray(key) ?: return emptyList()
+    return buildList {
+        for (i in 0 until array.length()) {
+            val s = array.optString(i)
+            if (s.isNotBlank()) add(s)
+        }
+    }
+}
+
+private fun JSONObject.optOrchestraLeaders(key: String): List<com.radiogolha.mobile.ui.home.OrchestraLeaderUiModel> {
+    val array = optJSONArray(key) ?: return emptyList()
+    return buildList {
+        for (i in 0 until array.length()) {
+            val item = array.getJSONObject(i)
+            add(
+                com.radiogolha.mobile.ui.home.OrchestraLeaderUiModel(
+                    orchestra = item.optString("orchestra", ""),
+                    name = item.optString("name", "")
+                )
+            )
+        }
+    }
+}
+
+private fun JSONObject.optPerformers(key: String): List<com.radiogolha.mobile.ui.home.PerformerUiModel> {
+    val array = optJSONArray(key) ?: return emptyList()
+    return buildList {
+        for (i in 0 until array.length()) {
+            val item = array.getJSONObject(i)
+            add(
+                com.radiogolha.mobile.ui.home.PerformerUiModel(
+                    name = item.optString("name", ""),
+                    avatar = item.optNullableString("avatar"),
+                    instrument = item.optNullableString("instrument")
+                )
+            )
+        }
+    }
+}
+
+private fun JSONObject.optTimeline(key: String): List<com.radiogolha.mobile.ui.home.TimelineSegmentUiModel> {
+    val array = optJSONArray(key) ?: return emptyList()
+    return buildList {
+        for (i in 0 until array.length()) {
+            val item = array.getJSONObject(i)
+            add(
+                com.radiogolha.mobile.ui.home.TimelineSegmentUiModel(
+                    id = item.optLong("id"),
+                    startTime = item.optNullableString("startTime"),
+                    endTime = item.optNullableString("endTime"),
+                    modeName = item.optNullableString("modeName"),
+                    singers = item.optStringList("singers"),
+                    poets = item.optStringList("poets"),
+                    announcers = item.optStringList("announcers"),
+                    orchestras = item.optStringList("orchestras"),
+                    orchestraLeaders = item.optOrchestraLeaders("orchestraLeaders"),
+                    performers = item.optPerformers("performers")
+                )
+            )
+        }
+    }
+}
+
+private fun JSONObject.optTranscript(key: String): List<com.radiogolha.mobile.ui.home.TranscriptVerseUiModel> {
+    val array = optJSONArray(key) ?: return emptyList()
+    return buildList {
+        for (i in 0 until array.length()) {
+            val item = array.getJSONObject(i)
+            add(
+                com.radiogolha.mobile.ui.home.TranscriptVerseUiModel(
+                    segmentOrder = item.optInt("segmentOrder"),
+                    verseOrder = item.optInt("verseOrder"),
+                    text = item.optString("text", "")
+                )
+            )
+        }
+    }
+}
+
 private fun extractProgramNumberText(title: String): String {
     val regex = """[\d۰-۹]+""".toRegex()
     return regex.find(title)?.value ?: "0"

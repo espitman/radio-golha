@@ -332,6 +332,7 @@ fun TopTracksSection(
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     onPlayTrack: (TrackUiModel) -> Unit,
+    onTrackClick: (TrackUiModel) -> Unit = {},
     currentTrackId: Long? = null,
     isPlayerPlaying: Boolean = false,
     modifier: Modifier = Modifier
@@ -445,6 +446,7 @@ fun TopTracksSection(
                             isActive = track.id == currentTrackId,
                             isPlaying = track.id == currentTrackId && isPlayerPlaying,
                             onPlayClick = { onPlayTrack(track) },
+                            onClick = { onTrackClick(track) }
                         )
                         if (index != displayedTracks.lastIndex) {
                             HorizontalDivider(
@@ -1178,11 +1180,13 @@ private fun TrackRow(
     isActive: Boolean,
     isPlaying: Boolean,
     onPlayClick: () -> Unit,
+    onClick: () -> Unit = {},
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
+            .clickable { onClick() }
             .background(if (isActive) GolhaColors.BadgeBackground.copy(alpha = 0.42f) else Color.Transparent)
             .padding(horizontal = 8.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -1516,6 +1520,29 @@ fun GolhaLineIcon(
                     lineTo(ax - hl * 0.1f, ay - hl * 0.8f)
                 }
                 drawPath(arrowPath, tint, style = Stroke(width = sw, cap = StrokeCap.Round, join = StrokeJoin.Round))
+            }
+
+            GolhaIcon.Timer -> {
+                drawCircle(color = tint, radius = size.minDimension * 0.32f, style = Stroke(width = stroke))
+                drawLine(color = tint, start = center, end = Offset(center.x, center.y - size.height * 0.2f), strokeWidth = stroke)
+                drawLine(color = tint, start = center, end = Offset(center.x + size.width * 0.15f, center.y), strokeWidth = stroke)
+            }
+
+            GolhaIcon.Note -> {
+                drawRoundRect(color = tint, style = Stroke(width = stroke), cornerRadius = CornerRadius(4.dp.toPx()))
+                drawLine(color = tint, start = Offset(size.width * 0.3f, size.height * 0.3f), end = Offset(size.width * 0.7f, size.height * 0.3f), strokeWidth = stroke)
+                drawLine(color = tint, start = Offset(size.width * 0.3f, size.height * 0.5f), end = Offset(size.width * 0.7f, size.height * 0.5f), strokeWidth = stroke)
+            }
+
+            GolhaIcon.History -> {
+                drawCircle(color = tint, radius = size.minDimension * 0.35f, style = Stroke(width = stroke))
+                drawLine(color = tint, start = center, end = Offset(center.x, center.y - size.height * 0.18f), strokeWidth = stroke)
+                drawLine(color = tint, start = center, end = Offset(center.x + size.width * 0.12f, center.y + size.width * 0.12f), strokeWidth = stroke)
+            }
+
+            GolhaIcon.People -> {
+                drawCircle(color = tint, center = Offset(size.width * 0.35f, size.height * 0.35f), radius = size.minDimension * 0.15f, style = Stroke(width = stroke))
+                drawCircle(color = tint, center = Offset(size.width * 0.65f, size.height * 0.35f), radius = size.minDimension * 0.15f, style = Stroke(width = stroke))
             }
         }
     }

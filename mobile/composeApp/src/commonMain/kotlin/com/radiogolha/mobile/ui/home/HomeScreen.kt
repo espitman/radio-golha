@@ -34,6 +34,7 @@ fun HomeScreen(
     currentPlaybackDurationMs: Long = 0L,
     onTogglePlayerPlayback: () -> Unit = {},
     onPlayTrack: (TrackUiModel) -> Unit = {},
+    onTrackClick: (TrackUiModel) -> Unit = {},
     onProgramClick: (ProgramUiModel) -> Unit = {},
     onBottomNavSelected: (AppTab) -> Unit = {},
 ) {
@@ -102,6 +103,7 @@ fun HomeScreen(
                                 isRefreshing = isRefreshingTopTracks,
                                 onRefresh = onRefreshTopTracks,
                                 onPlayTrack = onPlayTrack,
+                                onTrackClick = onTrackClick,
                                 currentTrackId = currentTrack?.id,
                                 isPlayerPlaying = isPlayerPlaying,
                             ) 

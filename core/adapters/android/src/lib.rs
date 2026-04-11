@@ -343,3 +343,16 @@ pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getProgramsByCa
         to_string(&items).map_err(|error| error.to_string())
     })
 }
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getProgramDetailJson(
+    mut env: JNIEnv,
+    _class: JClass,
+    db_path: JString,
+    program_id: i64,
+) -> jstring {
+    jni_json_response(&mut env, db_path, |path| {
+        let core = RadioGolhaCore::open(path).map_err(|error| error.to_string())?;
+        let detail = core.get_program_detail(program_id).map_err(|error| error.to_string())?;
+        to_string(&detail).map_err(|error| error.to_string())
+    })
+}

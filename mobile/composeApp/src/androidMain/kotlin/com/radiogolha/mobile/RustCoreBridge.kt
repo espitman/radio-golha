@@ -11,4 +11,5 @@ object RustCoreBridge {
     external fun getSingersJson(dbPath: String): String
     external fun getMusiciansJson(dbPath: String): String
     external fun getProgramsByCategoryJson(dbPath: String, categoryId: Long): String
+    external fun getProgramDetailJson(dbPath: String, programId: Long): String
 }

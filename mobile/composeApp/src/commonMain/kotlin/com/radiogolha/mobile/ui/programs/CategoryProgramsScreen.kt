@@ -36,6 +36,7 @@ fun CategoryProgramsScreen(
     bottomNavItems: List<BottomNavItemUiModel>,
     onBottomNavSelected: (AppTab) -> Unit,
     onProgramClick: (CategoryProgramUiModel) -> Unit,
+    onPlayTrack: (TrackUiModel) -> Unit,
     onBackClick: () -> Unit,
     currentTrack: TrackUiModel? = null,
     isPlayerPlaying: Boolean = false,
@@ -101,7 +102,18 @@ fun CategoryProgramsScreen(
                                     program = program,
                                     isActive = isActive,
                                     isPlaying = isActive && isPlayerPlaying,
-                                    onPlayClick = { onProgramClick(program) }
+                                    onPlayClick = { 
+                                        onPlayTrack(com.radiogolha.mobile.ui.home.TrackUiModel(
+                                            id = program.id,
+                                            title = "${categoryTitle} ${program.programNumber}",
+                                            artist = program.singer,
+                                            duration = program.duration,
+                                            audioUrl = program.audioUrl
+                                        ))
+                                    },
+                                    onRowClick = {
+                                        onProgramClick(program)
+                                    }
                                 )
                                 if (index != programs.lastIndex) {
                                     HorizontalDivider(
@@ -125,12 +137,13 @@ private fun CategoryProgramTrackRow(
     program: CategoryProgramUiModel,
     isActive: Boolean,
     isPlaying: Boolean,
+    onRowClick: () -> Unit,
     onPlayClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clickable { onRowClick() }
             .background(if (isActive) GolhaColors.BadgeBackground.copy(alpha = 0.42f) else Color.Transparent)
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
