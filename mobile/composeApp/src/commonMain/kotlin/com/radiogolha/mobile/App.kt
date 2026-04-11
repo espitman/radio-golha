@@ -22,6 +22,8 @@ import com.radiogolha.mobile.ui.home.loadHomeUiState
 import com.radiogolha.mobile.ui.home.loadTopTracks
 import com.radiogolha.mobile.ui.musicians.MusiciansScreen
 import com.radiogolha.mobile.ui.musicians.loadMusiciansUiState
+import com.radiogolha.mobile.ui.library.LibraryScreen
+import com.radiogolha.mobile.ui.programs.loadProgramsUiState
 import com.radiogolha.mobile.ui.settings.SettingsScreen
 import com.radiogolha.mobile.ui.singers.SingersScreen
 import com.radiogolha.mobile.ui.singers.loadSingersUiState
@@ -82,7 +84,7 @@ fun App() {
     }
 
     val singers by produceState(
-        initialValue = emptyList(),
+        initialValue = emptyList<com.radiogolha.mobile.ui.home.SingerListItemUiModel>(),
         key1 = reloadToken,
         key2 = currentRoute,
     ) {
@@ -96,7 +98,7 @@ fun App() {
         }.getOrNull() ?: emptyList()
     }
     val musicians by produceState(
-        initialValue = emptyList(),
+        initialValue = emptyList<com.radiogolha.mobile.ui.home.MusicianListItemUiModel>(),
         key1 = reloadToken,
         key2 = currentRoute,
     ) {
@@ -107,6 +109,21 @@ fun App() {
 
         value = runCatching {
             withContext(Dispatchers.Default) { loadMusiciansUiState() }
+        }.getOrNull() ?: emptyList()
+    }
+    
+    val programs by produceState(
+        initialValue = emptyList<com.radiogolha.mobile.ui.home.ProgramUiModel>(),
+        key1 = reloadToken,
+        key2 = selectedTab,
+    ) {
+        if (selectedTab != AppTab.Library) {
+            value = emptyList()
+            return@produceState
+        }
+        
+        value = runCatching {
+            withContext(Dispatchers.Default) { loadProgramsUiState() }
         }.getOrNull() ?: emptyList()
     }
 
@@ -140,7 +157,7 @@ fun App() {
 
             is AppRoute.Root -> {
                 when (currentRoute.tab) {
-                    AppTab.Home, AppTab.Search, AppTab.Library -> {
+                    AppTab.Home, AppTab.Search -> {
                         HomeScreen(
                             state = homeState?.copy(bottomNavItems = bottomNavItems),
                             bottomNavItems = bottomNavItems,
@@ -148,6 +165,19 @@ fun App() {
                             onOpenAllMusicians = { navigationStack.push(AppRoute.Musicians) },
                             onRefreshTopTracks = { reloadToken += 1 },
                             isRefreshingTopTracks = isTopTracksRefreshing,
+                            onBottomNavSelected = {
+                                navigationStack.resetToRoot(it)
+                            },
+                        )
+                    }
+
+                    AppTab.Library -> {
+                        LibraryScreen(
+                            programs = programs,
+                            singers = emptyList(), // Load these properly if needed later
+                            musicians = emptyList(),
+                            isProgramsLoading = programs.isEmpty(), // Simplified loading state
+                            bottomNavItems = bottomNavItems,
                             onBottomNavSelected = {
                                 navigationStack.resetToRoot(it)
                             },

@@ -1,18 +1,27 @@
 package com.radiogolha.mobile.ui.programs
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.BasicTextField
 import com.radiogolha.mobile.theme.GolhaColors
 import com.radiogolha.mobile.theme.GolhaElevation
 import com.radiogolha.mobile.theme.GolhaRadius
@@ -23,61 +32,120 @@ import com.radiogolha.mobile.ui.home.ProgramUiModel
 fun ProgramsScreen(
     programs: List<ProgramUiModel>,
     modifier: Modifier = Modifier,
+    isLoading: Boolean = false,
 ) {
-    if (programs.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
-            Text("برنامه‌ای پیدا نشد", color = GolhaColors.SecondaryText)
-        }
-        return
-    }
-
     androidx.compose.runtime.CompositionLocalProvider(
         androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Rtl
     ) {
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            modifier = modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                horizontal = GolhaSpacing.ScreenHorizontal,
-                vertical = 16.dp
-            ),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(programs) { program ->
-                ProgramListCard(program)
+        if (isLoading) {
+            LazyColumn(
+                modifier = modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = GolhaSpacing.ScreenHorizontal,
+                    end = GolhaSpacing.ScreenHorizontal,
+                    top = 16.dp,
+                    bottom = 24.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(6) {
+                    SkeletonProgramListRow()
+                }
+            }
+        } else if (programs.isEmpty()) {
+            Box(modifier = modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                Text("برنامه‌ای پیدا نشد", color = GolhaColors.SecondaryText)
+            }
+        } else {
+            LazyColumn(
+                modifier = modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = GolhaSpacing.ScreenHorizontal,
+                    end = GolhaSpacing.ScreenHorizontal,
+                    top = 16.dp,
+                    bottom = 24.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(programs) { program ->
+                    ProgramListRow(program)
+                }
             }
         }
     }
 }
 
 @Composable
-private fun ProgramListCard(item: ProgramUiModel) {
+private fun SkeletonProgramListRow() {
     Surface(
-        modifier = Modifier.fillMaxWidth().height(100.dp),
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(GolhaRadius.Card),
         color = GolhaColors.Surface,
         shadowElevation = GolhaElevation.Card,
-        border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border),
+        border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.5f)),
     ) {
-        Column(
+        Row(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(
-                text = item.title,
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
-                color = GolhaColors.PrimaryText,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
+            Box(
+                modifier = Modifier
+                    .width(180.dp)
+                    .height(20.dp)
+                    .background(GolhaColors.Border.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
             )
-            Text(
-                text = "${item.episodeCount} قسمت",
-                style = MaterialTheme.typography.bodySmall,
-                color = GolhaColors.SecondaryText,
+            
+            Box(
+                modifier = Modifier
+                    .width(70.dp)
+                    .height(24.dp)
+                    .background(GolhaColors.Border.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
             )
+        }
+    }
+}
+
+@Composable
+private fun ProgramListRow(item: ProgramUiModel) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(GolhaRadius.Card),
+        color = GolhaColors.Surface,
+        shadowElevation = GolhaElevation.Card,
+        border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.8f)),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = item.title,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = GolhaColors.PrimaryText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+
+            Surface(
+                color = GolhaColors.BadgeBackground,
+                shape = RoundedCornerShape(8.dp),
+                border = androidx.compose.foundation.BorderStroke(0.5.dp, GolhaColors.Border)
+            ) {
+                Text(
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    text = "${item.episodeCount} برنامه",
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
+                    color = GolhaColors.SecondaryText,
+                )
+            }
         }
     }
 }

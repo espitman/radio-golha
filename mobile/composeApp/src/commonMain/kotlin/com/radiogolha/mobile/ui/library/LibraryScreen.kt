@@ -30,9 +30,12 @@ enum class LibraryTab(val title: String) {
 @Composable
 fun LibraryScreen(
     initialTab: LibraryTab = LibraryTab.Programs,
-    programs: List<ProgramUiModel>,
-    singers: List<SingerListItemUiModel>,
-    musicians: List<MusicianListItemUiModel>,
+    programs: List<ProgramUiModel> = emptyList(),
+    singers: List<SingerListItemUiModel> = emptyList(),
+    musicians: List<MusicianListItemUiModel> = emptyList(),
+    isProgramsLoading: Boolean = false,
+    isSingersLoading: Boolean = false,
+    isMusiciansLoading: Boolean = false,
     bottomNavItems: List<BottomNavItemUiModel>,
     onBottomNavSelected: (AppTab) -> Unit,
     currentTrack: TrackUiModel? = null,
@@ -50,91 +53,96 @@ fun LibraryScreen(
     val scope = rememberCoroutineScope()
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-        Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            containerColor = GolhaColors.ScreenBackground,
-            bottomBar = {
-                BottomNavigationWithMiniPlayer(
-                    items = bottomNavItems,
-                    onItemSelected = onBottomNavSelected,
-                    currentTrack = currentTrack,
-                    isPlaying = isPlayerPlaying,
-                    isLoading = isPlayerLoading,
-                    currentPositionMs = currentPlaybackPositionMs,
-                    durationMs = currentPlaybackDurationMs,
-                    onTogglePlayback = onTogglePlayerPlayback,
-                )
-            }
-        ) { innerPadding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = innerPadding.calculateBottomPadding())
-                    .statusBarsPadding()
-            ) {
-                // Header
-                Text(
-                    text = "کتابخانه",
-                    style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
-                    color = GolhaColors.PrimaryText,
+        com.radiogolha.mobile.theme.GolhaPatternBackground {
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                containerColor = Color.Transparent,
+                bottomBar = {
+                    BottomNavigationWithMiniPlayer(
+                        items = bottomNavItems,
+                        onItemSelected = onBottomNavSelected,
+                        currentTrack = currentTrack,
+                        isPlaying = isPlayerPlaying,
+                        isLoading = isPlayerLoading,
+                        currentPositionMs = currentPlaybackPositionMs,
+                        durationMs = currentPlaybackDurationMs,
+                        onTogglePlayback = onTogglePlayerPlayback,
+                    )
+                }
+            ) { innerPadding ->
+                Column(
                     modifier = Modifier
-                        .padding(horizontal = GolhaSpacing.ScreenHorizontal)
-                        .padding(top = 16.dp, bottom = 12.dp)
-                )
-
-                // Tabs
-                ScrollableTabRow(
-                    selectedTabIndex = pagerState.currentPage,
-                    containerColor = Color.Transparent,
-                    contentColor = GolhaColors.PrimaryAccent,
-                    edgePadding = GolhaSpacing.ScreenHorizontal,
-                    divider = {},
-                    indicator = { tabPositions ->
-                        TabRowDefaults.SecondaryIndicator(
-                            modifier = Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage]),
-                            color = GolhaColors.PrimaryAccent
-                        )
-                    }
+                        .fillMaxSize()
+                        .padding(bottom = innerPadding.calculateBottomPadding())
+                        .statusBarsPadding()
                 ) {
-                    tabs.forEachIndexed { index, tab ->
-                        val selected = pagerState.currentPage == index
-                        Tab(
-                            selected = selected,
-                            onClick = {
-                                scope.launch {
-                                    pagerState.animateScrollToPage(index)
+                    // Header
+                    Text(
+                        text = "کتابخانه",
+                        style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
+                        color = GolhaColors.PrimaryText,
+                        modifier = Modifier
+                            .padding(horizontal = GolhaSpacing.ScreenHorizontal)
+                            .padding(top = 16.dp, bottom = 12.dp)
+                    )
+
+                    // Tabs
+                    ScrollableTabRow(
+                        selectedTabIndex = pagerState.currentPage,
+                        containerColor = Color.Transparent,
+                        contentColor = GolhaColors.PrimaryAccent,
+                        edgePadding = GolhaSpacing.ScreenHorizontal,
+                        divider = {},
+                        indicator = { tabPositions ->
+                            TabRowDefaults.SecondaryIndicator(
+                                modifier = Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage]),
+                                color = GolhaColors.PrimaryAccent
+                            )
+                        }
+                    ) {
+                        tabs.forEachIndexed { index, tab ->
+                            val selected = pagerState.currentPage == index
+                            Tab(
+                                selected = selected,
+                                onClick = {
+                                    scope.launch {
+                                        pagerState.animateScrollToPage(index)
+                                    }
+                                },
+                                text = {
+                                    Text(
+                                        text = tab.title,
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                            fontSize = 17.sp
+                                        ),
+                                        color = if (selected) GolhaColors.PrimaryText else GolhaColors.SecondaryText
+                                    )
                                 }
-                            },
-                            text = {
-                                Text(
-                                    text = tab.title,
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                                        fontSize = 17.sp
-                                    ),
-                                    color = if (selected) GolhaColors.PrimaryText else GolhaColors.SecondaryText
+                            )
+                        }
+                    }
+
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(top = 8.dp)
+                    ) { page ->
+                        when (tabs[page]) {
+                            LibraryTab.Programs -> {
+                                ProgramsScreen(
+                                    programs = programs,
+                                    isLoading = isProgramsLoading
                                 )
                             }
-                        )
-                    }
-                }
 
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(top = 8.dp)
-                ) { page ->
-                    when (tabs[page]) {
-                        LibraryTab.Programs -> {
-                            ProgramsScreen(programs = programs)
-                        }
+                            LibraryTab.Singers -> {
+                                SingersContent(singers = singers)
+                            }
 
-                        LibraryTab.Singers -> {
-                            SingersContent(singers = singers)
-                        }
-
-                        LibraryTab.Musicians -> {
-                            MusiciansContent(musicians = musicians)
+                            LibraryTab.Musicians -> {
+                                MusiciansContent(musicians = musicians)
+                            }
                         }
                     }
                 }

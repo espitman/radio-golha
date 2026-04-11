@@ -24,9 +24,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
 import com.radiogolha.mobile.theme.GolhaColors
 import com.radiogolha.mobile.theme.GolhaElevation
 import com.radiogolha.mobile.theme.GolhaRadius
+import com.radiogolha.mobile.theme.GolhaPatternBackground
 import com.radiogolha.mobile.theme.GolhaSpacing
 import com.radiogolha.mobile.ui.home.AppTab
 import com.radiogolha.mobile.ui.home.BottomNavItemUiModel
@@ -47,70 +49,70 @@ fun TabRootScreen(
     onTogglePlayerPlayback: () -> Unit = {},
 ) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-        Scaffold(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(GolhaColors.ScreenBackground),
-            containerColor = GolhaColors.ScreenBackground,
-            bottomBar = {
-                BottomNavigationWithMiniPlayer(
-                    items = bottomNavItems,
-                    onItemSelected = onBottomNavSelected,
-                    currentTrack = currentTrack,
-                    isPlaying = isPlayerPlaying,
-                    isLoading = isPlayerLoading,
-                    currentPositionMs = currentPlaybackPositionMs,
-                    durationMs = currentPlaybackDurationMs,
-                    onTogglePlayback = onTogglePlayerPlayback,
-                )
-            },
-        ) { innerPadding ->
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .statusBarsPadding(),
-                contentPadding = PaddingValues(
-                    start = GolhaSpacing.ScreenHorizontal,
-                    end = GolhaSpacing.ScreenHorizontal,
-                    top = GolhaSpacing.StatusBarTopGap,
-                    bottom = innerPadding.calculateBottomPadding() + 22.dp,
-                ),
-                verticalArrangement = Arrangement.spacedBy(18.dp),
-            ) {
-                item {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = GolhaColors.PrimaryText,
+        GolhaPatternBackground {
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                containerColor = Color.Transparent,
+                bottomBar = {
+                    BottomNavigationWithMiniPlayer(
+                        items = bottomNavItems,
+                        onItemSelected = onBottomNavSelected,
+                        currentTrack = currentTrack,
+                        isPlaying = isPlayerPlaying,
+                        isLoading = isPlayerLoading,
+                        currentPositionMs = currentPlaybackPositionMs,
+                        durationMs = currentPlaybackDurationMs,
+                        onTogglePlayback = onTogglePlayerPlayback,
                     )
-                }
-                item {
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = GolhaColors.SecondaryText,
-                    )
-                }
-                item {
-                    Surface(
-                        shape = RoundedCornerShape(GolhaRadius.Card),
-                        color = GolhaColors.Surface,
-                        tonalElevation = 0.dp,
-                        shadowElevation = GolhaElevation.Card,
-                        border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border),
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 18.dp, vertical = 32.dp),
-                            contentAlignment = Alignment.Center,
+                },
+            ) { innerPadding ->
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .statusBarsPadding(),
+                    contentPadding = PaddingValues(
+                        start = GolhaSpacing.ScreenHorizontal,
+                        end = GolhaSpacing.ScreenHorizontal,
+                        top = GolhaSpacing.StatusBarTopGap,
+                        bottom = innerPadding.calculateBottomPadding() + 22.dp,
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(18.dp),
+                ) {
+                    item {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.headlineLarge,
+                            color = GolhaColors.PrimaryText,
+                        )
+                    }
+                    item {
+                        Text(
+                            text = subtitle,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = GolhaColors.SecondaryText,
+                        )
+                    }
+                    item {
+                        Surface(
+                            shape = RoundedCornerShape(GolhaRadius.Card),
+                            color = GolhaColors.Surface,
+                            tonalElevation = 0.dp,
+                            shadowElevation = GolhaElevation.Card,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border),
                         ) {
-                            Text(
-                                text = "این بخش در مرحله‌ی بعد کامل می‌شود.",
-                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-                                color = GolhaColors.PrimaryText,
-                                textAlign = TextAlign.Center,
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 18.dp, vertical = 32.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = "این بخش در مرحله‌ی بعد کامل می‌شود.",
+                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                                    color = GolhaColors.PrimaryText,
+                                    textAlign = TextAlign.Center,
+                                )
+                            }
                         }
                     }
                 }

@@ -64,8 +64,11 @@ private fun JSONArray.toProgramModels(): List<ProgramUiModel> = buildList {
         val item = getJSONObject(index)
         add(
             ProgramUiModel(
-                title = item.getString("title"),
-                episodeCount = item.getInt("episode_count"),
+                title = item.optString("title").takeIf { it.isNotBlank() } 
+                        ?: item.optString("titleFa").takeIf { it.isNotBlank() }
+                        ?: item.optString("title_fa").takeIf { it.isNotBlank() }
+                        ?: "برنامه بدون نام",
+                episodeCount = item.optInt("episodeCount", 0).takeIf { it > 0 } ?: item.optInt("episode_count", 0),
             )
         )
     }
