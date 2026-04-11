@@ -5,7 +5,7 @@ use crate::{
     db::RadioGolhaCore,
     error::CoreResult,
     models::{
-        ArtistDetail, ArtistListItem, ArtistListResponse, ArtistStats, CategoryOption,
+        ArtistDetail, ArtistCredit, ArtistListItem, ArtistListResponse, ArtistStats, CategoryOption,
         CategoryStat, DashboardOverview, DashboardSummary, LookupListItem, LookupListResponse,
         LookupStats, OrchestraLeaderCredit, PerformerCredit, ProgramDetail, ProgramListItem,
         ProgramListResponse, ProgramSearchOptions, ProgramSearchResponse, RankedNameStat,
@@ -1231,9 +1231,9 @@ impl RadioGolhaCore {
             return Ok(None);
         };
 
-        detail.singers = self.simple_name_list(
+        detail.singers = self.simple_artist_list(
             "
-            SELECT a.name
+            SELECT a.name, a.avatar
             FROM program_singers ps
             JOIN singer s ON s.id = ps.singer_id
             JOIN artist a ON a.id = s.artist_id
@@ -1242,9 +1242,9 @@ impl RadioGolhaCore {
             ",
             program_id,
         )?;
-        detail.poets = self.simple_name_list(
+        detail.poets = self.simple_artist_list(
             "
-            SELECT a.name
+            SELECT a.name, a.avatar
             FROM program_poets pp
             JOIN poet p ON p.id = pp.poet_id
             JOIN artist a ON a.id = p.artist_id
@@ -1253,9 +1253,9 @@ impl RadioGolhaCore {
             ",
             program_id,
         )?;
-        detail.announcers = self.simple_name_list(
+        detail.announcers = self.simple_artist_list(
             "
-            SELECT a.name
+            SELECT a.name, a.avatar
             FROM program_announcers pa
             JOIN announcer an ON an.id = pa.announcer_id
             JOIN artist a ON a.id = an.artist_id
@@ -1264,9 +1264,9 @@ impl RadioGolhaCore {
             ",
             program_id,
         )?;
-        detail.composers = self.simple_name_list(
+        detail.composers = self.simple_artist_list(
             "
-            SELECT a.name
+            SELECT a.name, a.avatar
             FROM program_composers pc
             JOIN composer c ON c.id = pc.composer_id
             JOIN artist a ON a.id = c.artist_id
@@ -1275,9 +1275,9 @@ impl RadioGolhaCore {
             ",
             program_id,
         )?;
-        detail.arrangers = self.simple_name_list(
+        detail.arrangers = self.simple_artist_list(
             "
-            SELECT a.name
+            SELECT a.name, a.avatar
             FROM program_arrangers pa
             JOIN arranger ar ON ar.id = pa.arranger_id
             JOIN artist a ON a.id = ar.artist_id
@@ -1296,9 +1296,9 @@ impl RadioGolhaCore {
             ",
             program_id,
         )?;
-        detail.orchestras = self.simple_name_list(
+        detail.orchestras = self.simple_artist_list(
             "
-            SELECT DISTINCT o.name
+            SELECT DISTINCT o.name, NULL as avatar
             FROM program_orchestras po
             JOIN orchestra o ON o.id = po.orchestra_id
             WHERE po.program_id = ?1
@@ -1332,6 +1332,17 @@ impl RadioGolhaCore {
             })
         })?;
 
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    fn simple_artist_list(&self, sql: &str, program_id: i64) -> CoreResult<Vec<ArtistCredit>> {
+        let mut stmt = self.connection().prepare(sql)?;
+        let rows = stmt.query_map([program_id], |row| {
+            Ok(ArtistCredit {
+                name: row.get(0)?,
+                avatar: row.get(1)?,
+            })
+        })?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 

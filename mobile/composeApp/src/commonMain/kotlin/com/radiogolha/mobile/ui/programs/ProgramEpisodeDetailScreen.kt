@@ -5,6 +5,7 @@ import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -88,35 +89,52 @@ fun ProgramEpisodeDetailScreen(
                     InfoGrid(detail = d)
                 }
 
-                // 3. Artists Section (Singers, Musicians)
-                if (d.singers.isNotEmpty() || d.performers.isNotEmpty() || d.orchestraLeaders.isNotEmpty()) {
-                    item { SectionHeader("هنرمندان") }
-                    items(d.singers) { singer ->
-                        ArtistRow(name = singer, role = "خواننده")
-                    }
-                    items(d.orchestraLeaders) { leader ->
-                        ArtistRow(name = leader.name, role = "رهبر ارکستر (${leader.orchestra})")
-                    }
-                    items(d.performers) { performer ->
-                        ArtistRow(
-                            name = performer.name, 
-                            role = performer.instrument ?: "نوازنده",
-                            avatar = performer.avatar
-                        )
-                    }
+                // 3. Horizontal Carousels for different roles
+                
+                // Singers
+                if (d.singers.isNotEmpty()) {
+                    item { ArtistCarousel(title = "خوانندگان", artists = d.singers) }
                 }
 
-                // 4. Credits Section (Poets, Composers, etc.)
-                if (d.poets.isNotEmpty() || d.composers.isNotEmpty() || d.announcers.isNotEmpty()) {
-                    item { SectionHeader("عوامل برنامه") }
-                    item {
-                        CreditsCard(detail = d)
-                    }
+                // Musicians (Performers + Orchestra Leaders)
+                val musicians = buildList {
+                    addAll(d.orchestraLeaders.map { ArtistCreditUiModel(it.name, null) })
+                    addAll(d.performers.map { ArtistCreditUiModel(it.name, it.avatar) })
+                }
+                if (musicians.isNotEmpty()) {
+                    item { ArtistCarousel(title = "نوازندگان و رهبران", artists = musicians) }
                 }
 
-                // 5. Transcript/Poetry Section
+                // Poets
+                if (d.poets.isNotEmpty()) {
+                    item { ArtistCarousel(title = "شاعران", artists = d.poets) }
+                }
+
+                // Composers
+                if (d.composers.isNotEmpty()) {
+                    item { ArtistCarousel(title = "آهنگسازان", artists = d.composers) }
+                }
+
+                // Arrangers
+                if (d.arrangers.isNotEmpty()) {
+                    item { ArtistCarousel(title = "تنظیم‌کنندگان", artists = d.arrangers) }
+                }
+
+                // Announcers
+                if (d.announcers.isNotEmpty()) {
+                    item { ArtistCarousel(title = "گویندگان", artists = d.announcers) }
+                }
+
+                // Orchestras
+                if (d.orchestras.isNotEmpty()) {
+                    item { ArtistCarousel(title = "ارکسترها", artists = d.orchestras) }
+                }
+
+                // 4. Transcript Section (Keep as is or move to card)
                 if (d.transcript.isNotEmpty()) {
-                    item { SectionHeader("متن برنامه و اشعار") }
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
+                    item { SectionTitle(title = "متن و اشعار") }
+                    item { Spacer(modifier = Modifier.height(12.dp)) }
                     item {
                         TranscriptCard(transcript = d.transcript)
                     }
@@ -232,33 +250,42 @@ private fun InfoTile(modifier: Modifier, label: String, value: String, icon: Gol
 }
 
 @Composable
-private fun SectionHeader(title: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-            color = GolhaColors.PrimaryText
-        )
-        HorizontalDivider(modifier = Modifier.weight(1f), color = GolhaColors.Border.copy(alpha = 0.6f))
+private fun ArtistCarousel(title: String, artists: List<ArtistCreditUiModel>) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+        SectionTitle(title = title)
+        Spacer(modifier = Modifier.height(14.dp))
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = GolhaSpacing.ScreenHorizontal),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(artists) { artist ->
+                ArtistCarouselItem(artist)
+            }
+        }
     }
 }
 
 @Composable
-private fun ArtistRow(name: String, role: String, avatar: String? = null) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+private fun ArtistCarouselItem(artist: ArtistCreditUiModel) {
+    Column(
+        modifier = Modifier.width(88.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        ArtistAvatar(name = name, imageUrl = avatar, tint = GolhaColors.SoftRose)
-        Column {
-            Text(text = name, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium), color = GolhaColors.PrimaryText)
-            Text(text = role, style = MaterialTheme.typography.labelMedium, color = GolhaColors.SecondaryText)
-        }
+        ArtistAvatar(
+            name = artist.name,
+            imageUrl = artist.avatar,
+            tint = GolhaColors.SoftRose,
+            modifier = Modifier.size(80.dp)
+        )
+        Text(
+            text = artist.name,
+            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+            color = GolhaColors.PrimaryText,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center
+        )
     }
 }
 

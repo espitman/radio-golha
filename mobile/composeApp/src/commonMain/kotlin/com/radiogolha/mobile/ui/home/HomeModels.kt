@@ -125,6 +125,11 @@ data class TranscriptVerseUiModel(
     val text: String
 )
 
+data class ArtistCreditUiModel(
+    val name: String,
+    val avatar: String?
+)
+
 data class ProgramEpisodeDetailUiModel(
     val id: Long,
     val title: String,
@@ -133,13 +138,13 @@ data class ProgramEpisodeDetailUiModel(
     val subNo: String?,
     val duration: String? = null,
     val audioUrl: String?,
-    val singers: List<String>,
-    val poets: List<String>,
-    val announcers: List<String>,
-    val composers: List<String>,
-    val arrangers: List<String>,
+    val singers: List<ArtistCreditUiModel>,
+    val poets: List<ArtistCreditUiModel>,
+    val announcers: List<ArtistCreditUiModel>,
+    val composers: List<ArtistCreditUiModel>,
+    val arrangers: List<ArtistCreditUiModel>,
     val modes: List<String>,
-    val orchestras: List<String>,
+    val orchestras: List<ArtistCreditUiModel>,
     val orchestraLeaders: List<OrchestraLeaderUiModel>,
     val performers: List<PerformerUiModel>,
     val timeline: List<TimelineSegmentUiModel>,

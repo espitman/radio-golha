@@ -121,26 +121,50 @@ actual fun loadProgramEpisodeDetail(programId: Long): com.radiogolha.mobile.ui.h
     
     val root = runCatching { JSONObject(payload) }.getOrNull() ?: return null
     
+    val singers = root.optArtistCredits("singers")
+    val poets = root.optArtistCredits("poets")
+    val announcers = root.optArtistCredits("announcers")
+    val composers = root.optArtistCredits("composers")
+    val arrangers = root.optArtistCredits("arrangers")
+    val orchestras = root.optArtistCredits("orchestras")
+    val orchestraLeaders = root.optOrchestraLeaders("orchestraLeaders").takeIf { it.isNotEmpty() } ?: root.optOrchestraLeaders("orchestra_leaders")
+    val performers = root.optPerformers("performers").takeIf { it.isNotEmpty() } ?: root.optPerformers("program_performers")
+
     return com.radiogolha.mobile.ui.home.ProgramEpisodeDetailUiModel(
         id = root.optLong("id"),
         title = root.optString("title", ""),
-        categoryName = root.optString("categoryName") ?: "",
+        categoryName = root.optString("categoryName") ?: root.optString("category_name") ?: "",
         no = root.optInt("no", 0),
-        subNo = root.optNullableString("subNo"),
+        subNo = root.optNullableString("subNo") ?: root.optNullableString("sub_no"),
         duration = root.optNullableString("duration"),
-        audioUrl = root.optNullableString("audioUrl"),
-        singers = root.optStringList("singers"),
-        poets = root.optStringList("poets"),
-        announcers = root.optStringList("announcers"),
-        composers = root.optStringList("composers"),
-        arrangers = root.optStringList("arrangers"),
+        audioUrl = root.optNullableString("audioUrl") ?: root.optNullableString("audio_url"),
+        singers = singers,
+        poets = poets,
+        announcers = announcers,
+        composers = composers,
+        arrangers = arrangers,
         modes = root.optStringList("modes"),
-        orchestras = root.optStringList("orchestras"),
-        orchestraLeaders = root.optOrchestraLeaders("orchestraLeaders"),
-        performers = root.optPerformers("performers"),
+        orchestras = orchestras,
+        orchestraLeaders = orchestraLeaders,
+        performers = performers,
         timeline = root.optTimeline("timeline"),
         transcript = root.optTranscript("transcript")
     )
+}
+
+private fun JSONObject.optArtistCredits(key: String): List<com.radiogolha.mobile.ui.home.ArtistCreditUiModel> {
+    val array = optJSONArray(key) ?: return emptyList()
+    return buildList {
+        for (i in 0 until array.length()) {
+            val item = array.getJSONObject(i)
+            add(
+                com.radiogolha.mobile.ui.home.ArtistCreditUiModel(
+                    name = item.optString("name", ""),
+                    avatar = item.optNullableString("avatar")
+                )
+            )
+        }
+    }
 }
 
 private fun JSONObject.optStringList(key: String): List<String> {

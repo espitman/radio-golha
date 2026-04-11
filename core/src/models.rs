@@ -224,6 +224,13 @@ pub struct TranscriptVerse {
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct ArtistCredit {
+    pub name: String,
+    pub avatar: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ProgramDetail {
     pub id: i64,
     pub title: String,
@@ -232,13 +239,13 @@ pub struct ProgramDetail {
     pub sub_no: Option<String>,
     pub duration: Option<String>,
     pub audio_url: Option<String>,
-    pub singers: Vec<String>,
-    pub poets: Vec<String>,
-    pub announcers: Vec<String>,
-    pub composers: Vec<String>,
-    pub arrangers: Vec<String>,
+    pub singers: Vec<ArtistCredit>,
+    pub poets: Vec<ArtistCredit>,
+    pub announcers: Vec<ArtistCredit>,
+    pub composers: Vec<ArtistCredit>,
+    pub arrangers: Vec<ArtistCredit>,
     pub modes: Vec<String>,
-    pub orchestras: Vec<String>,
+    pub orchestras: Vec<ArtistCredit>,
     pub orchestra_leaders: Vec<OrchestraLeaderCredit>,
     pub performers: Vec<PerformerCredit>,
     pub timeline: Vec<TimelineSegment>,
