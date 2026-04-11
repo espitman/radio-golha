@@ -88,9 +88,17 @@ fun TabRootScreen(
                 ) {
                     item {
                         Row(
+                            modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
+                            Text(
+                                modifier = Modifier.weight(1f),
+                                text = title,
+                                style = MaterialTheme.typography.headlineLarge,
+                                color = GolhaColors.PrimaryText,
+                            )
+
                             if (onBackClick != null) {
                                 Box(
                                     modifier = Modifier
@@ -112,12 +120,6 @@ fun TabRootScreen(
                                    )
                                 }
                             }
-
-                            Text(
-                                text = title,
-                                style = MaterialTheme.typography.headlineLarge,
-                                color = GolhaColors.PrimaryText,
-                            )
                         }
                     }
                     item {
