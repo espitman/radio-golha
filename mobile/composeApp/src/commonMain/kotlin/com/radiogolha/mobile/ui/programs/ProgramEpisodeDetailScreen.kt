@@ -1,5 +1,6 @@
 package com.radiogolha.mobile.ui.programs
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
@@ -30,6 +31,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.radiogolha.mobile.ui.home.ArtistAvatar
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ProgramEpisodeDetailScreen(
     programId: Long,
@@ -150,22 +152,31 @@ fun ProgramEpisodeDetailScreen(
                     item { ArtistCarousel(title = "گویندگان", artists = d.announcers) }
                 }
 
-                // 4. Tab Selector (Timeline / Lyrics)
-                item {
-                    DetailTabSelector(
-                        activeTab = activeTab,
-                        onTabChange = { activeTab = it }
-                    )
-                }
+                // 4. Content Logic (Timeline / Lyrics)
+                val hasTimeline = d.timeline.isNotEmpty()
+                val hasLyrics = d.transcript.isNotEmpty()
 
-                // 5. Tab Content
-                when (activeTab) {
-                    DetailTab.Timeline -> {
-                        TimelineSection(timeline = d.timeline)
+                if (hasTimeline && hasLyrics) {
+                    // Split into tabs with sticky header
+                    stickyHeader {
+                        DetailTabSelector(
+                            activeTab = activeTab,
+                            onTabChange = { activeTab = it }
+                        )
                     }
-                    DetailTab.Lyrics -> {
-                        LyricsSection(transcript = d.transcript)
+
+                    when (activeTab) {
+                        DetailTab.Timeline -> TimelineSection(timeline = d.timeline)
+                        DetailTab.Lyrics -> LyricsSection(transcript = d.transcript)
                     }
+                } else if (hasTimeline) {
+                    // Only Timeline
+                    item { SectionTitle(title = "تایم‌لاین اجرایی") }
+                    TimelineSection(timeline = d.timeline)
+                } else if (hasLyrics) {
+                    // Only Lyrics
+                    item { SectionTitle(title = "متن و اشعار") }
+                    LyricsSection(transcript = d.transcript)
                 }
                 
                 // Spacer
@@ -183,28 +194,33 @@ private enum class DetailTab(val label: String) {
 @Composable
 private fun DetailTabSelector(activeTab: DetailTab, onTabChange: (DetailTab) -> Unit) {
     Surface(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-        color = Color.Transparent,
-        shape = RoundedCornerShape(GolhaRadius.Pill),
-        border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.5f))
+        modifier = Modifier.fillMaxWidth(),
+        color = GolhaColors.ScreenBackground,
     ) {
-        Row(modifier = Modifier.fillMaxWidth().height(48.dp)) {
-            DetailTab.entries.forEach { tab ->
-                val selected = activeTab == tab
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .clip(RoundedCornerShape(GolhaRadius.Pill))
-                        .background(if (selected) GolhaColors.PrimaryAccent else Color.Transparent)
-                        .clickable { onTabChange(tab) },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = tab.label,
-                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                        color = if (selected) Color.White else GolhaColors.SecondaryText
-                    )
+        Surface(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = GolhaSpacing.ScreenHorizontal, vertical = 12.dp),
+            color = GolhaColors.Surface,
+            shape = RoundedCornerShape(GolhaRadius.Pill),
+            border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.5f))
+        ) {
+            Row(modifier = Modifier.fillMaxWidth().height(48.dp)) {
+                DetailTab.entries.forEach { tab ->
+                    val selected = activeTab == tab
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(GolhaRadius.Pill))
+                            .background(if (selected) GolhaColors.PrimaryAccent else Color.Transparent)
+                            .clickable { onTabChange(tab) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = tab.label,
+                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                            color = if (selected) Color.White else GolhaColors.SecondaryText
+                        )
+                    }
                 }
             }
         }
@@ -219,7 +235,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.TimelineSection(timel
     } else {
         items(timeline) { segment ->
             TimelineSegmentCard(segment)
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
