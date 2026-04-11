@@ -70,52 +70,59 @@ fun AndroidApp() {
     var homeState by remember { mutableStateOf<HomeUiState?>(null) }
     var isHomeLoading by remember { mutableStateOf(true) }
     
-    var singers by remember { mutableStateOf<List<com.radiogolha.mobile.ui.home.SingerListItemUiModel>>(emptyList()) }
+    var librarySingers by remember { mutableStateOf<List<com.radiogolha.mobile.ui.home.SingerListItemUiModel>>(emptyList()) }
     var isSingersLoading by remember { mutableStateOf(false) }
     
-    var musicians by remember { mutableStateOf<List<com.radiogolha.mobile.ui.home.MusicianListItemUiModel>>(emptyList()) }
+    var libraryMusicians by remember { mutableStateOf<List<com.radiogolha.mobile.ui.home.MusicianListItemUiModel>>(emptyList()) }
     var isMusiciansLoading by remember { mutableStateOf(false) }
     
-    var programs by remember { mutableStateOf<List<com.radiogolha.mobile.ui.home.ProgramUiModel>>(emptyList()) }
+    var libraryPrograms by remember { mutableStateOf<List<com.radiogolha.mobile.ui.home.ProgramUiModel>>(emptyList()) }
     var isProgramsLoading by remember { mutableStateOf(false) }
 
-    // Load initial home state
+    // Top Tracks pre-fetching persistent state
+    var prefetchedTopTracks by remember { mutableStateOf<List<com.radiogolha.mobile.ui.home.TrackUiModel>>(emptyList()) }
+    var isRefreshingTopTracks by remember { mutableStateOf(false) }
+    var topTracksPrefetchToken by remember { mutableIntStateOf(0) }
+    val visibleTrackCount = 5
+
+    // Load initial home state and library state
     LaunchedEffect(reloadToken) {
         if (homeState == null) isHomeLoading = true
-        val loadedState = runCatching {
-            withContext(Dispatchers.Default) { loadHomeUiState() }
-        }.getOrNull()
-
-        if (loadedState != null) {
-            val visibleTrackCount = 5
-            val currentTracks = loadedState.topTracks.take(visibleTrackCount)
-            homeState = loadedState.copy(topTracks = currentTracks)
-        }
-        isHomeLoading = false
-    }
-
-    LaunchedEffect(reloadToken) {
         isSingersLoading = true
-        singers = runCatching {
-            withContext(Dispatchers.Default) { loadSingersUiState() }
-        }.getOrNull() ?: emptyList()
-        isSingersLoading = false
-    }
-
-    LaunchedEffect(reloadToken) {
         isMusiciansLoading = true
-        musicians = runCatching {
-            withContext(Dispatchers.Default) { loadMusiciansUiState() }
-        }.getOrNull() ?: emptyList()
-        isMusiciansLoading = false
-    }
-
-    LaunchedEffect(reloadToken) {
         isProgramsLoading = true
-        programs = runCatching {
-            withContext(Dispatchers.Default) { com.radiogolha.mobile.ui.programs.loadProgramsUiState() }
-        }.getOrNull() ?: emptyList()
-        isProgramsLoading = false
+
+        withContext(Dispatchers.Default) {
+            // 1. Home
+            val loadedState = runCatching { loadHomeUiState() }.getOrNull()
+            if (loadedState != null) {
+                val currentTracks = loadedState.topTracks.take(visibleTrackCount)
+                prefetchedTopTracks = loadedState.topTracks.drop(visibleTrackCount).take(visibleTrackCount)
+                homeState = loadedState.copy(topTracks = currentTracks)
+            }
+            isHomeLoading = false
+
+            // 2. Library - Singers
+            librarySingers = runCatching { loadSingersUiState() }.getOrElse { 
+                println("ERROR (Singers): ${it.message}")
+                emptyList() 
+            }
+            isSingersLoading = false
+
+            // 3. Library - Musicians
+            libraryMusicians = runCatching { loadMusiciansUiState() }.getOrElse { 
+                println("ERROR (Musicians): ${it.message}")
+                emptyList() 
+            }
+            isMusiciansLoading = false
+
+            // 4. Library - Programs
+            libraryPrograms = runCatching { com.radiogolha.mobile.ui.programs.loadProgramsUiState() }.getOrElse { 
+                println("ERROR (Programs): ${it.message}")
+                emptyList() 
+            }
+            isProgramsLoading = false
+        }
     }
     val bottomNavItems = remember(selectedTab) {
         buildBottomNavItems(selectedTab)
@@ -127,22 +134,6 @@ fun AndroidApp() {
             startDestination = AndroidRoute.Home.route,
         ) {
             composable(AndroidRoute.Home.route) {
-                var isRefreshingTopTracks by remember { mutableStateOf(false) }
-                var topTracksPrefetchToken by remember { mutableIntStateOf(0) }
-                val visibleTrackCount = 5
-                var prefetchedTopTracks by remember { mutableStateOf<List<com.radiogolha.mobile.ui.home.TrackUiModel>>(emptyList()) }
-
-                LaunchedEffect(topTracksPrefetchToken) {
-                    if (topTracksPrefetchToken == 0) return@LaunchedEffect
-                    val refreshedTracks = runCatching {
-                        withContext(Dispatchers.Default) { com.radiogolha.mobile.ui.home.loadTopTracks() }
-                    }.getOrNull()
-
-                    if (refreshedTracks != null) {
-                        prefetchedTopTracks = refreshedTracks.take(visibleTrackCount)
-                    }
-                    isRefreshingTopTracks = false
-                }
 
                 HomeScreen(
                     state = if (isHomeLoading && homeState == null) {
@@ -233,9 +224,9 @@ fun AndroidApp() {
 
                 com.radiogolha.mobile.ui.library.LibraryScreen(
                     initialTab = initialTab,
-                    programs = programs,
-                    singers = singers,
-                    musicians = musicians,
+                    programs = libraryPrograms,
+                    singers = librarySingers,
+                    musicians = libraryMusicians,
                     isProgramsLoading = isProgramsLoading,
                     isSingersLoading = isSingersLoading,
                     isMusiciansLoading = isMusiciansLoading,
