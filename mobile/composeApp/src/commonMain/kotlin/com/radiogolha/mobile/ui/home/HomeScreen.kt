@@ -78,7 +78,6 @@ fun HomeScreen(
                         item { HeroBannerSkeleton() }
                         item { ProgramsSectionSkeleton() }
                         item { SingersSectionSkeleton() }
-                        item { DastgahSectionSkeleton() }
                         item { MusiciansSectionSkeleton() }
                         item { TopTracksSectionSkeleton() }
                     } else {
@@ -96,7 +95,6 @@ fun HomeScreen(
                                 onSeeAllClick = onOpenAllSingers,
                             )
                         }
-                        item { DastgahSection(items = state.dastgahs) }
                         item {
                             MusiciansSection(
                                 musicians = state.musicians,

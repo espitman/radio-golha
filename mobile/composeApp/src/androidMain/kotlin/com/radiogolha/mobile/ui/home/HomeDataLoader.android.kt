@@ -112,7 +112,7 @@ internal fun JSONArray.toTrackModels(): List<TrackUiModel> = buildList {
             TrackUiModel(
                 id = item.getLong("id"),
                 title = item.getString("title"),
-                artist = item.getString("artist"),
+                artist = item.getString("artist").split(" - ")[0],
                 duration = item.getString("duration"),
                 audioUrl = item.optNullableString("audio_url"),
             )

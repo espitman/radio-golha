@@ -192,7 +192,7 @@ fun CategoryProgramUiModel.toTrackUiModel(): TrackUiModel {
     return TrackUiModel(
         id = id,
         title = title,
-        artist = if (!dastgah.isNullOrBlank()) "$singer - $dastgah" else singer,
+        artist = singer,
         duration = duration,
         audioUrl = audioUrl
     )
