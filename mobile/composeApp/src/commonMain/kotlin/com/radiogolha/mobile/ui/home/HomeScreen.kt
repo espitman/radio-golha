@@ -39,6 +39,7 @@ fun HomeScreen(
     onProgramClick: (ProgramUiModel) -> Unit = {},
     onSingerClick: (Long) -> Unit = {},
     onMusicianClick: (Long) -> Unit = {},
+    onExpandPlayer: () -> Unit = {},
     onBottomNavSelected: (AppTab) -> Unit = {},
 ) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
@@ -61,7 +62,8 @@ fun HomeScreen(
                             // Find the track in state if needed or just pass the ID
                             state?.topTracks?.find { it.id == trackId }?.let { onTrackClick(it) }
                                 ?: currentTrack?.takeIf { it.id == trackId }?.let { onTrackClick(it) }
-                        }
+                        },
+                        onExpand = onExpandPlayer,
                     )
                 },
             ) { innerPadding ->

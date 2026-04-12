@@ -48,6 +48,7 @@ fun LibraryScreen(
     onSingerClick: (Long) -> Unit = {},
     onMusicianClick: (Long) -> Unit = {},
     onTrackClick: (Long) -> Unit = {},
+    onExpandPlayer: () -> Unit = {},
 ) {
     val tabs = LibraryTab.entries
     val pagerState = rememberPagerState(
@@ -72,6 +73,7 @@ fun LibraryScreen(
                         durationMs = currentPlaybackDurationMs,
                         onTogglePlayback = onTogglePlayerPlayback,
                         onTrackClick = onTrackClick,
+                        onExpand = onExpandPlayer,
                     )
                 }
             ) { innerPadding ->

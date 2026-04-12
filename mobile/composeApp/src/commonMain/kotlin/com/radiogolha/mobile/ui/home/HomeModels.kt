@@ -93,6 +93,8 @@ enum class GolhaIcon {
     Account,
     Play,
     Pause,
+    SkipPrevious,
+    SkipNext,
     More,
     Download,
     Back,

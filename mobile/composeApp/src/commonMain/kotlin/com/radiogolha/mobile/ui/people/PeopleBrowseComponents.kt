@@ -103,6 +103,7 @@ fun PeopleBrowseScreen(
     currentPlaybackPositionMs: Long = 0L,
     currentPlaybackDurationMs: Long = 0L,
     onTogglePlayerPlayback: () -> Unit = {},
+    onExpandPlayer: () -> Unit = {},
 ) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         GolhaPatternBackground {
@@ -119,6 +120,7 @@ fun PeopleBrowseScreen(
                         currentPositionMs = currentPlaybackPositionMs,
                         durationMs = currentPlaybackDurationMs,
                         onTogglePlayback = onTogglePlayerPlayback,
+                        onExpand = onExpandPlayer,
                     )
                 },
             ) { innerPadding ->

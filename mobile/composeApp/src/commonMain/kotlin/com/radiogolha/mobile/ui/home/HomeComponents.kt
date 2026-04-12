@@ -4,6 +4,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -476,6 +478,7 @@ fun BottomNavigationWithMiniPlayer(
     durationMs: Long,
     onTogglePlayback: () -> Unit,
     onTrackClick: (Long) -> Unit = {},
+    onExpand: () -> Unit = {},
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -488,6 +491,7 @@ fun BottomNavigationWithMiniPlayer(
             durationMs = durationMs,
             onTogglePlayback = onTogglePlayback,
             onTrackClick = onTrackClick,
+            onExpand = onExpand,
         )
         BottomNavigationBar(
             items = items,
@@ -505,12 +509,21 @@ fun MiniPlayerBar(
     durationMs: Long,
     onTogglePlayback: () -> Unit,
     onTrackClick: (Long) -> Unit = {},
+    onExpand: () -> Unit = {},
 ) {
     Surface(
         tonalElevation = 0.dp,
         shadowElevation = 0.dp,
         color = GolhaColors.Surface.copy(alpha = 0.98f),
         border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.82f)),
+        modifier = Modifier.pointerInput(Unit) {
+            detectVerticalDragGestures { change, dragAmount ->
+                if (dragAmount < -15) { // Swipe up threshold
+                    onExpand()
+                    change.consume()
+                }
+            }
+        }
     ) {
         Row(
             modifier = Modifier
@@ -1364,6 +1377,38 @@ fun GolhaLineIcon(
                     topLeft = Offset(size.width * 0.58f, size.height * 0.22f),
                     size = Size(size.width * 0.16f, size.height * 0.56f),
                     cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx()),
+                )
+            }
+
+            GolhaIcon.SkipPrevious -> {
+                val triangle = Path().apply {
+                    moveTo(size.width * 0.75f, size.height * 0.28f)
+                    lineTo(size.width * 0.35f, size.height * 0.50f)
+                    lineTo(size.width * 0.75f, size.height * 0.72f)
+                    close()
+                }
+                drawPath(triangle, tint)
+                drawRoundRect(
+                    color = tint,
+                    topLeft = Offset(size.width * 0.22f, size.height * 0.28f),
+                    size = Size(size.width * 0.08f, size.height * 0.44f),
+                    cornerRadius = CornerRadius(2.dp.toPx(), 2.dp.toPx()),
+                )
+            }
+
+            GolhaIcon.SkipNext -> {
+                val triangle = Path().apply {
+                    moveTo(size.width * 0.25f, size.height * 0.28f)
+                    lineTo(size.width * 0.65f, size.height * 0.50f)
+                    lineTo(size.width * 0.25f, size.height * 0.72f)
+                    close()
+                }
+                drawPath(triangle, tint)
+                drawRoundRect(
+                    color = tint,
+                    topLeft = Offset(size.width * 0.70f, size.height * 0.28f),
+                    size = Size(size.width * 0.08f, size.height * 0.44f),
+                    cornerRadius = CornerRadius(2.dp.toPx(), 2.dp.toPx()),
                 )
             }
 

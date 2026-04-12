@@ -54,6 +54,7 @@ fun TabRootScreen(
     currentPlaybackDurationMs: Long = 0L,
     onTogglePlayerPlayback: () -> Unit = {},
     onTrackClick: (Long) -> Unit = {},
+    onExpandPlayer: () -> Unit = {},
     onBackClick: (() -> Unit)? = null,
     scrollState: androidx.compose.foundation.lazy.LazyListState = androidx.compose.foundation.lazy.rememberLazyListState(),
     headerOverlay: (@Composable () -> Unit)? = null,
@@ -75,6 +76,7 @@ fun TabRootScreen(
                         durationMs = currentPlaybackDurationMs,
                         onTogglePlayback = onTogglePlayerPlayback,
                         onTrackClick = onTrackClick,
+                        onExpand = onExpandPlayer,
                     )
                 },
             ) { innerPadding ->

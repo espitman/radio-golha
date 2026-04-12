@@ -54,6 +54,8 @@ fun ProgramEpisodeDetailScreen(
     onTogglePlayerPlayback: () -> Unit = {},
     onPlayProgram: (ProgramEpisodeDetailUiModel) -> Unit = {},
     onArtistClick: (Long) -> Unit = {},
+    onTrackClick: (Long) -> Unit = {},
+    onExpandPlayer: () -> Unit = {},
 ) {
     var detail by remember { mutableStateOf<ProgramEpisodeDetailUiModel?>(null) }
     var isLoading by remember { mutableStateOf(true) }
@@ -94,6 +96,8 @@ fun ProgramEpisodeDetailScreen(
             currentPlaybackPositionMs = currentPlaybackPositionMs,
             currentPlaybackDurationMs = currentPlaybackDurationMs,
             onTogglePlayerPlayback = onTogglePlayerPlayback,
+            onTrackClick = onTrackClick,
+            onExpandPlayer = onExpandPlayer,
             onBackClick = onBackClick,
             scrollState = scrollState,
             headerOverlay = {

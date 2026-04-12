@@ -46,6 +46,7 @@ fun SingersScreen(
     currentPlaybackPositionMs: Long = 0L,
     currentPlaybackDurationMs: Long = 0L,
     onTogglePlayerPlayback: () -> Unit = {},
+    onExpandPlayer: () -> Unit = {},
 ) {
     PeopleBrowseScreen(
         title = "خواننده‌ها",
@@ -65,6 +66,7 @@ fun SingersScreen(
         currentPlaybackPositionMs = currentPlaybackPositionMs,
         currentPlaybackDurationMs = currentPlaybackDurationMs,
         onTogglePlayerPlayback = onTogglePlayerPlayback,
+        onExpandPlayer = onExpandPlayer,
     )
 }
 

@@ -217,6 +217,11 @@ class GolhaPlayerManager(private val context: Context) {
         }
     }
 
+    fun seekTo(positionMs: Long) {
+        player?.seekTo(positionMs)
+        _currentPositionMs.value = positionMs
+    }
+
     private fun getPlaceholderArtworkBytes(context: Context): ByteArray? {
         val resId = context.resources.getIdentifier("golha_artwork_placeholder", "drawable", context.packageName)
         if (resId == 0) return null

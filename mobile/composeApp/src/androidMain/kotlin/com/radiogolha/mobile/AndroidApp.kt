@@ -180,7 +180,11 @@ fun AndroidApp() {
                     onTogglePlayerPlayback = { playerManager.togglePlayback() },
                     onPlayTrack = { track -> playerManager.play(track) },
                     onTrackClick = { track ->
-                        navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(track.id))
+                        if (track.id == currentTrack?.id) {
+                            navController.navigate(AndroidRoute.NowPlaying.route)
+                        } else {
+                            navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(track.id))
+                        }
                     },
                     onProgramClick = { program ->
                         navController.navigate(AndroidRoute.CategoryPrograms.createRoute(program.title))
@@ -191,6 +195,7 @@ fun AndroidApp() {
                     onMusicianClick = { artistId ->
                         navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId))
                     },
+                    onExpandPlayer = { navController.navigate(AndroidRoute.NowPlaying.route) },
                     onBottomNavSelected = { tab ->
                         navController.navigate(tab.toRoute().route) {
                             popUpTo(navController.graph.findStartDestination().id) {
@@ -217,6 +222,7 @@ fun AndroidApp() {
                     onTrackClick = { trackId ->
                         navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(trackId))
                     },
+                    onExpandPlayer = { navController.navigate(AndroidRoute.NowPlaying.route) },
                     onBottomNavSelected = { tab ->
                         navController.navigate(tab.toRoute().route) {
                             popUpTo(navController.graph.findStartDestination().id) {
@@ -253,6 +259,7 @@ fun AndroidApp() {
                     isSingersLoading = isLibraryLoading,
                     isMusiciansLoading = isLibraryLoading,
                     bottomNavItems = bottomNavItems,
+                    onExpandPlayer = { navController.navigate(AndroidRoute.NowPlaying.route) },
                     onBottomNavSelected = { tab ->
                         navController.navigate(tab.toRoute().route) {
                             popUpTo(navController.graph.findStartDestination().id) {
@@ -307,6 +314,7 @@ fun AndroidApp() {
                     programs = categoryPrograms,
                     isLoading = isCategoryLoading,
                     bottomNavItems = bottomNavItems,
+                    onExpandPlayer = { navController.navigate(AndroidRoute.NowPlaying.route) },
                     onBottomNavSelected = { tab ->
                         navController.navigate(tab.toRoute().route) {
                             popUpTo(navController.graph.findStartDestination().id) {
@@ -343,6 +351,7 @@ fun AndroidApp() {
                 com.radiogolha.mobile.ui.programs.ProgramEpisodeDetailScreen(
                     programId = programId,
                     bottomNavItems = bottomNavItems,
+                    onExpandPlayer = { navController.navigate(AndroidRoute.NowPlaying.route) },
                     onBottomNavSelected = { tab ->
                         navController.navigate(tab.toRoute().route) {
                             popUpTo(navController.graph.findStartDestination().id) {
@@ -377,6 +386,7 @@ fun AndroidApp() {
             composable(AndroidRoute.Account.route) {
                 SettingsScreen(
                     bottomNavItems = bottomNavItems,
+                    onExpandPlayer = { navController.navigate(AndroidRoute.NowPlaying.route) },
                     onBottomNavSelected = { tab ->
                         navController.navigate(tab.toRoute().route) {
                             popUpTo(navController.graph.findStartDestination().id) {
@@ -445,6 +455,9 @@ fun AndroidApp() {
                     onSingerClick = { artistId ->
                         navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId))
                     },
+                    onExpandPlayer = {
+                        navController.navigate(AndroidRoute.NowPlaying.route)
+                    }
                 )
             }
 
@@ -476,6 +489,9 @@ fun AndroidApp() {
                     onMusicianClick = { artistId ->
                         navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId))
                     },
+                    onExpandPlayer = {
+                        navController.navigate(AndroidRoute.NowPlaying.route)
+                    }
                 )
             }
 
@@ -489,6 +505,7 @@ fun AndroidApp() {
                 ArtistDetailScreen(
                     artistId = artistId,
                     bottomNavItems = bottomNavItems,
+                    onExpandPlayer = { navController.navigate(AndroidRoute.NowPlaying.route) },
                     onBottomNavSelected = { tab ->
                         navController.navigate(tab.toRoute().route) {
                             popUpTo(navController.graph.findStartDestination().id) {
@@ -514,6 +531,19 @@ fun AndroidApp() {
                     },
                 )
             }
+
+            composable(AndroidRoute.NowPlaying.route) {
+                com.radiogolha.mobile.ui.player.NowPlayingScreen(
+                    currentTrack = currentTrack,
+                    isPlaying = isPlayerPlaying,
+                    isLoading = isPlayerLoading,
+                    currentPositionMs = currentPlaybackPositionMs,
+                    durationMs = currentPlaybackDurationMs,
+                    onTogglePlayback = { playerManager.togglePlayback() },
+                    onSeek = { pos -> playerManager.seekTo(pos) },
+                    onBackClick = { navController.popBackStack() },
+                )
+            }
         }
     }
 }
@@ -536,6 +566,7 @@ private sealed class AndroidRoute(val route: String) {
     data object ProgramEpisodeDetail : AndroidRoute("program_episode_detail/{id}") {
         fun createRoute(id: Long) = "program_episode_detail/$id"
     }
+    data object NowPlaying : AndroidRoute("now_playing")
 }
 
 private fun AppTab.toRoute(): AndroidRoute = when (this) {

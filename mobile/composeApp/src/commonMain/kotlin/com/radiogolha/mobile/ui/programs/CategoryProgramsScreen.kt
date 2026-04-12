@@ -46,6 +46,7 @@ fun CategoryProgramsScreen(
     currentPlaybackDurationMs: Long = 0L,
     onTogglePlayerPlayback: () -> Unit = {},
     onTrackClick: (Long) -> Unit = {},
+    onExpandPlayer: () -> Unit = {},
 ) {
     TabRootScreen(
         title = "برنامه",
@@ -59,6 +60,7 @@ fun CategoryProgramsScreen(
         currentPlaybackDurationMs = currentPlaybackDurationMs,
         onTogglePlayerPlayback = onTogglePlayerPlayback,
         onTrackClick = onTrackClick,
+        onExpandPlayer = onExpandPlayer,
         onBackClick = onBackClick,
         content = {
             if (isLoading) {

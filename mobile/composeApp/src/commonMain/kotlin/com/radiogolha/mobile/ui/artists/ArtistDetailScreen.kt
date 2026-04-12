@@ -58,6 +58,7 @@ fun ArtistDetailScreen(
     currentPlaybackDurationMs: Long = 0L,
     onTogglePlayerPlayback: () -> Unit = {},
     onTrackClick: (Long) -> Unit = {},
+    onExpandPlayer: () -> Unit = {},
 ) {
     val detail by produceState<ArtistDetailUiModel?>(initialValue = null, key1 = artistId) {
         value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
@@ -90,6 +91,7 @@ fun ArtistDetailScreen(
             currentPlaybackDurationMs = currentPlaybackDurationMs,
             onTogglePlayerPlayback = onTogglePlayerPlayback,
             onTrackClick = onTrackClick,
+            onExpandPlayer = onExpandPlayer,
             onBackClick = onBackClick,
             scrollState = scrollState,
             content = {

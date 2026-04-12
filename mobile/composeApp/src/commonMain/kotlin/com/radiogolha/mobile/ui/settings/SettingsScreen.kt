@@ -49,6 +49,7 @@ fun SettingsScreen(
     currentPlaybackPositionMs: Long = 0L,
     currentPlaybackDurationMs: Long = 0L,
     onTogglePlayerPlayback: () -> Unit = {},
+    onExpandPlayer: () -> Unit = {},
 ) {
     CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides LayoutDirection.Rtl) {
         GolhaPatternBackground {
@@ -66,6 +67,7 @@ fun SettingsScreen(
                     currentPositionMs = currentPlaybackPositionMs,
                     durationMs = currentPlaybackDurationMs,
                     onTogglePlayback = onTogglePlayerPlayback,
+                    onExpand = onExpandPlayer,
                 )
             },
         ) { innerPadding ->
