@@ -56,6 +56,7 @@ fun TabRootScreen(
     onTrackClick: (Long) -> Unit = {},
     onBackClick: (() -> Unit)? = null,
     scrollState: androidx.compose.foundation.lazy.LazyListState = androidx.compose.foundation.lazy.rememberLazyListState(),
+    headerOverlay: (@Composable () -> Unit)? = null,
     content: (androidx.compose.foundation.lazy.LazyListScope.() -> Unit)? = null,
 ) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
@@ -161,6 +162,12 @@ fun TabRootScreen(
                                 }
                             }
                         }
+                    }
+                }
+                
+                headerOverlay?.let { 
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        it()
                     }
                 }
             }
