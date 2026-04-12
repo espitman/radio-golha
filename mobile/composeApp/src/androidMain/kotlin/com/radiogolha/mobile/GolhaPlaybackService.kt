@@ -22,6 +22,7 @@ class GolhaPlaybackService : MediaSessionService() {
                     .build(),
                 true
             )
+            .setHandleAudioBecomingNoisy(true)
             .build()
         
         val intent = Intent(this, MainActivity::class.java)

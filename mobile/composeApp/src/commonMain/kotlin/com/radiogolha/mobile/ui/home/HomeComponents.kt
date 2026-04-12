@@ -545,7 +545,7 @@ fun MiniPlayerBar(
                         .clip(CircleShape)
                         .background(GolhaColors.BadgeBackground)
                         .border(1.dp, GolhaColors.Border, CircleShape)
-                        .clickable(enabled = currentTrack?.audioUrl != null) { onTogglePlayback() },
+                        .clickable(enabled = !currentTrack?.audioUrl.isNullOrBlank()) { onTogglePlayback() },
                     contentAlignment = Alignment.Center,
                 ) {
                     if (isLoading) {
@@ -558,7 +558,7 @@ fun MiniPlayerBar(
                         GolhaLineIcon(
                             icon = if (isPlaying) GolhaIcon.Pause else GolhaIcon.Play,
                             modifier = Modifier.size(18.dp),
-                            tint = if (currentTrack?.audioUrl != null) GolhaColors.PrimaryText else GolhaColors.SecondaryText.copy(alpha = 0.55f),
+                            tint = if (!currentTrack?.audioUrl.isNullOrBlank()) GolhaColors.PrimaryText else GolhaColors.SecondaryText.copy(alpha = 0.55f),
                         )
                     }
                 }
