@@ -573,14 +573,14 @@ fun MiniPlayerBar(
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(
-                    text = currentTrack?.title ?: "چیزی در حال پخش نیست",
+                    text = currentTrack?.title ?: "...",
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
                     color = GolhaColors.PrimaryText,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = currentTrack?.artist ?: "برای شروع، یکی از ترک‌های برتر را پخش کن",
+                    text = currentTrack?.artist ?: "...",
                     style = MaterialTheme.typography.bodySmall,
                     color = GolhaColors.SecondaryText,
                     maxLines = 1,
