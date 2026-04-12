@@ -55,6 +55,7 @@ fun TabRootScreen(
     onTogglePlayerPlayback: () -> Unit = {},
     onTrackClick: (Long) -> Unit = {},
     onBackClick: (() -> Unit)? = null,
+    scrollState: androidx.compose.foundation.lazy.LazyListState = androidx.compose.foundation.lazy.rememberLazyListState(),
     content: (androidx.compose.foundation.lazy.LazyListScope.() -> Unit)? = null,
 ) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
@@ -77,6 +78,7 @@ fun TabRootScreen(
                 },
             ) { innerPadding ->
                 LazyColumn(
+                    state = scrollState,
                     modifier = Modifier
                         .fillMaxSize()
                         .statusBarsPadding(),
