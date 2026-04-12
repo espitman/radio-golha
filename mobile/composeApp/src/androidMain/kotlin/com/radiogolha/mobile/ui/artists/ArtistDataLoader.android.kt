@@ -28,10 +28,21 @@ private fun JSONArray?.toCategoryPrograms(): List<CategoryProgramUiModel> {
     return buildList {
         for (index in 0 until length()) {
             val item = getJSONObject(index)
+            val title = item.optNullableString("title") 
+                ?: item.optNullableString("title_fa")
+                ?: item.optNullableString("titleFa")
+                ?: run {
+                    val cat = item.optNullableString("category") ?: item.optNullableString("category_name") ?: "برنامه"
+                    val no = item.optLong("no", 0).toString()
+                    "$cat $no"
+                }
+            val no = item.optLong("no", 0).toString()
             add(
                 CategoryProgramUiModel(
                     id = item.optLong("id"),
-                    programNumber = item.optLong("no", 0).toString(),
+                    title = title,
+                    categoryName = item.optNullableString("category") ?: item.optNullableString("category_name"),
+                    programNumber = no,
                     singer = item.optString("artist", "ناشناس"),
                     duration = item.optNullableString("duration"),
                     dastgah = item.optNullableString("mode"),

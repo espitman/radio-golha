@@ -67,6 +67,7 @@ import com.radiogolha.mobile.theme.GolhaElevation
 import com.radiogolha.mobile.theme.GolhaRadius
 import com.radiogolha.mobile.theme.GolhaSpacing
 import com.radiogolha.mobile.theme.GolhaTypographyTokens
+import com.radiogolha.mobile.ui.programs.*
 import kotlin.math.min
 
 @Composable
@@ -403,34 +404,12 @@ fun TopTracksSection(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     repeat(trackRowCount) { index ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            Row(
-                                modifier = Modifier.weight(1f),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                SkeletonRoundedRect(width = 58.dp, height = 58.dp, radius = 16.dp)
-                                Column(
-                                    modifier = Modifier.weight(1f),
-                                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                                ) {
-                                    SkeletonBlock(widthFraction = 0.72f, height = 14.dp)
-                                    SkeletonBlock(widthFraction = 0.42f, height = 11.dp)
-                                }
-                            }
-
-                            SkeletonBlock(width = 36.dp, height = 11.dp)
-                            SkeletonCircle(size = 36.dp)
-                        }
-
+                        SkeletonTrackRow()
                         if (index != trackRowCount - 1) {
-                            HorizontalDivider(color = GolhaColors.Border.copy(alpha = 0.65f))
+                            HorizontalDivider(
+                                modifier = Modifier.padding(vertical = 4.dp),
+                                color = GolhaColors.Border.copy(alpha = 0.65f)
+                            )
                         }
                     }
                 }
@@ -438,15 +417,15 @@ fun TopTracksSection(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                    .padding(horizontal = GolhaSpacing.ScreenHorizontal),
+                        .padding(horizontal = GolhaSpacing.ScreenHorizontal),
                 ) {
                     displayedTracks.forEachIndexed { index, track ->
-                        TrackRow(
+                        ProgramTrackRow(
                             track = track,
                             isActive = track.id == currentTrackId,
                             isPlaying = track.id == currentTrackId && isPlayerPlaying,
                             onPlayClick = { onPlayTrack(track) },
-                            onClick = { onTrackClick(track) }
+                            onTrackClick = { onTrackClick(track) }
                         )
                         if (index != displayedTracks.lastIndex) {
                             HorizontalDivider(
@@ -1181,87 +1160,7 @@ private fun DastgahChip(name: String) {
     }
 }
 
-@Composable
-private fun TrackRow(
-    track: TrackUiModel,
-    isActive: Boolean,
-    isPlaying: Boolean,
-    onPlayClick: () -> Unit,
-    onClick: () -> Unit = {},
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .clickable { onClick() }
-            .background(if (isActive) GolhaColors.BadgeBackground.copy(alpha = 0.42f) else Color.Transparent)
-            .padding(horizontal = 8.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Row(
-            modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            TrackCoverPlaceholder(title = track.title)
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text(
-                    text = track.title,
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
-                    color = GolhaColors.PrimaryText,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = track.artist,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = GolhaColors.SecondaryText,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-
-        if (!track.duration.isNullOrBlank()) {
-            Text(
-                text = track.duration,
-                style = MaterialTheme.typography.labelMedium,
-                color = GolhaColors.SecondaryText,
-            )
-        }
-
-        SmallCircularIconButton(
-            icon = if (isActive && isPlaying) GolhaIcon.Pause else GolhaIcon.Play,
-            iconTint = GolhaColors.PrimaryText,
-            iconSize = 18.dp,
-            background = GolhaColors.BadgeBackground,
-            borderColor = GolhaColors.Border,
-            onClick = onPlayClick,
-        )
-    }
-}
-
-@Composable
-private fun TrackCoverPlaceholder(title: String) {
-    Box(
-        modifier = Modifier
-            .size(58.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(GolhaColors.SoftSand)
-            .border(1.dp, GolhaColors.Border.copy(alpha = 0.6f), RoundedCornerShape(16.dp)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = title.take(1),
-            style = MaterialTheme.typography.titleLarge,
-            color = GolhaColors.SecondaryText,
-        )
-    }
-}
+// TrackRow and related components moved to ProgramComponents.kt for global consistency
 
 @Composable
 private fun SmallCircularIconButton(

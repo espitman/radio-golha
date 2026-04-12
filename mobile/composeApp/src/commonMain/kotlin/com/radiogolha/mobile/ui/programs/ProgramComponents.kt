@@ -19,94 +19,117 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.radiogolha.mobile.theme.GolhaColors
 import com.radiogolha.mobile.theme.GolhaRadius
+import com.radiogolha.mobile.theme.GolhaSpacing
 import com.radiogolha.mobile.ui.home.*
 
 @Composable
-fun CategoryProgramTrackRow(
-    program: CategoryProgramUiModel,
+fun ProgramTrackRow(
+    track: TrackUiModel,
     isActive: Boolean,
     isPlaying: Boolean,
-    onRowClick: () -> Unit,
-    onPlayClick: () -> Unit
+    onTrackClick: () -> Unit,
+    onPlayClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .clickable { onRowClick() }
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { onTrackClick() }
             .background(if (isActive) GolhaColors.BadgeBackground.copy(alpha = 0.42f) else Color.Transparent)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = 8.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(
             modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Placeholder/Number
-            Box(
-                modifier = Modifier
-                    .size(54.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(GolhaColors.SoftSand)
-                    .border(1.dp, GolhaColors.Border.copy(alpha = 0.6f), RoundedCornerShape(14.dp)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = program.programNumber,
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = GolhaColors.PrimaryAccent,
-                )
-            }
-
+            TrackCoverPlaceholder(title = track.title)
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(
-                    text = program.singer,
+                    text = track.title,
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
                     color = GolhaColors.PrimaryText,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Start
                 )
-                if (!program.dastgah.isNullOrBlank()) {
-                    Text(
-                        text = program.dastgah,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = GolhaColors.SecondaryText,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.Start
-                    )
-                }
+                Text(
+                    text = track.artist,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = GolhaColors.SecondaryText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Start
+                )
             }
         }
 
-        if (!program.duration.isNullOrBlank()) {
+        if (!track.duration.isNullOrBlank()) {
             Text(
-                text = program.duration,
+                text = track.duration,
                 style = MaterialTheme.typography.labelMedium.copy(fontSize = 11.sp),
                 color = GolhaColors.SecondaryText,
             )
         }
 
-        Surface(
-            modifier = Modifier
-                .size(38.dp)
-                .clickable { onPlayClick() },
-            shape = CircleShape,
-            color = if (isActive) GolhaColors.PrimaryAccent else GolhaColors.BadgeBackground,
-            border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border),
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                GolhaLineIcon(
-                    icon = if (isActive && isPlaying) GolhaIcon.Pause else GolhaIcon.Play,
-                    modifier = Modifier.size(18.dp),
-                    tint = if (isActive) Color.White else GolhaColors.PrimaryText,
-                )
-            }
+        SmallCircularIconButton(
+            icon = if (isActive && isPlaying) GolhaIcon.Pause else GolhaIcon.Play,
+            iconTint = GolhaColors.PrimaryText,
+            iconSize = 18.dp,
+            background = GolhaColors.BadgeBackground,
+            borderColor = GolhaColors.Border,
+            onClick = onPlayClick,
+        )
+    }
+}
+
+@Composable
+fun TrackCoverPlaceholder(title: String) {
+    Box(
+        modifier = Modifier
+            .size(58.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(GolhaColors.SoftSand)
+            .border(1.dp, GolhaColors.Border.copy(alpha = 0.6f), RoundedCornerShape(16.dp)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = title.take(1),
+            style = MaterialTheme.typography.titleLarge,
+            color = GolhaColors.SecondaryText,
+        )
+    }
+}
+
+@Composable
+fun SmallCircularIconButton(
+    icon: GolhaIcon,
+    iconTint: Color,
+    background: Color,
+    borderColor: Color,
+    iconSize: androidx.compose.ui.unit.Dp = 14.dp,
+    onClick: () -> Unit = {},
+) {
+    Surface(
+        modifier = Modifier
+            .size(36.dp)
+            .clickable { onClick() },
+        shape = CircleShape,
+        color = background,
+        border = androidx.compose.foundation.BorderStroke(1.dp, borderColor),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            GolhaLineIcon(
+                icon = icon,
+                modifier = Modifier.size(iconSize),
+                tint = iconTint,
+            )
         }
     }
 }
@@ -116,14 +139,14 @@ fun SkeletonTrackRow() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = 8.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(
             modifier = Modifier
-                .size(54.dp)
-                .clip(RoundedCornerShape(14.dp))
+                .size(58.dp)
+                .clip(RoundedCornerShape(16.dp))
                 .background(GolhaColors.Border.copy(alpha = 0.25f))
         )
         Column(
@@ -145,9 +168,32 @@ fun SkeletonTrackRow() {
         }
         Box(
             modifier = Modifier
-                .size(38.dp)
+                .size(36.dp)
                 .clip(CircleShape)
                 .background(GolhaColors.Border.copy(alpha = 0.2f))
         )
     }
+}
+
+@Composable
+fun TopTracksSectionSkeleton() {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = GolhaSpacing.ScreenHorizontal),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        repeat(5) {
+            SkeletonTrackRow()
+        }
+    }
+}
+
+// Extension to convert CategoryProgramUiModel to TrackUiModel for easy display
+fun CategoryProgramUiModel.toTrackUiModel(): TrackUiModel {
+    return TrackUiModel(
+        id = id,
+        title = title,
+        artist = if (!dastgah.isNullOrBlank()) "$singer - $dastgah" else singer,
+        duration = duration,
+        audioUrl = audioUrl
+    )
 }

@@ -98,22 +98,12 @@ fun ArtistDetailScreen(
                                 ) {
                                     resolvedDetail.tracks.forEachIndexed { index, program ->
                                         val isActive = currentTrack?.id == program.id
-                                        CategoryProgramTrackRow(
-                                            program = program,
+                                        ProgramTrackRow(
+                                            track = program.toTrackUiModel(),
                                             isActive = isActive,
                                             isPlaying = isActive && isPlayerPlaying,
-                                            onRowClick = { onProgramClick(program) },
-                                            onPlayClick = {
-                                                onPlayTrack(
-                                                    TrackUiModel(
-                                                        id = program.id,
-                                                        title = "${resolvedDetail.name} ${program.programNumber}",
-                                                        artist = program.singer,
-                                                        duration = program.duration,
-                                                        audioUrl = program.audioUrl,
-                                                    )
-                                                )
-                                            },
+                                            onTrackClick = { onProgramClick(program) },
+                                            onPlayClick = { onPlayTrack(program.toTrackUiModel()) },
                                         )
                                         if (index != resolvedDetail.tracks.lastIndex) {
                                             HorizontalDivider(

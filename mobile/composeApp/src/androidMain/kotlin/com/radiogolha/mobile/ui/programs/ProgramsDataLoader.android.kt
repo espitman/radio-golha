@@ -98,10 +98,18 @@ actual fun loadCategoryPrograms(categoryTitle: String): List<com.radiogolha.mobi
     return buildList {
         for (i in 0 until root.length()) {
             val item = root.getJSONObject(i)
+            val no = item.optLong("no", 0).toString()
+            val title = item.optNullableString("title") 
+                ?: item.optNullableString("title_fa")
+                ?: item.optNullableString("titleFa")
+                ?: "$categoryTitle $no"
+                
             add(
                 com.radiogolha.mobile.ui.home.CategoryProgramUiModel(
                     id = item.optLong("id"),
-                    programNumber = item.optLong("no", 0).toString(),
+                    title = title,
+                    categoryName = categoryTitle,
+                    programNumber = no,
                     singer = item.optString("artist", "ناشناس"),
                     duration = item.optNullableString("duration"),
                     dastgah = item.optNullableString("mode"),

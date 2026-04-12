@@ -7,6 +7,8 @@ data class ProgramUiModel(
 
 data class CategoryProgramUiModel(
     val id: Long,
+    val title: String,
+    val categoryName: String?,
     val programNumber: String,
     val singer: String,
     val duration: String?,

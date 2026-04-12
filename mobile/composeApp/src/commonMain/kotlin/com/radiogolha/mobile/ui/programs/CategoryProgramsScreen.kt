@@ -100,22 +100,12 @@ fun CategoryProgramsScreen(
                         ) {
                             programs.forEachIndexed { index, program ->
                                 val isActive = currentTrack?.id == program.id
-                                CategoryProgramTrackRow(
-                                    program = program,
+                                ProgramTrackRow(
+                                    track = program.toTrackUiModel(),
                                     isActive = isActive,
                                     isPlaying = isActive && isPlayerPlaying,
-                                    onPlayClick = { 
-                                        onPlayTrack(com.radiogolha.mobile.ui.home.TrackUiModel(
-                                            id = program.id,
-                                            title = "${categoryTitle} ${program.programNumber}",
-                                            artist = program.singer,
-                                            duration = program.duration,
-                                            audioUrl = program.audioUrl
-                                        ))
-                                    },
-                                    onRowClick = {
-                                        onProgramClick(program)
-                                    }
+                                    onTrackClick = { onTrackClick(program.id) },
+                                    onPlayClick = { onPlayTrack(program.toTrackUiModel()) },
                                 )
                                 if (index != programs.lastIndex) {
                                     HorizontalDivider(
