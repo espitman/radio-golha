@@ -61,7 +61,9 @@ fun ArtistDetailScreen(
     onTrackClick: (Long) -> Unit = {},
 ) {
     val detail by produceState<ArtistDetailUiModel?>(initialValue = null, key1 = artistId) {
-        value = loadArtistDetail(artistId)
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            loadArtistDetail(artistId)
+        }
     }
 
     TabRootScreen(
