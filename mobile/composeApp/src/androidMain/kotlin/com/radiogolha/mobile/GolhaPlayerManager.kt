@@ -91,6 +91,8 @@ class GolhaPlayerManager(private val context: Context) {
         val title = prefs.getString("last_track_title", "") ?: ""
         val artist = prefs.getString("last_track_artist", "") ?: ""
         val url = prefs.getString("last_track_url", "") ?: ""
+        val imagesStr = prefs.getString("last_track_images", "") ?: ""
+        val images = if (imagesStr.isNotBlank()) imagesStr.split("|") else emptyList()
         
         if (title.isBlank() || url.isBlank()) return
 
@@ -99,7 +101,8 @@ class GolhaPlayerManager(private val context: Context) {
             title = title,
             artist = artist,
             audioUrl = url,
-            coverUrl = null
+            coverUrl = null,
+            artistImages = images
         )
         _currentPositionMs.value = prefs.getLong("last_position", 0L)
         _durationMs.value = prefs.getLong("last_duration", 0L)
@@ -151,6 +154,7 @@ class GolhaPlayerManager(private val context: Context) {
             putString("last_track_title", track.title)
             putString("last_track_artist", track.artist)
             putString("last_track_url", track.audioUrl)
+            putString("last_track_images", track.artistImages.joinToString("|"))
             apply()
         }
     }

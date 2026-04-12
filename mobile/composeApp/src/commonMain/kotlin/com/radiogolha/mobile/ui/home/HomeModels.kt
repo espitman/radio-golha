@@ -57,6 +57,7 @@ data class TrackUiModel(
     val duration: String? = null,
     val coverUrl: String? = null,
     val audioUrl: String? = null,
+    val artistImages: List<String> = emptyList(),
 )
 
 data class BottomNavItemUiModel(

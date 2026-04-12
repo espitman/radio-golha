@@ -372,12 +372,21 @@ fun AndroidApp() {
                         navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId))
                     },
                     onPlayProgram = { detail ->
+                        val artistImages = (
+                            detail.singers.mapNotNull { it.avatar } +
+                            detail.performers.mapNotNull { it.avatar } +
+                            detail.composers.mapNotNull { it.avatar } +
+                            detail.arrangers.mapNotNull { it.avatar } +
+                            detail.orchestras.mapNotNull { it.avatar }
+                        ).distinct()
+                        
                         playerManager.play(com.radiogolha.mobile.ui.home.TrackUiModel(
                             id = detail.id,
                             title = detail.title,
                             artist = detail.singers.map { it.name }.joinToString(" و ").takeIf { it.isNotBlank() } ?: "ناشناس",
                             duration = detail.duration, 
-                            audioUrl = detail.audioUrl
+                            audioUrl = detail.audioUrl,
+                            artistImages = artistImages
                         ))
                     }
                 )

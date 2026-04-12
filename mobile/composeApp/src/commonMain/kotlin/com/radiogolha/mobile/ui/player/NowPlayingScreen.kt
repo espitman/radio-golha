@@ -1,5 +1,6 @@
 package com.radiogolha.mobile.ui.player
 
+import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -27,6 +28,7 @@ import com.radiogolha.mobile.ui.home.GolhaIcon
 import com.radiogolha.mobile.ui.home.GolhaLineIcon
 import com.radiogolha.mobile.ui.home.TrackUiModel
 import com.radiogolha.mobile.ui.home.ArtistAvatar
+import kotlinx.coroutines.delay
 
 @Composable
 fun NowPlayingScreen(
@@ -45,173 +47,119 @@ fun NowPlayingScreen(
     val glowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.3f,
         targetValue = 0.6f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        )
+        animationSpec = infiniteRepeatable(animation = tween(2000, easing = LinearEasing), repeatMode = RepeatMode.Reverse)
     )
+
+    // Image Cycle Logic
+    val images = remember(currentTrack) {
+        val list = mutableListOf<String>()
+        currentTrack?.coverUrl?.let { list.add(it) }
+        currentTrack?.artistImages?.forEach { list.add(it) }
+        list.distinct()
+    }
+    var currentImageIndex by remember(currentTrack) { mutableStateOf(0) }
+    
+    if (images.size > 1) {
+        LaunchedEffect(currentTrack) {
+            while (true) {
+                delay(7000)
+                currentImageIndex = (currentImageIndex + 1) % images.size
+            }
+        }
+    }
+
+    // Seekbar State
+    var sliderValue by remember { mutableFloatStateOf(currentPositionMs.toFloat()) }
+    var isDragging by remember { mutableStateOf(false) }
+
+    // Sync state from player periodically or on significant drift
+    LaunchedEffect(currentPositionMs) {
+        if (!isDragging) {
+            val drift = kotlin.math.abs(sliderValue - currentPositionMs.toFloat())
+            if (drift > 2000f || !isPlaying) {
+                sliderValue = currentPositionMs.toFloat()
+            }
+        }
+    }
+
+    // Local smooth interpolation loop
+    LaunchedEffect(isPlaying) {
+        if (isPlaying) {
+            var lastUpdate = System.currentTimeMillis()
+            while (isPlaying) {
+                delay(16)
+                if (!isDragging) {
+                    val now = System.currentTimeMillis()
+                    val elapsed = now - lastUpdate
+                    sliderValue = (sliderValue + elapsed).coerceAtMost(durationMs.toFloat())
+                    lastUpdate = now
+                } else {
+                    lastUpdate = System.currentTimeMillis()
+                }
+            }
+        }
+    }
 
     GolhaPatternBackground {
         Box(modifier = Modifier.fillMaxSize()) {
-            // Background Gradient Overlay for Depth
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(
-                                Color.Transparent,
-                                GolhaColors.SoftSand.copy(alpha = 0.5f),
-                                GolhaColors.PrimaryAccent.copy(alpha = 0.15f)
-                            )
-                        )
-                    )
-            )
+            Box(modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, GolhaColors.SoftSand.copy(alpha = 0.5f), GolhaColors.PrimaryAccent.copy(alpha = 0.15f)))))
 
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .statusBarsPadding()
-                    .padding(horizontal = 28.dp, vertical = 16.dp),
+                modifier = Modifier.fillMaxSize().statusBarsPadding().padding(horizontal = 28.dp, vertical = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Header
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    IconButton(
-                        onClick = onBackClick,
-                        modifier = Modifier.background(GolhaColors.Surface.copy(alpha = 0.5f), CircleShape)
-                    ) {
-                        GolhaLineIcon(
-                            icon = GolhaIcon.Back,
-                            modifier = Modifier.size(24.dp),
-                            tint = GolhaColors.PrimaryText
-                        )
+                Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                    IconButton(onClick = onBackClick, modifier = Modifier.background(GolhaColors.Surface.copy(alpha = 0.5f), CircleShape)) {
+                        GolhaLineIcon(icon = GolhaIcon.Back, modifier = Modifier.size(24.dp), tint = GolhaColors.PrimaryText)
                     }
-                    
-                    Text(
-                        text = "در حال پخش",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.5.sp
-                        ),
-                        color = GolhaColors.PrimaryText
-                    )
-
-                    IconButton(
-                        onClick = { /* More options */ },
-                        modifier = Modifier.background(GolhaColors.Surface.copy(alpha = 0.5f), CircleShape)
-                    ) {
-                        GolhaLineIcon(
-                            icon = GolhaIcon.More,
-                            modifier = Modifier.size(24.dp),
-                            tint = GolhaColors.PrimaryText
-                        )
+                    Text(text = "در حال پخش", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp), color = GolhaColors.PrimaryText)
+                    IconButton(onClick = { /* More */ }, modifier = Modifier.background(GolhaColors.Surface.copy(alpha = 0.5f), CircleShape)) {
+                        GolhaLineIcon(icon = GolhaIcon.More, modifier = Modifier.size(24.dp), tint = GolhaColors.PrimaryText)
                     }
                 }
 
-                Spacer(modifier = Modifier.weight(0.15f))
+                Spacer(modifier = Modifier.weight(0.12f))
 
-                // Premium Artwork Frame
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxWidth().aspectRatio(1f)
-                ) {
-                    // Decorative Rings
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize(0.95f)
-                            .border(1.dp, GolhaColors.PrimaryAccent.copy(alpha = 0.3f), CircleShape)
-                    )
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize(0.88f)
-                            .border(2.dp, GolhaColors.PrimaryAccent.copy(alpha = 0.6f), CircleShape)
-                            .shadow(24.dp, CircleShape, spotColor = GolhaColors.PrimaryAccent)
-                    )
+                // Artwork Frame
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth().aspectRatio(1f)) {
+                    Box(modifier = Modifier.fillMaxSize(0.95f).border(1.dp, GolhaColors.PrimaryAccent.copy(alpha = 0.3f), CircleShape))
+                    Box(modifier = Modifier.fillMaxSize(0.88f).border(2.dp, GolhaColors.PrimaryAccent.copy(alpha = 0.6f), CircleShape).shadow(24.dp, CircleShape, spotColor = GolhaColors.PrimaryAccent))
 
-                    // Main Artwork
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxSize(0.82f)
-                            .clip(CircleShape),
-                        color = GolhaColors.Surface,
-                        shadowElevation = 12.dp
-                    ) {
+                    Surface(modifier = Modifier.fillMaxSize(0.82f).clip(CircleShape), color = GolhaColors.Surface, shadowElevation = 12.dp) {
                         Box(contentAlignment = Alignment.Center) {
-                            if (currentTrack != null) {
-                                ArtistAvatar(
-                                    name = currentTrack.artist,
-                                    imageUrl = currentTrack.coverUrl,
-                                    tint = GolhaColors.SoftBlue,
+                            if (images.isNotEmpty()) {
+                                AnimatedContent(
+                                    targetState = images[currentImageIndex],
+                                    transitionSpec = {
+                                        (fadeIn(animationSpec = tween(1500)) + scaleIn(initialScale = 0.95f, animationSpec = tween(1500)))
+                                            .togetherWith(fadeOut(animationSpec = tween(1500)) + scaleOut(targetScale = 1.05f, animationSpec = tween(1500)))
+                                    },
                                     modifier = Modifier.fillMaxSize()
-                                )
-                            } else {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(
-                                            Brush.radialGradient(
-                                                listOf(GolhaColors.SoftSand, GolhaColors.Surface)
-                                            )
-                                        )
-                                ) {
-                                    GolhaLineIcon(
-                                        icon = GolhaIcon.Note,
-                                        modifier = Modifier.size(80.dp).align(Alignment.Center),
-                                        tint = GolhaColors.PrimaryAccent.copy(alpha = 0.4f)
-                                    )
+                                ) { imageUrl ->
+                                    ArtistAvatar(name = currentTrack?.artist ?: "", imageUrl = imageUrl, tint = GolhaColors.SoftBlue, modifier = Modifier.fillMaxSize())
                                 }
+                            } else {
+                                ArtistAvatar(name = currentTrack?.artist ?: "", imageUrl = null, tint = GolhaColors.SoftBlue, modifier = Modifier.fillMaxSize())
                             }
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.weight(0.12f))
+                Spacer(modifier = Modifier.weight(0.1f))
 
-                // Track info with improved typography
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Text(
-                        text = currentTrack?.title ?: "قطعه نامشخص",
-                        style = MaterialTheme.typography.headlineMedium.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            textAlign = TextAlign.Center,
-                            fontSize = 24.sp,
-                            lineHeight = 32.sp
-                        ),
-                        color = GolhaColors.PrimaryText,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = currentTrack?.artist ?: "هنرمند نامشخص",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            color = GolhaColors.SecondaryText,
-                            textAlign = TextAlign.Center,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 18.sp
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                // Track Info
+                Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(text = currentTrack?.title ?: "قطعه نامشخص", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center), color = GolhaColors.PrimaryText, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(text = currentTrack?.artist ?: "هنرمند نامشخص", style = MaterialTheme.typography.titleLarge.copy(color = GolhaColors.SecondaryText, textAlign = TextAlign.Center), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
 
-                Spacer(modifier = Modifier.weight(0.12f))
+                Spacer(modifier = Modifier.weight(0.1f))
 
-                // Premium Seek Bar
-                var sliderValue by remember(currentPositionMs) { mutableFloatStateOf(currentPositionMs.toFloat()) }
-                var isDragging by remember { mutableStateOf(false) }
-
+                // Simple Robust Slider
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Slider(
-                        value = if (isDragging) sliderValue else currentPositionMs.toFloat(),
+                        value = sliderValue.coerceIn(0f, durationMs.toFloat().coerceAtLeast(1f)),
                         onValueChange = {
                             isDragging = true
                             sliderValue = it
@@ -221,119 +169,40 @@ fun NowPlayingScreen(
                             onSeek(sliderValue.toLong())
                         },
                         valueRange = 0f..durationMs.toFloat().coerceAtLeast(1f),
-                        colors = SliderDefaults.colors(
-                            thumbColor = GolhaColors.PrimaryAccent,
-                            activeTrackColor = GolhaColors.PrimaryAccent,
-                            inactiveTrackColor = GolhaColors.Border.copy(alpha = 0.4f),
-                            activeTickColor = Color.Transparent,
-                            inactiveTickColor = Color.Transparent
-                        ),
+                        colors = SliderDefaults.colors(thumbColor = GolhaColors.PrimaryAccent, activeTrackColor = GolhaColors.PrimaryAccent, inactiveTrackColor = GolhaColors.Border.copy(alpha = 0.4f)),
                         modifier = Modifier.fillMaxWidth()
                     )
-                    
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = formatTime(if (isDragging) sliderValue.toLong() else currentPositionMs),
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontFamily = MaterialTheme.typography.bodyMedium.fontFamily
-                            ),
-                            color = GolhaColors.PrimaryText.copy(alpha = 0.7f)
-                        )
-                        Text(
-                            text = formatTime(durationMs),
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontFamily = MaterialTheme.typography.bodyMedium.fontFamily
-                            ),
-                            color = GolhaColors.SecondaryText.copy(alpha = 0.6f)
-                        )
+                    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(text = formatTime(sliderValue.toLong()), style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold), color = GolhaColors.PrimaryText.copy(alpha = 0.8f))
+                        Text(text = formatTime(durationMs), style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold), color = GolhaColors.SecondaryText.copy(alpha = 0.6f))
                     }
                 }
 
-                Spacer(modifier = Modifier.weight(0.15f))
+                Spacer(modifier = Modifier.weight(0.12f))
 
-                // Controls with depth and animation
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Previous
-                    IconButton(
-                        onClick = onPreviousClick,
-                        modifier = Modifier
-                            .size(52.dp)
-                            .background(GolhaColors.Surface.copy(alpha = 0.6f), CircleShape)
-                    ) {
-                        GolhaLineIcon(
-                            icon = GolhaIcon.SkipPrevious,
-                            modifier = Modifier.size(28.dp),
-                            tint = GolhaColors.PrimaryText
-                        )
+                // Controls
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onPreviousClick, modifier = Modifier.size(52.dp).background(GolhaColors.Surface.copy(alpha = 0.6f), CircleShape)) {
+                        GolhaLineIcon(icon = GolhaIcon.SkipPrevious, modifier = Modifier.size(28.dp), tint = GolhaColors.PrimaryText)
                     }
-
-                    // Play/Pause with Glow
                     Box(contentAlignment = Alignment.Center) {
-                        // Ambient Glow
-                        Box(
-                            modifier = Modifier
-                                .size(96.dp)
-                                .graphicsLayer {
-                                    alpha = glowAlpha
-                                    scaleX = 1.1f
-                                    scaleY = 1.1f
-                                }
-                                .background(GolhaColors.PrimaryAccent.copy(alpha = 0.4f), CircleShape)
-                        )
-
-                        Surface(
-                            modifier = Modifier
-                                .size(88.dp)
-                                .clickable { onTogglePlayback() },
-                            shape = CircleShape,
-                            color = GolhaColors.PrimaryAccent,
-                            shadowElevation = 12.dp
-                        ) {
+                        Box(modifier = Modifier.size(96.dp).graphicsLayer { alpha = glowAlpha; scaleX = 1.1f; scaleY = 1.1f }.background(GolhaColors.PrimaryAccent.copy(alpha = 0.4f), CircleShape))
+                        Surface(modifier = Modifier.size(88.dp).clickable { onTogglePlayback() }, shape = CircleShape, color = GolhaColors.PrimaryAccent, shadowElevation = 12.dp) {
                             Box(contentAlignment = Alignment.Center) {
                                 if (isLoading) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(38.dp),
-                                        color = GolhaColors.OnAccent,
-                                        strokeWidth = 3.dp
-                                    )
+                                    CircularProgressIndicator(modifier = Modifier.size(38.dp), color = GolhaColors.OnAccent, strokeWidth = 3.dp)
                                 } else {
-                                    GolhaLineIcon(
-                                        icon = if (isPlaying) GolhaIcon.Pause else GolhaIcon.Play,
-                                        modifier = Modifier.size(40.dp).graphicsLayer {
-                                            // Subtle animation on click or state change could go here
-                                        },
-                                        tint = GolhaColors.OnAccent
-                                    )
+                                    GolhaLineIcon(icon = if (isPlaying) GolhaIcon.Pause else GolhaIcon.Play, modifier = Modifier.size(40.dp), tint = GolhaColors.OnAccent)
                                 }
                             }
                         }
                     }
-
-                    // Next
-                    IconButton(
-                        onClick = onNextClick,
-                        modifier = Modifier
-                            .size(52.dp)
-                            .background(GolhaColors.Surface.copy(alpha = 0.6f), CircleShape)
-                    ) {
-                        GolhaLineIcon(
-                            icon = GolhaIcon.SkipNext,
-                            modifier = Modifier.size(28.dp),
-                            tint = GolhaColors.PrimaryText
-                        )
+                    IconButton(onClick = onNextClick, modifier = Modifier.size(52.dp).background(GolhaColors.Surface.copy(alpha = 0.6f), CircleShape)) {
+                        GolhaLineIcon(icon = GolhaIcon.SkipNext, modifier = Modifier.size(28.dp), tint = GolhaColors.PrimaryText)
                     }
                 }
 
-                Spacer(modifier = Modifier.weight(0.18f))
+                Spacer(modifier = Modifier.weight(0.15f))
             }
         }
     }
@@ -341,7 +210,10 @@ fun NowPlayingScreen(
 
 private fun formatTime(timeMs: Long): String {
     val totalSeconds = (timeMs / 1000L).coerceAtLeast(0L)
-    val minutes = totalSeconds / 60L
-    val seconds = totalSeconds % 60L
-    return "${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}"
+    val h = totalSeconds / 3600L
+    val m = (totalSeconds % 3600L) / 60L
+    val s = totalSeconds % 60L
+    val mStr = m.toString().padStart(2, '0')
+    val sStr = s.toString().padStart(2, '0')
+    return if (h > 0) "$h:$mStr:$sStr" else "$mStr:$sStr"
 }

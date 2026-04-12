@@ -114,6 +114,7 @@ private fun JSONArray.toMusicianModels(): List<MusicianUiModel> = buildList {
 internal fun JSONArray.toTrackModels(): List<TrackUiModel> = buildList {
     for (index in 0 until length()) {
         val item = getJSONObject(index)
+        val avatar = item.optNullableString("avatar") ?: item.optNullableString("cover")
         add(
             TrackUiModel(
                 id = item.optLong("id", 0L),
@@ -122,6 +123,8 @@ internal fun JSONArray.toTrackModels(): List<TrackUiModel> = buildList {
                 artist = item.getString("artist").split(" - ")[0],
                 duration = item.getString("duration"),
                 audioUrl = item.optNullableString("audio_url"),
+                coverUrl = avatar,
+                artistImages = if (avatar != null) listOf(avatar) else emptyList()
             )
         )
     }
