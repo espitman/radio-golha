@@ -7,6 +7,7 @@ data class ProgramUiModel(
 
 data class CategoryProgramUiModel(
     val id: Long,
+    val artistId: Long? = null,
     val title: String,
     val categoryName: String?,
     val programNumber: String,
@@ -17,6 +18,7 @@ data class CategoryProgramUiModel(
 )
 
 data class SingerUiModel(
+    val id: Long,
     val name: String,
     val imageUrl: String? = null,
 )
@@ -33,6 +35,7 @@ data class DastgahUiModel(
 )
 
 data class MusicianUiModel(
+    val id: Long,
     val name: String,
     val instrument: String,
     val imageUrl: String? = null,
@@ -48,6 +51,7 @@ data class MusicianListItemUiModel(
 
 data class TrackUiModel(
     val id: Long,
+    val artistId: Long? = null,
     val title: String,
     val artist: String,
     val duration: String? = null,

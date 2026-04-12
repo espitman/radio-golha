@@ -35,8 +35,9 @@ fun CategoryProgramsScreen(
     isLoading: Boolean = false,
     bottomNavItems: List<BottomNavItemUiModel>,
     onBottomNavSelected: (AppTab) -> Unit,
-    onProgramClick: (CategoryProgramUiModel) -> Unit,
+    onProgramClick: (CategoryProgramUiModel) -> Unit = {},
     onPlayTrack: (TrackUiModel) -> Unit,
+    onArtistClick: (Long) -> Unit = {},
     onBackClick: () -> Unit,
     currentTrack: TrackUiModel? = null,
     isPlayerPlaying: Boolean = false,
@@ -47,8 +48,8 @@ fun CategoryProgramsScreen(
     onTrackClick: (Long) -> Unit = {},
 ) {
     TabRootScreen(
-        title = categoryTitle,
-        subtitle = "${programs.size} برنامه",
+        title = "برنامه‌ها",
+        subtitle = categoryTitle,
         bottomNavItems = bottomNavItems,
         onBottomNavSelected = onBottomNavSelected,
         currentTrack = currentTrack,
@@ -106,6 +107,7 @@ fun CategoryProgramsScreen(
                                     isPlaying = isActive && isPlayerPlaying,
                                     onTrackClick = { onTrackClick(program.id) },
                                     onPlayClick = { onPlayTrack(program.toTrackUiModel()) },
+                                    onArtistClick = onArtistClick,
                                 )
                                 if (index != programs.lastIndex) {
                                     HorizontalDivider(

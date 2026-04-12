@@ -185,6 +185,12 @@ fun AndroidApp() {
                     onProgramClick = { program ->
                         navController.navigate(AndroidRoute.CategoryPrograms.createRoute(program.title))
                     },
+                    onSingerClick = { artistId ->
+                        navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId))
+                    },
+                    onMusicianClick = { artistId ->
+                        navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId))
+                    },
                     onBottomNavSelected = { tab ->
                         navController.navigate(tab.toRoute().route) {
                             popUpTo(navController.graph.findStartDestination().id) {

@@ -29,6 +29,7 @@ fun ProgramTrackRow(
     isPlaying: Boolean,
     onTrackClick: () -> Unit,
     onPlayClick: () -> Unit,
+    onArtistClick: (Long) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -62,10 +63,13 @@ fun ProgramTrackRow(
                 Text(
                     text = track.artist,
                     style = MaterialTheme.typography.bodySmall,
-                    color = GolhaColors.SecondaryText,
+                    color = if (track.artistId != null) GolhaColors.PrimaryAccent else GolhaColors.SecondaryText,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Start
+                    textAlign = TextAlign.Start,
+                    modifier = if (track.artistId != null) {
+                        Modifier.clickable { onArtistClick(track.artistId) }
+                    } else Modifier
                 )
             }
         }
@@ -191,6 +195,7 @@ fun TopTracksSectionSkeleton() {
 fun CategoryProgramUiModel.toTrackUiModel(): TrackUiModel {
     return TrackUiModel(
         id = id,
+        artistId = artistId,
         title = title,
         artist = singer,
         duration = duration,

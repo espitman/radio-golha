@@ -155,6 +155,7 @@ fun App() {
                         navigationStack.resetToRoot(it)
                     },
                     onBackClick = { navigationStack.pop() },
+                    onSingerClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
                 )
             }
 
@@ -166,6 +167,32 @@ fun App() {
                         navigationStack.resetToRoot(it)
                     },
                     onBackClick = { navigationStack.pop() },
+                    onMusicianClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
+                )
+            }
+            
+            is AppRoute.ArtistDetail -> {
+                com.radiogolha.mobile.ui.artists.ArtistDetailScreen(
+                    artistId = (currentRoute as AppRoute.ArtistDetail).id,
+                    bottomNavItems = bottomNavItems,
+                    onBottomNavSelected = { navigationStack.resetToRoot(it) },
+                    onBackClick = { navigationStack.pop() },
+                    onArtistClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
+                )
+            }
+
+            is AppRoute.CategoryPrograms -> {
+                val route = currentRoute as AppRoute.CategoryPrograms
+                com.radiogolha.mobile.ui.programs.CategoryProgramsScreen(
+                    categoryTitle = route.category.title,
+                    programs = route.programs,
+                    bottomNavItems = bottomNavItems,
+                    onBottomNavSelected = { navigationStack.resetToRoot(it) },
+                    onBackClick = { navigationStack.pop() },
+                    onTrackClick = { /* Handle track click if needed */ },
+                    onPlayTrack = { /* Handle play */ },
+                    onArtistClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
+                    onProgramClick = { /* If clicking a program inside category does something */ }
                 )
             }
 
@@ -180,6 +207,8 @@ fun App() {
                             onOpenAllMusicians = { navigationStack.push(AppRoute.Musicians) },
                             onRefreshTopTracks = { reloadToken += 1 },
                             isRefreshingTopTracks = isTopTracksRefreshing,
+                            onSingerClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
+                            onMusicianClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
                             onBottomNavSelected = {
                                 navigationStack.resetToRoot(it)
                             },
@@ -189,13 +218,23 @@ fun App() {
                     AppTab.Library -> {
                         LibraryScreen(
                             programs = programs,
-                            singers = emptyList(), // Load these properly if needed later
+                            singers = emptyList(), 
                             musicians = emptyList(),
                             isProgramsLoading = isProgramsLoading,
                             bottomNavItems = bottomNavItems,
                             onBottomNavSelected = {
                                 navigationStack.resetToRoot(it)
                             },
+                            onProgramClick = { category ->
+                                scope.launch {
+                                    val catPrograms = withContext(Dispatchers.Default) {
+                                        com.radiogolha.mobile.ui.programs.loadCategoryPrograms(category.title)
+                                    }
+                                    navigationStack.push(AppRoute.CategoryPrograms(category, catPrograms))
+                                }
+                            },
+                            onSingerClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
+                            onMusicianClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
                         )
                     }
 
@@ -233,6 +272,11 @@ private sealed interface AppRoute {
     data class Root(val tab: AppTab) : AppRoute
     data object Singers : AppRoute
     data object Musicians : AppRoute
+    data class ArtistDetail(val id: Long) : AppRoute
+    data class CategoryPrograms(
+        val category: com.radiogolha.mobile.ui.home.ProgramUiModel,
+        val programs: List<com.radiogolha.mobile.ui.home.CategoryProgramUiModel>
+    ) : AppRoute
 }
 
 private fun MutableList<AppRoute>.resetToRoot(tab: AppTab) {

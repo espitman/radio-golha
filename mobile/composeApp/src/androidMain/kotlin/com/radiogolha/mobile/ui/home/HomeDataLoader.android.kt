@@ -79,7 +79,10 @@ private fun JSONArray.toSingerModels(): List<SingerUiModel> = buildList {
         val item = getJSONObject(index)
         add(
             SingerUiModel(
-                name = item.getString("name"),
+                id = item.optLong("id").takeIf { it > 0 } 
+                    ?: item.optLong("artist_id").takeIf { it > 0 }
+                    ?: item.optLong("artistId", 0L),
+                name = item.optString("name", "نامعلوم"),
                 imageUrl = item.optNullableString("avatar"),
             )
         )
@@ -97,8 +100,11 @@ private fun JSONArray.toMusicianModels(): List<MusicianUiModel> = buildList {
         val item = getJSONObject(index)
         add(
             MusicianUiModel(
-                name = item.getString("name"),
-                instrument = item.getString("instrument"),
+                id = item.optLong("id").takeIf { it > 0 } 
+                    ?: item.optLong("artist_id").takeIf { it > 0 }
+                    ?: item.optLong("artistId", 0L),
+                name = item.optString("name", "نامعلوم"),
+                instrument = item.optString("instrument", ""),
                 imageUrl = item.optNullableString("avatar"),
             )
         )
@@ -110,8 +116,9 @@ internal fun JSONArray.toTrackModels(): List<TrackUiModel> = buildList {
         val item = getJSONObject(index)
         add(
             TrackUiModel(
-                id = item.getLong("id"),
-                title = item.getString("title"),
+                id = item.optLong("id", 0L),
+                artistId = item.optLong("artist_id").takeIf { it > 0 } ?: item.optLong("artistId").takeIf { it > 0 },
+                title = item.optString("title", "بدون عنوان"),
                 artist = item.getString("artist").split(" - ")[0],
                 duration = item.getString("duration"),
                 audioUrl = item.optNullableString("audio_url"),

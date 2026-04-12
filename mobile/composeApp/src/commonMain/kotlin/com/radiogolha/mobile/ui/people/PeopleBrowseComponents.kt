@@ -729,7 +729,7 @@ internal fun PeopleListRow(
                 text = item.name,
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold,
-                    fontSize = 19.sp,
+                    fontSize = 17.sp,
                 ),
                 color = GolhaColors.PrimaryText,
                 maxLines = 1,

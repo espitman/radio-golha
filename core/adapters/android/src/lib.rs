@@ -27,6 +27,7 @@ struct AndroidNamedItem {
 
 #[derive(Serialize)]
 struct AndroidSingerItem {
+    id: i64,
     name: String,
     avatar: Option<String>,
 }
@@ -41,6 +42,7 @@ struct AndroidSingerListItem {
 
 #[derive(Serialize)]
 struct AndroidMusicianItem {
+    id: i64,
     name: String,
     instrument: String,
     avatar: Option<String>,
@@ -93,11 +95,11 @@ fn categories_json(db_path: &str) -> Result<String, String> {
 
 fn home_json(db_path: &str) -> Result<String, String> {
     let core = RadioGolhaCore::open(db_path).map_err(|error| error.to_string())?;
+    let conn = core.connection();
     let category_breakdown = core.category_breakdown().map_err(|error| error.to_string())?;
     let mode_lookup = core
         .browse_lookup_items(LookupKind::Modes, "", 1)
         .map_err(|error| error.to_string())?;
-    let mut top_singers = core.top_singers(24).map_err(|error| error.to_string())?;
 
     let programs = category_breakdown
         .into_iter()
@@ -107,32 +109,35 @@ fn home_json(db_path: &str) -> Result<String, String> {
         })
         .collect();
 
-    top_singers.sort_by(|left, right| {
-        let left_has_avatar = left
-            .avatar
-            .as_deref()
-            .map(str::trim)
-            .is_some_and(|value| !value.is_empty());
-        let right_has_avatar = right
-            .avatar
-            .as_deref()
-            .map(str::trim)
-            .is_some_and(|value| !value.is_empty());
+    let mut singers_stmt = conn.prepare(
+        "
+        SELECT a.id, a.name, a.avatar, COUNT(DISTINCT ps.program_id) AS total
+        FROM program_singers ps
+        JOIN singer s ON s.id = ps.singer_id
+        JOIN artist a ON a.id = s.artist_id
+        GROUP BY s.id, a.id, a.name, a.avatar
+        ORDER BY
+          CASE
+            WHEN a.avatar IS NOT NULL AND TRIM(a.avatar) <> '' THEN 1
+            ELSE 0
+          END DESC,
+          total DESC,
+          a.name ASC
+        LIMIT 8
+        ",
+    ).map_err(|error| error.to_string())?;
 
-        right_has_avatar
-            .cmp(&left_has_avatar)
-            .then_with(|| right.total.cmp(&left.total))
-            .then_with(|| left.name.cmp(&right.name))
-    });
-
-    let singers = top_singers
-        .into_iter()
-        .take(8)
-        .map(|item| AndroidSingerItem {
-            name: item.name,
-            avatar: item.avatar,
+    let singer_rows = singers_stmt.query_map([], |row| {
+        Ok(AndroidSingerItem {
+            id: row.get(0)?,
+            name: row.get(1)?,
+            avatar: row.get(2)?,
         })
-        .collect();
+    }).map_err(|error| error.to_string())?;
+
+    let singers = singer_rows
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|error| error.to_string())?;
 
     let dastgahs = mode_lookup
         .rows
@@ -153,19 +158,46 @@ fn home_json(db_path: &str) -> Result<String, String> {
         })
         .collect();
 
-    let musicians = core
-        .top_performers(8)
-        .map_err(|error| error.to_string())?
-        .into_iter()
-        .map(|item| AndroidMusicianItem {
-            name: item.name,
-            instrument: item
-                .instrument
+    let mut musicians_stmt = conn.prepare(
+        "
+        SELECT
+          a.id,
+          a.name,
+          (
+            SELECT i.name
+            FROM program_performers pp2
+            LEFT JOIN instrument i ON i.id = pp2.instrument_id
+            WHERE pp2.performer_id = p.id AND i.name IS NOT NULL AND TRIM(i.name) <> ''
+            GROUP BY i.id, i.name
+            ORDER BY COUNT(*) DESC, i.name ASC
+            LIMIT 1
+          ) AS instrument_name,
+          a.avatar,
+          COUNT(DISTINCT pp.program_id) AS total
+        FROM program_performers pp
+        JOIN performer p ON p.id = pp.performer_id
+        JOIN artist a ON a.id = p.artist_id
+        GROUP BY p.id, a.id, a.name, a.avatar
+        ORDER BY total DESC, a.name ASC
+        LIMIT 8
+        ",
+    ).map_err(|error| error.to_string())?;
+
+    let musician_rows = musicians_stmt.query_map([], |row| {
+        let instrument: Option<String> = row.get(2)?;
+        Ok(AndroidMusicianItem {
+            id: row.get(0)?,
+            name: row.get(1)?,
+            instrument: instrument
                 .filter(|value| !value.trim().is_empty())
                 .unwrap_or_else(|| "نوازنده".to_string()),
-            avatar: item.avatar,
+            avatar: row.get(3)?,
         })
-        .collect();
+    }).map_err(|error| error.to_string())?;
+
+    let musicians = musician_rows
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|error| error.to_string())?;
 
     let payload = AndroidHomePayload {
         programs,

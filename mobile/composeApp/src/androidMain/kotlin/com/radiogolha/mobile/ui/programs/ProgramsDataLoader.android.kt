@@ -107,6 +107,8 @@ actual fun loadCategoryPrograms(categoryTitle: String): List<com.radiogolha.mobi
             add(
                 com.radiogolha.mobile.ui.home.CategoryProgramUiModel(
                     id = item.optLong("id"),
+                    artistId = item.optLong("artist_id").takeIf { it > 0 } 
+                        ?: item.optLong("artistId").takeIf { it > 0 },
                     title = title,
                     categoryName = categoryTitle,
                     programNumber = no,

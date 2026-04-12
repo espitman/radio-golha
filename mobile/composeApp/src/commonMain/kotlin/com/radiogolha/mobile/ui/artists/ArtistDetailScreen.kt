@@ -47,8 +47,9 @@ fun ArtistDetailScreen(
     bottomNavItems: List<BottomNavItemUiModel>,
     onBottomNavSelected: (AppTab) -> Unit,
     onBackClick: () -> Unit,
-    onProgramClick: (CategoryProgramUiModel) -> Unit,
-    onPlayTrack: (TrackUiModel) -> Unit,
+    onProgramClick: (CategoryProgramUiModel) -> Unit = {},
+    onPlayTrack: (TrackUiModel) -> Unit = {},
+    onArtistClick: (Long) -> Unit = {},
     currentTrack: TrackUiModel? = null,
     isPlayerPlaying: Boolean = false,
     isPlayerLoading: Boolean = false,
@@ -65,7 +66,7 @@ fun ArtistDetailScreen(
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         TabRootScreen(
-            title = detail?.name ?: "در حال بارگذاری...",
+            title = "هنرمند",
             subtitle = "",
             bottomNavItems = bottomNavItems,
             onBottomNavSelected = onBottomNavSelected,
@@ -104,6 +105,7 @@ fun ArtistDetailScreen(
                                             isPlaying = isActive && isPlayerPlaying,
                                             onTrackClick = { onProgramClick(program) },
                                             onPlayClick = { onPlayTrack(program.toTrackUiModel()) },
+                                            onArtistClick = onArtistClick,
                                         )
                                         if (index != resolvedDetail.tracks.lastIndex) {
                                             HorizontalDivider(

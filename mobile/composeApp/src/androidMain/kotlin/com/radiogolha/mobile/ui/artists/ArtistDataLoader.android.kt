@@ -19,11 +19,11 @@ actual fun loadArtistDetail(artistId: Long): ArtistDetailUiModel? {
         imageUrl = root.optNullableString("avatar"),
         instrument = root.optNullableString("instrument"),
         trackCount = root.optInt("track_count"),
-        tracks = root.optJSONArray("tracks").toCategoryPrograms(),
+        tracks = root.optJSONArray("tracks").toCategoryPrograms(root.getLong("id")),
     )
 }
 
-private fun JSONArray?.toCategoryPrograms(): List<CategoryProgramUiModel> {
+private fun JSONArray?.toCategoryPrograms(artistId: Long): List<CategoryProgramUiModel> {
     if (this == null) return emptyList()
     return buildList {
         for (index in 0 until length()) {
@@ -40,6 +40,7 @@ private fun JSONArray?.toCategoryPrograms(): List<CategoryProgramUiModel> {
             add(
                 CategoryProgramUiModel(
                     id = item.optLong("id"),
+                    artistId = artistId,
                     title = title,
                     categoryName = item.optNullableString("category") ?: item.optNullableString("category_name"),
                     programNumber = no,

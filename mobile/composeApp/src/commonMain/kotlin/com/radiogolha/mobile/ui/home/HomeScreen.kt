@@ -37,6 +37,8 @@ fun HomeScreen(
     onPlayTrack: (TrackUiModel) -> Unit = {},
     onTrackClick: (TrackUiModel) -> Unit = {},
     onProgramClick: (ProgramUiModel) -> Unit = {},
+    onSingerClick: (Long) -> Unit = {},
+    onMusicianClick: (Long) -> Unit = {},
     onBottomNavSelected: (AppTab) -> Unit = {},
 ) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
@@ -93,12 +95,14 @@ fun HomeScreen(
                             SingersSection(
                                 singers = state.singers,
                                 onSeeAllClick = onOpenAllSingers,
+                                onSingerClick = onSingerClick,
                             )
                         }
                         item {
                             MusiciansSection(
                                 musicians = state.musicians,
                                 onSeeAllClick = onOpenAllMusicians,
+                                onMusicianClick = onMusicianClick,
                             )
                         }
                         item { 
@@ -108,6 +112,7 @@ fun HomeScreen(
                                 onRefresh = onRefreshTopTracks,
                                 onPlayTrack = onPlayTrack,
                                 onTrackClick = onTrackClick,
+                                onArtistClick = onSingerClick,
                                 currentTrackId = currentTrack?.id,
                                 isPlayerPlaying = isPlayerPlaying,
                             ) 

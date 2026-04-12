@@ -27,5 +27,10 @@ All track lists (Home Page Top Tracks, Category Programs, Artist Details, Search
     - Avoid generic prefixes like "برنامه" unless it's part of the official title.
 - **Conversion**: Use the `.toTrackUiModel()` extension on `CategoryProgramUiModel` to ensure consistent mapping of titles and artists before passing data to the UI.
 
+- **Navigation**: All artist names **MUST** be linkable (using `onArtistClick`) whenever an `artistId` is available.
+- **Colors**:
+    - **Primary Names**: Always use `GolhaColors.PrimaryText` (names of singers, musicians, programs).
+    - **Metadata/Subtitles**: Always use `GolhaColors.SecondaryText` (instruments, count, etc.).
+
 ## 4. Maintenance
 Any visual tweaks to track rows **MUST** be applied to `ProgramComponents.kt` only. Local overrides in screen-specific files are strictly forbidden to prevent UI regressions.

@@ -10,10 +10,10 @@ internal val samplePrograms = listOf(
 )
 
 internal val sampleSingers = listOf(
-    SingerUiModel(name = "محمدرضا بنان"),
-    SingerUiModel(name = "دلکش"),
-    SingerUiModel(name = "مرضیه"),
-    SingerUiModel(name = "محمدرضا شجریان"),
+    SingerUiModel(id = 1, name = "محمدرضا بنان"),
+    SingerUiModel(id = 2, name = "دلکش"),
+    SingerUiModel(id = 3, name = "مرضیه"),
+    SingerUiModel(id = 4, name = "محمدرضا شجریان"),
 )
 
 internal val sampleDastgahs = listOf(
@@ -26,10 +26,10 @@ internal val sampleDastgahs = listOf(
 )
 
 internal val sampleMusicians = listOf(
-    MusicianUiModel(name = "جلیل شهناز", instrument = "تار"),
-    MusicianUiModel(name = "حسن کسایی", instrument = "نی"),
-    MusicianUiModel(name = "فرامرز پایور", instrument = "سنتور"),
-    MusicianUiModel(name = "حسین علیزاده", instrument = "تار"),
+    MusicianUiModel(id = 5, name = "جلیل شهناز", instrument = "تار"),
+    MusicianUiModel(id = 6, name = "حسن کسایی", instrument = "نی"),
+    MusicianUiModel(id = 7, name = "فرامرز پایور", instrument = "سنتور"),
+    MusicianUiModel(id = 8, name = "حسین علیزاده", instrument = "تار"),
 )
 
 internal val sampleTracks = listOf(

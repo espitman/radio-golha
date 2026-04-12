@@ -226,7 +226,6 @@ fun HeroBanner(modifier: Modifier = Modifier) {
                         PlayPillButton()
                     }
                 }
-
                 VintageRadioIllustration()
             }
         }
@@ -261,6 +260,7 @@ fun ProgramsSection(
 fun SingersSection(
     singers: List<SingerUiModel>,
     onSeeAllClick: () -> Unit,
+    onSingerClick: (Long) -> Unit = {},
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large)) {
         SectionTitle(
@@ -278,6 +278,7 @@ fun SingersSection(
                     subtitle = null,
                     imageUrl = singer.imageUrl,
                     tint = GolhaColors.SoftBlue,
+                    onClick = { onSingerClick(singer.id) },
                 )
             }
         }
@@ -304,6 +305,7 @@ fun DastgahSection(items: List<DastgahUiModel>) {
 fun MusiciansSection(
     musicians: List<MusicianUiModel>,
     onSeeAllClick: () -> Unit,
+    onMusicianClick: (Long) -> Unit = {},
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large)) {
         SectionTitle(
@@ -321,6 +323,7 @@ fun MusiciansSection(
                     subtitle = musician.instrument,
                     imageUrl = musician.imageUrl,
                     tint = GolhaColors.SoftRose,
+                    onClick = { onMusicianClick(musician.id) },
                 )
             }
         }
@@ -333,6 +336,7 @@ fun TopTracksSection(
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     onPlayTrack: (TrackUiModel) -> Unit,
+    onArtistClick: (Long) -> Unit = {},
     onTrackClick: (TrackUiModel) -> Unit = {},
     currentTrackId: Long? = null,
     isPlayerPlaying: Boolean = false,
@@ -425,7 +429,8 @@ fun TopTracksSection(
                             isActive = track.id == currentTrackId,
                             isPlaying = track.id == currentTrackId && isPlayerPlaying,
                             onPlayClick = { onPlayTrack(track) },
-                            onTrackClick = { onTrackClick(track) }
+                            onTrackClick = { onTrackClick(track) },
+                            onArtistClick = onArtistClick,
                         )
                         if (index != displayedTracks.lastIndex) {
                             HorizontalDivider(
@@ -1086,35 +1091,42 @@ private fun AvatarNameItem(
     subtitle: String?,
     imageUrl: String?,
     tint: Color,
+    onClick: () -> Unit = {},
 ) {
-    Column(
-        modifier = Modifier.widthIn(min = 76.dp, max = 88.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+    Box(
+        modifier = Modifier
+            .widthIn(min = 80.dp, max = 100.dp)
+            .clickable { onClick() }
     ) {
-        ArtistAvatar(
-            name = title,
-            imageUrl = imageUrl,
-            tint = tint,
-            modifier = Modifier.size(78.dp),
-        )
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Normal),
-            textAlign = TextAlign.Center,
-            color = GolhaColors.SecondaryText,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        if (subtitle != null) {
+        Column(
+            modifier = Modifier.padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            ArtistAvatar(
+                name = title,
+                imageUrl = imageUrl,
+                tint = tint,
+                modifier = Modifier.size(78.dp),
+            )
             Text(
-                text = subtitle,
-                style = MaterialTheme.typography.labelMedium,
-                color = GolhaColors.SecondaryText,
+                text = title,
+                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Normal),
                 textAlign = TextAlign.Center,
+                color = GolhaColors.PrimaryText,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = GolhaColors.SecondaryText,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }
