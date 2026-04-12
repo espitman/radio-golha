@@ -48,7 +48,7 @@ fun CategoryProgramsScreen(
     onTrackClick: (Long) -> Unit = {},
 ) {
     TabRootScreen(
-        title = "برنامه‌ها",
+        title = "برنامه",
         subtitle = categoryTitle,
         bottomNavItems = bottomNavItems,
         onBottomNavSelected = onBottomNavSelected,

@@ -59,8 +59,8 @@ fun ProgramEpisodeDetailScreen(
     }
 
     TabRootScreen(
-        title = detail?.categoryName ?: "در حال بارگذاری...",
-        subtitle = "",
+        title = "برنامه",
+        subtitle = detail?.categoryName ?: "",
         bottomNavItems = bottomNavItems,
         onBottomNavSelected = onBottomNavSelected,
         currentTrack = currentTrack,
