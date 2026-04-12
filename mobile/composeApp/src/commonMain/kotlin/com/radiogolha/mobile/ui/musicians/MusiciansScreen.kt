@@ -1,5 +1,6 @@
 package com.radiogolha.mobile.ui.musicians
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -67,6 +68,7 @@ fun MusiciansScreen(
     bottomNavItems: List<BottomNavItemUiModel>,
     onBottomNavSelected: (AppTab) -> Unit,
     onBackClick: () -> Unit,
+    onMusicianClick: (Long) -> Unit = {},
     currentTrack: TrackUiModel? = null,
     isPlayerPlaying: Boolean = false,
     isPlayerLoading: Boolean = false,
@@ -101,7 +103,10 @@ fun MusiciansScreen(
                             .padding(horizontal = GolhaSpacing.ScreenHorizontal)
                             .padding(top = GolhaSpacing.StatusBarTopGap, bottom = 12.dp)
                     )
-                    MusiciansContent(musicians = musicians)
+                    MusiciansContent(
+                        musicians = musicians,
+                        onMusicianClick = onMusicianClick,
+                    )
                 }
             }
         }
@@ -109,7 +114,10 @@ fun MusiciansScreen(
 }
 
 @Composable
-fun MusiciansContent(musicians: List<MusicianListItemUiModel>) {
+fun MusiciansContent(
+    musicians: List<MusicianListItemUiModel>,
+    onMusicianClick: (Long) -> Unit = {},
+) {
     var searchQuery by remember { mutableStateOf("") }
 
     val filteredBySearch = remember(musicians, searchQuery) {
@@ -150,6 +158,7 @@ fun MusiciansContent(musicians: List<MusicianListItemUiModel>) {
                 onInstrumentSelected = { selectedInstrument = it },
                 musicians = filteredMusicians.map { musician ->
                     BrowsePersonRowUiModel(
+                        artistId = musician.artistId,
                         name = musician.name,
                         imageUrl = musician.imageUrl,
                         primaryMeta = "",
@@ -157,7 +166,8 @@ fun MusiciansContent(musicians: List<MusicianListItemUiModel>) {
                         groupLabel = "",
                     )
                 },
-                tint = GolhaColors.SoftRose
+                tint = GolhaColors.SoftRose,
+                onMusicianClick = onMusicianClick,
             )
         }
     )
@@ -221,6 +231,7 @@ private fun LazyListScope.instrumentsTabbedList(
     onInstrumentSelected: (String) -> Unit,
     musicians: List<BrowsePersonRowUiModel>,
     tint: androidx.compose.ui.graphics.Color,
+    onMusicianClick: (Long) -> Unit,
 ) {
     val selectedTabIndex = instruments.indexOf(selectedInstrument).coerceAtLeast(0)
 
@@ -281,6 +292,7 @@ private fun LazyListScope.instrumentsTabbedList(
     ) { index, person ->
         PeopleListRow(
             item = person,
+            onClick = { person.artistId?.let(onMusicianClick) },
             tint = tint,
             modifier = Modifier.padding(horizontal = GolhaSpacing.ScreenHorizontal)
         )

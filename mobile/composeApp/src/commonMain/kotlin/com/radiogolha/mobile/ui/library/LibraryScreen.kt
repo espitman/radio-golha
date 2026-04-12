@@ -45,6 +45,8 @@ fun LibraryScreen(
     currentPlaybackDurationMs: Long = 0L,
     onTogglePlayerPlayback: () -> Unit = {},
     onProgramClick: (ProgramUiModel) -> Unit = {},
+    onSingerClick: (Long) -> Unit = {},
+    onMusicianClick: (Long) -> Unit = {},
     onTrackClick: (Long) -> Unit = {},
 ) {
     val tabs = LibraryTab.entries
@@ -141,11 +143,17 @@ fun LibraryScreen(
                             }
 
                             LibraryTab.Singers -> {
-                                SingersContent(singers = singers)
+                                SingersContent(
+                                    singers = singers,
+                                    onSingerClick = onSingerClick,
+                                )
                             }
 
                             LibraryTab.Musicians -> {
-                                MusiciansContent(musicians = musicians)
+                                MusiciansContent(
+                                    musicians = musicians,
+                                    onMusicianClick = onMusicianClick,
+                                )
                             }
                         }
                     }

@@ -20,6 +20,7 @@ data class SingerUiModel(
 )
 
 data class SingerListItemUiModel(
+    val artistId: Long,
     val name: String,
     val imageUrl: String? = null,
     val programCount: Int,
@@ -36,6 +37,7 @@ data class MusicianUiModel(
 )
 
 data class MusicianListItemUiModel(
+    val artistId: Long,
     val name: String,
     val instrument: String,
     val imageUrl: String? = null,
@@ -149,4 +151,13 @@ data class ProgramEpisodeDetailUiModel(
     val performers: List<PerformerUiModel>,
     val timeline: List<TimelineSegmentUiModel>,
     val transcript: List<TranscriptVerseUiModel>,
+)
+
+data class ArtistDetailUiModel(
+    val artistId: Long,
+    val name: String,
+    val imageUrl: String? = null,
+    val instrument: String? = null,
+    val trackCount: Int,
+    val tracks: List<CategoryProgramUiModel>,
 )

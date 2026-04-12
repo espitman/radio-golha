@@ -39,6 +39,7 @@ fun SingersScreen(
     bottomNavItems: List<BottomNavItemUiModel>,
     onBottomNavSelected: (AppTab) -> Unit,
     onBackClick: () -> Unit,
+    onSingerClick: (Long) -> Unit = {},
     currentTrack: TrackUiModel? = null,
     isPlayerPlaying: Boolean = false,
     isPlayerLoading: Boolean = false,
@@ -57,6 +58,7 @@ fun SingersScreen(
         bottomNavItems = bottomNavItems,
         onBottomNavSelected = onBottomNavSelected,
         onBackClick = onBackClick,
+        onPersonClick = { person -> person.artistId?.let(onSingerClick) },
         currentTrack = currentTrack,
         isPlayerPlaying = isPlayerPlaying,
         isPlayerLoading = isPlayerLoading,
@@ -67,13 +69,17 @@ fun SingersScreen(
 }
 
 @Composable
-fun SingersContent(singers: List<SingerListItemUiModel>) {
+fun SingersContent(
+    singers: List<SingerListItemUiModel>,
+    onSingerClick: (Long) -> Unit = {},
+) {
     PeopleBrowseContent(
         tint = GolhaColors.SoftBlue,
         topSectionContent = {
             SingersTopSection(singers = singers)
         },
         people = singers.toBrowsePersonRowModels(),
+        onPersonClick = { person -> person.artistId?.let(onSingerClick) },
     )
 }
 
@@ -94,6 +100,7 @@ private fun SingersTopSection(singers: List<SingerListItemUiModel>) {
 
 private fun List<SingerListItemUiModel>.toBrowsePersonRowModels() = map { singer ->
     BrowsePersonRowUiModel(
+        artistId = singer.artistId,
         name = singer.name,
         imageUrl = singer.imageUrl,
         primaryMeta = "${singer.programCount} برنامه",

@@ -22,6 +22,7 @@ import com.radiogolha.mobile.debug.importDebugDatabase
 import com.radiogolha.mobile.debug.isDebugDatabaseToolsEnabled
 import com.radiogolha.mobile.debug.showDebugToast
 import com.radiogolha.mobile.theme.GolhaAppTheme
+import com.radiogolha.mobile.ui.artists.ArtistDetailScreen
 import com.radiogolha.mobile.ui.home.AppTab
 import com.radiogolha.mobile.ui.home.BottomNavItemUiModel
 import com.radiogolha.mobile.ui.home.GolhaIcon
@@ -260,6 +261,12 @@ fun AndroidApp() {
                     onProgramClick = { program ->
                         navController.navigate(AndroidRoute.CategoryPrograms.createRoute(program.title))
                     },
+                    onSingerClick = { artistId ->
+                        navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId))
+                    },
+                    onMusicianClick = { artistId ->
+                        navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId))
+                    },
                     onTrackClick = { trackId ->
                         navController.navigate("program_detail/$trackId")
                     }
@@ -426,6 +433,9 @@ fun AndroidApp() {
                         }
                     },
                     onBackClick = { navController.popBackStack() },
+                    onSingerClick = { artistId ->
+                        navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId))
+                    },
                 )
             }
 
@@ -454,6 +464,45 @@ fun AndroidApp() {
                         }
                     },
                     onBackClick = { navController.popBackStack() },
+                    onMusicianClick = { artistId ->
+                        navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId))
+                    },
+                )
+            }
+
+            composable(
+                route = AndroidRoute.ArtistDetail.route,
+                arguments = listOf(
+                    androidx.navigation.navArgument("id") { type = androidx.navigation.NavType.LongType }
+                )
+            ) { backStackEntry ->
+                val artistId = backStackEntry.arguments?.getLong("id") ?: 0L
+                ArtistDetailScreen(
+                    artistId = artistId,
+                    bottomNavItems = bottomNavItems,
+                    onBottomNavSelected = { tab ->
+                        navController.navigate(tab.toRoute().route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onBackClick = { navController.popBackStack() },
+                    onProgramClick = { program ->
+                        navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(program.id))
+                    },
+                    onPlayTrack = { track -> playerManager.play(track) },
+                    currentTrack = currentTrack,
+                    isPlayerPlaying = isPlayerPlaying,
+                    isPlayerLoading = isPlayerLoading,
+                    currentPlaybackPositionMs = currentPlaybackPositionMs,
+                    currentPlaybackDurationMs = currentPlaybackDurationMs,
+                    onTogglePlayerPlayback = { playerManager.togglePlayback() },
+                    onTrackClick = { trackId ->
+                        navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(trackId))
+                    },
                 )
             }
         }
@@ -469,6 +518,9 @@ private sealed class AndroidRoute(val route: String) {
     data object Account : AndroidRoute("account")
     data object Singers : AndroidRoute("singers")
     data object Musicians : AndroidRoute("musicians")
+    data object ArtistDetail : AndroidRoute("artist_detail/{id}") {
+        fun createRoute(id: Long) = "artist_detail/$id"
+    }
     data object CategoryPrograms : AndroidRoute("category_programs/{title}") {
         fun createRoute(title: String) = "category_programs/$title"
     }

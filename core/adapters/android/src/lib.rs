@@ -33,6 +33,7 @@ struct AndroidSingerItem {
 
 #[derive(Serialize)]
 struct AndroidSingerListItem {
+    id: i64,
     name: String,
     avatar: Option<String>,
     program_count: i64,
@@ -47,6 +48,7 @@ struct AndroidMusicianItem {
 
 #[derive(Serialize)]
 struct AndroidMusicianListItem {
+    id: i64,
     name: String,
     instrument: String,
     avatar: Option<String>,
@@ -71,6 +73,16 @@ struct AndroidCategoryProgramItem {
     mode: Option<String>,
     duration: Option<String>,
     audio_url: Option<String>,
+}
+
+#[derive(Serialize)]
+struct AndroidArtistDetailPayload {
+    id: i64,
+    name: String,
+    avatar: Option<String>,
+    instrument: Option<String>,
+    track_count: i64,
+    tracks: Vec<AndroidCategoryProgramItem>,
 }
 
 fn categories_json(db_path: &str) -> Result<String, String> {
@@ -186,38 +198,197 @@ fn top_tracks_json(db_path: &str) -> Result<String, String> {
 
 fn singers_json(db_path: &str) -> Result<String, String> {
     let core = RadioGolhaCore::open(db_path).map_err(|error| error.to_string())?;
-    let singers = core
-        .top_singers(256)
-        .map_err(|error| error.to_string())?
-        .into_iter()
-        .map(|item| AndroidSingerListItem {
-            name: item.name,
-            avatar: item.avatar,
-            program_count: item.total,
+    let conn = core.connection();
+    let mut stmt = conn.prepare(
+        "
+        SELECT a.id, a.name, a.avatar, COUNT(DISTINCT ps.program_id) AS total
+        FROM program_singers ps
+        JOIN singer s ON s.id = ps.singer_id
+        JOIN artist a ON a.id = s.artist_id
+        GROUP BY s.id, a.id, a.name, a.avatar
+        ORDER BY total DESC, a.name ASC
+        "
+    ).map_err(|error| error.to_string())?;
+
+    let rows = stmt.query_map([], |row| {
+        Ok(AndroidSingerListItem {
+            id: row.get(0)?,
+            name: row.get(1)?,
+            avatar: row.get(2)?,
+            program_count: row.get(3)?,
         })
-        .collect::<Vec<_>>();
+    }).map_err(|error| error.to_string())?;
+
+    let singers = rows.collect::<Result<Vec<_>, _>>().map_err(|error| error.to_string())?;
 
     to_string(&singers).map_err(|error| error.to_string())
 }
 
 fn musicians_json(db_path: &str) -> Result<String, String> {
     let core = RadioGolhaCore::open(db_path).map_err(|error| error.to_string())?;
-    let musicians = core
-        .top_performers(256)
-        .map_err(|error| error.to_string())?
-        .into_iter()
-        .map(|item| AndroidMusicianListItem {
-            name: item.name,
-            instrument: item
-                .instrument
+    let conn = core.connection();
+    let mut stmt = conn.prepare(
+        "
+        SELECT
+          a.id,
+          a.name,
+          (
+            SELECT i.name
+            FROM program_performers pp2
+            LEFT JOIN instrument i ON i.id = pp2.instrument_id
+            WHERE pp2.performer_id = p.id AND i.name IS NOT NULL AND TRIM(i.name) <> ''
+            GROUP BY i.id, i.name
+            ORDER BY COUNT(*) DESC, i.name ASC
+            LIMIT 1
+          ) AS instrument_name,
+          a.avatar,
+          COUNT(DISTINCT pp.program_id) AS total
+        FROM program_performers pp
+        JOIN performer p ON p.id = pp.performer_id
+        JOIN artist a ON a.id = p.artist_id
+        GROUP BY p.id, a.id, a.name, a.avatar
+        ORDER BY total DESC, a.name ASC
+        "
+    ).map_err(|error| error.to_string())?;
+
+    let rows = stmt.query_map([], |row| {
+        let instrument: Option<String> = row.get(2)?;
+        Ok(AndroidMusicianListItem {
+            id: row.get(0)?,
+            name: row.get(1)?,
+            instrument: instrument
                 .filter(|value| !value.trim().is_empty())
                 .unwrap_or_else(|| "نوازنده".to_string()),
-            avatar: item.avatar,
-            program_count: item.total,
+            avatar: row.get(3)?,
+            program_count: row.get(4)?,
         })
-        .collect::<Vec<_>>();
+    }).map_err(|error| error.to_string())?;
+
+    let musicians = rows.collect::<Result<Vec<_>, _>>().map_err(|error| error.to_string())?;
 
     to_string(&musicians).map_err(|error| error.to_string())
+}
+
+fn artist_detail_json(db_path: &str, artist_id: i64) -> Result<String, String> {
+    let core = RadioGolhaCore::open(db_path).map_err(|error| error.to_string())?;
+    let conn = core.connection();
+
+    let payload = conn.query_row(
+        "
+        SELECT
+          a.id,
+          a.name,
+          a.avatar,
+          (
+            SELECT i.name
+            FROM program_performers pp
+            JOIN performer p ON p.id = pp.performer_id
+            LEFT JOIN instrument i ON i.id = pp.instrument_id
+            WHERE p.artist_id = a.id AND i.name IS NOT NULL AND TRIM(i.name) <> ''
+            GROUP BY i.id, i.name
+            ORDER BY COUNT(*) DESC, i.name ASC
+            LIMIT 1
+          ) AS instrument_name,
+          (
+            SELECT COUNT(DISTINCT p2.id)
+            FROM program p2
+            WHERE EXISTS (
+                SELECT 1
+                FROM program_singers ps
+                JOIN singer s ON s.id = ps.singer_id
+                WHERE ps.program_id = p2.id AND s.artist_id = a.id
+            )
+            OR EXISTS (
+                SELECT 1
+                FROM program_performers pp
+                JOIN performer p ON p.id = pp.performer_id
+                WHERE pp.program_id = p2.id AND p.artist_id = a.id
+            )
+          ) AS track_count
+        FROM artist a
+        WHERE a.id = ?1
+        ",
+        [artist_id],
+        |row| {
+            Ok((
+                row.get::<_, i64>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, Option<String>>(2)?,
+                row.get::<_, Option<String>>(3)?,
+                row.get::<_, i64>(4)?,
+            ))
+        },
+    ).map_err(|error| error.to_string())?;
+
+    let mut stmt = conn.prepare(
+        "
+        SELECT
+            p.id,
+            p.title,
+            p.no,
+            COALESCE(
+                (
+                    SELECT GROUP_CONCAT(name, ' و ')
+                    FROM (
+                        SELECT DISTINCT a2.name AS name
+                        FROM program_singers ps
+                        JOIN singer s ON s.id = ps.singer_id
+                        JOIN artist a2 ON a2.id = s.artist_id
+                        WHERE ps.program_id = p.id
+                        ORDER BY a2.name ASC
+                    )
+                ),
+                'ناشناس'
+            ) AS artist_names,
+            (
+                SELECT GROUP_CONCAT(m.name, ' و ')
+                FROM program_modes pm
+                JOIN mode m ON m.id = pm.mode_id
+                WHERE pm.program_id = p.id
+            ) AS mode_names,
+            (SELECT MAX(end_time) FROM program_timeline WHERE program_id = p.id) AS duration,
+            p.audio_url
+        FROM program p
+        WHERE EXISTS (
+            SELECT 1
+            FROM program_singers ps
+            JOIN singer s ON s.id = ps.singer_id
+            WHERE ps.program_id = p.id AND s.artist_id = ?1
+        )
+        OR EXISTS (
+            SELECT 1
+            FROM program_performers pp
+            JOIN performer pf ON pf.id = pp.performer_id
+            WHERE pp.program_id = p.id AND pf.artist_id = ?1
+        )
+        ORDER BY p.no ASC, p.id ASC
+        "
+    ).map_err(|error| error.to_string())?;
+
+    let rows = stmt.query_map([artist_id], |row| {
+        Ok(AndroidCategoryProgramItem {
+            id: row.get(0)?,
+            title: row.get(1)?,
+            no: row.get(2)?,
+            artist: row.get(3)?,
+            mode: row.get(4)?,
+            duration: row.get(5)?,
+            audio_url: row.get(6)?,
+        })
+    }).map_err(|error| error.to_string())?;
+
+    let tracks = rows.collect::<Result<Vec<_>, _>>().map_err(|error| error.to_string())?;
+
+    let payload = AndroidArtistDetailPayload {
+        id: payload.0,
+        name: payload.1,
+        avatar: payload.2,
+        instrument: payload.3,
+        track_count: payload.4,
+        tracks,
+    };
+
+    to_string(&payload).map_err(|error| error.to_string())
 }
 
 fn jni_json_response(
@@ -285,6 +456,16 @@ pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getMusiciansJso
     db_path: JString,
 ) -> jstring {
     jni_json_response(&mut env, db_path, musicians_json)
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getArtistDetailJson(
+    mut env: JNIEnv,
+    _class: JClass,
+    db_path: JString,
+    artist_id: i64,
+) -> jstring {
+    jni_json_response(&mut env, db_path, |path| artist_detail_json(path, artist_id))
 }
 
 #[unsafe(no_mangle)]

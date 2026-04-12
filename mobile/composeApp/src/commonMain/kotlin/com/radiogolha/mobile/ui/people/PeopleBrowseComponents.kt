@@ -74,6 +74,7 @@ data class FeaturedPersonCardUiModel(
 )
 
 data class BrowsePersonRowUiModel(
+    val artistId: Long? = null,
     val name: String,
     val imageUrl: String? = null,
     val primaryMeta: String,
@@ -95,6 +96,7 @@ fun PeopleBrowseScreen(
     bottomNavItems: List<BottomNavItemUiModel>,
     onBottomNavSelected: (AppTab) -> Unit,
     onBackClick: () -> Unit,
+    onPersonClick: (BrowsePersonRowUiModel) -> Unit = {},
     currentTrack: TrackUiModel? = null,
     isPlayerPlaying: Boolean = false,
     isPlayerLoading: Boolean = false,
@@ -130,6 +132,7 @@ fun PeopleBrowseScreen(
                     customContent = customContent,
                     people = people,
                     onBackClick = onBackClick,
+                    onPersonClick = onPersonClick,
                     modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
                 )
             }
@@ -149,6 +152,7 @@ fun PeopleBrowseContent(
     customContent: (androidx.compose.foundation.lazy.LazyListScope.() -> Unit)? = null,
     people: List<BrowsePersonRowUiModel> = emptyList(),
     onBackClick: (() -> Unit)? = null,
+    onPersonClick: (BrowsePersonRowUiModel) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
@@ -240,6 +244,7 @@ fun PeopleBrowseContent(
                     ) { index, person ->
                         PeopleListRow(
                             item = person,
+                            onClick = { onPersonClick(person) },
                             tint = tint,
                             modifier = Modifier.padding(horizontal = GolhaSpacing.ScreenHorizontal)
                         )
@@ -545,6 +550,7 @@ private fun SpacerCard(modifier: Modifier = Modifier) {
 private fun PeopleListCard(
     people: List<BrowsePersonRowUiModel>,
     tint: androidx.compose.ui.graphics.Color,
+    onPersonClick: (BrowsePersonRowUiModel) -> Unit = {},
 ) {
     val groupedPeople = rememberGroupedPeople(people)
     val scope = rememberCoroutineScope()
@@ -580,7 +586,11 @@ private fun PeopleListCard(
                     items = group.items,
                     key = { index, person -> "${group.label}-${person.name}-${index}" },
                 ) { index, person ->
-                    PeopleListRow(item = person, tint = tint)
+                    PeopleListRow(
+                        item = person,
+                        onClick = { onPersonClick(person) },
+                        tint = tint,
+                    )
                     val isLastInGroup = index == group.items.lastIndex
                     val isLastGroup = groupIndex == groupedPeople.lastIndex
                     if (!(isLastInGroup && isLastGroup)) {
@@ -691,12 +701,14 @@ private fun AlphabetJumpRail(
 @Composable
 internal fun PeopleListRow(
     item: BrowsePersonRowUiModel,
+    onClick: () -> Unit,
     tint: androidx.compose.ui.graphics.Color,
     modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .clickable { onClick() }
             .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),

@@ -14,6 +14,7 @@ actual fun loadSingersUiState(): List<SingerListItemUiModel> {
             val item = root.getJSONObject(index)
             add(
                 SingerListItemUiModel(
+                    artistId = item.getLong("id"),
                     name = item.getString("name"),
                     imageUrl = item.optNullableString("avatar"),
                     programCount = item.getInt("program_count"),
