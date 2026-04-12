@@ -1233,7 +1233,7 @@ impl RadioGolhaCore {
 
         detail.singers = self.simple_artist_list(
             "
-            SELECT a.name, a.avatar
+            SELECT a.id, a.name, a.avatar
             FROM program_singers ps
             JOIN singer s ON s.id = ps.singer_id
             JOIN artist a ON a.id = s.artist_id
@@ -1244,7 +1244,7 @@ impl RadioGolhaCore {
         )?;
         detail.poets = self.simple_artist_list(
             "
-            SELECT a.name, a.avatar
+            SELECT a.id, a.name, a.avatar
             FROM program_poets pp
             JOIN poet p ON p.id = pp.poet_id
             JOIN artist a ON a.id = p.artist_id
@@ -1255,7 +1255,7 @@ impl RadioGolhaCore {
         )?;
         detail.announcers = self.simple_artist_list(
             "
-            SELECT a.name, a.avatar
+            SELECT a.id, a.name, a.avatar
             FROM program_announcers pa
             JOIN announcer an ON an.id = pa.announcer_id
             JOIN artist a ON a.id = an.artist_id
@@ -1266,7 +1266,7 @@ impl RadioGolhaCore {
         )?;
         detail.composers = self.simple_artist_list(
             "
-            SELECT a.name, a.avatar
+            SELECT a.id, a.name, a.avatar
             FROM program_composers pc
             JOIN composer c ON c.id = pc.composer_id
             JOIN artist a ON a.id = c.artist_id
@@ -1277,7 +1277,7 @@ impl RadioGolhaCore {
         )?;
         detail.arrangers = self.simple_artist_list(
             "
-            SELECT a.name, a.avatar
+            SELECT a.id, a.name, a.avatar
             FROM program_arrangers pa
             JOIN arranger ar ON ar.id = pa.arranger_id
             JOIN artist a ON a.id = ar.artist_id
@@ -1298,7 +1298,7 @@ impl RadioGolhaCore {
         )?;
         detail.orchestras = self.simple_artist_list(
             "
-            SELECT DISTINCT o.name, NULL as avatar
+            SELECT NULL as artist_id, o.name, NULL as avatar
             FROM program_orchestras po
             JOIN orchestra o ON o.id = po.orchestra_id
             WHERE po.program_id = ?1
@@ -1339,8 +1339,9 @@ impl RadioGolhaCore {
         let mut stmt = self.connection().prepare(sql)?;
         let rows = stmt.query_map([program_id], |row| {
             Ok(ArtistCredit {
-                name: row.get(0)?,
-                avatar: row.get(1)?,
+                artist_id: row.get(0)?,
+                name: row.get(1)?,
+                avatar: row.get(2)?,
             })
         })?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
@@ -1355,7 +1356,7 @@ impl RadioGolhaCore {
     fn program_orchestra_leaders(&self, program_id: i64) -> CoreResult<Vec<OrchestraLeaderCredit>> {
         let mut stmt = self.connection().prepare(
             "
-            SELECT DISTINCT o.name, a.name
+            SELECT DISTINCT a.id, o.name, a.name
             FROM program_orchestra_leaders pol
             JOIN orchestra o ON o.id = pol.orchestra_id
             JOIN orchestra_leader ol ON ol.id = pol.orchestra_leader_id
@@ -1367,8 +1368,9 @@ impl RadioGolhaCore {
 
         let rows = stmt.query_map([program_id], |row| {
             Ok(OrchestraLeaderCredit {
-                orchestra: row.get(0)?,
-                leader: row.get(1)?,
+                artist_id: row.get(0)?,
+                orchestra: row.get(1)?,
+                leader: row.get(2)?,
             })
         })?;
 
@@ -1378,7 +1380,7 @@ impl RadioGolhaCore {
     fn program_performers(&self, program_id: i64) -> CoreResult<Vec<PerformerCredit>> {
         let mut stmt = self.connection().prepare(
             "
-            SELECT a.name, a.avatar, i.name
+            SELECT a.id, a.name, a.avatar, i.name
             FROM program_performers pp
             JOIN performer p ON p.id = pp.performer_id
             JOIN artist a ON a.id = p.artist_id
@@ -1390,9 +1392,10 @@ impl RadioGolhaCore {
 
         let rows = stmt.query_map([program_id], |row| {
             Ok(PerformerCredit {
-                name: row.get(0)?,
-                avatar: row.get(1)?,
-                instrument: row.get(2)?,
+                artist_id: row.get(0)?,
+                name: row.get(1)?,
+                avatar: row.get(2)?,
+                instrument: row.get(3)?,
             })
         })?;
 
@@ -1499,7 +1502,7 @@ impl RadioGolhaCore {
     fn timeline_orchestra_leaders(&self, timeline_id: i64) -> CoreResult<Vec<OrchestraLeaderCredit>> {
         let mut stmt = self.connection().prepare(
             "
-            SELECT DISTINCT o.name, a.name
+            SELECT DISTINCT a.id, o.name, a.name
             FROM program_timeline_orchestra_leaders ptol
             JOIN orchestra o ON o.id = ptol.orchestra_id
             JOIN orchestra_leader ol ON ol.id = ptol.orchestra_leader_id
@@ -1511,8 +1514,9 @@ impl RadioGolhaCore {
 
         let rows = stmt.query_map([timeline_id], |row| {
             Ok(OrchestraLeaderCredit {
-                orchestra: row.get(0)?,
-                leader: row.get(1)?,
+                artist_id: row.get(0)?,
+                orchestra: row.get(1)?,
+                leader: row.get(2)?,
             })
         })?;
 
@@ -1522,7 +1526,7 @@ impl RadioGolhaCore {
     fn timeline_performers(&self, timeline_id: i64, program_id: i64) -> CoreResult<Vec<PerformerCredit>> {
         let mut stmt = self.connection().prepare(
             "
-            SELECT a.name, a.avatar, i.name
+            SELECT a.id, a.name, a.avatar, i.name
             FROM program_timeline_performers ptp
             JOIN performer p ON p.id = ptp.performer_id
             JOIN artist a ON a.id = p.artist_id
@@ -1536,9 +1540,10 @@ impl RadioGolhaCore {
 
         let rows = stmt.query_map(params![timeline_id, program_id], |row| {
             Ok(PerformerCredit {
-                name: row.get(0)?,
-                avatar: row.get(1)?,
-                instrument: row.get(2)?,
+                artist_id: row.get(0)?,
+                name: row.get(1)?,
+                avatar: row.get(2)?,
+                instrument: row.get(3)?,
             })
         })?;
 

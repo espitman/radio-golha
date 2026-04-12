@@ -186,6 +186,7 @@ pub struct DashboardOverview {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct PerformerCredit {
+    pub artist_id: i64,
     pub name: String,
     pub avatar: Option<String>,
     pub instrument: Option<String>,
@@ -193,6 +194,7 @@ pub struct PerformerCredit {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct OrchestraLeaderCredit {
+    pub artist_id: i64,
     pub orchestra: String,
     #[serde(rename = "name")]
     pub leader: String,
@@ -222,6 +224,7 @@ pub struct TranscriptVerse {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ArtistCredit {
+    pub artist_id: Option<i64>,
     pub name: String,
     pub avatar: Option<String>,
 }

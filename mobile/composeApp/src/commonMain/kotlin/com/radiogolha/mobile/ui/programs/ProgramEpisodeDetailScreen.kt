@@ -45,6 +45,7 @@ fun ProgramEpisodeDetailScreen(
     currentPlaybackDurationMs: Long = 0L,
     onTogglePlayerPlayback: () -> Unit = {},
     onPlayProgram: (ProgramEpisodeDetailUiModel) -> Unit = {},
+    onArtistClick: (Long) -> Unit = {},
 ) {
     var detail by remember { mutableStateOf<ProgramEpisodeDetailUiModel?>(null) }
     var isLoading by remember { mutableStateOf(true) }
@@ -96,21 +97,22 @@ fun ProgramEpisodeDetailScreen(
                 
                 // Singers
                 if (d.singers.isNotEmpty()) {
-                    item { ArtistCarousel(title = "خوانندگان", artists = d.singers) }
+                    item { ArtistCarousel(title = "خوانندگان", artists = d.singers, onArtistClick = onArtistClick) }
                 }
 
                 // Orchestras
                 if (d.orchestras.isNotEmpty()) {
-                    item { ArtistCarousel(title = "ارکسترها", artists = d.orchestras) }
+                    item { ArtistCarousel(title = "ارکسترها", artists = d.orchestras, onArtistClick = onArtistClick) }
                 }
 
                 // Orchestra Leaders
                 if (d.orchestraLeaders.isNotEmpty()) {
-                    val leaders = d.orchestraLeaders.map { ArtistCreditUiModel(it.name, null) }
+                    val leaders = d.orchestraLeaders.map { ArtistCreditUiModel(it.artistId, it.name, null) }
                     item { 
                         ArtistCarousel(
                             title = "رهبران ارکستر", 
                             artists = leaders,
+                            onArtistClick = onArtistClick,
                             subtitleGetter = { leader -> 
                                 d.orchestraLeaders.find { it.name == leader.name }?.orchestra 
                             }
@@ -120,11 +122,12 @@ fun ProgramEpisodeDetailScreen(
 
                 // Musicians (Performers)
                 if (d.performers.isNotEmpty()) {
-                    val musicians = d.performers.map { ArtistCreditUiModel(it.name, it.avatar) }
+                    val musicians = d.performers.map { ArtistCreditUiModel(it.artistId, it.name, it.avatar) }
                     item { 
                         ArtistCarousel(
                             title = "نوازندگان", 
                             artists = musicians,
+                            onArtistClick = onArtistClick,
                             subtitleGetter = { m ->
                                 d.performers.find { it.name == m.name }?.instrument ?: "نوازنده"
                             }
@@ -134,22 +137,22 @@ fun ProgramEpisodeDetailScreen(
 
                 // Poets
                 if (d.poets.isNotEmpty()) {
-                    item { ArtistCarousel(title = "شاعران", artists = d.poets) }
+                    item { ArtistCarousel(title = "شاعران", artists = d.poets, onArtistClick = onArtistClick) }
                 }
 
                 // Composers
                 if (d.composers.isNotEmpty()) {
-                    item { ArtistCarousel(title = "آهنگسازان", artists = d.composers) }
+                    item { ArtistCarousel(title = "آهنگسازان", artists = d.composers, onArtistClick = onArtistClick) }
                 }
 
                 // Arrangers
                 if (d.arrangers.isNotEmpty()) {
-                    item { ArtistCarousel(title = "تنظیم‌کنندگان", artists = d.arrangers) }
+                    item { ArtistCarousel(title = "تنظیم‌کنندگان", artists = d.arrangers, onArtistClick = onArtistClick) }
                 }
 
                 // Announcers
                 if (d.announcers.isNotEmpty()) {
-                    item { ArtistCarousel(title = "گویندگان", artists = d.announcers) }
+                    item { ArtistCarousel(title = "گویندگان", artists = d.announcers, onArtistClick = onArtistClick) }
                 }
 
                 // 4. Content Logic (Timeline / Lyrics)
@@ -438,7 +441,12 @@ private fun InfoTile(modifier: Modifier, label: String, value: String, icon: Gol
 }
 
 @Composable
-private fun ArtistCarousel(title: String, artists: List<ArtistCreditUiModel>, subtitleGetter: ((ArtistCreditUiModel) -> String?)? = null) {
+private fun ArtistCarousel(
+    title: String, 
+    artists: List<ArtistCreditUiModel>, 
+    onArtistClick: (Long) -> Unit = {},
+    subtitleGetter: ((ArtistCreditUiModel) -> String?)? = null
+) {
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         SectionTitle(title = title)
         Spacer(modifier = Modifier.height(14.dp))
@@ -447,43 +455,57 @@ private fun ArtistCarousel(title: String, artists: List<ArtistCreditUiModel>, su
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             items(artists) { artist ->
-                ArtistCarouselItem(artist, subtitleGetter?.invoke(artist))
+                ArtistCarouselItem(
+                    artist = artist, 
+                    subtitle = subtitleGetter?.invoke(artist),
+                    onClick = { artist.artistId?.let { onArtistClick(it) } }
+                )
             }
         }
     }
 }
 
 @Composable
-private fun ArtistCarouselItem(artist: ArtistCreditUiModel, subtitle: String? = null) {
-    Column(
-        modifier = Modifier.width(88.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+private fun ArtistCarouselItem(
+    artist: ArtistCreditUiModel, 
+    subtitle: String? = null,
+    onClick: () -> Unit = {},
+) {
+    Box(
+        modifier = Modifier
+            .width(88.dp)
+            .clickable { onClick() }
     ) {
-        ArtistAvatar(
-            name = artist.name,
-            imageUrl = artist.avatar,
-            tint = GolhaColors.SoftRose,
-            modifier = Modifier.size(80.dp)
-        )
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = artist.name,
-                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                color = GolhaColors.PrimaryText,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center
+        Column(
+            modifier = Modifier.width(88.dp).padding(vertical = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            ArtistAvatar(
+                name = artist.name,
+                imageUrl = artist.avatar,
+                tint = GolhaColors.SoftRose,
+                modifier = Modifier.size(80.dp)
             )
-            if (subtitle != null) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = GolhaColors.SecondaryText,
+                    text = artist.name,
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                    color = GolhaColors.PrimaryText,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center
                 )
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = GolhaColors.SecondaryText,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
     }
@@ -584,4 +606,3 @@ private fun ErrorState() {
         Text("خطا در بارگذاری اطلاعات برنامه", color = GolhaColors.SecondaryText)
     }
 }
-

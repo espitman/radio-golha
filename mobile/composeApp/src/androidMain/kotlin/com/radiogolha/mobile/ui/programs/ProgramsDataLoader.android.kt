@@ -167,8 +167,14 @@ private fun JSONObject.optArtistCredits(key: String): List<com.radiogolha.mobile
     return buildList {
         for (i in 0 until array.length()) {
             val item = array.getJSONObject(i)
+            val id = item.optLong("artist_id", 0L).takeIf { it > 0 }
+                ?: item.optLong("id", 0L).takeIf { it > 0 }
+                ?: item.optLong("performer_id", 0L).takeIf { it > 0 }
+                ?: item.optLong("singer_id", 0L).takeIf { it > 0 }
+                ?: item.optLong("musician_id", 0L).takeIf { it > 0 }
             add(
                 com.radiogolha.mobile.ui.home.ArtistCreditUiModel(
+                    artistId = id,
                     name = item.optString("name", ""),
                     avatar = item.optNullableString("avatar")
                 )
@@ -192,8 +198,12 @@ private fun JSONObject.optOrchestraLeaders(key: String): List<com.radiogolha.mob
     return buildList {
         for (i in 0 until array.length()) {
             val item = array.getJSONObject(i)
+            val id = item.optLong("artist_id", 0L).takeIf { it > 0 }
+                ?: item.optLong("id", 0L).takeIf { it > 0 }
+                ?: item.optLong("performer_id", 0L).takeIf { it > 0 }
             add(
                 com.radiogolha.mobile.ui.home.OrchestraLeaderUiModel(
+                    artistId = id,
                     orchestra = item.optString("orchestra", ""),
                     name = item.optString("name", "")
                 )
@@ -207,8 +217,12 @@ private fun JSONObject.optPerformers(key: String): List<com.radiogolha.mobile.ui
     return buildList {
         for (i in 0 until array.length()) {
             val item = array.getJSONObject(i)
+            val id = item.optLong("performer_id", 0L).takeIf { it > 0 }
+                ?: item.optLong("artist_id", 0L).takeIf { it > 0 }
+                ?: item.optLong("id", 0L).takeIf { it > 0 }
             add(
                 com.radiogolha.mobile.ui.home.PerformerUiModel(
+                    artistId = id,
                     name = item.optString("name", ""),
                     avatar = item.optNullableString("avatar"),
                     instrument = item.optNullableString("instrument")

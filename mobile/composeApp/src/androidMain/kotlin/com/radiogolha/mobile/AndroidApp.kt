@@ -215,7 +215,7 @@ fun AndroidApp() {
                     currentPlaybackDurationMs = currentPlaybackDurationMs,
                     onTogglePlayerPlayback = { playerManager.togglePlayback() },
                     onTrackClick = { trackId ->
-                        navController.navigate("program_detail/$trackId")
+                        navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(trackId))
                     },
                     onBottomNavSelected = { tab ->
                         navController.navigate(tab.toRoute().route) {
@@ -274,7 +274,7 @@ fun AndroidApp() {
                         navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId))
                     },
                     onTrackClick = { trackId ->
-                        navController.navigate("program_detail/$trackId")
+                        navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(trackId))
                     }
                 )
             }
@@ -328,7 +328,7 @@ fun AndroidApp() {
                     currentPlaybackDurationMs = currentPlaybackDurationMs,
                     onTogglePlayerPlayback = { playerManager.togglePlayback() },
                     onTrackClick = { trackId ->
-                        navController.navigate("program_detail/$trackId")
+                        navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(trackId))
                     }
                 )
             }
@@ -359,6 +359,9 @@ fun AndroidApp() {
                     currentPlaybackPositionMs = currentPlaybackPositionMs,
                     currentPlaybackDurationMs = currentPlaybackDurationMs,
                     onTogglePlayerPlayback = { playerManager.togglePlayback() },
+                    onArtistClick = { artistId ->
+                        navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId))
+                    },
                     onPlayProgram = { detail ->
                         playerManager.play(com.radiogolha.mobile.ui.home.TrackUiModel(
                             id = detail.id,

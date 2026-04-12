@@ -104,12 +104,14 @@ enum class GolhaIcon {
 }
 
 data class PerformerUiModel(
+    val artistId: Long? = null,
     val name: String,
     val avatar: String?,
     val instrument: String?
 )
 
 data class OrchestraLeaderUiModel(
+    val artistId: Long? = null,
     val orchestra: String,
     val name: String
 )
@@ -134,6 +136,7 @@ data class TranscriptVerseUiModel(
 )
 
 data class ArtistCreditUiModel(
+    val artistId: Long? = null,
     val name: String,
     val avatar: String?
 )
