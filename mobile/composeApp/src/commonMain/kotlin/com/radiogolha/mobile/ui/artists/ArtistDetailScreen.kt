@@ -183,11 +183,11 @@ private fun ArtistHeaderLayout(
         shadowElevation = if (isSticky) 4.dp else 0.dp
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
-            // Background Pattern (Fades out as it collapses)
+            // Background Pattern (Keep visible)
             androidx.compose.foundation.Image(
                 painter = painterResource(Res.drawable.eslimi_card_bg),
                 contentDescription = null,
-                modifier = Modifier.matchParentSize().alpha(contentAlpha * 0.4f),
+                modifier = Modifier.matchParentSize().alpha(0.32f),
                 contentScale = ContentScale.Crop
             )
 
@@ -199,7 +199,7 @@ private fun ArtistHeaderLayout(
                         Brush.verticalGradient(
                             colors = listOf(
                                 GolhaColors.Surface.copy(alpha = 0.95f),
-                                GolhaColors.Surface.copy(alpha = 0.4f + (0.6f * progress))
+                                GolhaColors.Surface.copy(alpha = 0.4f + (0.55f * progress))
                             )
                         )
                     )
@@ -219,28 +219,42 @@ private fun ArtistHeaderLayout(
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally, 
                         verticalArrangement = Arrangement.spacedBy(4.dp),
-                        modifier = Modifier.alpha(contentAlpha)
+                        modifier = Modifier.alpha(if (isLoading) 1f else contentAlpha)
                     ) {
-                        Text(
-                            text = detail?.name ?: "در حال بارگذاری...",
-                            style = MaterialTheme.typography.headlineSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = titleFontSize
-                            ),
-                            color = GolhaColors.PrimaryText,
-                            textAlign = TextAlign.Center,
-                        )
-                        
-                        if (isLoading || !detail?.instrument.isNullOrBlank()) {
-                            Text(
-                                text = detail?.instrument ?: "ساز تخصصی",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = GolhaColors.SecondaryText,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.alpha(if (isLoading) 0.3f else 1f)
+                        if (isLoading || detail == null) {
+                            Box(
+                                modifier = Modifier
+                                    .width(160.dp)
+                                    .height(32.dp)
+                                    .background(GolhaColors.Border.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .width(100.dp)
+                                    .height(24.dp)
+                                    .background(GolhaColors.Border.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
                             )
                         } else {
-                            Box(modifier = Modifier.height(24.dp))
+                            Text(
+                                text = detail.name,
+                                style = MaterialTheme.typography.headlineSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = titleFontSize
+                                ),
+                                color = GolhaColors.PrimaryText,
+                                textAlign = TextAlign.Center,
+                            )
+                            
+                            if (!detail.instrument.isNullOrBlank()) {
+                                Text(
+                                    text = detail.instrument,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = GolhaColors.SecondaryText,
+                                    textAlign = TextAlign.Center,
+                                )
+                            } else {
+                                Box(modifier = Modifier.height(24.dp))
+                            }
                         }
                     }
 
@@ -262,7 +276,12 @@ private fun ArtistHeaderLayout(
                             )
                         }
                     } else {
-                        Box(modifier = Modifier.width(84.dp).height(38.dp).background(GolhaColors.Border.copy(alpha = 0.1f), RoundedCornerShape(10.dp)))
+                        Box(
+                            modifier = Modifier
+                                .width(84.dp)
+                                .height(38.dp)
+                                .background(GolhaColors.Border.copy(alpha = 0.25f), RoundedCornerShape(10.dp))
+                        )
                     }
                 }
             } else {
@@ -278,25 +297,43 @@ private fun ArtistHeaderLayout(
                     ArtistAvatarBox(detail, isLoading, 40.dp)
                     
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = detail?.name ?: "در حال بارگذاری...",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            color = GolhaColors.PrimaryText,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        if (!detail?.instrument.isNullOrBlank()) {
+                        if (isLoading || detail == null) {
+                            Box(
+                                modifier = Modifier
+                                    .width(120.dp)
+                                    .height(20.dp)
+                                    .background(GolhaColors.Border.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
+                            )
+                        } else {
                             Text(
-                                text = detail?.instrument ?: "",
+                                text = detail.name,
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                color = GolhaColors.PrimaryText,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        
+                        if (!isLoading && detail != null && !detail.instrument.isNullOrBlank()) {
+                            Text(
+                                text = detail.instrument,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = GolhaColors.SecondaryText,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
+                        } else if (isLoading) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Box(
+                                modifier = Modifier
+                                    .width(80.dp)
+                                    .height(14.dp)
+                                    .background(GolhaColors.Border.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
+                            )
                         }
                     }
                     
-                    if (detail != null) {
+                    if (!isLoading && detail != null) {
                         Text(
                             text = "${detail.trackCount} برنامه",
                             style = MaterialTheme.typography.labelSmall,
