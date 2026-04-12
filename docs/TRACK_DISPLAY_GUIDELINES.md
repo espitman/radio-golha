@@ -29,8 +29,8 @@ All track lists (Home Page Top Tracks, Category Programs, Artist Details, Search
 
 - **Navigation**: All artist names **MUST** be linkable (using `onArtistClick`) whenever an `artistId` is available.
 - **Colors**:
-    - **Primary Names**: Always use `GolhaColors.PrimaryText` (names of singers, musicians, programs).
-    - **Metadata/Subtitles**: Always use `GolhaColors.SecondaryText` (instruments, count, etc.).
+    - **Primary Names**: Always use `GolhaColors.PrimaryText` for singer/musician names (under avatars, in lists, or inside track rows if linkable).
+    - **Metadata/Subtitles**: Always use `GolhaColors.SecondaryText` for non-linkable metadata, instruments, or count labels.
 
 ## 4. Maintenance
 Any visual tweaks to track rows **MUST** be applied to `ProgramComponents.kt` only. Local overrides in screen-specific files are strictly forbidden to prevent UI regressions.

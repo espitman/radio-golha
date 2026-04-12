@@ -63,7 +63,7 @@ fun ProgramTrackRow(
                 Text(
                     text = track.artist,
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (track.artistId != null) GolhaColors.PrimaryAccent else GolhaColors.SecondaryText,
+                    color = if (track.artistId != null) GolhaColors.PrimaryText else GolhaColors.SecondaryText,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Start,
