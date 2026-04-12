@@ -198,8 +198,8 @@ private fun ArtistHeaderLayout(
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                GolhaColors.Surface.copy(alpha = 0.95f),
-                                GolhaColors.Surface.copy(alpha = 0.4f + (0.55f * progress))
+                                GolhaColors.Surface.copy(alpha = 0.92f),
+                                GolhaColors.Surface.copy(alpha = 0.4f + (0.2f * progress))
                             )
                         )
                     )
