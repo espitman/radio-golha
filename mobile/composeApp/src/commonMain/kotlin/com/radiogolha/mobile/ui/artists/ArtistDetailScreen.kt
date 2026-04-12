@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
@@ -40,6 +42,16 @@ import com.radiogolha.mobile.theme.GolhaSpacing
 import com.radiogolha.mobile.ui.home.*
 import com.radiogolha.mobile.ui.programs.*
 import com.radiogolha.mobile.ui.root.TabRootScreen
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
+import org.jetbrains.compose.resources.painterResource
+import radiogolha_mobile.composeapp.generated.resources.Res
+import radiogolha_mobile.composeapp.generated.resources.eslimi_card_bg
+
+private val ArtistHeaderCardHeight = 255.dp
+private val ArtistTracksCardHeight = 418.dp
+private const val ArtistSkeletonTrackCount = 5
 
 @Composable
 fun ArtistDetailScreen(
@@ -81,55 +93,19 @@ fun ArtistDetailScreen(
             content = {
                 val resolvedDetail = detail
                 if (resolvedDetail == null) {
-                    item { ArtistHeaderSkeleton() }
+                    item { ArtistHeaderLayout(isLoading = true) }
                     item { ArtistTracksSkeleton() }
                 } else {
-                    item { ArtistHeaderCard(detail = resolvedDetail) }
+                    item { ArtistHeaderLayout(detail = resolvedDetail) }
                     item {
-                        Surface(
-                            shape = RoundedCornerShape(GolhaRadius.Card),
-                            color = GolhaColors.Surface,
-                            border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.65f)),
-                        ) {
-                            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 8.dp),
-                                ) {
-                                    resolvedDetail.tracks.forEachIndexed { index, program ->
-                                        val isActive = currentTrack?.id == program.id
-                                        ProgramTrackRow(
-                                            track = program.toTrackUiModel(),
-                                            isActive = isActive,
-                                            isPlaying = isActive && isPlayerPlaying,
-                                            onTrackClick = { onProgramClick(program) },
-                                            onPlayClick = { onPlayTrack(program.toTrackUiModel()) },
-                                            onArtistClick = onArtistClick,
-                                        )
-                                        if (index != resolvedDetail.tracks.lastIndex) {
-                                            HorizontalDivider(
-                                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                                                color = GolhaColors.Border.copy(alpha = 0.65f),
-                                            )
-                                        }
-                                    }
-                                    if (resolvedDetail.tracks.isEmpty()) {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(vertical = 36.dp),
-                                            contentAlignment = Alignment.Center,
-                                        ) {
-                                            Text(
-                                                text = "ترکی برای این هنرمند پیدا نشد",
-                                                color = GolhaColors.SecondaryText,
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        ArtistTracksCard(
+                            tracks = resolvedDetail.tracks,
+                            currentTrack = currentTrack,
+                            isPlayerPlaying = isPlayerPlaying,
+                            onProgramClick = onProgramClick,
+                            onPlayTrack = onPlayTrack,
+                            onArtistClick = onArtistClick,
+                        )
                     }
                     item { Spacer(modifier = Modifier.height(24.dp)) }
                 }
@@ -139,80 +115,184 @@ fun ArtistDetailScreen(
 }
 
 @Composable
-private fun ArtistHeaderCard(detail: ArtistDetailUiModel) {
+private fun ArtistHeaderLayout(
+    detail: ArtistDetailUiModel? = null,
+    isLoading: Boolean = false
+) {
     Surface(
         shape = RoundedCornerShape(GolhaRadius.Card),
         color = GolhaColors.Surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.65f)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.7f)),
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(18.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .height(ArtistHeaderCardHeight)
+                .clip(RoundedCornerShape(GolhaRadius.Card))
         ) {
-            ArtistAvatar(
-                name = detail.name,
-                imageUrl = detail.imageUrl,
-                tint = GolhaColors.SoftBlue,
-                modifier = Modifier.size(104.dp),
+            // Background Pattern
+            androidx.compose.foundation.Image(
+                painter = painterResource(Res.drawable.eslimi_card_bg),
+                contentDescription = null,
+                modifier = Modifier.matchParentSize(),
+                contentScale = ContentScale.Crop,
+                alpha = 0.32f
             )
-            Text(
-                text = detail.name,
-                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                color = GolhaColors.PrimaryText,
-                textAlign = TextAlign.Center,
+
+            // Gradient Overlay
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                GolhaColors.Surface.copy(alpha = 0.95f),
+                                GolhaColors.Surface.copy(alpha = 0.4f)
+                            )
+                        )
+                    )
             )
-            if (!detail.instrument.isNullOrBlank()) {
-                Text(
-                    text = detail.instrument,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = GolhaColors.SecondaryText,
-                    textAlign = TextAlign.Center,
-                )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(ArtistHeaderCardHeight)
+                    .padding(18.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                if (isLoading || detail == null) {
+                    // Skeleton State
+                    Box(
+                        modifier = Modifier
+                            .size(104.dp)
+                            .background(GolhaColors.Border.copy(alpha = 0.2f), CircleShape)
+                    )
+                    
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Box(
+                            modifier = Modifier
+                                .width(160.dp)
+                                .height(40.dp)
+                                .background(GolhaColors.Border.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
+                        )
+                        Box(
+                            modifier = Modifier
+                                .width(100.dp)
+                                .height(24.dp)
+                                .background(GolhaColors.Border.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .width(84.dp)
+                            .height(38.dp)
+                            .background(GolhaColors.Border.copy(alpha = 0.25f), RoundedCornerShape(10.dp))
+                    )
+                } else {
+                    // Loaded State
+                    ArtistAvatar(
+                        name = detail.name,
+                        imageUrl = detail.imageUrl,
+                        tint = GolhaColors.SoftRose,
+                        modifier = Modifier.size(104.dp),
+                    )
+                    
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = detail.name,
+                            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                            color = GolhaColors.PrimaryText,
+                            textAlign = TextAlign.Center,
+                        )
+                        
+                        if (!detail.instrument.isNullOrBlank()) {
+                            Text(
+                                text = detail.instrument,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = GolhaColors.SecondaryText,
+                                textAlign = TextAlign.Center,
+                            )
+                        } else {
+                            // Empty box to maintain height stability if no instrument
+                            Box(modifier = Modifier.height(24.dp))
+                        }
+                    }
+
+                    Surface(
+                        color = GolhaColors.BadgeBackground.copy(alpha = 0.9f),
+                        shape = RoundedCornerShape(10.dp),
+                        border = androidx.compose.foundation.BorderStroke(0.5.dp, GolhaColors.Border)
+                    ) {
+                        Text(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                            text = "${detail.trackCount} برنامه",
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            ),
+                            color = GolhaColors.PrimaryText,
+                        )
+                    }
+                }
             }
-            Text(
-                text = "${detail.trackCount} ترک",
-                style = MaterialTheme.typography.bodyMedium,
-                color = GolhaColors.SecondaryText,
-                textAlign = TextAlign.Center,
-            )
         }
     }
 }
 
 @Composable
-private fun ArtistHeaderSkeleton() {
+private fun ArtistTracksCard(
+    tracks: List<CategoryProgramUiModel>,
+    currentTrack: TrackUiModel?,
+    isPlayerPlaying: Boolean,
+    onProgramClick: (CategoryProgramUiModel) -> Unit,
+    onPlayTrack: (TrackUiModel) -> Unit,
+    onArtistClick: (Long) -> Unit,
+) {
     Surface(
         shape = RoundedCornerShape(GolhaRadius.Card),
         color = GolhaColors.Surface,
         border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.65f)),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(18.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Box(
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            Column(
                 modifier = Modifier
-                    .size(104.dp)
-                    .background(GolhaColors.Border.copy(alpha = 0.24f), CircleShape)
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(0.5f)
-                    .height(18.dp)
-                    .background(GolhaColors.Border.copy(alpha = 0.24f), RoundedCornerShape(10.dp))
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(0.3f)
-                    .height(14.dp)
-                    .background(GolhaColors.Border.copy(alpha = 0.20f), RoundedCornerShape(10.dp))
-            )
+                    .fillMaxWidth()
+                    .height(ArtistTracksCardHeight)
+                    .padding(vertical = 8.dp),
+            ) {
+                tracks.forEachIndexed { index, program ->
+                    val isActive = currentTrack?.id == program.id
+                    ProgramTrackRow(
+                        track = program.toTrackUiModel(),
+                        isActive = isActive,
+                        isPlaying = isActive && isPlayerPlaying,
+                        onTrackClick = { onProgramClick(program) },
+                        onPlayClick = { onPlayTrack(program.toTrackUiModel()) },
+                        onArtistClick = onArtistClick,
+                    )
+                    if (index != tracks.lastIndex) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                            color = GolhaColors.Border.copy(alpha = 0.65f),
+                        )
+                    }
+                }
+                if (tracks.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 36.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "ترکی برای این هنرمند پیدا نشد",
+                            color = GolhaColors.SecondaryText,
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -228,14 +308,15 @@ private fun ArtistTracksSkeleton() {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .height(ArtistTracksCardHeight)
                     .padding(vertical = 8.dp),
             ) {
-                repeat(6) { index ->
+                repeat(ArtistSkeletonTrackCount) { index ->
                     SkeletonTrackRow()
-                    if (index != 5) {
+                    if (index != ArtistSkeletonTrackCount - 1) {
                         HorizontalDivider(
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                            color = GolhaColors.Border.copy(alpha = 0.65f),
+                            color = GolhaColors.Border.copy(alpha = 0.65f)
                         )
                     }
                 }
