@@ -163,8 +163,7 @@ fun MusiciansContent(
                         artistId = musician.artistId,
                         name = musician.name,
                         imageUrl = musician.imageUrl,
-                        primaryMeta = "",
-                        secondaryMeta = "${musician.programCount} برنامه",
+                        primaryMeta = "${musician.programCount} برنامه",
                         groupLabel = "",
                     )
                 },
