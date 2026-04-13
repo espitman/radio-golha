@@ -295,6 +295,8 @@ fun AndroidApp() {
                                 navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(id))
                             }
                         },
+                        onSeekBack10 = { playerManager.seekTo((currentPlaybackPositionMs - 10_000L).coerceAtLeast(0L)) },
+                        onSeekForward10 = { playerManager.seekTo((currentPlaybackPositionMs + 10_000L).coerceAtMost(currentPlaybackDurationMs)) },
                     )
                 }
             }

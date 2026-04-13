@@ -1528,6 +1528,76 @@ fun GolhaLineIcon(
                     cap = StrokeCap.Round
                 )
             }
+
+            GolhaIcon.SeekBack10 -> {
+                // Arrow arc pointing left (counter-clockwise)
+                drawArc(
+                    color = tint,
+                    startAngle = -30f,
+                    sweepAngle = -300f,
+                    useCenter = false,
+                    topLeft = Offset(size.width * 0.18f, size.height * 0.18f),
+                    size = androidx.compose.ui.geometry.Size(size.width * 0.64f, size.height * 0.64f),
+                    style = Stroke(width = stroke, cap = StrokeCap.Round)
+                )
+                // Arrowhead pointing left at the end of arc
+                val ax = size.width * 0.34f
+                val ay = size.height * 0.14f
+                val arrowPath = Path().apply {
+                    moveTo(ax - size.width * 0.12f, ay + size.height * 0.05f)
+                    lineTo(ax, ay)
+                    lineTo(ax + size.width * 0.04f, ay + size.height * 0.12f)
+                }
+                drawPath(arrowPath, tint, style = Stroke(width = stroke, cap = StrokeCap.Round, join = StrokeJoin.Round))
+                // "10" text approximated as two lines
+                // digit "1"
+                drawLine(tint, Offset(size.width * 0.38f, size.height * 0.42f), Offset(size.width * 0.38f, size.height * 0.62f), stroke, StrokeCap.Round)
+                // digit "0" as small rect/oval approximation
+                drawArc(
+                    color = tint,
+                    startAngle = 0f,
+                    sweepAngle = 360f,
+                    useCenter = false,
+                    topLeft = Offset(size.width * 0.46f, size.height * 0.42f),
+                    size = androidx.compose.ui.geometry.Size(size.width * 0.18f, size.height * 0.20f),
+                    style = Stroke(width = stroke * 0.85f, cap = StrokeCap.Round)
+                )
+            }
+
+            GolhaIcon.SeekForward10 -> {
+                // Arrow arc pointing right (clockwise)
+                drawArc(
+                    color = tint,
+                    startAngle = -150f,
+                    sweepAngle = 300f,
+                    useCenter = false,
+                    topLeft = Offset(size.width * 0.18f, size.height * 0.18f),
+                    size = androidx.compose.ui.geometry.Size(size.width * 0.64f, size.height * 0.64f),
+                    style = Stroke(width = stroke, cap = StrokeCap.Round)
+                )
+                // Arrowhead pointing right
+                val ax = size.width * 0.66f
+                val ay = size.height * 0.14f
+                val arrowPath = Path().apply {
+                    moveTo(ax + size.width * 0.12f, ay + size.height * 0.05f)
+                    lineTo(ax, ay)
+                    lineTo(ax - size.width * 0.04f, ay + size.height * 0.12f)
+                }
+                drawPath(arrowPath, tint, style = Stroke(width = stroke, cap = StrokeCap.Round, join = StrokeJoin.Round))
+                // "10" text
+                // digit "1"
+                drawLine(tint, Offset(size.width * 0.38f, size.height * 0.42f), Offset(size.width * 0.38f, size.height * 0.62f), stroke, StrokeCap.Round)
+                // digit "0"
+                drawArc(
+                    color = tint,
+                    startAngle = 0f,
+                    sweepAngle = 360f,
+                    useCenter = false,
+                    topLeft = Offset(size.width * 0.46f, size.height * 0.42f),
+                    size = androidx.compose.ui.geometry.Size(size.width * 0.18f, size.height * 0.20f),
+                    style = Stroke(width = stroke * 0.85f, cap = StrokeCap.Round)
+                )
+            }
         }
     }
 }

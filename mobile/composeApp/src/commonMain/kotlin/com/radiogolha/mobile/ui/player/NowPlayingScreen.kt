@@ -31,11 +31,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.radiogolha.mobile.theme.GolhaColors
 import com.radiogolha.mobile.theme.GolhaPatternBackground
+import com.radiogolha.mobile.theme.GolhaRadius
 import com.radiogolha.mobile.ui.home.GolhaIcon
 import com.radiogolha.mobile.ui.home.GolhaLineIcon
+import com.radiogolha.mobile.ui.home.TimelineSegmentUiModel
 import com.radiogolha.mobile.ui.home.TrackUiModel
 import com.radiogolha.mobile.ui.home.ArtistAvatar
+import com.radiogolha.mobile.ui.programs.loadProgramEpisodeDetail
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 @Composable
 fun NowPlayingScreen(
@@ -50,6 +55,8 @@ fun NowPlayingScreen(
     onInfoClick: () -> Unit = {},
     onPreviousClick: () -> Unit = {},
     onNextClick: () -> Unit = {},
+    onSeekBack10: () -> Unit = {},
+    onSeekForward10: () -> Unit = {},
 ) {
     val infiniteTransition = rememberInfiniteTransition()
     val glowAlpha by infiniteTransition.animateFloat(
@@ -58,27 +65,48 @@ fun NowPlayingScreen(
         animationSpec = infiniteRepeatable(animation = tween(2000, easing = LinearEasing), repeatMode = RepeatMode.Reverse)
     )
 
-    // Image Cycle Logic
-    val images = remember(currentTrack) {
+    // Seekbar State
+    var sliderValue by remember { mutableFloatStateOf(currentPositionMs.toFloat()) }
+    var isDragging by remember { mutableStateOf(false) }
+
+    // Episode detail: timeline + singer avatars
+    var timeline by remember(currentTrack?.id) { mutableStateOf<List<TimelineSegmentUiModel>>(emptyList()) }
+    var singerImages by remember(currentTrack?.id) { mutableStateOf<List<String>>(emptyList()) }
+    LaunchedEffect(currentTrack?.id) {
+        val id = currentTrack?.id ?: return@LaunchedEffect
+        val detail = withContext(Dispatchers.Default) { runCatching { loadProgramEpisodeDetail(id) }.getOrNull() }
+        timeline = detail?.timeline ?: emptyList()
+        singerImages = detail?.singers?.mapNotNull { it.avatar }?.distinct() ?: emptyList()
+    }
+
+    // Image Cycle Logic — singer avatars only, fallback to coverUrl
+    val images = remember(singerImages, currentTrack) {
         val list = mutableListOf<String>()
-        currentTrack?.coverUrl?.let { list.add(it) }
-        currentTrack?.artistImages?.forEach { list.add(it) }
+        if (singerImages.isNotEmpty()) {
+            singerImages.forEach { list.add(it) }
+        } else {
+            currentTrack?.coverUrl?.let { list.add(it) }
+        }
         list.distinct()
     }
     var currentImageIndex by remember(currentTrack) { mutableStateOf(0) }
-    
+
     if (images.size > 1) {
-        LaunchedEffect(currentTrack) {
+        LaunchedEffect(images) {
             while (true) {
                 delay(7000)
                 currentImageIndex = (currentImageIndex + 1) % images.size
             }
         }
     }
-
-    // Seekbar State
-    var sliderValue by remember { mutableFloatStateOf(currentPositionMs.toFloat()) }
-    var isDragging by remember { mutableStateOf(false) }
+    val activeSegment by remember(timeline) {
+        derivedStateOf {
+            if (timeline.isEmpty()) null
+            else timeline.indices.lastOrNull { i ->
+                sliderValue >= parsePlayerTimeToMs(timeline[i].startTime)
+            }?.let { timeline[it] }
+        }
+    }
 
     // Sync state from player periodically or on significant drift
     LaunchedEffect(currentPositionMs) {
@@ -162,7 +190,7 @@ fun NowPlayingScreen(
                     Text(text = currentTrack?.artist ?: "هنرمند نامشخص", style = MaterialTheme.typography.titleLarge.copy(color = GolhaColors.SecondaryText, textAlign = TextAlign.Center), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
 
-                Spacer(modifier = Modifier.weight(0.1f))
+                Spacer(modifier = Modifier.weight(0.06f))
 
                 // Custom Seekbar
                 Column(modifier = Modifier.fillMaxWidth()) {
@@ -222,30 +250,95 @@ fun NowPlayingScreen(
 
                 // Controls
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onPreviousClick, modifier = Modifier.size(52.dp).background(GolhaColors.Surface.copy(alpha = 0.6f), CircleShape)) {
-                        GolhaLineIcon(icon = GolhaIcon.SkipPrevious, modifier = Modifier.size(28.dp), tint = GolhaColors.PrimaryText)
+                    IconButton(onClick = onPreviousClick, modifier = Modifier.size(48.dp).background(GolhaColors.Surface.copy(alpha = 0.6f), CircleShape)) {
+                        GolhaLineIcon(icon = GolhaIcon.SkipPrevious, modifier = Modifier.size(26.dp), tint = GolhaColors.PrimaryText)
+                    }
+                    IconButton(onClick = onSeekBack10, modifier = Modifier.size(48.dp).background(GolhaColors.Surface.copy(alpha = 0.6f), CircleShape)) {
+                        GolhaLineIcon(icon = GolhaIcon.SeekBack10, modifier = Modifier.size(26.dp), tint = GolhaColors.PrimaryText)
                     }
                     Box(contentAlignment = Alignment.Center) {
-                        Box(modifier = Modifier.size(96.dp).graphicsLayer { alpha = glowAlpha; scaleX = 1.1f; scaleY = 1.1f }.background(GolhaColors.PrimaryAccent.copy(alpha = 0.4f), CircleShape))
-                        Surface(modifier = Modifier.size(88.dp).clickable { onTogglePlayback() }, shape = CircleShape, color = GolhaColors.PrimaryAccent, shadowElevation = 12.dp) {
+                        Box(modifier = Modifier.size(88.dp).graphicsLayer { alpha = glowAlpha; scaleX = 1.1f; scaleY = 1.1f }.background(GolhaColors.PrimaryAccent.copy(alpha = 0.4f), CircleShape))
+                        Surface(modifier = Modifier.size(80.dp).clickable { onTogglePlayback() }, shape = CircleShape, color = GolhaColors.PrimaryAccent, shadowElevation = 12.dp) {
                             Box(contentAlignment = Alignment.Center) {
                                 if (isLoading) {
-                                    CircularProgressIndicator(modifier = Modifier.size(38.dp), color = GolhaColors.OnAccent, strokeWidth = 3.dp)
+                                    CircularProgressIndicator(modifier = Modifier.size(34.dp), color = GolhaColors.OnAccent, strokeWidth = 3.dp)
                                 } else {
-                                    GolhaLineIcon(icon = if (isPlaying) GolhaIcon.Pause else GolhaIcon.Play, modifier = Modifier.size(40.dp), tint = GolhaColors.OnAccent)
+                                    GolhaLineIcon(icon = if (isPlaying) GolhaIcon.Pause else GolhaIcon.Play, modifier = Modifier.size(36.dp), tint = GolhaColors.OnAccent)
                                 }
                             }
                         }
                     }
-                    IconButton(onClick = onNextClick, modifier = Modifier.size(52.dp).background(GolhaColors.Surface.copy(alpha = 0.6f), CircleShape)) {
-                        GolhaLineIcon(icon = GolhaIcon.SkipNext, modifier = Modifier.size(28.dp), tint = GolhaColors.PrimaryText)
+                    IconButton(onClick = onSeekForward10, modifier = Modifier.size(48.dp).background(GolhaColors.Surface.copy(alpha = 0.6f), CircleShape)) {
+                        GolhaLineIcon(icon = GolhaIcon.SeekForward10, modifier = Modifier.size(26.dp), tint = GolhaColors.PrimaryText)
+                    }
+                    IconButton(onClick = onNextClick, modifier = Modifier.size(48.dp).background(GolhaColors.Surface.copy(alpha = 0.6f), CircleShape)) {
+                        GolhaLineIcon(icon = GolhaIcon.SkipNext, modifier = Modifier.size(26.dp), tint = GolhaColors.PrimaryText)
                     }
                 }
 
-                Spacer(modifier = Modifier.weight(0.15f))
+                Spacer(modifier = Modifier.weight(0.06f))
+
+                // Active Segment (fixed height — always occupies space, fades content in/out)
+                Surface(
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    shape = RoundedCornerShape(GolhaRadius.Card),
+                    color = if (activeSegment != null) GolhaColors.Surface.copy(alpha = 0.7f) else Color.Transparent,
+                    border = if (activeSegment != null) androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.5f)) else null,
+                ) {
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = activeSegment != null,
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                    ) {
+                        activeSegment?.let { seg ->
+                            Row(
+                                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            ) {
+                                Box(
+                                    modifier = Modifier.size(26.dp).background(GolhaColors.PrimaryAccent.copy(alpha = 0.15f), CircleShape),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    GolhaLineIcon(icon = GolhaIcon.Play, modifier = Modifier.size(11.dp), tint = GolhaColors.PrimaryAccent)
+                                }
+                                Text(
+                                    text = buildString {
+                                        append(seg.modeName ?: "بخش اجرایی")
+                                        if (seg.singers.isNotEmpty()) append("  •  ${seg.singers.joinToString(" و ")}")
+                                    },
+                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Medium),
+                                    color = GolhaColors.PrimaryText,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                Text(
+                                    text = seg.startTime ?: "",
+                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                                    color = GolhaColors.PrimaryAccent,
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.weight(0.09f))
             }
         }
     }
+}
+
+private fun parsePlayerTimeToMs(time: String?): Float {
+    if (time == null) return 0f
+    return try {
+        val parts = time.trim().split(":")
+        when (parts.size) {
+            2 -> (parts[0].toLong() * 60 + parts[1].toLong()) * 1000f
+            3 -> (parts[0].toLong() * 3600 + parts[1].toLong() * 60 + parts[2].toLong()) * 1000f
+            else -> 0f
+        }
+    } catch (e: Exception) { 0f }
 }
 
 private fun formatTime(timeMs: Long): String {

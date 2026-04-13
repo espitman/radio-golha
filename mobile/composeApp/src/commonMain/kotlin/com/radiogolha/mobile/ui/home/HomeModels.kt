@@ -105,6 +105,8 @@ enum class GolhaIcon {
     History,
     People,
     Info,
+    SeekBack10,
+    SeekForward10,
 }
 
 data class PerformerUiModel(
