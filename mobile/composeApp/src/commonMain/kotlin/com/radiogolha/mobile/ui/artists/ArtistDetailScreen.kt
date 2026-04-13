@@ -2,11 +2,8 @@ package com.radiogolha.mobile.ui.artists
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
@@ -14,13 +11,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -33,13 +29,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.radiogolha.mobile.theme.GolhaColors
 import com.radiogolha.mobile.theme.GolhaRadius
-import com.radiogolha.mobile.theme.GolhaSpacing
 import com.radiogolha.mobile.ui.home.*
 import com.radiogolha.mobile.ui.programs.*
 import com.radiogolha.mobile.ui.root.TabRootScreen
 import org.jetbrains.compose.resources.painterResource
 import radiogolha_mobile.composeapp.generated.resources.Res
 import radiogolha_mobile.composeapp.generated.resources.eslimi_card_bg
+
+private val artistDetailCache = mutableMapOf<Long, ArtistDetailUiModel?>()
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -60,13 +57,19 @@ fun ArtistDetailScreen(
     onTrackClick: (Long) -> Unit = {},
     onExpandPlayer: () -> Unit = {},
 ) {
-    val detail by produceState<ArtistDetailUiModel?>(initialValue = null, key1 = artistId) {
-        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-            loadArtistDetail(artistId)
-        }
+    var detail by remember(artistId) { mutableStateOf(artistDetailCache[artistId]) }
+    val scrollState = rememberSaveable(artistId, saver = LazyListState.Saver) {
+        LazyListState()
     }
 
-    val scrollState = rememberLazyListState()
+    LaunchedEffect(artistId) {
+        if (detail == null) {
+            detail = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                loadArtistDetail(artistId)
+            }
+            artistDetailCache[artistId] = detail
+        }
+    }
     
     // Calculate collapse progress based on scroll
     // The threshold is the height of the title section + some padding
@@ -381,45 +384,71 @@ private fun ArtistTracksSkeleton() {
         color = GolhaColors.Surface,
         border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.65f)),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            repeat(8) { index ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Box(
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+            ) {
+                repeat(6) { index ->
+                    Row(
                         modifier = Modifier
-                            .size(40.dp)
-                            .background(GolhaColors.Border.copy(alpha = 0.2f), CircleShape)
-                    )
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(58.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(GolhaColors.Border.copy(alpha = 0.25f))
+                            )
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.6f)
+                                        .height(14.dp)
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(GolhaColors.Border.copy(alpha = 0.25f))
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.4f)
+                                        .height(10.dp)
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(GolhaColors.Border.copy(alpha = 0.15f))
+                                )
+                            }
+                        }
                         Box(
                             modifier = Modifier
-                                .width(120.dp)
-                                .height(16.dp)
-                                .background(GolhaColors.Border.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
+                                .width(36.dp)
+                                .height(11.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(GolhaColors.Border.copy(alpha = 0.18f))
                         )
                         Box(
                             modifier = Modifier
-                                .width(80.dp)
-                                .height(12.dp)
-                                .background(GolhaColors.Border.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(GolhaColors.Border.copy(alpha = 0.2f))
                         )
                     }
-                }
-                if (index != 7) {
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        color = GolhaColors.Border.copy(alpha = 0.65f)
-                    )
+                    if (index != 5) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                            color = GolhaColors.Border.copy(alpha = 0.65f),
+                        )
+                    }
                 }
             }
         }

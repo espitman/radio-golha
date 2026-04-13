@@ -1,7 +1,6 @@
 package com.radiogolha.mobile
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -29,7 +28,6 @@ import com.radiogolha.mobile.ui.settings.SettingsScreen
 import com.radiogolha.mobile.ui.singers.SingersScreen
 import com.radiogolha.mobile.ui.singers.loadSingersUiState
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -63,137 +61,135 @@ fun App() {
     }
 
     GolhaAppTheme {
-        key(navigationStack.size) {
-            val currentRoute = navigationStack.last()
-            when (currentRoute) {
-                AppRoute.Singers -> {
-                    SingersScreen(
-                        singers = singers,
-                        bottomNavItems = buildBottomNavItems(AppTab.Home),
-                        onBottomNavSelected = {
-                            navigationStack.resetToRoot(it)
-                        },
-                        onBackClick = { navigationStack.pop() },
-                        onSingerClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
-                    )
-                }
+        val currentRoute = navigationStack.last()
+        when (currentRoute) {
+            AppRoute.Singers -> {
+                SingersScreen(
+                    singers = singers,
+                    bottomNavItems = buildBottomNavItems(AppTab.Home),
+                    onBottomNavSelected = {
+                        navigationStack.resetToRoot(it)
+                    },
+                    onBackClick = { navigationStack.pop() },
+                    onSingerClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
+                )
+            }
 
-                AppRoute.Musicians -> {
-                    MusiciansScreen(
-                        musicians = musicians,
-                        bottomNavItems = buildBottomNavItems(AppTab.Home),
-                        onBottomNavSelected = {
-                            navigationStack.resetToRoot(it)
-                        },
-                        onBackClick = { navigationStack.pop() },
-                        onMusicianClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
-                    )
-                }
-                
-                is AppRoute.ArtistDetail -> {
-                    com.radiogolha.mobile.ui.artists.ArtistDetailScreen(
-                        artistId = (currentRoute as AppRoute.ArtistDetail).id,
-                        bottomNavItems = buildBottomNavItems(AppTab.Home),
-                        onBottomNavSelected = { navigationStack.resetToRoot(it) },
-                        onBackClick = { navigationStack.pop() },
-                        onArtistClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
-                    )
-                }
+            AppRoute.Musicians -> {
+                MusiciansScreen(
+                    musicians = musicians,
+                    bottomNavItems = buildBottomNavItems(AppTab.Home),
+                    onBottomNavSelected = {
+                        navigationStack.resetToRoot(it)
+                    },
+                    onBackClick = { navigationStack.pop() },
+                    onMusicianClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
+                )
+            }
 
-                is AppRoute.CategoryPrograms -> {
-                    val route = currentRoute as AppRoute.CategoryPrograms
-                    com.radiogolha.mobile.ui.programs.CategoryProgramsScreen(
-                        categoryTitle = route.category.title,
-                        programs = route.programs,
-                        bottomNavItems = buildBottomNavItems(AppTab.Home),
-                        onBottomNavSelected = { navigationStack.resetToRoot(it) },
-                        onBackClick = { navigationStack.pop() },
-                        onTrackClick = { trackId -> navigationStack.push(AppRoute.ProgramEpisodeDetail(trackId)) },
-                        onPlayTrack = { /* Handle play */ },
-                        onArtistClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
-                        onProgramClick = { program -> navigationStack.push(AppRoute.ProgramEpisodeDetail(program.id)) }
-                    )
-                }
+            is AppRoute.ArtistDetail -> {
+                com.radiogolha.mobile.ui.artists.ArtistDetailScreen(
+                    artistId = (currentRoute as AppRoute.ArtistDetail).id,
+                    bottomNavItems = buildBottomNavItems(AppTab.Home),
+                    onBottomNavSelected = { navigationStack.resetToRoot(it) },
+                    onBackClick = { navigationStack.pop() },
+                    onArtistClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
+                )
+            }
 
-                is AppRoute.ProgramEpisodeDetail -> {
-                    val route = currentRoute as AppRoute.ProgramEpisodeDetail
-                    com.radiogolha.mobile.ui.programs.ProgramEpisodeDetailScreen(
-                        programId = route.programId,
-                        bottomNavItems = buildBottomNavItems(AppTab.Home),
-                        onBottomNavSelected = { navigationStack.resetToRoot(it) },
-                        onBackClick = { navigationStack.pop() },
-                        onArtistClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
-                    )
-                }
+            is AppRoute.CategoryPrograms -> {
+                val route = currentRoute as AppRoute.CategoryPrograms
+                com.radiogolha.mobile.ui.programs.CategoryProgramsScreen(
+                    categoryTitle = route.category.title,
+                    programs = route.programs,
+                    bottomNavItems = buildBottomNavItems(AppTab.Home),
+                    onBottomNavSelected = { navigationStack.resetToRoot(it) },
+                    onBackClick = { navigationStack.pop() },
+                    onTrackClick = { trackId -> navigationStack.push(AppRoute.ProgramEpisodeDetail(trackId)) },
+                    onPlayTrack = { /* Handle play */ },
+                    onArtistClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
+                    onProgramClick = { program -> navigationStack.push(AppRoute.ProgramEpisodeDetail(program.id)) }
+                )
+            }
 
-                is AppRoute.Root -> {
-                    val rootRoute = currentRoute as AppRoute.Root
-                    val bottomNavItems = buildBottomNavItems(rootRoute.tab)
-                    when (rootRoute.tab) {
-                        AppTab.Home, AppTab.Search -> {
-                            HomeScreen(
-                                state = homeState?.copy(bottomNavItems = bottomNavItems),
-                                bottomNavItems = bottomNavItems,
-                                onOpenAllSingers = { navigationStack.push(AppRoute.Singers) },
-                                onOpenAllMusicians = { navigationStack.push(AppRoute.Musicians) },
-                                onRefreshTopTracks = { reloadToken += 1 },
-                                isRefreshingTopTracks = isTopTracksRefreshing,
-                                onTrackClick = { track -> navigationStack.push(AppRoute.ProgramEpisodeDetail(track.id)) },
-                                onSingerClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
-                                onMusicianClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
-                                onBottomNavSelected = {
-                                    navigationStack.resetToRoot(it)
-                                },
-                            )
-                        }
+            is AppRoute.ProgramEpisodeDetail -> {
+                val route = currentRoute as AppRoute.ProgramEpisodeDetail
+                com.radiogolha.mobile.ui.programs.ProgramEpisodeDetailScreen(
+                    programId = route.programId,
+                    bottomNavItems = buildBottomNavItems(AppTab.Home),
+                    onBottomNavSelected = { navigationStack.resetToRoot(it) },
+                    onBackClick = { navigationStack.pop() },
+                    onArtistClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
+                )
+            }
 
-                        AppTab.Library -> {
-                            LibraryScreen(
-                                programs = programs,
-                                singers = emptyList(), 
-                                musicians = emptyList(),
-                                isProgramsLoading = isProgramsLoading,
-                                bottomNavItems = bottomNavItems,
-                                onBottomNavSelected = {
-                                    navigationStack.resetToRoot(it)
-                                },
-                                onProgramClick = { category ->
+            is AppRoute.Root -> {
+                val rootRoute = currentRoute as AppRoute.Root
+                val bottomNavItems = buildBottomNavItems(rootRoute.tab)
+                when (rootRoute.tab) {
+                    AppTab.Home, AppTab.Search -> {
+                        HomeScreen(
+                            state = homeState?.copy(bottomNavItems = bottomNavItems),
+                            bottomNavItems = bottomNavItems,
+                            onOpenAllSingers = { navigationStack.push(AppRoute.Singers) },
+                            onOpenAllMusicians = { navigationStack.push(AppRoute.Musicians) },
+                            onRefreshTopTracks = { reloadToken += 1 },
+                            isRefreshingTopTracks = isTopTracksRefreshing,
+                            onTrackClick = { track -> navigationStack.push(AppRoute.ProgramEpisodeDetail(track.id)) },
+                            onSingerClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
+                            onMusicianClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
+                            onBottomNavSelected = {
+                                navigationStack.resetToRoot(it)
+                            },
+                        )
+                    }
+
+                    AppTab.Library -> {
+                        LibraryScreen(
+                            programs = programs,
+                            singers = emptyList(),
+                            musicians = emptyList(),
+                            isProgramsLoading = isProgramsLoading,
+                            bottomNavItems = bottomNavItems,
+                            onBottomNavSelected = {
+                                navigationStack.resetToRoot(it)
+                            },
+                            onProgramClick = { category ->
+                                scope.launch {
+                                    val catPrograms = withContext(Dispatchers.Default) {
+                                        com.radiogolha.mobile.ui.programs.loadCategoryPrograms(category.title)
+                                    }
+                                    navigationStack.push(AppRoute.CategoryPrograms(category, catPrograms))
+                                }
+                            },
+                            onSingerClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
+                            onMusicianClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
+                        )
+                    }
+
+                    AppTab.Account -> {
+                        SettingsScreen(
+                            bottomNavItems = bottomNavItems,
+                            onBottomNavSelected = {
+                                navigationStack.resetToRoot(it)
+                            },
+                            isDebugDatabaseToolsEnabled = isDebugDatabaseToolsEnabled(),
+                            isImportingDatabase = isImportingDatabase,
+                            onImportDebugDatabase = {
+                                if (!isImportingDatabase) {
                                     scope.launch {
-                                        val catPrograms = withContext(Dispatchers.Default) {
-                                            com.radiogolha.mobile.ui.programs.loadCategoryPrograms(category.title)
+                                        isImportingDatabase = true
+                                        val result = importDebugDatabase()
+                                        showDebugToast(result.message)
+                                        if (result.success) {
+                                            reloadToken += 1
+                                            navigationStack.resetToRoot(AppTab.Home)
                                         }
-                                        navigationStack.push(AppRoute.CategoryPrograms(category, catPrograms))
+                                        isImportingDatabase = false
                                     }
-                                },
-                                onSingerClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
-                                onMusicianClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
-                            )
-                        }
-
-                        AppTab.Account -> {
-                            SettingsScreen(
-                                bottomNavItems = bottomNavItems,
-                                onBottomNavSelected = {
-                                    navigationStack.resetToRoot(it)
-                                },
-                                isDebugDatabaseToolsEnabled = isDebugDatabaseToolsEnabled(),
-                                isImportingDatabase = isImportingDatabase,
-                                onImportDebugDatabase = {
-                                    if (!isImportingDatabase) {
-                                        scope.launch {
-                                            isImportingDatabase = true
-                                            val result = importDebugDatabase()
-                                            showDebugToast(result.message)
-                                            if (result.success) {
-                                                reloadToken += 1
-                                                navigationStack.resetToRoot(AppTab.Home)
-                                            }
-                                            isImportingDatabase = false
-                                        }
-                                    }
-                                },
-                            )
-                        }
+                                }
+                            },
+                        )
                     }
                 }
             }

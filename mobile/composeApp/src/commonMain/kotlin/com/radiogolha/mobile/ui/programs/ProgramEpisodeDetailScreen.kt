@@ -115,7 +115,7 @@ fun ProgramEpisodeDetailScreen(
                 
                 // 1. Placeholder for the Expanded Header
                 item {
-                    Spacer(modifier = Modifier.height(130.dp))
+                    Spacer(modifier = Modifier.height(60.dp))
                 }
 
                 if (isLoading) {
