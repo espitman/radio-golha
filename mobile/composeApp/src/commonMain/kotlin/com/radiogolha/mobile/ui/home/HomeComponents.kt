@@ -516,14 +516,16 @@ fun MiniPlayerBar(
         shadowElevation = 0.dp,
         color = GolhaColors.Surface.copy(alpha = 0.98f),
         border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.82f)),
-        modifier = Modifier.pointerInput(Unit) {
-            detectVerticalDragGestures { change, dragAmount ->
-                if (dragAmount < -15) { // Swipe up threshold
-                    onExpand()
-                    change.consume()
+        modifier = Modifier
+            .clickable(enabled = currentTrack != null) { onExpand() }
+            .pointerInput(Unit) {
+                detectVerticalDragGestures { change, dragAmount ->
+                    if (dragAmount < -15) {
+                        onExpand()
+                        change.consume()
+                    }
                 }
             }
-        }
     ) {
         Row(
             modifier = Modifier
@@ -578,11 +580,7 @@ fun MiniPlayerBar(
             }
 
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable(enabled = currentTrack != null) { 
-                        currentTrack?.id?.let { onTrackClick(it) } 
-                    },
+                modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(
@@ -611,6 +609,7 @@ fun MiniPlayerBar(
                     color = GolhaColors.SecondaryText,
                 )
             }
+
         }
     }
 }
@@ -1506,6 +1505,21 @@ fun GolhaLineIcon(
             GolhaIcon.People -> {
                 drawCircle(color = tint, center = Offset(size.width * 0.35f, size.height * 0.35f), radius = size.minDimension * 0.15f, style = Stroke(width = stroke))
                 drawCircle(color = tint, center = Offset(size.width * 0.65f, size.height * 0.35f), radius = size.minDimension * 0.15f, style = Stroke(width = stroke))
+            }
+
+            GolhaIcon.Info -> {
+                // Outer circle
+                drawCircle(color = tint, radius = size.minDimension * 0.44f, style = Stroke(width = stroke))
+                // Dot
+                drawCircle(color = tint, radius = stroke * 0.7f, center = Offset(center.x, size.height * 0.32f))
+                // Vertical stem
+                drawLine(
+                    color = tint,
+                    start = Offset(center.x, size.height * 0.46f),
+                    end = Offset(center.x, size.height * 0.72f),
+                    strokeWidth = stroke,
+                    cap = StrokeCap.Round
+                )
             }
         }
     }

@@ -274,6 +274,15 @@ fun AndroidApp() {
                                 showPlayerSheet = false
                             }
                         },
+                        onInfoClick = {
+                            scope.launch {
+                                playerSheetState.hide()
+                                showPlayerSheet = false
+                            }
+                            currentTrack?.id?.let { id ->
+                                navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(id))
+                            }
+                        },
                     )
                 }
             }

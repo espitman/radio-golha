@@ -104,6 +104,7 @@ enum class GolhaIcon {
     Note,
     History,
     People,
+    Info,
 }
 
 data class PerformerUiModel(

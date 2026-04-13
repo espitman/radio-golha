@@ -47,6 +47,7 @@ fun NowPlayingScreen(
     onTogglePlayback: () -> Unit,
     onSeek: (Long) -> Unit,
     onBackClick: () -> Unit,
+    onInfoClick: () -> Unit = {},
     onPreviousClick: () -> Unit = {},
     onNextClick: () -> Unit = {},
 ) {
@@ -121,8 +122,8 @@ fun NowPlayingScreen(
                         GolhaLineIcon(icon = GolhaIcon.Back, modifier = Modifier.size(24.dp), tint = GolhaColors.PrimaryText)
                     }
                     Text(text = "در حال پخش", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp), color = GolhaColors.PrimaryText)
-                    IconButton(onClick = { /* More */ }, modifier = Modifier.background(GolhaColors.Surface.copy(alpha = 0.5f), CircleShape)) {
-                        GolhaLineIcon(icon = GolhaIcon.More, modifier = Modifier.size(24.dp), tint = GolhaColors.PrimaryText)
+                    IconButton(onClick = onInfoClick, modifier = Modifier.background(GolhaColors.Surface.copy(alpha = 0.5f), CircleShape)) {
+                        GolhaLineIcon(icon = GolhaIcon.Info, modifier = Modifier.size(24.dp), tint = GolhaColors.PrimaryText)
                     }
                 }
 
