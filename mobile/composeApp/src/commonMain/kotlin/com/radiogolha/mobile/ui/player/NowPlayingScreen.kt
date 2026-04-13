@@ -2,9 +2,12 @@ package com.radiogolha.mobile.ui.player
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,6 +16,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -156,22 +163,54 @@ fun NowPlayingScreen(
 
                 Spacer(modifier = Modifier.weight(0.1f))
 
-                // Simple Robust Slider
+                // Custom Seekbar
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    Slider(
-                        value = sliderValue.coerceIn(0f, durationMs.toFloat().coerceAtLeast(1f)),
-                        onValueChange = {
-                            isDragging = true
-                            sliderValue = it
-                        },
-                        onValueChangeFinished = {
-                            isDragging = false
-                            onSeek(sliderValue.toLong())
-                        },
-                        valueRange = 0f..durationMs.toFloat().coerceAtLeast(1f),
-                        colors = SliderDefaults.colors(thumbColor = GolhaColors.PrimaryAccent, activeTrackColor = GolhaColors.PrimaryAccent, inactiveTrackColor = GolhaColors.Border.copy(alpha = 0.4f)),
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    val maxVal = durationMs.toFloat().coerceAtLeast(1f)
+                    val thumbColor = GolhaColors.PrimaryAccent
+                    val activeColor = GolhaColors.PrimaryAccent
+                    val inactiveColor = GolhaColors.Border.copy(alpha = 0.4f)
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(36.dp)
+                            .pointerInput(maxVal) {
+                                detectTapGestures { offset ->
+                                    val fraction = (offset.x / size.width).coerceIn(0f, 1f)
+                                    sliderValue = fraction * maxVal
+                                    onSeek(sliderValue.toLong())
+                                }
+                            }
+                            .pointerInput(maxVal) {
+                                detectHorizontalDragGestures(
+                                    onDragStart = { isDragging = true },
+                                    onDragEnd = {
+                                        isDragging = false
+                                        onSeek(sliderValue.toLong())
+                                    },
+                                    onHorizontalDrag = { change, _ ->
+                                        val fraction = (change.position.x / size.width).coerceIn(0f, 1f)
+                                        sliderValue = fraction * maxVal
+                                    }
+                                )
+                            }
+                    ) {
+                        Canvas(modifier = Modifier.fillMaxSize()) {
+                            val progress = sliderValue.coerceIn(0f, maxVal) / maxVal
+                            val trackY = size.height / 2
+                            val trackH = 4.dp.toPx()
+                            val thumbR = 10.dp.toPx()
+                            val thumbX = progress * size.width
+
+                            drawLine(inactiveColor, Offset(0f, trackY), Offset(size.width, trackY), trackH, StrokeCap.Round)
+                            if (thumbX > 0f) {
+                                drawLine(activeColor, Offset(0f, trackY), Offset(thumbX, trackY), trackH, StrokeCap.Round)
+                            }
+                            drawCircle(thumbColor, thumbR, Offset(thumbX, trackY))
+                            drawCircle(Color.White.copy(alpha = 0.9f), thumbR, Offset(thumbX, trackY), style = Stroke(2.dp.toPx()))
+                        }
+                    }
+
                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(text = formatTime(sliderValue.toLong()), style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold), color = GolhaColors.PrimaryText.copy(alpha = 0.8f))
                         Text(text = formatTime(durationMs), style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold), color = GolhaColors.SecondaryText.copy(alpha = 0.6f))
