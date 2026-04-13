@@ -34,6 +34,12 @@ data class DastgahUiModel(
     val name: String,
 )
 
+data class OrchestraListItemUiModel(
+    val id: Long,
+    val name: String,
+    val programCount: Int,
+)
+
 data class MusicianUiModel(
     val id: Long,
     val name: String,

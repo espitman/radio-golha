@@ -23,6 +23,8 @@ import com.radiogolha.mobile.ui.home.loadTopTracks
 import com.radiogolha.mobile.ui.musicians.MusiciansScreen
 import com.radiogolha.mobile.ui.musicians.loadMusiciansUiState
 import com.radiogolha.mobile.ui.library.LibraryScreen
+import com.radiogolha.mobile.ui.orchestras.OrchestraDetailScreen
+import com.radiogolha.mobile.ui.orchestras.loadOrchestrasUiState
 import com.radiogolha.mobile.ui.programs.loadProgramsUiState
 import com.radiogolha.mobile.ui.settings.SettingsScreen
 import com.radiogolha.mobile.ui.singers.SingersScreen
@@ -52,6 +54,12 @@ fun App() {
 
     val musicians by produceState(initialValue = emptyList(), reloadToken) {
         value = loadMusiciansUiState()
+    }
+
+    val orchestras by produceState<List<com.radiogolha.mobile.ui.home.OrchestraListItemUiModel>>(initialValue = emptyList(), reloadToken) {
+        println("DEBUG: Loading orchestras...")
+        value = loadOrchestrasUiState()
+        println("DEBUG: Orchestras loaded: ${value.size}")
     }
 
     val isProgramsLoading = programs.isEmpty()
@@ -112,6 +120,19 @@ fun App() {
                 )
             }
 
+            is AppRoute.OrchestraDetail -> {
+                val route = currentRoute as AppRoute.OrchestraDetail
+                OrchestraDetailScreen(
+                    orchestraId = route.id,
+                    orchestraName = route.name,
+                    bottomNavItems = buildBottomNavItems(AppTab.Library),
+                    onBottomNavSelected = { navigationStack.resetToRoot(it) },
+                    onBackClick = { navigationStack.pop() },
+                    onTrackClick = { trackId -> navigationStack.push(AppRoute.ProgramEpisodeDetail(trackId)) },
+                    onArtistClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
+                )
+            }
+
             is AppRoute.ProgramEpisodeDetail -> {
                 val route = currentRoute as AppRoute.ProgramEpisodeDetail
                 com.radiogolha.mobile.ui.programs.ProgramEpisodeDetailScreen(
@@ -147,8 +168,9 @@ fun App() {
                     AppTab.Library -> {
                         LibraryScreen(
                             programs = programs,
-                            singers = emptyList(),
-                            musicians = emptyList(),
+                            singers = singers,
+                            musicians = musicians,
+                            orchestras = orchestras,
                             isProgramsLoading = isProgramsLoading,
                             bottomNavItems = bottomNavItems,
                             onBottomNavSelected = {
@@ -164,6 +186,12 @@ fun App() {
                             },
                             onSingerClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
                             onMusicianClick = { id -> navigationStack.push(AppRoute.ArtistDetail(id)) },
+                            onOrchestraClick = { id ->
+                                val orchestra = orchestras.find { it.id == id }
+                                if (orchestra != null) {
+                                    navigationStack.push(AppRoute.OrchestraDetail(id, orchestra.name))
+                                }
+                            },
                         )
                     }
 
@@ -207,6 +235,7 @@ private sealed interface AppRoute {
         val programs: List<com.radiogolha.mobile.ui.home.CategoryProgramUiModel>
     ) : AppRoute
     data class ProgramEpisodeDetail(val programId: Long) : AppRoute
+    data class OrchestraDetail(val id: Long, val name: String) : AppRoute
 }
 
 private fun MutableList<AppRoute>.resetToRoot(tab: AppTab) {

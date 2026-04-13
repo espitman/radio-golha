@@ -20,6 +20,7 @@ object GolhaColors {
     val BannerShadow = Color(0x330B2161)
     val SoftBlue = Color(0xFFDCE5F6)
     val SoftRose = Color(0xFFF3DE9A)
+    val SoftGold = Color(0xFFE8D5A3)
     val SoftSand = Color(0xFFF8EFD3)
 }
 

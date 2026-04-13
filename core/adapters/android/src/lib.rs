@@ -301,6 +301,74 @@ fn musicians_json(db_path: &str) -> Result<String, String> {
     to_string(&musicians).map_err(|error| error.to_string())
 }
 
+fn orchestras_json(db_path: &str) -> Result<String, String> {
+    let core = RadioGolhaCore::open(db_path).map_err(|error| error.to_string())?;
+    let items = core
+        .list_lookup_items(LookupKind::Orchestras, "", 1, 1000)
+        .map_err(|error| error.to_string())?;
+    let result: Vec<_> = items
+        .into_iter()
+        .map(|item| {
+            json!({
+                "id": item.id,
+                "name": item.name,
+                "program_count": item.usage_count
+            })
+        })
+        .collect();
+    to_string(&result).map_err(|error| error.to_string())
+}
+
+fn programs_by_orchestra_json(db_path: &str, orchestra_id: i64) -> Result<String, String> {
+    let core = RadioGolhaCore::open(db_path).map_err(|error| error.to_string())?;
+    let conn = core.connection();
+    let mut stmt = conn.prepare(
+        "
+        SELECT
+            p.id,
+            p.title,
+            p.no,
+            COALESCE(
+                (
+                    SELECT GROUP_CONCAT(a.name, ' و ')
+                    FROM program_singers ps
+                    JOIN singer s ON s.id = ps.singer_id
+                    JOIN artist a ON a.id = s.artist_id
+                    WHERE ps.program_id = p.id
+                ),
+                'ناشناس'
+            ) AS artist_names,
+            (
+                SELECT GROUP_CONCAT(m.name, ' و ')
+                FROM program_modes pm
+                JOIN mode m ON m.id = pm.mode_id
+                WHERE pm.program_id = p.id
+            ) AS mode_names,
+            (SELECT MAX(end_time) FROM program_timeline WHERE program_id = p.id) AS duration,
+            p.audio_url
+        FROM program p
+        JOIN program_orchestras po ON po.program_id = p.id
+        WHERE po.orchestra_id = ?1
+        ORDER BY p.no ASC, p.id ASC
+        "
+    ).map_err(|error| error.to_string())?;
+
+    let rows = stmt.query_map([orchestra_id], |row| {
+        Ok(AndroidCategoryProgramItem {
+            id: row.get(0)?,
+            title: row.get(1)?,
+            no: row.get(2)?,
+            artist: row.get(3)?,
+            mode: row.get(4)?,
+            duration: row.get(5)?,
+            audio_url: row.get(6)?,
+        })
+    }).map_err(|error| error.to_string())?;
+
+    let items: Vec<_> = rows.collect::<Result<Vec<_>, _>>().map_err(|error| error.to_string())?;
+    to_string(&items).map_err(|error| error.to_string())
+}
+
 fn artist_detail_json(db_path: &str, artist_id: i64) -> Result<String, String> {
     let core = RadioGolhaCore::open(db_path).map_err(|error| error.to_string())?;
     let conn = core.connection();
@@ -568,4 +636,23 @@ pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getProgramDetai
         let detail = core.get_program_detail(program_id).map_err(|error| error.to_string())?;
         to_string(&detail).map_err(|error| error.to_string())
     })
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getOrchestrasJson(
+    mut env: JNIEnv,
+    _class: JClass,
+    db_path: JString,
+) -> jstring {
+    jni_json_response(&mut env, db_path, orchestras_json)
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getProgramsByOrchestraJson(
+    mut env: JNIEnv,
+    _class: JClass,
+    db_path: JString,
+    orchestra_id: i64,
+) -> jstring {
+    jni_json_response(&mut env, db_path, |path| programs_by_orchestra_json(path, orchestra_id))
 }

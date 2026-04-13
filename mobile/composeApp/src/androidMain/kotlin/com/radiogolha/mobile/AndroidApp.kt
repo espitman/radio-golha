@@ -29,6 +29,7 @@ import com.radiogolha.mobile.ui.programs.*
 import com.radiogolha.mobile.ui.root.TabRootScreen
 import com.radiogolha.mobile.ui.settings.SettingsScreen
 import com.radiogolha.mobile.ui.singers.*
+import com.radiogolha.mobile.ui.orchestras.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -77,6 +78,7 @@ fun AndroidApp() {
     
     var librarySingers by remember { mutableStateOf<List<SingerListItemUiModel>>(emptyList()) }
     var libraryMusicians by remember { mutableStateOf<List<MusicianListItemUiModel>>(emptyList()) }
+    var libraryOrchestras by remember { mutableStateOf<List<OrchestraListItemUiModel>>(emptyList()) }
     var libraryPrograms by remember { mutableStateOf<List<ProgramUiModel>>(emptyList()) }
     var isLibraryLoading by remember { mutableStateOf(false) }
 
@@ -104,6 +106,7 @@ fun AndroidApp() {
 
             librarySingers = runCatching { loadSingersUiState() }.getOrDefault(emptyList())
             libraryMusicians = runCatching { loadMusiciansUiState() }.getOrDefault(emptyList())
+            libraryOrchestras = runCatching { loadOrchestrasUiState() }.getOrDefault(emptyList())
             libraryPrograms = runCatching { com.radiogolha.mobile.ui.programs.loadProgramsUiState() }.getOrDefault(emptyList())
             isLibraryLoading = false
         }
@@ -202,10 +205,11 @@ fun AndroidApp() {
                     val tabName = backStackEntry.arguments?.getString("tab") ?: "programs"
                     val initialTab = LibraryTab.entries.find { it.name.equals(tabName, ignoreCase = true) } ?: LibraryTab.Programs
                     LibraryScreen(
-                        initialTab = initialTab, 
+                        initialTab = initialTab,
                         programs = libraryPrograms,
                         singers = librarySingers,
                         musicians = libraryMusicians,
+                        orchestras = libraryOrchestras,
                         isProgramsLoading = isLibraryLoading,
                         isSingersLoading = isLibraryLoading,
                         isMusiciansLoading = isLibraryLoading,
@@ -215,6 +219,12 @@ fun AndroidApp() {
                         onProgramClick = { program -> navController.navigate(AndroidRoute.CategoryPrograms.createRoute(program.title)) },
                         onSingerClick = { id -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(id)) },
                         onMusicianClick = { id -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(id)) },
+                        onOrchestraClick = { id ->
+                            val orchestra = libraryOrchestras.find { it.id == id }
+                            if (orchestra != null) {
+                                navController.navigate(AndroidRoute.OrchestraDetail.createRoute(id, orchestra.name))
+                            }
+                        },
                         currentTrack = currentTrack,
                         isPlayerPlaying = isPlayerPlaying,
                         isPlayerLoading = isPlayerLoading,
@@ -239,6 +249,27 @@ fun AndroidApp() {
                 composable(route = AndroidRoute.ArtistDetail.route, arguments = listOf(navArgument("id") { type = NavType.LongType })) { backStackEntry ->
                     val artistId = backStackEntry.arguments?.getLong("id") ?: 0L
                     ArtistDetailScreen(artistId = artistId, bottomNavItems = bottomNavItems, onExpandPlayer = { showPlayerSheet = true }, onBottomNavSelected = onTabSelected, onBackClick = { navController.popBackStack() }, onProgramClick = { program -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(program.id)) }, onPlayTrack = { track -> playerManager.play(track) }, currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onTrackClick = { trackId -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(trackId)) })
+                }
+
+                composable(route = AndroidRoute.OrchestraDetail.route, arguments = listOf(navArgument("id") { type = NavType.LongType }, navArgument("name") { type = NavType.StringType })) { backStackEntry ->
+                    val orchestraId = backStackEntry.arguments?.getLong("id") ?: 0L
+                    val orchestraName = backStackEntry.arguments?.getString("name") ?: ""
+                    OrchestraDetailScreen(
+                        orchestraId = orchestraId,
+                        orchestraName = orchestraName,
+                        bottomNavItems = bottomNavItems,
+                        onBottomNavSelected = onTabSelected,
+                        onBackClick = { navController.popBackStack() },
+                        onTrackClick = { trackId -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(trackId)) },
+                        onArtistClick = { id -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(id)) },
+                        currentTrack = currentTrack,
+                        isPlayerPlaying = isPlayerPlaying,
+                        isPlayerLoading = isPlayerLoading,
+                        currentPlaybackPositionMs = currentPlaybackPositionMs,
+                        currentPlaybackDurationMs = currentPlaybackDurationMs,
+                        onTogglePlayerPlayback = { playerManager.togglePlayback() },
+                        onExpandPlayer = { showPlayerSheet = true },
+                    )
                 }
 
                 composable(AndroidRoute.Account.route) {
@@ -314,6 +345,7 @@ private sealed class AndroidRoute(val route: String) {
     data object ArtistDetail : AndroidRoute("artist_detail/{id}") { fun createRoute(id: Long) = "artist_detail/$id" }
     data object CategoryPrograms : AndroidRoute("category_programs/{title}") { fun createRoute(title: String) = "category_programs/$title" }
     data object ProgramEpisodeDetail : AndroidRoute("program_episode_detail/{id}") { fun createRoute(id: Long) = "program_episode_detail/$id" }
+    data object OrchestraDetail : AndroidRoute("orchestra_detail/{id}/{name}") { fun createRoute(id: Long, name: String) = "orchestra_detail/$id/$name" }
 }
 
 private fun AppTab.toRoute(): AndroidRoute = when (this) {
