@@ -56,6 +56,7 @@ fun ProgramEpisodeDetailScreen(
     onArtistClick: (Long) -> Unit = {},
     onTrackClick: (Long) -> Unit = {},
     onExpandPlayer: () -> Unit = {},
+    onSeek: (Long) -> Unit = {},
 ) {
     var detail by remember { mutableStateOf<ProgramEpisodeDetailUiModel?>(null) }
     var isLoading by remember { mutableStateOf(true) }
@@ -144,24 +145,33 @@ fun ProgramEpisodeDetailScreen(
                     val hasTimeline = d.timeline.isNotEmpty()
                     val hasLyrics = d.transcript.isNotEmpty()
 
+                    val isThisTrackPlaying = currentTrack?.id == d.id
+
                     if (hasTimeline && hasLyrics) {
                         stickyHeader {
                             DetailTabSelector(
                                 activeTab = activeTab,
                                 onTabChange = { activeTab = it },
-                                // Apply padding when sticky to stay below the collapsed header
                                 stickyPadding = collapsedHeaderHeight,
                                 isCollapsed = scrollState.firstVisibleItemIndex >= 1
                             )
                         }
 
                         when (activeTab) {
-                            DetailTab.Timeline -> TimelineSection(timeline = d.timeline)
+                            DetailTab.Timeline -> TimelineSection(
+                                timeline = d.timeline,
+                                currentPositionMs = if (isThisTrackPlaying) currentPlaybackPositionMs else -1L,
+                                onSegmentClick = { startMs -> if (isThisTrackPlaying) onSeek(startMs) else { onPlayProgram(d); onSeek(startMs) } }
+                            )
                             DetailTab.Lyrics -> LyricsSection(transcript = d.transcript)
                         }
                     } else if (hasTimeline) {
                         item { SectionTitle(title = "تایم‌لاین") }
-                        TimelineSection(timeline = d.timeline)
+                        TimelineSection(
+                            timeline = d.timeline,
+                            currentPositionMs = if (isThisTrackPlaying) currentPlaybackPositionMs else -1L,
+                            onSegmentClick = { startMs -> if (isThisTrackPlaying) onSeek(startMs) else { onPlayProgram(d); onSeek(startMs) } }
+                        )
                     } else if (hasLyrics) {
                         item { SectionTitle(title = "متن و اشعار") }
                         LyricsSection(transcript = d.transcript)
@@ -335,32 +345,77 @@ private fun lerp(start: androidx.compose.ui.unit.TextUnit, end: androidx.compose
 
 private enum class DetailTab(val label: String) { Timeline("تایم‌لاین"), Lyrics("اشعار") }
 
-private fun androidx.compose.foundation.lazy.LazyListScope.TimelineSection(timeline: List<TimelineSegmentUiModel>) {
-    items(timeline) { segment ->
-        TimelineSegmentCard(segment)
+private fun parseTimeToMs(time: String?): Long {
+    if (time == null) return 0L
+    return try {
+        val parts = time.trim().split(":")
+        when (parts.size) {
+            2 -> (parts[0].toLong() * 60 + parts[1].toLong()) * 1000L
+            3 -> (parts[0].toLong() * 3600 + parts[1].toLong() * 60 + parts[2].toLong()) * 1000L
+            else -> 0L
+        }
+    } catch (e: Exception) { 0L }
+}
+
+private fun androidx.compose.foundation.lazy.LazyListScope.TimelineSection(
+    timeline: List<TimelineSegmentUiModel>,
+    currentPositionMs: Long = -1L,
+    onSegmentClick: (Long) -> Unit = {},
+) {
+    items(timeline.size) { index ->
+        val segment = timeline[index]
+        val startMs = parseTimeToMs(segment.startTime)
+        val endMs = if (index + 1 < timeline.size) parseTimeToMs(timeline[index + 1].startTime) else Long.MAX_VALUE
+        val isActive = currentPositionMs >= 0L && currentPositionMs >= startMs && currentPositionMs < endMs
+        TimelineSegmentCard(segment = segment, isActive = isActive, onClick = { onSegmentClick(startMs) })
         Spacer(modifier = Modifier.height(8.dp))
     }
 }
 
 @Composable
-private fun TimelineSegmentCard(segment: TimelineSegmentUiModel) {
+private fun TimelineSegmentCard(
+    segment: TimelineSegmentUiModel,
+    isActive: Boolean = false,
+    onClick: () -> Unit = {},
+) {
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable { onClick() },
         shape = RoundedCornerShape(GolhaRadius.Card),
-        color = GolhaColors.Surface.copy(alpha = 0.6f),
-        border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.6f))
+        color = if (isActive) GolhaColors.PrimaryAccent.copy(alpha = 0.08f) else GolhaColors.Surface.copy(alpha = 0.6f),
+        border = androidx.compose.foundation.BorderStroke(
+            width = if (isActive) 1.5.dp else 1.dp,
+            color = if (isActive) GolhaColors.PrimaryAccent.copy(alpha = 0.6f) else GolhaColors.Border.copy(alpha = 0.6f)
+        )
     ) {
         Row(modifier = Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Surface(shape = CircleShape, color = GolhaColors.PrimaryAccent.copy(alpha = 0.1f), modifier = Modifier.size(32.dp)) {
+                Surface(
+                    shape = CircleShape,
+                    color = if (isActive) GolhaColors.PrimaryAccent else GolhaColors.PrimaryAccent.copy(alpha = 0.1f),
+                    modifier = Modifier.size(32.dp)
+                ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text(text = segment.startTime ?: "0:00", style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, fontWeight = FontWeight.Black), color = GolhaColors.PrimaryAccent)
+                        if (isActive) {
+                            GolhaLineIcon(icon = GolhaIcon.Play, modifier = Modifier.size(14.dp), tint = Color.White)
+                        } else {
+                            Text(
+                                text = segment.startTime ?: "0:00",
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, fontWeight = FontWeight.Black),
+                                color = GolhaColors.PrimaryAccent
+                            )
+                        }
                     }
                 }
-                Box(modifier = Modifier.width(2.dp).weight(1f).background(GolhaColors.Border.copy(alpha = 0.5f)))
+                Box(modifier = Modifier.width(2.dp).weight(1f).background(
+                    if (isActive) GolhaColors.PrimaryAccent.copy(alpha = 0.4f) else GolhaColors.Border.copy(alpha = 0.5f)
+                ))
             }
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(text = segment.modeName ?: "بخش اجرایی", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = GolhaColors.PrimaryText)
+                Text(
+                    text = segment.modeName ?: "بخش اجرایی",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                    color = if (isActive) GolhaColors.PrimaryAccent else GolhaColors.PrimaryText
+                )
                 if (segment.singers.isNotEmpty()) TimelineMetaRow(icon = GolhaIcon.People, text = segment.singers.joinToString(" و "))
                 if (segment.poets.isNotEmpty()) TimelineMetaRow(icon = GolhaIcon.Note, text = segment.poets.joinToString(" و "))
                 if (segment.performers.isNotEmpty()) {
