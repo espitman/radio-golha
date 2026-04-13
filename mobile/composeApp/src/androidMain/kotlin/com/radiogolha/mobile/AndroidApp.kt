@@ -132,6 +132,18 @@ fun AndroidApp() {
         }
     }
 
+    val onTabSelected: (AppTab) -> Unit = { tab ->
+        val route = tab.toRoute().route
+        val popped = navController.popBackStack(route, inclusive = false)
+        if (!popped) {
+            navController.navigate(route) {
+                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                launchSingleTop = true
+                restoreState = true
+            }
+        }
+    }
+
     BackHandler(showPlayerSheet) {
         scope.launch {
             playerSheetState.hide()
@@ -165,7 +177,7 @@ fun AndroidApp() {
                         onSingerClick = { artistId -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId)) },
                         onMusicianClick = { artistId -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId)) },
                         onExpandPlayer = { showPlayerSheet = true },
-                        onBottomNavSelected = { tab -> navController.navigate(tab.toRoute().route) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } },
+                        onBottomNavSelected = onTabSelected,
                     )
                 }
 
@@ -182,7 +194,7 @@ fun AndroidApp() {
                         onTogglePlayerPlayback = { playerManager.togglePlayback() },
                         onTrackClick = { trackId -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(trackId)) },
                         onExpandPlayer = { showPlayerSheet = true },
-                        onBottomNavSelected = { tab -> navController.navigate(tab.toRoute().route) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } },
+                        onBottomNavSelected = onTabSelected,
                     )
                 }
 
@@ -199,7 +211,7 @@ fun AndroidApp() {
                         isMusiciansLoading = isLibraryLoading,
                         bottomNavItems = bottomNavItems,
                         onExpandPlayer = { showPlayerSheet = true },
-                        onBottomNavSelected = { tab -> navController.navigate(tab.toRoute().route) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } },
+                        onBottomNavSelected = onTabSelected,
                         onProgramClick = { program -> navController.navigate(AndroidRoute.CategoryPrograms.createRoute(program.title)) },
                         onSingerClick = { id -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(id)) },
                         onMusicianClick = { id -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(id)) },
@@ -216,31 +228,31 @@ fun AndroidApp() {
                 composable(route = AndroidRoute.CategoryPrograms.route, arguments = listOf(navArgument("title") { type = NavType.StringType })) { backStackEntry ->
                     val title = backStackEntry.arguments?.getString("title") ?: ""
                     LaunchedEffect(title) { if (title != lastCategoryTitle) { categoryPrograms = emptyList(); isCategoryLoading = true; try { categoryPrograms = withContext(Dispatchers.Default) { loadCategoryPrograms(title) } } finally { isCategoryLoading = false; lastCategoryTitle = title } } }
-                    CategoryProgramsScreen(categoryTitle = title, programs = categoryPrograms, isLoading = isCategoryLoading, bottomNavItems = bottomNavItems, onExpandPlayer = { showPlayerSheet = true }, onBottomNavSelected = { tab -> navController.navigate(tab.toRoute().route) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } }, onProgramClick = { program -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(program.id)) }, onPlayTrack = { track -> playerManager.play(track) }, onBackClick = { navController.popBackStack() }, currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onTrackClick = { trackId -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(trackId)) })
+                    CategoryProgramsScreen(categoryTitle = title, programs = categoryPrograms, isLoading = isCategoryLoading, bottomNavItems = bottomNavItems, onExpandPlayer = { showPlayerSheet = true }, onBottomNavSelected = onTabSelected, onProgramClick = { program -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(program.id)) }, onPlayTrack = { track -> playerManager.play(track) }, onBackClick = { navController.popBackStack() }, currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onTrackClick = { trackId -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(trackId)) })
                 }
 
                 composable(route = AndroidRoute.ProgramEpisodeDetail.route, arguments = listOf(navArgument("id") { type = NavType.LongType })) { backStackEntry ->
                     val programId = backStackEntry.arguments?.getLong("id") ?: 0L
-                    ProgramEpisodeDetailScreen(programId = programId, bottomNavItems = bottomNavItems, onExpandPlayer = { showPlayerSheet = true }, onBottomNavSelected = { tab -> navController.navigate(tab.toRoute().route) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } }, onBackClick = { navController.popBackStack() }, currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onArtistClick = { artistId -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId)) }, onPlayProgram = { detail -> val artistImages = (detail.singers.mapNotNull { it.avatar } + detail.performers.mapNotNull { it.avatar } + detail.composers.mapNotNull { it.avatar } + detail.arrangers.mapNotNull { it.avatar } + detail.orchestras.mapNotNull { it.avatar }).distinct(); playerManager.play(TrackUiModel(id = detail.id, title = detail.title, artist = detail.singers.map { it.name }.joinToString(" و ").takeIf { it.isNotBlank() } ?: "ناشناس", duration = detail.duration, audioUrl = detail.audioUrl, artistImages = artistImages)) })
+                    ProgramEpisodeDetailScreen(programId = programId, bottomNavItems = bottomNavItems, onExpandPlayer = { showPlayerSheet = true }, onBottomNavSelected = onTabSelected, onBackClick = { navController.popBackStack() }, currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onArtistClick = { artistId -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId)) }, onPlayProgram = { detail -> val artistImages = (detail.singers.mapNotNull { it.avatar } + detail.performers.mapNotNull { it.avatar } + detail.composers.mapNotNull { it.avatar } + detail.arrangers.mapNotNull { it.avatar } + detail.orchestras.mapNotNull { it.avatar }).distinct(); playerManager.play(TrackUiModel(id = detail.id, title = detail.title, artist = detail.singers.map { it.name }.joinToString(" و ").takeIf { it.isNotBlank() } ?: "ناشناس", duration = detail.duration, audioUrl = detail.audioUrl, artistImages = artistImages)) })
                 }
 
                 composable(route = AndroidRoute.ArtistDetail.route, arguments = listOf(navArgument("id") { type = NavType.LongType })) { backStackEntry ->
                     val artistId = backStackEntry.arguments?.getLong("id") ?: 0L
-                    ArtistDetailScreen(artistId = artistId, bottomNavItems = bottomNavItems, onExpandPlayer = { showPlayerSheet = true }, onBottomNavSelected = { tab -> navController.navigate(tab.toRoute().route) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } }, onBackClick = { navController.popBackStack() }, onProgramClick = { program -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(program.id)) }, onPlayTrack = { track -> playerManager.play(track) }, currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onTrackClick = { trackId -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(trackId)) })
+                    ArtistDetailScreen(artistId = artistId, bottomNavItems = bottomNavItems, onExpandPlayer = { showPlayerSheet = true }, onBottomNavSelected = onTabSelected, onBackClick = { navController.popBackStack() }, onProgramClick = { program -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(program.id)) }, onPlayTrack = { track -> playerManager.play(track) }, currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onTrackClick = { trackId -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(trackId)) })
                 }
 
                 composable(AndroidRoute.Account.route) {
-                    SettingsScreen(bottomNavItems = bottomNavItems, onExpandPlayer = { showPlayerSheet = true }, onBottomNavSelected = { tab -> navController.navigate(tab.toRoute().route) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } }, isDebugDatabaseToolsEnabled = isDebugDatabaseToolsEnabled(), isImportingDatabase = isImportingDatabase, currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onImportDebugDatabase = { if (!isImportingDatabase) { scope.launch { isImportingDatabase = true; val result = importDebugDatabase(); showDebugToast(result.message); if (result.success) { reloadToken += 1; navController.navigate(AndroidRoute.Home.route) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } } ; isImportingDatabase = false } } })
+                    SettingsScreen(bottomNavItems = bottomNavItems, onExpandPlayer = { showPlayerSheet = true }, onBottomNavSelected = onTabSelected, isDebugDatabaseToolsEnabled = isDebugDatabaseToolsEnabled(), isImportingDatabase = isImportingDatabase, currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onImportDebugDatabase = { if (!isImportingDatabase) { scope.launch { isImportingDatabase = true; val result = importDebugDatabase(); showDebugToast(result.message); if (result.success) { reloadToken += 1; navController.navigate(AndroidRoute.Home.route) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } } ; isImportingDatabase = false } } })
                 }
                 
                 composable(AndroidRoute.Singers.route) { 
                     val singers by produceState(initialValue = emptyList<SingerListItemUiModel>(), key1 = reloadToken) { value = runCatching { withContext(Dispatchers.Default) { loadSingersUiState() } }.getOrNull() ?: emptyList() }
-                    SingersScreen(singers = singers, bottomNavItems = bottomNavItems, currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onBottomNavSelected = { tab -> navController.navigate(tab.toRoute().route) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } }, onBackClick = { navController.popBackStack() }, onSingerClick = { artistId -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId)) }, onExpandPlayer = { showPlayerSheet = true })
+                    SingersScreen(singers = singers, bottomNavItems = bottomNavItems, currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onBottomNavSelected = onTabSelected, onBackClick = { navController.popBackStack() }, onSingerClick = { artistId -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId)) }, onExpandPlayer = { showPlayerSheet = true })
                 }
 
                 composable(AndroidRoute.Musicians.route) {
                     val musicians by produceState(initialValue = emptyList<MusicianListItemUiModel>(), key1 = reloadToken) { value = runCatching { withContext(Dispatchers.Default) { loadMusiciansUiState() } }.getOrNull() ?: emptyList() }
-                    MusiciansScreen(musicians = musicians, bottomNavItems = bottomNavItems, currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onBottomNavSelected = { tab -> navController.navigate(tab.toRoute().route) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } }, onBackClick = { navController.popBackStack() }, onMusicianClick = { artistId -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId)) }, onExpandPlayer = { showPlayerSheet = true })
+                    MusiciansScreen(musicians = musicians, bottomNavItems = bottomNavItems, currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onBottomNavSelected = onTabSelected, onBackClick = { navController.popBackStack() }, onMusicianClick = { artistId -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId)) }, onExpandPlayer = { showPlayerSheet = true })
                 }
             }
 

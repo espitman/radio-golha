@@ -1310,17 +1310,24 @@ fun GolhaLineIcon(
             }
 
             GolhaIcon.Home -> {
-                val roof = Path().apply {
-                    moveTo(size.width * 0.16f, size.height * 0.48f)
-                    lineTo(size.width * 0.50f, size.height * 0.16f)
-                    lineTo(size.width * 0.84f, size.height * 0.48f)
+                // Full house outline as one connected path
+                val house = Path().apply {
+                    moveTo(size.width * 0.50f, size.height * 0.10f)  // peak
+                    lineTo(size.width * 0.93f, size.height * 0.48f)  // roof right end
+                    lineTo(size.width * 0.82f, size.height * 0.48f)  // step in to right wall
+                    lineTo(size.width * 0.82f, size.height * 0.88f)  // right wall down
+                    lineTo(size.width * 0.18f, size.height * 0.88f)  // base
+                    lineTo(size.width * 0.18f, size.height * 0.48f)  // left wall up
+                    lineTo(size.width * 0.07f, size.height * 0.48f)  // roof left end
+                    close()
                 }
-                drawPath(roof, tint, style = Stroke(width = stroke, cap = StrokeCap.Round))
+                drawPath(house, tint, style = Stroke(width = stroke, cap = StrokeCap.Round, join = StrokeJoin.Round))
+                // Door
                 drawRoundRect(
                     color = tint,
-                    topLeft = Offset(size.width * 0.26f, size.height * 0.46f),
-                    size = Size(size.width * 0.48f, size.height * 0.34f),
-                    cornerRadius = CornerRadius(6.dp.toPx(), 6.dp.toPx()),
+                    topLeft = Offset(size.width * 0.37f, size.height * 0.60f),
+                    size = Size(size.width * 0.26f, size.height * 0.28f),
+                    cornerRadius = CornerRadius(3.dp.toPx(), 3.dp.toPx()),
                     style = Stroke(width = stroke),
                 )
             }
