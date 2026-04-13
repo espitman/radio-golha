@@ -27,6 +27,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.radiogolha.mobile.theme.GolhaColors
@@ -254,22 +257,22 @@ fun NowPlayingScreen(
                         GolhaLineIcon(icon = GolhaIcon.SkipPrevious, modifier = Modifier.size(26.dp), tint = GolhaColors.PrimaryText)
                     }
                     IconButton(onClick = onSeekBack10, modifier = Modifier.size(48.dp).background(GolhaColors.Surface.copy(alpha = 0.6f), CircleShape)) {
-                        GolhaLineIcon(icon = GolhaIcon.SeekBack10, modifier = Modifier.size(26.dp), tint = GolhaColors.PrimaryText)
+                        Icon(Replay10Icon, contentDescription = null, tint = GolhaColors.PrimaryText, modifier = Modifier.size(28.dp))
                     }
                     Box(contentAlignment = Alignment.Center) {
-                        Box(modifier = Modifier.size(88.dp).graphicsLayer { alpha = glowAlpha; scaleX = 1.1f; scaleY = 1.1f }.background(GolhaColors.PrimaryAccent.copy(alpha = 0.4f), CircleShape))
-                        Surface(modifier = Modifier.size(80.dp).clickable { onTogglePlayback() }, shape = CircleShape, color = GolhaColors.PrimaryAccent, shadowElevation = 12.dp) {
+                        Box(modifier = Modifier.size(92.dp).graphicsLayer { alpha = glowAlpha; scaleX = 1.1f; scaleY = 1.1f }.background(GolhaColors.PrimaryAccent.copy(alpha = 0.4f), CircleShape))
+                        Surface(modifier = Modifier.size(84.dp).clickable { onTogglePlayback() }, shape = CircleShape, color = GolhaColors.PrimaryAccent, shadowElevation = 12.dp) {
                             Box(contentAlignment = Alignment.Center) {
                                 if (isLoading) {
-                                    CircularProgressIndicator(modifier = Modifier.size(34.dp), color = GolhaColors.OnAccent, strokeWidth = 3.dp)
+                                    CircularProgressIndicator(modifier = Modifier.size(36.dp), color = GolhaColors.OnAccent, strokeWidth = 3.dp)
                                 } else {
-                                    GolhaLineIcon(icon = if (isPlaying) GolhaIcon.Pause else GolhaIcon.Play, modifier = Modifier.size(36.dp), tint = GolhaColors.OnAccent)
+                                    GolhaLineIcon(icon = if (isPlaying) GolhaIcon.Pause else GolhaIcon.Play, modifier = Modifier.size(38.dp), tint = GolhaColors.OnAccent)
                                 }
                             }
                         }
                     }
                     IconButton(onClick = onSeekForward10, modifier = Modifier.size(48.dp).background(GolhaColors.Surface.copy(alpha = 0.6f), CircleShape)) {
-                        GolhaLineIcon(icon = GolhaIcon.SeekForward10, modifier = Modifier.size(26.dp), tint = GolhaColors.PrimaryText)
+                        Icon(Forward10Icon, contentDescription = null, tint = GolhaColors.PrimaryText, modifier = Modifier.size(28.dp))
                     }
                     IconButton(onClick = onNextClick, modifier = Modifier.size(48.dp).background(GolhaColors.Surface.copy(alpha = 0.6f), CircleShape)) {
                         GolhaLineIcon(icon = GolhaIcon.SkipNext, modifier = Modifier.size(26.dp), tint = GolhaColors.PrimaryText)
@@ -327,6 +330,24 @@ fun NowPlayingScreen(
             }
         }
     }
+}
+
+private val Replay10Icon: ImageVector by lazy {
+    val pathData = PathParser().parsePathString(
+        "M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"
+    ).toNodes()
+    ImageVector.Builder(defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f)
+        .apply { addPath(pathData, fill = SolidColor(Color.Black)) }
+        .build()
+}
+
+private val Forward10Icon: ImageVector by lazy {
+    val pathData = PathParser().parsePathString(
+        "M18 13c0 3.31-2.69 6-6 6s-6-2.69-6-6 2.69-6 6-6v4l5-5-5-5v4c-4.42 0-8 3.58-8 8s3.58 8 8 8 8-3.58 8-8h-2z"
+    ).toNodes()
+    ImageVector.Builder(defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f)
+        .apply { addPath(pathData, fill = SolidColor(Color.Black)) }
+        .build()
 }
 
 private fun parsePlayerTimeToMs(time: String?): Float {
