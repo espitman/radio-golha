@@ -181,6 +181,7 @@ fun AndroidApp() {
                         onProgramClick = { program -> navController.navigate(AndroidRoute.CategoryPrograms.createRoute(program.title)) },
                         onSingerClick = { artistId -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId)) },
                         onMusicianClick = { artistId -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId)) },
+                        onDuetClick = { duet -> navController.navigate(AndroidRoute.DuetDetail.createRoute(duet.singer1, duet.singer2)) },
                         onExpandPlayer = { showPlayerSheet = true },
                         onBottomNavSelected = onTabSelected,
                     )
@@ -275,6 +276,23 @@ fun AndroidApp() {
                     )
                 }
 
+                composable(route = AndroidRoute.DuetDetail.route, arguments = listOf(navArgument("singer1") { type = NavType.StringType }, navArgument("singer2") { type = NavType.StringType })) { backStackEntry ->
+                    val s1 = backStackEntry.arguments?.getString("singer1") ?: ""
+                    val s2 = backStackEntry.arguments?.getString("singer2") ?: ""
+                    DuetDetailScreen(
+                        singer1 = s1, singer2 = s2,
+                        bottomNavItems = bottomNavItems,
+                        onBottomNavSelected = onTabSelected,
+                        onBackClick = { navController.popBackStack() },
+                        onTrackClick = { trackId -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(trackId)) },
+                        onPlayTrack = { track -> playerManager.play(track) },
+                        currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading,
+                        currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs,
+                        onTogglePlayerPlayback = { playerManager.togglePlayback() },
+                        onExpandPlayer = { showPlayerSheet = true },
+                    )
+                }
+
                 composable(AndroidRoute.Account.route) {
                     SettingsScreen(bottomNavItems = bottomNavItems, onExpandPlayer = { showPlayerSheet = true }, onBottomNavSelected = onTabSelected, isDebugDatabaseToolsEnabled = isDebugDatabaseToolsEnabled(), isImportingDatabase = isImportingDatabase, currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onImportDebugDatabase = { if (!isImportingDatabase) { scope.launch { isImportingDatabase = true; val result = importDebugDatabase(); showDebugToast(result.message); if (result.success) { reloadToken += 1; navController.navigate(AndroidRoute.Home.route) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } } ; isImportingDatabase = false } } })
                 }
@@ -350,6 +368,7 @@ private sealed class AndroidRoute(val route: String) {
     data object CategoryPrograms : AndroidRoute("category_programs/{title}") { fun createRoute(title: String) = "category_programs/$title" }
     data object ProgramEpisodeDetail : AndroidRoute("program_episode_detail/{id}") { fun createRoute(id: Long) = "program_episode_detail/$id" }
     data object OrchestraDetail : AndroidRoute("orchestra_detail/{id}/{name}") { fun createRoute(id: Long, name: String) = "orchestra_detail/$id/$name" }
+    data object DuetDetail : AndroidRoute("duet_detail/{singer1}/{singer2}") { fun createRoute(s1: String, s2: String) = "duet_detail/$s1/$s2" }
 }
 
 private fun AppTab.toRoute(): AndroidRoute = when (this) {

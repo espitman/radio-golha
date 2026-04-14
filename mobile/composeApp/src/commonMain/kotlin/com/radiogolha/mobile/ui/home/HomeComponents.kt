@@ -333,6 +333,62 @@ fun MusiciansSection(
 }
 
 @Composable
+fun DuetsSection(
+    duets: List<DuetPairUiModel>,
+    onDuetClick: (DuetPairUiModel) -> Unit = {},
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large),
+    ) {
+        SectionTitle(title = "دوئت‌های ماندگار")
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(GolhaSpacing.CardGap),
+            contentPadding = PaddingValues(horizontal = GolhaSpacing.ScreenHorizontal),
+        ) {
+            items(duets) { duet ->
+                Surface(
+                    modifier = Modifier
+                        .widthIn(min = 200.dp, max = 240.dp)
+                        .height(80.dp)
+                        .clickable { onDuetClick(duet) },
+                    shape = RoundedCornerShape(GolhaRadius.Card),
+                    color = GolhaColors.BannerBackground,
+                    shadowElevation = GolhaElevation.Card,
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize().padding(horizontal = 18.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = duet.singer1,
+                                style = MaterialTheme.typography.titleSmall,
+                                color = GolhaColors.BannerDetail,
+                                maxLines = 1,
+                            )
+                            Text(
+                                text = "و",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = GolhaColors.Surface.copy(alpha = 0.5f),
+                            )
+                            Text(
+                                text = duet.singer2,
+                                style = MaterialTheme.typography.titleSmall,
+                                color = GolhaColors.BannerDetail,
+                                maxLines = 1,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun TopTracksSection(
     tracks: List<TrackUiModel>,
     isRefreshing: Boolean,

@@ -130,6 +130,26 @@ internal fun JSONArray.toTrackModels(): List<TrackUiModel> = buildList {
     }
 }
 
+actual fun loadDuetPrograms(singer1: String, singer2: String): List<CategoryProgramUiModel> {
+    val payload = RustCoreBridge.getDuetProgramsJson(requireArchiveDbPath(), singer1, singer2)
+    val root = JSONArray(payload)
+    return buildList {
+        for (i in 0 until root.length()) {
+            val item = root.getJSONObject(i)
+            add(CategoryProgramUiModel(
+                id = item.optLong("id"),
+                title = item.optNullableString("title") ?: "برنامه ${item.optLong("no")}",
+                categoryName = null,
+                programNumber = item.optLong("no", 0).toString(),
+                singer = item.optString("artist", "ناشناس"),
+                duration = item.optNullableString("duration"),
+                dastgah = item.optNullableString("mode"),
+                audioUrl = item.optNullableString("audio_url"),
+            ))
+        }
+    }
+}
+
 internal fun JSONObject.optNullableString(key: String): String? {
     if (isNull(key)) return null
     return optString(key)

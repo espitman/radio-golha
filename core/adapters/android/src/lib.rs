@@ -526,6 +526,59 @@ fn parse_match_mode(s: &Option<String>) -> SearchMatchMode {
     }
 }
 
+fn duet_programs_json(db_path: &str, singer1: &str, singer2: &str) -> Result<String, String> {
+    let core = RadioGolhaCore::open(db_path).map_err(|e| e.to_string())?;
+    let conn = core.connection();
+    let mut stmt = conn.prepare(
+        "
+        SELECT p.id, p.title, p.no,
+               COALESCE(
+                   (SELECT GROUP_CONCAT(a.name, ' و ')
+                    FROM program_singers ps2
+                    JOIN singer s2 ON s2.id = ps2.singer_id
+                    JOIN artist a ON a.id = s2.artist_id
+                    WHERE ps2.program_id = p.id),
+                   'ناشناس'
+               ) AS artist_names,
+               (SELECT GROUP_CONCAT(m.name, ' و ')
+                FROM program_modes pm JOIN mode m ON m.id = pm.mode_id
+                WHERE pm.program_id = p.id) AS mode_names,
+               (SELECT MAX(end_time) FROM program_timeline WHERE program_id = p.id) AS duration,
+               p.audio_url
+        FROM program p
+        WHERE (SELECT COUNT(*) FROM program_singers ps WHERE ps.program_id = p.id) = 2
+          AND EXISTS (
+              SELECT 1 FROM program_singers ps
+              JOIN singer s ON s.id = ps.singer_id
+              JOIN artist a ON a.id = s.artist_id
+              WHERE ps.program_id = p.id AND a.name = ?1
+          )
+          AND EXISTS (
+              SELECT 1 FROM program_singers ps
+              JOIN singer s ON s.id = ps.singer_id
+              JOIN artist a ON a.id = s.artist_id
+              WHERE ps.program_id = p.id AND a.name = ?2
+          )
+        ORDER BY p.no ASC, p.id ASC
+        "
+    ).map_err(|e| e.to_string())?;
+
+    let rows = stmt.query_map([singer1, singer2], |row| {
+        Ok(AndroidCategoryProgramItem {
+            id: row.get(0)?,
+            title: row.get(1)?,
+            no: row.get(2)?,
+            artist: row.get(3)?,
+            mode: row.get(4)?,
+            duration: row.get(5)?,
+            audio_url: row.get(6)?,
+        })
+    }).map_err(|e| e.to_string())?;
+
+    let items: Vec<_> = rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())?;
+    to_string(&items).map_err(|e| e.to_string())
+}
+
 fn search_options_json(db_path: &str) -> Result<String, String> {
     let core = RadioGolhaCore::open(db_path).map_err(|e| e.to_string())?;
     let options = core.program_search_options().map_err(|e| e.to_string())?;
@@ -753,4 +806,23 @@ pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_searchProgramsJ
         Err(e) => return jni_json_response(&mut env, db_path, |_| Err(e.to_string())),
     };
     jni_json_response(&mut env, db_path, |path| search_programs_json(path, &filters))
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getDuetProgramsJson(
+    mut env: JNIEnv,
+    _class: JClass,
+    db_path: JString,
+    singer1: JString,
+    singer2: JString,
+) -> jstring {
+    let s1 = match env.get_string(&singer1) {
+        Ok(s) => s.to_string_lossy().to_string(),
+        Err(e) => return jni_json_response(&mut env, db_path, |_| Err(e.to_string())),
+    };
+    let s2 = match env.get_string(&singer2) {
+        Ok(s) => s.to_string_lossy().to_string(),
+        Err(e) => return jni_json_response(&mut env, db_path, |_| Err(e.to_string())),
+    };
+    jni_json_response(&mut env, db_path, |path| duet_programs_json(path, &s1, &s2))
 }

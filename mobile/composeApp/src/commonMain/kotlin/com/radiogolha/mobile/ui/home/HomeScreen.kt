@@ -20,6 +20,14 @@ import com.radiogolha.mobile.theme.GolhaPatternBackground
 import com.radiogolha.mobile.theme.GolhaSpacing
 import com.radiogolha.mobile.ui.programs.*
 
+private val duetPairs = listOf(
+    DuetPairUiModel("محمدرضا شجریان", "هایده"),
+    DuetPairUiModel("غلامحسین بنان", "مرضیه"),
+    DuetPairUiModel("مرضیه", "گلپا"),
+    DuetPairUiModel("الهه", "محمدرضا شجریان"),
+    DuetPairUiModel("هایده", "ایرج"),
+)
+
 @Composable
 fun HomeScreen(
     state: HomeUiState?,
@@ -39,6 +47,7 @@ fun HomeScreen(
     onProgramClick: (ProgramUiModel) -> Unit = {},
     onSingerClick: (Long) -> Unit = {},
     onMusicianClick: (Long) -> Unit = {},
+    onDuetClick: (DuetPairUiModel) -> Unit = {},
     onExpandPlayer: () -> Unit = {},
     onBottomNavSelected: (AppTab) -> Unit = {},
 ) {
@@ -107,7 +116,13 @@ fun HomeScreen(
                                 onMusicianClick = onMusicianClick,
                             )
                         }
-                        item { 
+                        item {
+                            DuetsSection(
+                                duets = duetPairs,
+                                onDuetClick = onDuetClick,
+                            )
+                        }
+                        item {
                             TopTracksSection(
                                 tracks = state.topTracks,
                                 isRefreshing = isRefreshingTopTracks,

@@ -80,6 +80,12 @@ enum class AppTab {
     Account,
 }
 
+data class DuetPairUiModel(
+    val singer1: String,
+    val singer2: String,
+    val label: String = "$singer1 و $singer2",
+)
+
 data class HomeUiState(
     val programs: List<ProgramUiModel>,
     val singers: List<SingerUiModel>,
