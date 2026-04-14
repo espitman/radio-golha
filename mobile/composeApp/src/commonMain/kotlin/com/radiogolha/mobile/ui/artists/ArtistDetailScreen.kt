@@ -229,11 +229,12 @@ private fun ArtistHeaderLayout(
                             Box(Modifier.width(100.dp).height(24.dp).background(skeletonColor, RoundedCornerShape(4.dp)))
                         } else {
                             Text(detail.name, style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold, fontSize = titleFontSize), color = textWhite, textAlign = TextAlign.Center)
-                            if (!detail.instrument.isNullOrBlank()) {
-                                Text(detail.instrument, style = MaterialTheme.typography.titleMedium, color = gold, textAlign = TextAlign.Center)
-                            } else {
-                                Box(modifier = Modifier.height(24.dp))
-                            }
+                            Text(
+                                text = detail.instrument?.takeIf { it.isNotBlank() } ?: "خواننده",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = gold,
+                                textAlign = TextAlign.Center,
+                            )
                         }
                     }
 
@@ -267,8 +268,8 @@ private fun ArtistHeaderLayout(
                         } else {
                             Text(detail.name, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = textWhite, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
-                        if (!isLoading && detail != null && !detail.instrument.isNullOrBlank()) {
-                            Text(detail.instrument, style = MaterialTheme.typography.bodySmall, color = gold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        if (!isLoading && detail != null) {
+                            Text(detail.instrument?.takeIf { it.isNotBlank() } ?: "خواننده", style = MaterialTheme.typography.bodySmall, color = gold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         } else if (isLoading) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Box(Modifier.width(80.dp).height(14.dp).background(skeletonColor, RoundedCornerShape(4.dp)))
@@ -289,15 +290,20 @@ private fun ArtistAvatarBox(detail: ArtistDetailUiModel?, isLoading: Boolean, si
         Box(
             modifier = Modifier
                 .size(size)
-                .background(GolhaColors.Border.copy(alpha = 0.2f), CircleShape)
+                .background(Color.White.copy(alpha = 0.1f), CircleShape)
         )
     } else {
-        ArtistAvatar(
-            name = detail.name,
-            imageUrl = detail.imageUrl,
-            tint = GolhaColors.SoftRose,
-            modifier = Modifier.size(size),
-        )
+        val inf = rememberInfiniteTransition(label = "avatarRing")
+        val ringRot by inf.animateFloat(0f, 360f, infiniteRepeatable(tween(8000, easing = androidx.compose.animation.core.LinearEasing)), label = "rot")
+        Box(modifier = Modifier.size(size)) {
+            AnimatedAvatarRing(rotation = ringRot, modifier = Modifier.fillMaxSize())
+            ArtistAvatar(
+                name = detail.name,
+                imageUrl = detail.imageUrl,
+                tint = GolhaColors.SoftRose,
+                modifier = Modifier.fillMaxSize().padding(3.dp),
+            )
+        }
     }
 }
 
