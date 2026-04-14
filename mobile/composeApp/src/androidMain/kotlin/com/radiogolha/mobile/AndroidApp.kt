@@ -163,9 +163,24 @@ fun AndroidApp() {
                 startDestination = AndroidRoute.Home.route,
             ) {
                 composable(AndroidRoute.Home.route) {
+                    val enrichedDuets = remember(librarySingers) {
+                        val basePairs = listOf(
+                            DuetPairUiModel("هایده", "محمدرضا شجریان"),
+                            DuetPairUiModel("حسین قوامی", "مرضیه"),
+                            DuetPairUiModel("مرضیه", "گلپا"),
+                            DuetPairUiModel("غلامحسین بنان", "مرضیه"),
+                            DuetPairUiModel("عهدیه", "ایرج"),
+                        )
+                        fun findAvatar(name: String) = librarySingers.find { it.name == name }?.imageUrl
+                        basePairs.map {
+                            val count = runCatching { loadDuetPrograms(it.singer1, it.singer2).size }.getOrDefault(0)
+                            it.copy(singer1Avatar = findAvatar(it.singer1), singer2Avatar = findAvatar(it.singer2), trackCount = count)
+                        }
+                    }
                     HomeScreen(
                         state = if (isHomeLoading && homeUiState == null) null else homeUiState?.copy(bottomNavItems = bottomNavItems),
                         bottomNavItems = bottomNavItems,
+                        duets = enrichedDuets,
                         onOpenAllSingers = { navController.navigate(AndroidRoute.Library.createRoute("singers")) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } },
                         onOpenAllMusicians = { navController.navigate(AndroidRoute.Library.createRoute("musicians")) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } },
                         isRefreshingTopTracks = isRefreshingTopTracks,
@@ -279,8 +294,10 @@ fun AndroidApp() {
                 composable(route = AndroidRoute.DuetDetail.route, arguments = listOf(navArgument("singer1") { type = NavType.StringType }, navArgument("singer2") { type = NavType.StringType })) { backStackEntry ->
                     val s1 = backStackEntry.arguments?.getString("singer1") ?: ""
                     val s2 = backStackEntry.arguments?.getString("singer2") ?: ""
+                    fun findAvatar(name: String) = librarySingers.find { it.name == name }?.imageUrl
                     DuetDetailScreen(
                         singer1 = s1, singer2 = s2,
+                        singer1Avatar = findAvatar(s1), singer2Avatar = findAvatar(s2),
                         bottomNavItems = bottomNavItems,
                         onBottomNavSelected = onTabSelected,
                         onBackClick = { navController.popBackStack() },

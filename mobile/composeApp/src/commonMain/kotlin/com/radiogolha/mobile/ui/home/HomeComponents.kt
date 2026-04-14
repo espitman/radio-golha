@@ -342,11 +342,7 @@ fun DuetsBanner(
 ) {
     val pagerState = rememberPagerState(pageCount = { duets.size })
 
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
+    Box(modifier = modifier.fillMaxWidth()) {
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxWidth(),
@@ -355,7 +351,7 @@ fun DuetsBanner(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .requiredHeight(160.dp)
+                    .requiredHeight(180.dp)
                     .clickable { onDuetClick(duet) },
                 shape = RoundedCornerShape(0.dp),
                 color = GolhaColors.BannerBackground,
@@ -364,54 +360,78 @@ fun DuetsBanner(
                     modifier = Modifier
                         .fillMaxSize()
                         .drawBehind {
-                            drawCircle(
-                                color = GolhaColors.BannerDetail.copy(alpha = 0.08f),
-                                radius = size.minDimension * 0.38f,
-                                center = Offset(size.width * 0.15f, size.height * 0.25f),
-                            )
+                            // Subtle gold glow circles
                             drawCircle(
                                 color = GolhaColors.BannerDetail.copy(alpha = 0.06f),
-                                radius = size.minDimension * 0.28f,
-                                center = Offset(size.width * 0.85f, size.height * 0.8f),
+                                radius = size.minDimension * 0.6f,
+                                center = Offset(size.width * 0.7f, size.height * 0.5f),
                             )
-                        }
-                        .padding(horizontal = 24.dp),
-                    contentAlignment = Alignment.Center,
+                            drawCircle(
+                                color = GolhaColors.BannerDetail.copy(alpha = 0.04f),
+                                radius = size.minDimension * 0.4f,
+                                center = Offset(size.width * 0.2f, size.height * 0.8f),
+                            )
+                        },
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(
-                            text = "دوئت ماندگار",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = GolhaColors.Surface.copy(alpha = 0.5f),
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = duet.singer1,
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = GolhaColors.BannerDetail,
-                            maxLines = 1,
-                        )
-                        Text(
-                            text = "و",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = GolhaColors.Surface.copy(alpha = 0.45f),
-                        )
-                        Text(
-                            text = duet.singer2,
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = GolhaColors.BannerDetail,
-                            maxLines = 1,
-                        )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 20.dp, vertical = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        // Text (right in RTL)
+                        Column(
+                            horizontalAlignment = Alignment.Start,
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text(
+                                text = "دوئت ماندگار",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = GolhaColors.Surface.copy(alpha = 0.45f),
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "${duet.singer1} و ${duet.singer2}",
+                                style = MaterialTheme.typography.titleLarge,
+                                color = GolhaColors.BannerDetail,
+                                maxLines = 1,
+                            )
+                            if (duet.trackCount > 0) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "${duet.trackCount} ترک",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = GolhaColors.Surface.copy(alpha = 0.5f),
+                                )
+                            }
+                        }
+
+                        // Avatars (left in RTL)
+                        Box(modifier = Modifier.size(width = 150.dp, height = 100.dp)) {
+                            Box(modifier = Modifier.size(90.dp).align(Alignment.CenterEnd)) {
+                                ArtistAvatar(
+                                    name = duet.singer2, imageUrl = duet.singer2Avatar, tint = GolhaColors.BannerDetail,
+                                    modifier = Modifier.fillMaxSize().border(2.dp, GolhaColors.BannerDetail.copy(alpha = 0.6f), CircleShape),
+                                )
+                            }
+                            Box(modifier = Modifier.size(90.dp).align(Alignment.CenterStart)) {
+                                ArtistAvatar(
+                                    name = duet.singer1, imageUrl = duet.singer1Avatar, tint = GolhaColors.BannerDetail,
+                                    modifier = Modifier.fillMaxSize().border(2.dp, GolhaColors.BannerDetail.copy(alpha = 0.8f), CircleShape),
+                                )
+                            }
+                        }
                     }
                 }
             }
         }
 
-        // Page indicator dots overlaid at bottom
+        // Page indicator dots
         Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 10.dp),
+                .padding(bottom = 8.dp),
             horizontalArrangement = Arrangement.Center,
         ) {
             repeat(duets.size) { index ->
@@ -424,7 +444,6 @@ fun DuetsBanner(
                         .background(if (selected) GolhaColors.BannerDetail else GolhaColors.Surface.copy(alpha = 0.3f)),
                 )
             }
-        }
         }
     }
 }

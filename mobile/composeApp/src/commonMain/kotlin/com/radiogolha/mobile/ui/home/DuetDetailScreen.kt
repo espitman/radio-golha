@@ -14,6 +14,12 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.radiogolha.mobile.theme.GolhaColors
 import com.radiogolha.mobile.theme.GolhaRadius
+import com.radiogolha.mobile.theme.GolhaSpacing
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import com.radiogolha.mobile.ui.programs.ProgramTrackRow
 import com.radiogolha.mobile.ui.programs.SkeletonTrackRow
 import com.radiogolha.mobile.ui.programs.toTrackUiModel
@@ -25,6 +31,8 @@ import kotlinx.coroutines.withContext
 fun DuetDetailScreen(
     singer1: String,
     singer2: String,
+    singer1Avatar: String? = null,
+    singer2Avatar: String? = null,
     bottomNavItems: List<BottomNavItemUiModel>,
     onBottomNavSelected: (AppTab) -> Unit,
     onBackClick: () -> Unit,
@@ -49,8 +57,8 @@ fun DuetDetailScreen(
     val isLoading = programs == null
 
     TabRootScreen(
-        title = "$singer1 و $singer2",
-        subtitle = "دوئت",
+        title = "دوئت",
+        subtitle = "",
         bottomNavItems = bottomNavItems,
         onBottomNavSelected = onBottomNavSelected,
         currentTrack = currentTrack,
@@ -63,6 +71,15 @@ fun DuetDetailScreen(
         onExpandPlayer = onExpandPlayer,
         onBackClick = onBackClick,
         content = {
+            // Duet banner
+            item {
+                DuetBannerCard(
+                    singer1 = singer1, singer2 = singer2,
+                    singer1Avatar = singer1Avatar, singer2Avatar = singer2Avatar,
+                    trackCount = programs?.size ?: 0,
+                )
+            }
+
             if (isLoading) {
                 item {
                     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
@@ -116,4 +133,50 @@ fun DuetDetailScreen(
             }
         }
     )
+}
+
+@Composable
+private fun DuetBannerCard(
+    singer1: String, singer2: String,
+    singer1Avatar: String?, singer2Avatar: String?,
+    trackCount: Int,
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(GolhaRadius.Card),
+        color = GolhaColors.BannerBackground,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .requiredHeight(140.dp)
+                .drawBehind {
+                    drawCircle(color = GolhaColors.BannerDetail.copy(alpha = 0.06f), radius = size.minDimension * 0.6f, center = Offset(size.width * 0.7f, size.height * 0.5f))
+                    drawCircle(color = GolhaColors.BannerDetail.copy(alpha = 0.04f), radius = size.minDimension * 0.4f, center = Offset(size.width * 0.2f, size.height * 0.8f))
+                },
+        ) {
+            Row(
+                modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start, verticalArrangement = Arrangement.Center) {
+                    Text("دوئت ماندگار", style = MaterialTheme.typography.labelSmall, color = GolhaColors.Surface.copy(alpha = 0.45f))
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text("$singer1 و $singer2", style = MaterialTheme.typography.titleLarge, color = GolhaColors.BannerDetail, maxLines = 1)
+                    if (trackCount > 0) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("$trackCount ترک", style = MaterialTheme.typography.labelSmall, color = GolhaColors.Surface.copy(alpha = 0.5f))
+                    }
+                }
+                Box(modifier = Modifier.size(width = 130.dp, height = 90.dp)) {
+                    Box(modifier = Modifier.size(80.dp).align(Alignment.CenterEnd)) {
+                        ArtistAvatar(name = singer2, imageUrl = singer2Avatar, tint = GolhaColors.BannerDetail, modifier = Modifier.fillMaxSize().border(2.dp, GolhaColors.BannerDetail.copy(alpha = 0.6f), CircleShape))
+                    }
+                    Box(modifier = Modifier.size(80.dp).align(Alignment.CenterStart)) {
+                        ArtistAvatar(name = singer1, imageUrl = singer1Avatar, tint = GolhaColors.BannerDetail, modifier = Modifier.fillMaxSize().border(2.dp, GolhaColors.BannerDetail.copy(alpha = 0.8f), CircleShape))
+                    }
+                }
+            }
+        }
+    }
 }

@@ -83,6 +83,9 @@ enum class AppTab {
 data class DuetPairUiModel(
     val singer1: String,
     val singer2: String,
+    val singer1Avatar: String? = null,
+    val singer2Avatar: String? = null,
+    val trackCount: Int = 0,
     val label: String = "$singer1 و $singer2",
 )
 

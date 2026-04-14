@@ -47,6 +47,7 @@ fun HomeScreen(
     onProgramClick: (ProgramUiModel) -> Unit = {},
     onSingerClick: (Long) -> Unit = {},
     onMusicianClick: (Long) -> Unit = {},
+    duets: List<DuetPairUiModel> = emptyList(),
     onDuetClick: (DuetPairUiModel) -> Unit = {},
     onExpandPlayer: () -> Unit = {},
     onBottomNavSelected: (AppTab) -> Unit = {},
@@ -97,7 +98,7 @@ fun HomeScreen(
                         item { HeaderSection() }
                         item {
                             DuetsBanner(
-                                duets = duetPairs,
+                                duets = duets,
                                 onDuetClick = onDuetClick,
                             )
                         }
