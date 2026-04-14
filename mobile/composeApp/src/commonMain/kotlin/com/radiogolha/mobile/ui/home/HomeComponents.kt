@@ -28,6 +28,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -342,6 +346,35 @@ fun DuetsBanner(
 ) {
     val pagerState = rememberPagerState(pageCount = { duets.size })
 
+    // Animated glow circles
+    val infiniteTransition = rememberInfiniteTransition(label = "duetGlow")
+    val glowRadius1 by infiniteTransition.animateFloat(
+        initialValue = 0.55f, targetValue = 0.68f,
+        animationSpec = infiniteRepeatable(tween(4000, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse),
+        label = "glow1",
+    )
+    val glowRadius2 by infiniteTransition.animateFloat(
+        initialValue = 0.35f, targetValue = 0.45f,
+        animationSpec = infiniteRepeatable(tween(3000, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse),
+        label = "glow2",
+    )
+    val glowAlpha1 by infiniteTransition.animateFloat(
+        initialValue = 0.04f, targetValue = 0.09f,
+        animationSpec = infiniteRepeatable(tween(4000, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse),
+        label = "glowA1",
+    )
+    val glowAlpha2 by infiniteTransition.animateFloat(
+        initialValue = 0.03f, targetValue = 0.07f,
+        animationSpec = infiniteRepeatable(tween(3000, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse),
+        label = "glowA2",
+    )
+    // Border rotation for avatar rings
+    val borderRotation by infiniteTransition.animateFloat(
+        initialValue = 0f, targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween(8000, easing = LinearEasing)),
+        label = "borderRot",
+    )
+
     Box(modifier = modifier.fillMaxWidth()) {
         HorizontalPager(
             state = pagerState,
@@ -360,15 +393,14 @@ fun DuetsBanner(
                     modifier = Modifier
                         .fillMaxSize()
                         .drawBehind {
-                            // Subtle gold glow circles
                             drawCircle(
-                                color = GolhaColors.BannerDetail.copy(alpha = 0.06f),
-                                radius = size.minDimension * 0.6f,
+                                color = GolhaColors.BannerDetail.copy(alpha = glowAlpha1),
+                                radius = size.minDimension * glowRadius1,
                                 center = Offset(size.width * 0.7f, size.height * 0.5f),
                             )
                             drawCircle(
-                                color = GolhaColors.BannerDetail.copy(alpha = 0.04f),
-                                radius = size.minDimension * 0.4f,
+                                color = GolhaColors.BannerDetail.copy(alpha = glowAlpha2),
+                                radius = size.minDimension * glowRadius2,
                                 center = Offset(size.width * 0.2f, size.height * 0.8f),
                             )
                         },
@@ -407,18 +439,20 @@ fun DuetsBanner(
                             }
                         }
 
-                        // Avatars (left in RTL)
+                        // Avatars with animated border
                         Box(modifier = Modifier.size(width = 150.dp, height = 100.dp)) {
                             Box(modifier = Modifier.size(90.dp).align(Alignment.CenterEnd)) {
+                                AnimatedAvatarRing(rotation = borderRotation, modifier = Modifier.fillMaxSize())
                                 ArtistAvatar(
                                     name = duet.singer2, imageUrl = duet.singer2Avatar, tint = GolhaColors.BannerDetail,
-                                    modifier = Modifier.fillMaxSize().border(2.dp, GolhaColors.BannerDetail.copy(alpha = 0.6f), CircleShape),
+                                    modifier = Modifier.fillMaxSize().padding(3.dp),
                                 )
                             }
                             Box(modifier = Modifier.size(90.dp).align(Alignment.CenterStart)) {
+                                AnimatedAvatarRing(rotation = -borderRotation, modifier = Modifier.fillMaxSize())
                                 ArtistAvatar(
                                     name = duet.singer1, imageUrl = duet.singer1Avatar, tint = GolhaColors.BannerDetail,
-                                    modifier = Modifier.fillMaxSize().border(2.dp, GolhaColors.BannerDetail.copy(alpha = 0.8f), CircleShape),
+                                    modifier = Modifier.fillMaxSize().padding(3.dp),
                                 )
                             }
                         }
@@ -445,6 +479,25 @@ fun DuetsBanner(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun AnimatedAvatarRing(rotation: Float, modifier: Modifier = Modifier) {
+    val gold = GolhaColors.BannerDetail
+    Canvas(modifier = modifier.graphicsLayer { rotationZ = rotation }) {
+        val stroke = 2.5.dp.toPx()
+        val radius = (size.minDimension - stroke) / 2f
+        // Full ring
+        drawCircle(color = gold.copy(alpha = 0.3f), radius = radius, style = Stroke(width = stroke))
+        // Bright arc segment
+        drawArc(
+            color = gold.copy(alpha = 0.9f),
+            startAngle = 0f, sweepAngle = 90f, useCenter = false,
+            style = Stroke(width = stroke, cap = StrokeCap.Round),
+            topLeft = Offset(stroke / 2f, stroke / 2f),
+            size = Size(size.width - stroke, size.height - stroke),
+        )
     }
 }
 
