@@ -73,6 +73,7 @@ fun AndroidApp() {
     val bottomNavItems = remember(selectedTab) {
         buildBottomNavItems(selectedTab)
     }
+    val visibleTrackCount = 5
 
     // Shared State
     var reloadToken by remember { mutableIntStateOf(0) }
@@ -90,15 +91,13 @@ fun AndroidApp() {
 
     val searchState = remember { SearchState() }
     var homeUiState by remember { mutableStateOf<HomeUiState?>(null) }
-    var isHomeLoading by remember { mutableStateOf(false) }
+    var isHomeLoading by remember { mutableStateOf(true) }
     var isRefreshingTopTracks by remember { mutableStateOf(false) }
     var prefetchedTopTracks by remember { mutableStateOf<List<TrackUiModel>>(emptyList()) }
-    
-    val visibleTrackCount = 5
 
     LaunchedEffect(reloadToken) {
-        isHomeLoading = true
         isLibraryLoading = true
+        isHomeLoading = true
         withContext(Dispatchers.Default) {
             val hState = runCatching { loadHomeUiState() }.getOrNull()
             if (hState != null) {
@@ -335,6 +334,7 @@ fun AndroidApp() {
                     )
                 }
             }
+
         }
     }
 }

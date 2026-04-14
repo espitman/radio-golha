@@ -46,6 +46,7 @@ actual fun searchPrograms(filters: ActiveFilters, page: Int): SearchResultsUiSta
                     duration = item.optString("duration").takeIf { it.isNotBlank() },
                     audioUrl = item.optString("audioUrl").takeIf { it.isNotBlank() }
                         ?: item.optString("audio_url").takeIf { it.isNotBlank() },
+                    artist = item.optString("artist").takeIf { it.isNotBlank() },
                 )
             )
         }

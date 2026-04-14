@@ -172,6 +172,7 @@ data class SearchResultUiModel(
     val subNo: String?,
     val duration: String?,
     val audioUrl: String?,
+    val artist: String?,
 )
 
 data class SearchResultsUiState(

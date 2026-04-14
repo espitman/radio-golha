@@ -7,9 +7,9 @@ import androidx.activity.ComponentActivity
 class SplashActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         startActivity(Intent(this, MainActivity::class.java))
         finish()
+        @Suppress("DEPRECATION")
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
     }
 }

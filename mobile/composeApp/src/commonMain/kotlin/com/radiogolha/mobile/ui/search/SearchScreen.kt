@@ -541,7 +541,7 @@ private fun ResultsPage(
                                     val track = TrackUiModel(
                                         id = result.id,
                                         title = result.title,
-                                        artist = result.categoryName,
+                                        artist = result.artist ?: result.categoryName,
                                         duration = result.duration,
                                         audioUrl = result.audioUrl,
                                     )

@@ -354,6 +354,7 @@ impl RadioGolhaCore {
                 sub_no: row.get(4)?,
                 duration: None,
                 audio_url: None,
+                artist: None,
             })
         })?;
 
@@ -380,6 +381,7 @@ impl RadioGolhaCore {
                 sub_no: row.get(4)?,
                 duration: None,
                 audio_url: None,
+                artist: None,
             })
         })?;
 
@@ -409,6 +411,7 @@ impl RadioGolhaCore {
                 sub_no: row.get(4)?,
                 duration: row.get(5)?,
                 audio_url: None,
+                artist: None,
             })
         })?;
 
@@ -580,6 +583,7 @@ impl RadioGolhaCore {
                     sub_no: row.get(4)?,
                     duration: None,
                     audio_url: None,
+                    artist: None,
                 })
             },
         )?;
@@ -760,7 +764,12 @@ impl RadioGolhaCore {
             "
             SELECT p.id, p.title, c.title_fa, p.no, p.sub_no,
                    (SELECT MAX(end_time) FROM program_timeline WHERE program_id = p.id) AS duration,
-                   p.audio_url
+                   p.audio_url,
+                   (SELECT GROUP_CONCAT(a.name, ' و ')
+                    FROM program_singers ps
+                    JOIN singer s ON s.id = ps.singer_id
+                    JOIN artist a ON a.id = s.artist_id
+                    WHERE ps.program_id = p.id) AS artist
             FROM program p
             JOIN category c ON p.category_id = c.id
             WHERE 1=1
@@ -980,6 +989,7 @@ impl RadioGolhaCore {
                 sub_no: row.get(4)?,
                 duration: row.get(5)?,
                 audio_url: row.get(6)?,
+                artist: row.get(7)?,
             })
         })?;
 
