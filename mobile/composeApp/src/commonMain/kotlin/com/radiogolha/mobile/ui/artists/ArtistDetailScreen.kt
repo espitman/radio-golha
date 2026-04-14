@@ -1,5 +1,11 @@
 package com.radiogolha.mobile.ui.artists
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -187,6 +193,12 @@ private fun ArtistHeaderLayout(
     val textDim = Color(0xFF8A95A8)
     val skeletonColor = Color.White.copy(alpha = 0.1f)
 
+    val inf = rememberInfiniteTransition(label = "artistGlow")
+    val glowR1 by inf.animateFloat(0.45f, 0.58f, infiniteRepeatable(tween(4000, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "r1")
+    val glowR2 by inf.animateFloat(0.30f, 0.40f, infiniteRepeatable(tween(3000, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "r2")
+    val glowA1 by inf.animateFloat(0.04f, 0.09f, infiniteRepeatable(tween(4000, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "a1")
+    val glowA2 by inf.animateFloat(0.03f, 0.07f, infiniteRepeatable(tween(3000, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "a2")
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -196,8 +208,8 @@ private fun ArtistHeaderLayout(
         shadowElevation = if (isSticky) 4.dp else 0.dp,
     ) {
         Box(modifier = Modifier.fillMaxWidth().drawBehind {
-            drawCircle(gold.copy(alpha = 0.06f), size.minDimension * 0.5f, Offset(size.width * 0.8f, size.height * 0.3f))
-            drawCircle(gold.copy(alpha = 0.04f), size.minDimension * 0.35f, Offset(size.width * 0.15f, size.height * 0.8f))
+            drawCircle(gold.copy(alpha = glowA1), size.minDimension * glowR1, Offset(size.width * 0.8f, size.height * 0.3f))
+            drawCircle(gold.copy(alpha = glowA2), size.minDimension * glowR2, Offset(size.width * 0.15f, size.height * 0.8f))
         }) {
             if (progress < 0.8f) {
                 Column(
