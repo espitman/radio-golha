@@ -503,14 +503,27 @@ internal fun AnimatedAvatarRing(rotation: Float, modifier: Modifier = Modifier) 
 
 @Composable
 fun DuetsBannerSkeleton(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .requiredHeight(140.dp)
-            .padding(horizontal = GolhaSpacing.ScreenHorizontal)
-            .clip(RoundedCornerShape(GolhaRadius.Card))
-            .background(GolhaColors.Border.copy(alpha = 0.2f)),
-    )
+    val darkBg = Color(0xFF0B2161)
+    val skeletonColor = Color.White.copy(alpha = 0.08f)
+    Surface(
+        modifier = modifier.fillMaxWidth().requiredHeight(180.dp),
+        color = darkBg,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(Modifier.widthIn(min = 80.dp, max = 80.dp).height(12.dp).background(skeletonColor, RoundedCornerShape(4.dp)))
+                Box(Modifier.widthIn(min = 180.dp, max = 180.dp).height(22.dp).background(skeletonColor, RoundedCornerShape(4.dp)))
+                Box(Modifier.widthIn(min = 50.dp, max = 50.dp).height(12.dp).background(skeletonColor, RoundedCornerShape(4.dp)))
+            }
+            Box(modifier = Modifier.size(width = 150.dp, height = 100.dp)) {
+                Box(Modifier.size(90.dp).align(Alignment.CenterEnd).background(skeletonColor, CircleShape))
+                Box(Modifier.size(90.dp).align(Alignment.CenterStart).background(skeletonColor, CircleShape))
+            }
+        }
+    }
 }
 
 @Composable

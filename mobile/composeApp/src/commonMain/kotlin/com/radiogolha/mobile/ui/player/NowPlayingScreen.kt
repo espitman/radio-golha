@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -69,7 +70,12 @@ fun NowPlayingScreen(
     onNextClick: () -> Unit = {},
     onSeekBack10: () -> Unit = {},
     onSeekForward10: () -> Unit = {},
+    onVisibilityChanged: (Boolean) -> Unit = {},
 ) {
+    DisposableEffect(Unit) {
+        onVisibilityChanged(true)
+        onDispose { onVisibilityChanged(false) }
+    }
     // Seekbar State
     var sliderValue by remember { mutableFloatStateOf(currentPositionMs.toFloat()) }
     var isDragging by remember { mutableStateOf(false) }

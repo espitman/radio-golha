@@ -19,6 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -101,22 +103,19 @@ fun ProgramEpisodeDetailScreen(
             onExpandPlayer = onExpandPlayer,
             onBackClick = onBackClick,
             scrollState = scrollState,
-            headerOverlay = {
-                val isPlaying = currentTrack?.id == detail?.id && isPlayerPlaying
-                ProgramHeaderLayout(
-                    detail = detail,
-                    isLoading = isLoading,
-                    progress = collapseProgress,
-                    isPlaying = isPlaying,
-                    onPlayClick = { detail?.let { onPlayProgram(it) } }
-                )
-            },
             content = {
                 val resolvedDetail = detail
-                
-                // 1. Placeholder for the Expanded Header
+
+                // Banner
                 item {
-                    Spacer(modifier = Modifier.height(60.dp))
+                    val isThisPlaying = currentTrack?.id == detail?.id && isPlayerPlaying
+                    ProgramHeaderLayout(
+                        detail = detail,
+                        isLoading = isLoading,
+                        progress = 0f,
+                        isPlaying = isThisPlaying,
+                        onPlayClick = { detail?.let { onPlayProgram(it) } }
+                    )
                 }
 
                 if (isLoading) {
@@ -192,45 +191,23 @@ private fun ProgramHeaderLayout(
     isPlaying: Boolean = false,
     onPlayClick: () -> Unit = {}
 ) {
+    val darkBg = Color(0xFF0B2161)
+    val gold = Color(0xFFE3BF55)
+    val textWhite = Color(0xFFF0ECE3)
+    val skeletonColor = Color.White.copy(alpha = 0.1f)
     val currentPadding = lerp(18.dp, 10.dp, progress)
     val titleFontSize = lerp(20.sp, 17.sp, progress)
     val isSticky = progress > 0.95f
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .statusBarsPadding()
-            .padding(horizontal = if (isSticky) 0.dp else GolhaSpacing.ScreenHorizontal)
-            .padding(top = if (isSticky) 0.dp else 4.dp)
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(GolhaRadius.Card),
+        color = darkBg,
     ) {
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = if (isSticky) RoundedCornerShape(0.dp) else RoundedCornerShape(GolhaRadius.Card),
-            color = GolhaColors.Surface,
-            border = if (isSticky) null else androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.7f)),
-            shadowElevation = if (isSticky) 6.dp else 0.dp
-        ) {
-            Box(modifier = Modifier.fillMaxWidth()) {
-                androidx.compose.foundation.Image(
-                    painter = painterResource(Res.drawable.eslimi_card_bg),
-                    contentDescription = null,
-                    modifier = Modifier.matchParentSize().alpha(0.32f),
-                    contentScale = ContentScale.Crop
-                )
-
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    GolhaColors.Surface.copy(alpha = 0.92f),
-                                    GolhaColors.Surface.copy(alpha = 0.4f + (0.2f * progress))
-                                )
-                            )
-                        )
-                )
-
+            Box(modifier = Modifier.fillMaxWidth().drawBehind {
+                drawCircle(gold.copy(alpha = 0.06f), size.minDimension * 0.5f, Offset(size.width * 0.85f, size.height * 0.3f))
+                drawCircle(gold.copy(alpha = 0.04f), size.minDimension * 0.35f, Offset(size.width * 0.1f, size.height * 0.7f))
+            }) {
                 if (progress < 0.8f) {
                     Column(
                         modifier = Modifier.fillMaxWidth().padding(currentPadding),
@@ -238,13 +215,13 @@ private fun ProgramHeaderLayout(
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
                         if (isLoading || detail == null) {
-                            Box(modifier = Modifier.width(200.dp).height(26.dp).background(GolhaColors.Border.copy(alpha = 0.3f), RoundedCornerShape(4.dp)))
-                            Box(modifier = Modifier.fillMaxWidth(0.7f).height(54.dp).background(GolhaColors.Border.copy(alpha = 0.2f), RoundedCornerShape(GolhaRadius.Pill)))
+                            Box(Modifier.width(200.dp).height(26.dp).background(skeletonColor, RoundedCornerShape(4.dp)))
+                            Box(Modifier.fillMaxWidth(0.7f).height(54.dp).background(skeletonColor, RoundedCornerShape(GolhaRadius.Pill)))
                         } else {
                             Text(
                                 text = detail.title,
                                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold, fontSize = titleFontSize),
-                                color = GolhaColors.PrimaryText,
+                                color = textWhite,
                                 textAlign = TextAlign.Center,
                                 maxLines = 1,
                                 modifier = Modifier.basicMarquee()
@@ -253,11 +230,11 @@ private fun ProgramHeaderLayout(
                                 onClick = onPlayClick,
                                 modifier = Modifier.fillMaxWidth(0.7f).height(54.dp),
                                 shape = RoundedCornerShape(GolhaRadius.Pill),
-                                colors = ButtonDefaults.buttonColors(containerColor = GolhaColors.PrimaryAccent)
+                                colors = ButtonDefaults.buttonColors(containerColor = gold)
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    GolhaLineIcon(icon = if (isPlaying) GolhaIcon.Pause else GolhaIcon.Play, modifier = Modifier.size(24.dp), tint = Color.White)
-                                    Text(text = if (isPlaying) "توقف پخش" else "پخش برنامه", style = MaterialTheme.typography.titleMedium, color = Color.White)
+                                    GolhaLineIcon(icon = if (isPlaying) GolhaIcon.Pause else GolhaIcon.Play, modifier = Modifier.size(24.dp), tint = darkBg)
+                                    Text(text = if (isPlaying) "توقف پخش" else "پخش برنامه", style = MaterialTheme.typography.titleMedium, color = darkBg)
                                 }
                             }
                         }
@@ -273,7 +250,7 @@ private fun ProgramHeaderLayout(
                             modifier = Modifier.weight(1f),
                             text = detail?.title ?: "در حال بارگذاری...",
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            color = GolhaColors.PrimaryText,
+                            color = textWhite,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )

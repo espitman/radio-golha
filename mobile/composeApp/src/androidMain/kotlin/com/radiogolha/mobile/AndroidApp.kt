@@ -57,11 +57,6 @@ fun AndroidApp() {
     
     // Bottom Sheet State
     var showPlayerSheet by remember { mutableStateOf(false) }
-    val view = androidx.compose.ui.platform.LocalView.current
-    LaunchedEffect(showPlayerSheet) {
-        val window = (view.context as? android.app.Activity)?.window ?: return@LaunchedEffect
-        androidx.core.view.WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = !showPlayerSheet
-    }
     val playerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -372,6 +367,11 @@ fun AndroidApp() {
                         },
                         onSeekBack10 = { playerManager.seekTo((currentPlaybackPositionMs - 10_000L).coerceAtLeast(0L)) },
                         onSeekForward10 = { playerManager.seekTo((currentPlaybackPositionMs + 10_000L).coerceAtMost(currentPlaybackDurationMs)) },
+                        onVisibilityChanged = { visible ->
+                            val act = context as? android.app.Activity ?: return@NowPlayingScreen
+                            val ctrl = androidx.core.view.WindowCompat.getInsetsController(act.window, act.window.decorView)
+                            ctrl.isAppearanceLightStatusBars = !visible
+                        },
                     )
                 }
             }

@@ -16,7 +16,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -178,85 +181,44 @@ private fun ArtistHeaderLayout(
     val contentAlpha = 1f - progress
     val isSticky = progress > 0.95f
 
+    val darkBg = Color(0xFF0B2161)
+    val gold = Color(0xFFE3BF55)
+    val textWhite = Color(0xFFF0ECE3)
+    val textDim = Color(0xFF8A95A8)
+    val skeletonColor = Color.White.copy(alpha = 0.1f)
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = if (isSticky) 0.dp else 4.dp),
         shape = if (isSticky) RoundedCornerShape(0.dp) else RoundedCornerShape(GolhaRadius.Card),
-        color = GolhaColors.Surface,
-        border = if (isSticky) null else androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.7f)),
-        shadowElevation = if (isSticky) 4.dp else 0.dp
+        color = darkBg,
+        shadowElevation = if (isSticky) 4.dp else 0.dp,
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            // Background Pattern (Keep visible)
-            androidx.compose.foundation.Image(
-                painter = painterResource(Res.drawable.eslimi_card_bg),
-                contentDescription = null,
-                modifier = Modifier.matchParentSize().alpha(0.32f),
-                contentScale = ContentScale.Crop
-            )
-
-            // Gradient Overlay
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                GolhaColors.Surface.copy(alpha = 0.92f),
-                                GolhaColors.Surface.copy(alpha = 0.4f + (0.2f * progress))
-                            )
-                        )
-                    )
-            )
-
+        Box(modifier = Modifier.fillMaxWidth().drawBehind {
+            drawCircle(gold.copy(alpha = 0.06f), size.minDimension * 0.5f, Offset(size.width * 0.8f, size.height * 0.3f))
+            drawCircle(gold.copy(alpha = 0.04f), size.minDimension * 0.35f, Offset(size.width * 0.15f, size.height * 0.8f))
+        }) {
             if (progress < 0.8f) {
-                // Expanded Style: Vertical Column
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(currentPadding),
+                    modifier = Modifier.fillMaxWidth().padding(currentPadding),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     ArtistAvatarBox(detail, isLoading, avatarSize)
-                    
+
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally, 
+                        horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(4.dp),
-                        modifier = Modifier.alpha(if (isLoading) 1f else contentAlpha)
+                        modifier = Modifier.alpha(if (isLoading) 1f else contentAlpha),
                     ) {
                         if (isLoading || detail == null) {
-                            Box(
-                                modifier = Modifier
-                                    .width(160.dp)
-                                    .height(32.dp)
-                                    .background(GolhaColors.Border.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .width(100.dp)
-                                    .height(24.dp)
-                                    .background(GolhaColors.Border.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
-                            )
+                            Box(Modifier.width(160.dp).height(32.dp).background(skeletonColor, RoundedCornerShape(4.dp)))
+                            Box(Modifier.width(100.dp).height(24.dp).background(skeletonColor, RoundedCornerShape(4.dp)))
                         } else {
-                            Text(
-                                text = detail.name,
-                                style = MaterialTheme.typography.headlineSmall.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = titleFontSize
-                                ),
-                                color = GolhaColors.PrimaryText,
-                                textAlign = TextAlign.Center,
-                            )
-                            
+                            Text(detail.name, style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold, fontSize = titleFontSize), color = textWhite, textAlign = TextAlign.Center)
                             if (!detail.instrument.isNullOrBlank()) {
-                                Text(
-                                    text = detail.instrument,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = GolhaColors.SecondaryText,
-                                    textAlign = TextAlign.Center,
-                                )
+                                Text(detail.instrument, style = MaterialTheme.typography.titleMedium, color = gold, textAlign = TextAlign.Center)
                             } else {
                                 Box(modifier = Modifier.height(24.dp))
                             }
@@ -266,84 +228,42 @@ private fun ArtistHeaderLayout(
                     if (!isLoading && detail != null) {
                         Surface(
                             modifier = Modifier.alpha(contentAlpha),
-                            color = GolhaColors.BadgeBackground.copy(alpha = 0.9f),
+                            color = gold.copy(alpha = 0.15f),
                             shape = RoundedCornerShape(10.dp),
-                            border = androidx.compose.foundation.BorderStroke(0.5.dp, GolhaColors.Border)
                         ) {
                             Text(
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
                                 text = "${detail.trackCount} برنامه",
-                                style = MaterialTheme.typography.labelLarge.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp
-                                ),
-                                color = GolhaColors.PrimaryText,
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold, fontSize = 14.sp),
+                                color = gold,
                             )
                         }
                     } else {
-                        Box(
-                            modifier = Modifier
-                                .width(84.dp)
-                                .height(38.dp)
-                                .background(GolhaColors.Border.copy(alpha = 0.25f), RoundedCornerShape(10.dp))
-                        )
+                        Box(Modifier.width(84.dp).height(38.dp).background(skeletonColor, RoundedCornerShape(10.dp)))
                     }
                 }
             } else {
-                // Collapsed Style: Horizontal Row (Sticky)
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    modifier = Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     ArtistAvatarBox(detail, isLoading, 40.dp)
-                    
                     Column(modifier = Modifier.weight(1f)) {
                         if (isLoading || detail == null) {
-                            Box(
-                                modifier = Modifier
-                                    .width(120.dp)
-                                    .height(20.dp)
-                                    .background(GolhaColors.Border.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
-                            )
+                            Box(Modifier.width(120.dp).height(20.dp).background(skeletonColor, RoundedCornerShape(4.dp)))
                         } else {
-                            Text(
-                                text = detail.name,
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = GolhaColors.PrimaryText,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            Text(detail.name, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = textWhite, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
-                        
                         if (!isLoading && detail != null && !detail.instrument.isNullOrBlank()) {
-                            Text(
-                                text = detail.instrument,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = GolhaColors.SecondaryText,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            Text(detail.instrument, style = MaterialTheme.typography.bodySmall, color = gold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         } else if (isLoading) {
                             Spacer(modifier = Modifier.height(4.dp))
-                            Box(
-                                modifier = Modifier
-                                    .width(80.dp)
-                                    .height(14.dp)
-                                    .background(GolhaColors.Border.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
-                            )
+                            Box(Modifier.width(80.dp).height(14.dp).background(skeletonColor, RoundedCornerShape(4.dp)))
                         }
                     }
-                    
                     if (!isLoading && detail != null) {
-                        Text(
-                            text = "${detail.trackCount} برنامه",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = GolhaColors.SecondaryText
-                        )
+                        Text("${detail.trackCount} برنامه", style = MaterialTheme.typography.labelSmall, color = textDim)
                     }
                 }
             }
