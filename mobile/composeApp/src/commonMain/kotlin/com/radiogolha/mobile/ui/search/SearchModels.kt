@@ -51,15 +51,25 @@ data class ActiveFilters(
     val transcriptQuery: String = "",
     val categoryIds: Set<Long> = emptySet(),
     val singerIds: Set<Long> = emptySet(),
+    val singerMatch: MatchMode = MatchMode.Any,
     val modeIds: Set<Long> = emptySet(),
+    val modeMatch: MatchMode = MatchMode.Any,
     val orchestraIds: Set<Long> = emptySet(),
+    val orchestraMatch: MatchMode = MatchMode.Any,
     val instrumentIds: Set<Long> = emptySet(),
+    val instrumentMatch: MatchMode = MatchMode.Any,
     val performerIds: Set<Long> = emptySet(),
+    val performerMatch: MatchMode = MatchMode.Any,
     val poetIds: Set<Long> = emptySet(),
+    val poetMatch: MatchMode = MatchMode.Any,
     val announcerIds: Set<Long> = emptySet(),
+    val announcerMatch: MatchMode = MatchMode.Any,
     val composerIds: Set<Long> = emptySet(),
+    val composerMatch: MatchMode = MatchMode.Any,
     val arrangerIds: Set<Long> = emptySet(),
+    val arrangerMatch: MatchMode = MatchMode.Any,
     val orchestraLeaderIds: Set<Long> = emptySet(),
+    val orchestraLeaderMatch: MatchMode = MatchMode.Any,
 ) {
     fun idsFor(type: SearchFilterType): Set<Long> = when (type) {
         SearchFilterType.Category -> categoryIds
@@ -106,12 +116,45 @@ data class ActiveFilters(
         SearchFilterType.OrchestraLeader -> copy(orchestraLeaderIds = emptySet())
     }
 
+    fun matchModeFor(type: SearchFilterType): MatchMode = when (type) {
+        SearchFilterType.Category -> MatchMode.Any
+        SearchFilterType.Singer -> singerMatch
+        SearchFilterType.Mode -> modeMatch
+        SearchFilterType.Orchestra -> orchestraMatch
+        SearchFilterType.Instrument -> instrumentMatch
+        SearchFilterType.Performer -> performerMatch
+        SearchFilterType.Poet -> poetMatch
+        SearchFilterType.Announcer -> announcerMatch
+        SearchFilterType.Composer -> composerMatch
+        SearchFilterType.Arranger -> arrangerMatch
+        SearchFilterType.OrchestraLeader -> orchestraLeaderMatch
+    }
+
+    fun withMatchMode(type: SearchFilterType, mode: MatchMode): ActiveFilters = when (type) {
+        SearchFilterType.Category -> this
+        SearchFilterType.Singer -> copy(singerMatch = mode)
+        SearchFilterType.Mode -> copy(modeMatch = mode)
+        SearchFilterType.Orchestra -> copy(orchestraMatch = mode)
+        SearchFilterType.Instrument -> copy(instrumentMatch = mode)
+        SearchFilterType.Performer -> copy(performerMatch = mode)
+        SearchFilterType.Poet -> copy(poetMatch = mode)
+        SearchFilterType.Announcer -> copy(announcerMatch = mode)
+        SearchFilterType.Composer -> copy(composerMatch = mode)
+        SearchFilterType.Arranger -> copy(arrangerMatch = mode)
+        SearchFilterType.OrchestraLeader -> copy(orchestraLeaderMatch = mode)
+    }
+
     val activeFilterCount: Int get() = listOf(
         categoryIds, singerIds, modeIds, orchestraIds, instrumentIds, performerIds,
         poetIds, announcerIds, composerIds, arrangerIds, orchestraLeaderIds
     ).count { it.isNotEmpty() }
 
     val hasAnyFilter: Boolean get() = transcriptQuery.isNotBlank() || activeFilterCount > 0
+}
+
+enum class MatchMode(val label: String, val value: String) {
+    Any("هرکدام", "any"),
+    All("همه", "all"),
 }
 
 data class SearchResultUiModel(

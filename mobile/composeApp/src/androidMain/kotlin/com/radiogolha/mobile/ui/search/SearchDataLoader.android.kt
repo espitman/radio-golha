@@ -81,15 +81,15 @@ private fun buildFiltersJson(filters: ActiveFilters, page: Int): String {
     if (filters.transcriptQuery.isNotBlank()) obj.put("transcriptQuery", filters.transcriptQuery)
     obj.put("page", page)
     if (filters.categoryIds.isNotEmpty()) obj.put("categoryIds", JSONArray(filters.categoryIds.toList()))
-    if (filters.singerIds.isNotEmpty()) obj.put("singerIds", JSONArray(filters.singerIds.toList()))
-    if (filters.modeIds.isNotEmpty()) obj.put("modeIds", JSONArray(filters.modeIds.toList()))
-    if (filters.orchestraIds.isNotEmpty()) obj.put("orchestraIds", JSONArray(filters.orchestraIds.toList()))
-    if (filters.instrumentIds.isNotEmpty()) obj.put("instrumentIds", JSONArray(filters.instrumentIds.toList()))
-    if (filters.performerIds.isNotEmpty()) obj.put("performerIds", JSONArray(filters.performerIds.toList()))
-    if (filters.poetIds.isNotEmpty()) obj.put("poetIds", JSONArray(filters.poetIds.toList()))
-    if (filters.announcerIds.isNotEmpty()) obj.put("announcerIds", JSONArray(filters.announcerIds.toList()))
-    if (filters.composerIds.isNotEmpty()) obj.put("composerIds", JSONArray(filters.composerIds.toList()))
-    if (filters.arrangerIds.isNotEmpty()) obj.put("arrangerIds", JSONArray(filters.arrangerIds.toList()))
-    if (filters.orchestraLeaderIds.isNotEmpty()) obj.put("orchestraLeaderIds", JSONArray(filters.orchestraLeaderIds.toList()))
+    if (filters.singerIds.isNotEmpty()) { obj.put("singerIds", JSONArray(filters.singerIds.toList())); obj.put("singerMatch", filters.singerMatch.value) }
+    if (filters.modeIds.isNotEmpty()) { obj.put("modeIds", JSONArray(filters.modeIds.toList())); obj.put("modeMatch", filters.modeMatch.value) }
+    if (filters.orchestraIds.isNotEmpty()) { obj.put("orchestraIds", JSONArray(filters.orchestraIds.toList())); obj.put("orchestraMatch", filters.orchestraMatch.value) }
+    if (filters.instrumentIds.isNotEmpty()) { obj.put("instrumentIds", JSONArray(filters.instrumentIds.toList())); obj.put("instrumentMatch", filters.instrumentMatch.value) }
+    if (filters.performerIds.isNotEmpty()) { obj.put("performerIds", JSONArray(filters.performerIds.toList())); obj.put("performerMatch", filters.performerMatch.value) }
+    if (filters.poetIds.isNotEmpty()) { obj.put("poetIds", JSONArray(filters.poetIds.toList())); obj.put("poetMatch", filters.poetMatch.value) }
+    if (filters.announcerIds.isNotEmpty()) { obj.put("announcerIds", JSONArray(filters.announcerIds.toList())); obj.put("announcerMatch", filters.announcerMatch.value) }
+    if (filters.composerIds.isNotEmpty()) { obj.put("composerIds", JSONArray(filters.composerIds.toList())); obj.put("composerMatch", filters.composerMatch.value) }
+    if (filters.arrangerIds.isNotEmpty()) { obj.put("arrangerIds", JSONArray(filters.arrangerIds.toList())); obj.put("arrangerMatch", filters.arrangerMatch.value) }
+    if (filters.orchestraLeaderIds.isNotEmpty()) { obj.put("orchestraLeaderIds", JSONArray(filters.orchestraLeaderIds.toList())); obj.put("orchestraLeaderMatch", filters.orchestraLeaderMatch.value) }
     return obj.toString()
 }
