@@ -1,8 +1,8 @@
 use jni::JNIEnv;
 use jni::objects::{JClass, JString};
 use jni::sys::jstring;
-use radiogolha_core::{LookupKind, RadioGolhaCore};
-use serde::Serialize;
+use radiogolha_core::{LookupKind, ProgramSearchFilters, ProgramSortField, RadioGolhaCore, SearchMatchMode, SortDirection};
+use serde::{Deserialize, Serialize};
 use serde_json::{json, to_string};
 
 #[derive(Serialize)]
@@ -491,6 +491,81 @@ fn artist_detail_json(db_path: &str, artist_id: i64) -> Result<String, String> {
     to_string(&payload).map_err(|error| error.to_string())
 }
 
+#[derive(Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+struct AndroidSearchRequest {
+    transcript_query: Option<String>,
+    page: Option<i64>,
+    category_ids: Option<Vec<i64>>,
+    mode_ids: Option<Vec<i64>>,
+    mode_match: Option<String>,
+    orchestra_ids: Option<Vec<i64>>,
+    orchestra_match: Option<String>,
+    instrument_ids: Option<Vec<i64>>,
+    instrument_match: Option<String>,
+    singer_ids: Option<Vec<i64>>,
+    singer_match: Option<String>,
+    poet_ids: Option<Vec<i64>>,
+    poet_match: Option<String>,
+    announcer_ids: Option<Vec<i64>>,
+    announcer_match: Option<String>,
+    composer_ids: Option<Vec<i64>>,
+    composer_match: Option<String>,
+    arranger_ids: Option<Vec<i64>>,
+    arranger_match: Option<String>,
+    performer_ids: Option<Vec<i64>>,
+    performer_match: Option<String>,
+    orchestra_leader_ids: Option<Vec<i64>>,
+    orchestra_leader_match: Option<String>,
+}
+
+fn parse_match_mode(s: &Option<String>) -> SearchMatchMode {
+    match s.as_deref() {
+        Some("all") => SearchMatchMode::All,
+        _ => SearchMatchMode::Any,
+    }
+}
+
+fn search_options_json(db_path: &str) -> Result<String, String> {
+    let core = RadioGolhaCore::open(db_path).map_err(|e| e.to_string())?;
+    let options = core.program_search_options().map_err(|e| e.to_string())?;
+    to_string(&options).map_err(|e| e.to_string())
+}
+
+fn search_programs_json(db_path: &str, filters_json: &str) -> Result<String, String> {
+    let req: AndroidSearchRequest = serde_json::from_str(filters_json).map_err(|e| e.to_string())?;
+    let filters = ProgramSearchFilters {
+        transcript_query: req.transcript_query,
+        category_ids: req.category_ids.unwrap_or_default(),
+        mode_ids: req.mode_ids.unwrap_or_default(),
+        mode_match: parse_match_mode(&req.mode_match),
+        orchestra_ids: req.orchestra_ids.unwrap_or_default(),
+        orchestra_match: parse_match_mode(&req.orchestra_match),
+        instrument_ids: req.instrument_ids.unwrap_or_default(),
+        instrument_match: parse_match_mode(&req.instrument_match),
+        singer_ids: req.singer_ids.unwrap_or_default(),
+        singer_match: parse_match_mode(&req.singer_match),
+        poet_ids: req.poet_ids.unwrap_or_default(),
+        poet_match: parse_match_mode(&req.poet_match),
+        announcer_ids: req.announcer_ids.unwrap_or_default(),
+        announcer_match: parse_match_mode(&req.announcer_match),
+        composer_ids: req.composer_ids.unwrap_or_default(),
+        composer_match: parse_match_mode(&req.composer_match),
+        arranger_ids: req.arranger_ids.unwrap_or_default(),
+        arranger_match: parse_match_mode(&req.arranger_match),
+        performer_ids: req.performer_ids.unwrap_or_default(),
+        performer_match: parse_match_mode(&req.performer_match),
+        orchestra_leader_ids: req.orchestra_leader_ids.unwrap_or_default(),
+        orchestra_leader_match: parse_match_mode(&req.orchestra_leader_match),
+        sort_field: ProgramSortField::No,
+        sort_direction: SortDirection::Asc,
+    };
+    let page = req.page.unwrap_or(1);
+    let core = RadioGolhaCore::open(db_path).map_err(|e| e.to_string())?;
+    let result = core.search_programs(&filters, page).map_err(|e| e.to_string())?;
+    to_string(&result).map_err(|e| e.to_string())
+}
+
 fn jni_json_response(
     env: &mut JNIEnv,
     db_path: JString,
@@ -655,4 +730,27 @@ pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getProgramsByOr
     orchestra_id: i64,
 ) -> jstring {
     jni_json_response(&mut env, db_path, |path| programs_by_orchestra_json(path, orchestra_id))
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getSearchOptionsJson(
+    mut env: JNIEnv,
+    _class: JClass,
+    db_path: JString,
+) -> jstring {
+    jni_json_response(&mut env, db_path, search_options_json)
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_searchProgramsJson(
+    mut env: JNIEnv,
+    _class: JClass,
+    db_path: JString,
+    filters_json: JString,
+) -> jstring {
+    let filters = match env.get_string(&filters_json) {
+        Ok(s) => s.to_string_lossy().to_string(),
+        Err(e) => return jni_json_response(&mut env, db_path, |_| Err(e.to_string())),
+    };
+    jni_json_response(&mut env, db_path, |path| search_programs_json(path, &filters))
 }

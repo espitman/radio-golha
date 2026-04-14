@@ -30,6 +30,7 @@ import com.radiogolha.mobile.ui.root.TabRootScreen
 import com.radiogolha.mobile.ui.settings.SettingsScreen
 import com.radiogolha.mobile.ui.singers.*
 import com.radiogolha.mobile.ui.orchestras.*
+import com.radiogolha.mobile.ui.search.SearchScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -185,10 +186,10 @@ fun AndroidApp() {
                 }
 
                 composable(AndroidRoute.Search.route) {
-                    TabRootScreen(
-                        title = "جستجو",
-                        subtitle = "جستجو و فیلترهای اپ در این تب قرار می‌گیرد.",
+                    SearchScreen(
                         bottomNavItems = bottomNavItems,
+                        onBottomNavSelected = onTabSelected,
+                        onProgramClick = { programId -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(programId)) },
                         currentTrack = currentTrack,
                         isPlayerPlaying = isPlayerPlaying,
                         isPlayerLoading = isPlayerLoading,
@@ -197,7 +198,6 @@ fun AndroidApp() {
                         onTogglePlayerPlayback = { playerManager.togglePlayback() },
                         onTrackClick = { trackId -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(trackId)) },
                         onExpandPlayer = { showPlayerSheet = true },
-                        onBottomNavSelected = onTabSelected,
                     )
                 }
 
