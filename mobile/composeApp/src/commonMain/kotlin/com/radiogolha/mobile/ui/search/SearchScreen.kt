@@ -377,7 +377,9 @@ private fun FiltersPage(
         // Options list (not for Transcript tab)
         if (selectedFilterType == SearchFilterType.Transcript) {
             // Already handled above
-        } else LazyColumn(
+        } else {
+        key(selectedFilterType) {
+        LazyColumn(
             modifier = Modifier.weight(1f).padding(top = 8.dp),
             contentPadding = PaddingValues(horizontal = GolhaSpacing.ScreenHorizontal, vertical = 4.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -409,6 +411,8 @@ private fun FiltersPage(
                     }
                 }
             }
+        }
+        }
         }
 
         // Search button
