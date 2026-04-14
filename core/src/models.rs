@@ -133,6 +133,8 @@ pub struct ProgramListItem {
     pub no: i64,
     pub sub_no: Option<String>,
     pub duration: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub audio_url: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]

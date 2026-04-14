@@ -353,6 +353,7 @@ impl RadioGolhaCore {
                 no: row.get(3)?,
                 sub_no: row.get(4)?,
                 duration: None,
+                audio_url: None,
             })
         })?;
 
@@ -378,6 +379,7 @@ impl RadioGolhaCore {
                 no: row.get(3)?,
                 sub_no: row.get(4)?,
                 duration: None,
+                audio_url: None,
             })
         })?;
 
@@ -406,6 +408,7 @@ impl RadioGolhaCore {
                 no: row.get(3)?,
                 sub_no: row.get(4)?,
                 duration: row.get(5)?,
+                audio_url: None,
             })
         })?;
 
@@ -575,7 +578,8 @@ impl RadioGolhaCore {
                     category_name: row.get(2)?,
                     no: row.get(3)?,
                     sub_no: row.get(4)?,
-                duration: None,
+                    duration: None,
+                    audio_url: None,
                 })
             },
         )?;
@@ -754,7 +758,9 @@ impl RadioGolhaCore {
     fn build_program_search_sql(&self, filters: &ProgramSearchFilters) -> (String, Vec<Value>) {
         let mut sql = String::from(
             "
-            SELECT p.id, p.title, c.title_fa, p.no, p.sub_no
+            SELECT p.id, p.title, c.title_fa, p.no, p.sub_no,
+                   (SELECT MAX(end_time) FROM program_timeline WHERE program_id = p.id) AS duration,
+                   p.audio_url
             FROM program p
             JOIN category c ON p.category_id = c.id
             WHERE 1=1
@@ -972,7 +978,8 @@ impl RadioGolhaCore {
                 category_name: row.get(2)?,
                 no: row.get(3)?,
                 sub_no: row.get(4)?,
-                duration: None,
+                duration: row.get(5)?,
+                audio_url: row.get(6)?,
             })
         })?;
 

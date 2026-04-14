@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,7 +22,6 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -32,6 +30,7 @@ import com.radiogolha.mobile.theme.GolhaColors
 import com.radiogolha.mobile.theme.GolhaRadius
 import com.radiogolha.mobile.theme.GolhaSpacing
 import com.radiogolha.mobile.ui.home.*
+import com.radiogolha.mobile.ui.people.comparePersianTexts
 import com.radiogolha.mobile.ui.programs.ProgramTrackRow
 import com.radiogolha.mobile.ui.programs.SkeletonTrackRow
 import kotlinx.coroutines.Dispatchers
@@ -44,6 +43,7 @@ fun SearchScreen(
     bottomNavItems: List<BottomNavItemUiModel>,
     onBottomNavSelected: (AppTab) -> Unit,
     onProgramClick: (Long) -> Unit = {},
+    onPlayTrack: (TrackUiModel) -> Unit = {},
     currentTrack: TrackUiModel? = null,
     isPlayerPlaying: Boolean = false,
     isPlayerLoading: Boolean = false,
@@ -63,14 +63,12 @@ fun SearchScreen(
     var selectedFilterType by remember { mutableStateOf(SearchFilterType.Category) }
     var filterSearchQuery by remember { mutableStateOf("") }
 
-    // Load search options once
     LaunchedEffect(Unit) {
         withContext(Dispatchers.Default) {
             searchOptions = runCatching { loadSearchOptions() }.getOrDefault(SearchOptionsUiState())
         }
     }
 
-    // Reset filter search when switching tabs
     LaunchedEffect(selectedFilterType) { filterSearchQuery = "" }
 
     val doSearch: () -> Unit = {
@@ -79,7 +77,6 @@ fun SearchScreen(
         allResults = emptyList()
     }
 
-    // Execute search when switching to results
     LaunchedEffect(currentPage, isLoading) {
         if (currentPage == SearchPage.Results && isLoading) {
             val r = withContext(Dispatchers.Default) {
@@ -92,8 +89,6 @@ fun SearchScreen(
     }
 
     val listState = rememberLazyListState()
-
-    // Load more
     val shouldLoadMore by remember {
         derivedStateOf {
             val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
@@ -153,12 +148,53 @@ fun SearchScreen(
                         isLoading = isLoading,
                         isLoadingMore = isLoadingMore,
                         activeFilters = activeFilters,
+                        searchOptions = searchOptions,
                         currentTrack = currentTrack,
                         isPlayerPlaying = isPlayerPlaying,
                         onProgramClick = onProgramClick,
+                        onPlayTrack = onPlayTrack,
                         onBackToFilters = { currentPage = SearchPage.Filters },
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ActiveFilterChips(
+    activeFilters: ActiveFilters,
+    searchOptions: SearchOptionsUiState,
+) {
+    val chips = remember(activeFilters, searchOptions) {
+        buildList {
+            SearchFilterType.entries.forEach { type ->
+                activeFilters.idsFor(type).forEach { id ->
+                    val name = searchOptions.optionsFor(type).find { it.id == id }?.name ?: return@forEach
+                    add("${type.label}: $name")
+                }
+            }
+        }
+    }
+    if (chips.isEmpty()) return
+    LazyRow(
+        modifier = Modifier.padding(horizontal = GolhaSpacing.ScreenHorizontal),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        items(chips) { label ->
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = GolhaColors.BadgeBackground,
+                border = BorderStroke(0.5.dp, GolhaColors.Border),
+            ) {
+                Text(
+                    text = label,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = GolhaColors.PrimaryText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
         }
     }
@@ -179,8 +215,9 @@ private fun FiltersPage(
     val currentOptions = searchOptions.optionsFor(selectedFilterType)
     val selectedIds = activeFilters.idsFor(selectedFilterType)
     val filteredOptions = remember(currentOptions, filterSearchQuery) {
-        if (filterSearchQuery.isBlank()) currentOptions
+        val base = if (filterSearchQuery.isBlank()) currentOptions
         else currentOptions.filter { it.name.contains(filterSearchQuery, ignoreCase = true) }
+        base.sortedWith { a, b -> comparePersianTexts(a.name, b.name) }
     }
 
     Column(
@@ -190,33 +227,14 @@ private fun FiltersPage(
             .statusBarsPadding(),
     ) {
         // Header
-        Row(
+        Text(
+            text = "جستجو",
+            style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
+            color = GolhaColors.PrimaryText,
             modifier = Modifier
-                .fillMaxWidth()
                 .padding(horizontal = GolhaSpacing.ScreenHorizontal)
                 .padding(top = 16.dp, bottom = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = "جستجو",
-                style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
-                color = GolhaColors.PrimaryText,
-            )
-            if (activeFilters.hasAnyFilter) {
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = GolhaColors.PrimaryAccent,
-                ) {
-                    Text(
-                        text = "${activeFilters.activeFilterCount} فیلتر فعال",
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                        color = Color.White,
-                    )
-                }
-            }
-        }
+        )
 
         // Text search
         SearchInputField(
@@ -224,6 +242,9 @@ private fun FiltersPage(
             onQueryChange = { onFiltersChanged(activeFilters.copy(transcriptQuery = it)) },
             modifier = Modifier.padding(horizontal = GolhaSpacing.ScreenHorizontal).padding(bottom = 8.dp),
         )
+
+        // Active filter chips
+        ActiveFilterChips(activeFilters = activeFilters, searchOptions = searchOptions)
 
         // Filter type tabs
         ScrollableTabRow(
@@ -252,9 +273,7 @@ private fun FiltersPage(
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = type.label,
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                                ),
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium),
                                 color = if (selected) GolhaColors.PrimaryText else GolhaColors.SecondaryText,
                             )
                             if (count > 0) {
@@ -270,7 +289,7 @@ private fun FiltersPage(
             }
         }
 
-        // Any/All toggle (for non-category filters with selections)
+        // Any/All toggle
         if (selectedFilterType != SearchFilterType.Category && selectedIds.isNotEmpty()) {
             MatchModeToggle(
                 matchMode = activeFilters.matchModeFor(selectedFilterType),
@@ -282,10 +301,7 @@ private fun FiltersPage(
         // In-filter search
         if (currentOptions.size > 10) {
             Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = GolhaSpacing.ScreenHorizontal)
-                    .padding(top = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = GolhaSpacing.ScreenHorizontal).padding(top = 8.dp),
                 shape = RoundedCornerShape(12.dp),
                 color = GolhaColors.Surface,
                 border = BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.5f)),
@@ -298,19 +314,13 @@ private fun FiltersPage(
                     GolhaLineIcon(icon = GolhaIcon.Search, modifier = Modifier.size(16.dp), tint = GolhaColors.SecondaryText)
                     Box(modifier = Modifier.weight(1f)) {
                         if (filterSearchQuery.isEmpty()) {
-                            Text(
-                                text = "فیلتر ${selectedFilterType.label}...",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = GolhaColors.SecondaryText.copy(alpha = 0.5f),
-                            )
+                            Text("فیلتر ${selectedFilterType.label}...", style = MaterialTheme.typography.bodyMedium, color = GolhaColors.SecondaryText.copy(alpha = 0.5f))
                         }
                         BasicTextField(
-                            value = filterSearchQuery,
-                            onValueChange = onFilterSearchChange,
+                            value = filterSearchQuery, onValueChange = onFilterSearchChange,
                             modifier = Modifier.fillMaxWidth(),
                             textStyle = TextStyle(color = GolhaColors.PrimaryText, fontSize = MaterialTheme.typography.bodyMedium.fontSize),
-                            cursorBrush = SolidColor(GolhaColors.PrimaryAccent),
-                            singleLine = true,
+                            cursorBrush = SolidColor(GolhaColors.PrimaryAccent), singleLine = true,
                         )
                     }
                 }
@@ -337,20 +347,15 @@ private fun FiltersPage(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         Checkbox(
-                            checked = isSelected,
-                            onCheckedChange = null,
+                            checked = isSelected, onCheckedChange = null,
                             colors = CheckboxDefaults.colors(checkedColor = GolhaColors.PrimaryAccent, uncheckedColor = GolhaColors.Border),
                             modifier = Modifier.size(20.dp),
                         )
                         Text(
                             text = option.name,
-                            style = MaterialTheme.typography.bodyLarge.copy(
-                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                            ),
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal),
                             color = if (isSelected) GolhaColors.PrimaryAccent else GolhaColors.PrimaryText,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f),
+                            maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
                         )
                     }
                 }
@@ -360,20 +365,12 @@ private fun FiltersPage(
         // Search button
         Button(
             onClick = onSearch,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = GolhaSpacing.ScreenHorizontal)
-                .padding(top = 8.dp, bottom = 8.dp)
-                .height(52.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = GolhaSpacing.ScreenHorizontal).padding(top = 8.dp, bottom = 8.dp).height(52.dp),
             shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.buttonColors(containerColor = GolhaColors.PrimaryAccent),
             enabled = activeFilters.hasAnyFilter,
         ) {
-            Text(
-                text = "جستجو",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = Color.White,
-            )
+            Text("جستجو", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = Color.White)
         }
     }
 }
@@ -387,9 +384,11 @@ private fun ResultsPage(
     isLoading: Boolean,
     isLoadingMore: Boolean,
     activeFilters: ActiveFilters,
+    searchOptions: SearchOptionsUiState,
     currentTrack: TrackUiModel?,
     isPlayerPlaying: Boolean,
     onProgramClick: (Long) -> Unit,
+    onPlayTrack: (TrackUiModel) -> Unit,
     onBackToFilters: () -> Unit,
 ) {
     Column(
@@ -398,45 +397,54 @@ private fun ResultsPage(
             .padding(bottom = innerPadding.calculateBottomPadding())
             .statusBarsPadding(),
     ) {
-        // Header with back
+        // Header - back button on the left (end in RTL)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = GolhaSpacing.ScreenHorizontal)
-                .padding(top = 16.dp, bottom = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+                .padding(top = 16.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Surface(
-                    modifier = Modifier.size(36.dp).clickable { onBackToFilters() },
-                    shape = CircleShape,
-                    color = GolhaColors.Surface,
-                    border = BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.5f)),
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        GolhaLineIcon(icon = GolhaIcon.Back, modifier = Modifier.size(18.dp), tint = GolhaColors.PrimaryText)
-                    }
-                }
+            // Title + badge on the right (start in RTL)
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
                 Text(
                     text = "نتایج جستجو",
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
                     color = GolhaColors.PrimaryText,
                 )
+                if (!isLoading) {
+                    Surface(shape = RoundedCornerShape(20.dp), color = GolhaColors.PrimaryAccent) {
+                        Text(
+                            text = "$total",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                            color = Color.White,
+                        )
+                    }
+                }
             }
-            if (!isLoading) {
-                Surface(shape = RoundedCornerShape(20.dp), color = GolhaColors.PrimaryAccent) {
-                    Text(
-                        text = "$total نتیجه",
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                        color = Color.White,
-                    )
+            // Back button on the left (end in RTL)
+            Surface(
+                modifier = Modifier.size(36.dp).clickable { onBackToFilters() },
+                shape = CircleShape,
+                color = GolhaColors.Surface,
+                border = BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.5f)),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    GolhaLineIcon(icon = GolhaIcon.Back, modifier = Modifier.size(18.dp), tint = GolhaColors.PrimaryText)
                 }
             }
         }
 
-        // Results list
+        // Active filter chips
+        ActiveFilterChips(activeFilters = activeFilters, searchOptions = searchOptions)
+        if (activeFilters.activeFilterCount > 0) Spacer(modifier = Modifier.height(8.dp))
+
+        // Results
         if (isLoading) {
             LazyColumn(
                 modifier = Modifier.weight(1f),
@@ -452,12 +460,7 @@ private fun ResultsPage(
                         Column(modifier = Modifier.padding(vertical = 8.dp)) {
                             repeat(8) { index ->
                                 SkeletonTrackRow()
-                                if (index != 7) {
-                                    HorizontalDivider(
-                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                                        color = GolhaColors.Border.copy(alpha = 0.65f),
-                                    )
-                                }
+                                if (index != 7) HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp), color = GolhaColors.Border.copy(alpha = 0.65f))
                             }
                         }
                     }
@@ -491,6 +494,7 @@ private fun ResultsPage(
                                         title = result.title,
                                         artist = result.categoryName,
                                         duration = result.duration,
+                                        audioUrl = result.audioUrl,
                                     )
                                     val isActive = currentTrack?.id == result.id
                                     ProgramTrackRow(
@@ -498,19 +502,15 @@ private fun ResultsPage(
                                         isActive = isActive,
                                         isPlaying = isActive && isPlayerPlaying,
                                         onTrackClick = { onProgramClick(result.id) },
-                                        onPlayClick = { onProgramClick(result.id) },
+                                        onPlayClick = { onPlayTrack(track) },
                                     )
                                     if (index != results.lastIndex) {
-                                        HorizontalDivider(
-                                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                                            color = GolhaColors.Border.copy(alpha = 0.65f),
-                                        )
+                                        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp), color = GolhaColors.Border.copy(alpha = 0.65f))
                                     }
                                 }
                             }
                         }
                     }
-
                     if (isLoadingMore) {
                         item {
                             Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
@@ -518,7 +518,6 @@ private fun ResultsPage(
                             }
                         }
                     }
-
                     item { Spacer(modifier = Modifier.height(24.dp)) }
                 }
             }
@@ -527,42 +526,18 @@ private fun ResultsPage(
 }
 
 @Composable
-private fun MatchModeToggle(
-    matchMode: MatchMode,
-    onChanged: (MatchMode) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = "تطبیق:",
-            style = MaterialTheme.typography.bodySmall,
-            color = GolhaColors.SecondaryText,
-        )
-        Surface(
-            shape = RoundedCornerShape(20.dp),
-            color = GolhaColors.Surface,
-            border = BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.5f)),
-        ) {
+private fun MatchModeToggle(matchMode: MatchMode, onChanged: (MatchMode) -> Unit, modifier: Modifier = Modifier) {
+    Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text("تطبیق:", style = MaterialTheme.typography.bodySmall, color = GolhaColors.SecondaryText)
+        Surface(shape = RoundedCornerShape(20.dp), color = GolhaColors.Surface, border = BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.5f))) {
             Row(modifier = Modifier.padding(2.dp)) {
                 MatchMode.entries.forEach { mode ->
                     val selected = matchMode == mode
                     Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(if (selected) GolhaColors.PrimaryAccent else Color.Transparent)
-                            .clickable { onChanged(mode) }
-                            .padding(horizontal = 14.dp, vertical = 6.dp),
+                        modifier = Modifier.clip(RoundedCornerShape(18.dp)).background(if (selected) GolhaColors.PrimaryAccent else Color.Transparent).clickable { onChanged(mode) }.padding(horizontal = 14.dp, vertical = 6.dp),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(
-                            text = mode.label,
-                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal),
-                            color = if (selected) Color.White else GolhaColors.SecondaryText,
-                        )
+                        Text(mode.label, style = MaterialTheme.typography.labelMedium.copy(fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal), color = if (selected) Color.White else GolhaColors.SecondaryText)
                     }
                 }
             }
@@ -571,40 +546,13 @@ private fun MatchModeToggle(
 }
 
 @Composable
-private fun SearchInputField(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = GolhaColors.Surface,
-        border = BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.6f)),
-        shadowElevation = 2.dp,
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
+private fun SearchInputField(query: String, onQueryChange: (String) -> Unit, modifier: Modifier = Modifier) {
+    Surface(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = GolhaColors.Surface, border = BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.6f)), shadowElevation = 2.dp) {
+        Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             GolhaLineIcon(icon = GolhaIcon.Search, modifier = Modifier.size(20.dp), tint = GolhaColors.SecondaryText)
             Box(modifier = Modifier.weight(1f)) {
-                if (query.isEmpty()) {
-                    Text(
-                        text = "جستجو در متن برنامه‌ها...",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = GolhaColors.SecondaryText.copy(alpha = 0.6f),
-                    )
-                }
-                BasicTextField(
-                    value = query,
-                    onValueChange = onQueryChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    textStyle = TextStyle(color = GolhaColors.PrimaryText, fontSize = MaterialTheme.typography.bodyLarge.fontSize),
-                    cursorBrush = SolidColor(GolhaColors.PrimaryAccent),
-                    singleLine = true,
-                )
+                if (query.isEmpty()) Text("جستجو در متن برنامه‌ها...", style = MaterialTheme.typography.bodyLarge, color = GolhaColors.SecondaryText.copy(alpha = 0.6f))
+                BasicTextField(value = query, onValueChange = onQueryChange, modifier = Modifier.fillMaxWidth(), textStyle = TextStyle(color = GolhaColors.PrimaryText, fontSize = MaterialTheme.typography.bodyLarge.fontSize), cursorBrush = SolidColor(GolhaColors.PrimaryAccent), singleLine = true)
             }
         }
     }

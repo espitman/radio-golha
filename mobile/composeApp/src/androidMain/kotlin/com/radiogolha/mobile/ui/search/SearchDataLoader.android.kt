@@ -44,6 +44,8 @@ actual fun searchPrograms(filters: ActiveFilters, page: Int): SearchResultsUiSta
                     subNo = item.optString("subNo").takeIf { it.isNotBlank() }
                         ?: item.optString("sub_no").takeIf { it.isNotBlank() },
                     duration = item.optString("duration").takeIf { it.isNotBlank() },
+                    audioUrl = item.optString("audioUrl").takeIf { it.isNotBlank() }
+                        ?: item.optString("audio_url").takeIf { it.isNotBlank() },
                 )
             )
         }

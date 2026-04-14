@@ -190,6 +190,7 @@ fun AndroidApp() {
                         bottomNavItems = bottomNavItems,
                         onBottomNavSelected = onTabSelected,
                         onProgramClick = { programId -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(programId)) },
+                        onPlayTrack = { track -> playerManager.play(track) },
                         currentTrack = currentTrack,
                         isPlayerPlaying = isPlayerPlaying,
                         isPlayerLoading = isPlayerLoading,
