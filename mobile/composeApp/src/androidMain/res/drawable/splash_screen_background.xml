@@ -2,16 +2,18 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/radio_golha_surface" />
 
-    <item android:gravity="center">
+    <item
+        android:width="120dp"
+        android:height="120dp"
+        android:gravity="center">
         <shape android:shape="oval">
-            <size
-                android:width="132dp"
-                android:height="132dp" />
-            <solid android:color="@color/radio_golha_splash_icon_bg" />
+            <solid android:color="@color/ic_launcher_background" />
         </shape>
     </item>
 
     <item
+        android:width="84dp"
+        android:height="84dp"
         android:drawable="@mipmap/ic_launcher_foreground"
         android:gravity="center" />
 </layer-list>
