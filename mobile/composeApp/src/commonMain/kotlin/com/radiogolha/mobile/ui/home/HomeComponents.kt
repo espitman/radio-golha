@@ -346,21 +346,19 @@ fun DuetsBanner(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
         HorizontalPager(
             state = pagerState,
-            contentPadding = PaddingValues(horizontal = GolhaSpacing.ScreenHorizontal),
-            pageSpacing = 12.dp,
             modifier = Modifier.fillMaxWidth(),
         ) { page ->
             val duet = duets[page]
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .requiredHeight(140.dp)
+                    .requiredHeight(160.dp)
                     .clickable { onDuetClick(duet) },
-                shape = RoundedCornerShape(GolhaRadius.Card),
+                shape = RoundedCornerShape(0.dp),
                 color = GolhaColors.BannerBackground,
-                shadowElevation = GolhaElevation.Banner,
             ) {
                 Box(
                     modifier = Modifier
@@ -409,9 +407,11 @@ fun DuetsBanner(
             }
         }
 
-        // Page indicator dots
+        // Page indicator dots overlaid at bottom
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 10.dp),
             horizontalArrangement = Arrangement.Center,
         ) {
             repeat(duets.size) { index ->
@@ -421,9 +421,10 @@ fun DuetsBanner(
                         .padding(horizontal = 3.dp)
                         .size(if (selected) 8.dp else 6.dp)
                         .clip(CircleShape)
-                        .background(if (selected) GolhaColors.PrimaryAccent else GolhaColors.Border),
+                        .background(if (selected) GolhaColors.BannerDetail else GolhaColors.Surface.copy(alpha = 0.3f)),
                 )
             }
+        }
         }
     }
 }
