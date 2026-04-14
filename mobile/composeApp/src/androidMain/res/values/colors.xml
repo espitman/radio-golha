@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#0B2161</color>
+    <color name="radio_golha_surface">#F8F2E3</color>
+    <color name="radio_golha_splash_icon_bg">#E4C26A</color>
+    <color name="radio_golha_splash_pattern">#F1D9A2</color>
 </resources>
