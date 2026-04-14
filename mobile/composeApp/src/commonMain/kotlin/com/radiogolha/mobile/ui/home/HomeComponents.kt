@@ -21,6 +21,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
@@ -333,59 +335,109 @@ fun MusiciansSection(
 }
 
 @Composable
-fun DuetsSection(
+fun DuetsBanner(
     duets: List<DuetPairUiModel>,
     onDuetClick: (DuetPairUiModel) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    val pagerState = rememberPagerState(pageCount = { duets.size })
+
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        SectionTitle(title = "دوئت‌های ماندگار")
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(GolhaSpacing.CardGap),
+        HorizontalPager(
+            state = pagerState,
             contentPadding = PaddingValues(horizontal = GolhaSpacing.ScreenHorizontal),
-        ) {
-            items(duets) { duet ->
-                Surface(
+            pageSpacing = 12.dp,
+            modifier = Modifier.fillMaxWidth(),
+        ) { page ->
+            val duet = duets[page]
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .requiredHeight(140.dp)
+                    .clickable { onDuetClick(duet) },
+                shape = RoundedCornerShape(GolhaRadius.Card),
+                color = GolhaColors.BannerBackground,
+                shadowElevation = GolhaElevation.Banner,
+            ) {
+                Box(
                     modifier = Modifier
-                        .widthIn(min = 200.dp, max = 240.dp)
-                        .height(80.dp)
-                        .clickable { onDuetClick(duet) },
-                    shape = RoundedCornerShape(GolhaRadius.Card),
-                    color = GolhaColors.BannerBackground,
-                    shadowElevation = GolhaElevation.Card,
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize().padding(horizontal = 18.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = duet.singer1,
-                                style = MaterialTheme.typography.titleSmall,
-                                color = GolhaColors.BannerDetail,
-                                maxLines = 1,
+                        .fillMaxSize()
+                        .drawBehind {
+                            drawCircle(
+                                color = GolhaColors.BannerDetail.copy(alpha = 0.08f),
+                                radius = size.minDimension * 0.38f,
+                                center = Offset(size.width * 0.15f, size.height * 0.25f),
                             )
-                            Text(
-                                text = "و",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = GolhaColors.Surface.copy(alpha = 0.5f),
-                            )
-                            Text(
-                                text = duet.singer2,
-                                style = MaterialTheme.typography.titleSmall,
-                                color = GolhaColors.BannerDetail,
-                                maxLines = 1,
+                            drawCircle(
+                                color = GolhaColors.BannerDetail.copy(alpha = 0.06f),
+                                radius = size.minDimension * 0.28f,
+                                center = Offset(size.width * 0.85f, size.height * 0.8f),
                             )
                         }
+                        .padding(horizontal = 24.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            text = "دوئت ماندگار",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = GolhaColors.Surface.copy(alpha = 0.5f),
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = duet.singer1,
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = GolhaColors.BannerDetail,
+                            maxLines = 1,
+                        )
+                        Text(
+                            text = "و",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = GolhaColors.Surface.copy(alpha = 0.45f),
+                        )
+                        Text(
+                            text = duet.singer2,
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = GolhaColors.BannerDetail,
+                            maxLines = 1,
+                        )
                     }
                 }
             }
         }
+
+        // Page indicator dots
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            repeat(duets.size) { index ->
+                val selected = pagerState.currentPage == index
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 3.dp)
+                        .size(if (selected) 8.dp else 6.dp)
+                        .clip(CircleShape)
+                        .background(if (selected) GolhaColors.PrimaryAccent else GolhaColors.Border),
+                )
+            }
+        }
     }
+}
+
+@Composable
+fun DuetsBannerSkeleton(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .requiredHeight(140.dp)
+            .padding(horizontal = GolhaSpacing.ScreenHorizontal)
+            .clip(RoundedCornerShape(GolhaRadius.Card))
+            .background(GolhaColors.Border.copy(alpha = 0.2f)),
+    )
 }
 
 @Composable

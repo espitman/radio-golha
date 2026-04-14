@@ -88,19 +88,24 @@ fun HomeScreen(
                 ) {
                     if (state == null) {
                         item { HeaderSection() }
-                        item { HeroBannerSkeleton() }
+                        item { DuetsBannerSkeleton() }
                         item { ProgramsSectionSkeleton() }
                         item { SingersSectionSkeleton() }
                         item { MusiciansSectionSkeleton() }
                         item { TopTracksSectionSkeleton() }
                     } else {
                         item { HeaderSection() }
-                        item { HeroBanner() }
-                        item { 
+                        item {
+                            DuetsBanner(
+                                duets = duetPairs,
+                                onDuetClick = onDuetClick,
+                            )
+                        }
+                        item {
                             ProgramsSection(
                                 programs = state.programs,
                                 onProgramClick = onProgramClick
-                            ) 
+                            )
                         }
                         item {
                             SingersSection(
@@ -114,12 +119,6 @@ fun HomeScreen(
                                 musicians = state.musicians,
                                 onSeeAllClick = onOpenAllMusicians,
                                 onMusicianClick = onMusicianClick,
-                            )
-                        }
-                        item {
-                            DuetsSection(
-                                duets = duetPairs,
-                                onDuetClick = onDuetClick,
                             )
                         }
                         item {
