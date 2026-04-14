@@ -82,8 +82,8 @@ fun ProgramEpisodeDetailScreen(
         }
     }
 
-    // Dynamic height of the header for stacking
-    val collapsedHeaderHeight = 56.dp + 12.dp // Header height + small gap
+    // Only leave a small breathing room under the sticky header.
+    val collapsedHeaderHeight = 8.dp
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         TabRootScreen(
@@ -286,17 +286,18 @@ private fun ProgramHeaderLayout(
 
 @Composable
 private fun DetailTabSelector(
-    activeTab: DetailTab, 
+    activeTab: DetailTab,
     onTabChange: (DetailTab) -> Unit,
     stickyPadding: Dp = 0.dp,
     isCollapsed: Boolean = false
 ) {
-    Surface(
-        modifier = Modifier.fillMaxWidth().padding(top = if (isCollapsed) stickyPadding else 0.dp),
-        color = GolhaColors.ScreenBackground,
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(GolhaColors.ScreenBackground)
+            .padding(top = if (isCollapsed) stickyPadding else 0.dp),
     ) {
         Surface(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = GolhaSpacing.ScreenHorizontal, vertical = 12.dp),
             color = GolhaColors.Surface,
             shape = RoundedCornerShape(GolhaRadius.Pill),
             border = if (isCollapsed) null else androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.5f)),
