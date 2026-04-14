@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -67,6 +67,33 @@ type SearchResultsResponse = {
 type MatchMode = 'any' | 'all'
 type SortField = 'id' | 'no' | 'sub_no' | 'title' | 'category_name'
 type SortDirection = 'asc' | 'desc'
+type SearchPageQuery = {
+  page?: number
+  sortField?: SortField
+  sortDirection?: SortDirection
+  transcriptQuery?: string
+  categoryIds?: string
+  modeIds?: string
+  modeMatch?: MatchMode
+  orchestraIds?: string
+  orchestraMatch?: MatchMode
+  instrumentIds?: string
+  instrumentMatch?: MatchMode
+  singerIds?: string
+  singerMatch?: MatchMode
+  poetIds?: string
+  poetMatch?: MatchMode
+  announcerIds?: string
+  announcerMatch?: MatchMode
+  composerIds?: string
+  composerMatch?: MatchMode
+  arrangerIds?: string
+  arrangerMatch?: MatchMode
+  performerIds?: string
+  performerMatch?: MatchMode
+  orchestraLeaderIds?: string
+  orchestraLeaderMatch?: MatchMode
+}
 
 type MultiSelectProps = {
   label: string
@@ -102,8 +129,75 @@ const EMPTY_RESULTS: SearchResultsResponse = {
 }
 
 export const Route = createFileRoute('/search/')({
+  validateSearch: (search: Record<string, unknown>): Required<SearchPageQuery> => ({
+    page: parsePage(search.page),
+    sortField: parseSortField(search.sortField),
+    sortDirection: parseSortDirection(search.sortDirection),
+    transcriptQuery: parseString(search.transcriptQuery),
+    categoryIds: parseIdsParam(search.categoryIds),
+    modeIds: parseIdsParam(search.modeIds),
+    modeMatch: parseMatchMode(search.modeMatch),
+    orchestraIds: parseIdsParam(search.orchestraIds),
+    orchestraMatch: parseMatchMode(search.orchestraMatch),
+    instrumentIds: parseIdsParam(search.instrumentIds),
+    instrumentMatch: parseMatchMode(search.instrumentMatch),
+    singerIds: parseIdsParam(search.singerIds),
+    singerMatch: parseMatchMode(search.singerMatch),
+    poetIds: parseIdsParam(search.poetIds),
+    poetMatch: parseMatchMode(search.poetMatch),
+    announcerIds: parseIdsParam(search.announcerIds),
+    announcerMatch: parseMatchMode(search.announcerMatch),
+    composerIds: parseIdsParam(search.composerIds),
+    composerMatch: parseMatchMode(search.composerMatch),
+    arrangerIds: parseIdsParam(search.arrangerIds),
+    arrangerMatch: parseMatchMode(search.arrangerMatch),
+    performerIds: parseIdsParam(search.performerIds),
+    performerMatch: parseMatchMode(search.performerMatch),
+    orchestraLeaderIds: parseIdsParam(search.orchestraLeaderIds),
+    orchestraLeaderMatch: parseMatchMode(search.orchestraLeaderMatch),
+  }),
   component: SearchPage,
 })
+
+function parseString(value: unknown) {
+  return typeof value === 'string' ? value : ''
+}
+
+function parsePage(value: unknown) {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1
+}
+
+function parseIdsParam(value: unknown) {
+  return typeof value === 'string'
+    ? value
+        .split(',')
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0 && Number.isFinite(Number(item)))
+        .join(',')
+    : ''
+}
+
+function parseIdList(value: string) {
+  return value
+    .split(',')
+    .map((item) => Number(item))
+    .filter((item) => Number.isFinite(item))
+}
+
+function parseMatchMode(value: unknown): MatchMode {
+  return value === 'all' ? 'all' : 'any'
+}
+
+function parseSortField(value: unknown): SortField {
+  return value === 'id' || value === 'no' || value === 'sub_no' || value === 'title' || value === 'category_name'
+    ? value
+    : 'no'
+}
+
+function parseSortDirection(value: unknown): SortDirection {
+  return value === 'desc' ? 'desc' : 'asc'
+}
 
 function MultiSelectFilter({
   label,
@@ -288,38 +382,70 @@ function MultiSelectFilter({
 }
 
 function SearchPage() {
+  const search = Route.useSearch()
+  const navigate = useNavigate({ from: Route.fullPath })
   const [options, setOptions] = useState<SearchOptionsResponse>(EMPTY_OPTIONS)
   const [results, setResults] = useState<SearchResultsResponse>(EMPTY_RESULTS)
   const [loadingOptions, setLoadingOptions] = useState(true)
   const [loadingResults, setLoadingResults] = useState(true)
   const [optionsError, setOptionsError] = useState(false)
-  const [page, setPage] = useState(1)
-  const [sortField, setSortField] = useState<SortField>('no')
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
-  const [transcriptQuery, setTranscriptQuery] = useState('')
+  const [transcriptQuery, setTranscriptQuery] = useState(search.transcriptQuery)
   const deferredTranscriptQuery = useDeferredValue(transcriptQuery)
 
-  const [categoryIds, setCategoryIds] = useState<number[]>([])
-  const [modeIds, setModeIds] = useState<number[]>([])
-  const [modeMatch, setModeMatch] = useState<MatchMode>('any')
-  const [orchestraIds, setOrchestraIds] = useState<number[]>([])
-  const [orchestraMatch, setOrchestraMatch] = useState<MatchMode>('any')
-  const [instrumentIds, setInstrumentIds] = useState<number[]>([])
-  const [instrumentMatch, setInstrumentMatch] = useState<MatchMode>('any')
-  const [singerIds, setSingerIds] = useState<number[]>([])
-  const [singerMatch, setSingerMatch] = useState<MatchMode>('any')
-  const [poetIds, setPoetIds] = useState<number[]>([])
-  const [poetMatch, setPoetMatch] = useState<MatchMode>('any')
-  const [announcerIds, setAnnouncerIds] = useState<number[]>([])
-  const [announcerMatch, setAnnouncerMatch] = useState<MatchMode>('any')
-  const [composerIds, setComposerIds] = useState<number[]>([])
-  const [composerMatch, setComposerMatch] = useState<MatchMode>('any')
-  const [arrangerIds, setArrangerIds] = useState<number[]>([])
-  const [arrangerMatch, setArrangerMatch] = useState<MatchMode>('any')
-  const [performerIds, setPerformerIds] = useState<number[]>([])
-  const [performerMatch, setPerformerMatch] = useState<MatchMode>('any')
-  const [orchestraLeaderIds, setOrchestraLeaderIds] = useState<number[]>([])
-  const [orchestraLeaderMatch, setOrchestraLeaderMatch] = useState<MatchMode>('any')
+  const page = search.page
+  const sortField = search.sortField
+  const sortDirection = search.sortDirection
+  const categoryIds = useMemo(() => parseIdList(search.categoryIds), [search.categoryIds])
+  const modeIds = useMemo(() => parseIdList(search.modeIds), [search.modeIds])
+  const orchestraIds = useMemo(() => parseIdList(search.orchestraIds), [search.orchestraIds])
+  const instrumentIds = useMemo(() => parseIdList(search.instrumentIds), [search.instrumentIds])
+  const singerIds = useMemo(() => parseIdList(search.singerIds), [search.singerIds])
+  const poetIds = useMemo(() => parseIdList(search.poetIds), [search.poetIds])
+  const announcerIds = useMemo(() => parseIdList(search.announcerIds), [search.announcerIds])
+  const composerIds = useMemo(() => parseIdList(search.composerIds), [search.composerIds])
+  const arrangerIds = useMemo(() => parseIdList(search.arrangerIds), [search.arrangerIds])
+  const performerIds = useMemo(() => parseIdList(search.performerIds), [search.performerIds])
+  const orchestraLeaderIds = useMemo(() => parseIdList(search.orchestraLeaderIds), [search.orchestraLeaderIds])
+  const modeMatch = search.modeMatch
+  const orchestraMatch = search.orchestraMatch
+  const instrumentMatch = search.instrumentMatch
+  const singerMatch = search.singerMatch
+  const poetMatch = search.poetMatch
+  const announcerMatch = search.announcerMatch
+  const composerMatch = search.composerMatch
+  const arrangerMatch = search.arrangerMatch
+  const performerMatch = search.performerMatch
+  const orchestraLeaderMatch = search.orchestraLeaderMatch
+
+  const updateSearch = (
+    updater: (prev: Required<SearchPageQuery>) => Required<SearchPageQuery>,
+    replace = false,
+  ) => {
+    navigate({
+      search: (prev) => updater(prev as Required<SearchPageQuery>),
+      replace,
+    })
+  }
+
+  const setIdsParam = (key: keyof SearchPageQuery, ids: number[]) => {
+    updateSearch((prev) => ({
+      ...prev,
+      page: 1,
+      [key]: ids.length ? ids.join(',') : '',
+    }))
+  }
+
+  const setMatchParam = (key: keyof SearchPageQuery, mode: MatchMode) => {
+    updateSearch((prev) => ({
+      ...prev,
+      page: 1,
+      [key]: mode,
+    }))
+  }
+
+  useEffect(() => {
+    setTranscriptQuery(search.transcriptQuery)
+  }, [search.transcriptQuery])
 
   useEffect(() => {
     fetch('/api/program-search/options')
@@ -355,36 +481,15 @@ function SearchPage() {
       })
   }, [])
 
-  const filterKey = [
-    deferredTranscriptQuery.trim(),
-    categoryIds.join(','),
-    modeIds.join(','),
-    modeMatch,
-    orchestraIds.join(','),
-    orchestraMatch,
-    instrumentIds.join(','),
-    instrumentMatch,
-    singerIds.join(','),
-    singerMatch,
-    poetIds.join(','),
-    poetMatch,
-    announcerIds.join(','),
-    announcerMatch,
-    composerIds.join(','),
-    composerMatch,
-    arrangerIds.join(','),
-    arrangerMatch,
-    performerIds.join(','),
-    performerMatch,
-    orchestraLeaderIds.join(','),
-    orchestraLeaderMatch,
-    sortField,
-    sortDirection,
-  ].join('|')
-
   useEffect(() => {
-    setPage(1)
-  }, [filterKey])
+    if (deferredTranscriptQuery !== search.transcriptQuery) {
+      updateSearch((prev) => ({
+        ...prev,
+        page: 1,
+        transcriptQuery: deferredTranscriptQuery.trim(),
+      }), true)
+    }
+  }, [deferredTranscriptQuery, search.transcriptQuery])
 
   useEffect(() => {
     setLoadingResults(true)
@@ -394,7 +499,7 @@ function SearchPage() {
       sortDirection,
     })
 
-    if (deferredTranscriptQuery.trim()) params.set('transcriptQuery', deferredTranscriptQuery.trim())
+    if (search.transcriptQuery.trim()) params.set('transcriptQuery', search.transcriptQuery.trim())
     if (categoryIds.length) params.set('categoryIds', categoryIds.join(','))
     if (modeIds.length) {
       params.set('modeIds', modeIds.join(','))
@@ -450,7 +555,7 @@ function SearchPage() {
       .catch(() => setLoadingResults(false))
   }, [
     page,
-    deferredTranscriptQuery,
+    search.transcriptQuery,
     categoryIds,
     modeIds,
     modeMatch,
@@ -497,40 +602,52 @@ function SearchPage() {
 
   const resetAll = () => {
     setTranscriptQuery('')
-    setCategoryIds([])
-    setModeIds([])
-    setModeMatch('any')
-    setOrchestraIds([])
-    setOrchestraMatch('any')
-    setInstrumentIds([])
-    setInstrumentMatch('any')
-    setSingerIds([])
-    setSingerMatch('any')
-    setPoetIds([])
-    setPoetMatch('any')
-    setAnnouncerIds([])
-    setAnnouncerMatch('any')
-    setComposerIds([])
-    setComposerMatch('any')
-    setArrangerIds([])
-    setArrangerMatch('any')
-    setPerformerIds([])
-    setPerformerMatch('any')
-    setOrchestraLeaderIds([])
-    setOrchestraLeaderMatch('any')
-    setSortField('no')
-    setSortDirection('asc')
-    setPage(1)
+    navigate({
+      search: {
+        page: 1,
+        sortField: 'no',
+        sortDirection: 'asc',
+        transcriptQuery: '',
+        categoryIds: '',
+        modeIds: '',
+        modeMatch: 'any',
+        orchestraIds: '',
+        orchestraMatch: 'any',
+        instrumentIds: '',
+        instrumentMatch: 'any',
+        singerIds: '',
+        singerMatch: 'any',
+        poetIds: '',
+        poetMatch: 'any',
+        announcerIds: '',
+        announcerMatch: 'any',
+        composerIds: '',
+        composerMatch: 'any',
+        arrangerIds: '',
+        arrangerMatch: 'any',
+        performerIds: '',
+        performerMatch: 'any',
+        orchestraLeaderIds: '',
+        orchestraLeaderMatch: 'any',
+      },
+    })
   }
 
   const toggleSort = (field: SortField) => {
-    setPage(1)
     if (sortField === field) {
-      setSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))
+      updateSearch((prev) => ({
+        ...prev,
+        page: 1,
+        sortDirection: prev.sortDirection === 'asc' ? 'desc' : 'asc',
+      }))
       return
     }
-    setSortField(field)
-    setSortDirection('asc')
+    updateSearch((prev) => ({
+      ...prev,
+      page: 1,
+      sortField: field,
+      sortDirection: 'asc',
+    }))
   }
 
   const renderSortIcon = (field: SortField) => {
@@ -548,7 +665,12 @@ function SearchPage() {
 
     items.push(
       <PaginationItem key="first">
-        <PaginationLink size="default" onClick={() => setPage(1)} isActive={page === 1} className="cursor-pointer">
+        <PaginationLink
+          size="default"
+          onClick={() => updateSearch((prev) => ({ ...prev, page: 1 }))}
+          isActive={page === 1}
+          className="cursor-pointer"
+        >
           1
         </PaginationLink>
       </PaginationItem>,
@@ -562,7 +684,12 @@ function SearchPage() {
       if (i === 1 || i === total) continue
       items.push(
         <PaginationItem key={i}>
-          <PaginationLink size="default" onClick={() => setPage(i)} isActive={page === i} className="cursor-pointer">
+          <PaginationLink
+            size="default"
+            onClick={() => updateSearch((prev) => ({ ...prev, page: i }))}
+            isActive={page === i}
+            className="cursor-pointer"
+          >
             {i}
           </PaginationLink>
         </PaginationItem>,
@@ -576,7 +703,12 @@ function SearchPage() {
     if (total > 1) {
       items.push(
         <PaginationItem key="last">
-          <PaginationLink size="default" onClick={() => setPage(total)} isActive={page === total} className="cursor-pointer">
+          <PaginationLink
+            size="default"
+            onClick={() => updateSearch((prev) => ({ ...prev, page: total }))}
+            isActive={page === total}
+            className="cursor-pointer"
+          >
             {total}
           </PaginationLink>
         </PaginationItem>,
@@ -634,17 +766,17 @@ function SearchPage() {
               </div>
 
               <div className="grid gap-4 xl:grid-cols-4 lg:grid-cols-3 md:grid-cols-2">
-                <MultiSelectFilter label="دسته برنامه" placeholder="انتخاب دسته..." options={categorySearchOptions} selectedIds={categoryIds} loading={loadingOptions} disabled={optionsError} onChange={setCategoryIds} />
-                <MultiSelectFilter label="دستگاه" placeholder="انتخاب دستگاه..." options={options.modes} selectedIds={modeIds} matchMode={modeMatch} onMatchModeChange={setModeMatch} loading={loadingOptions} disabled={optionsError} onChange={setModeIds} />
-                <MultiSelectFilter label="ارکستر" placeholder="انتخاب ارکستر..." options={options.orchestras} selectedIds={orchestraIds} matchMode={orchestraMatch} onMatchModeChange={setOrchestraMatch} loading={loadingOptions} disabled={optionsError} onChange={setOrchestraIds} />
-                <MultiSelectFilter label="ساز" placeholder="انتخاب ساز..." options={options.instruments} selectedIds={instrumentIds} matchMode={instrumentMatch} onMatchModeChange={setInstrumentMatch} loading={loadingOptions} disabled={optionsError} onChange={setInstrumentIds} />
-                <MultiSelectFilter label="خواننده" placeholder="انتخاب خواننده..." options={options.singers} selectedIds={singerIds} matchMode={singerMatch} onMatchModeChange={setSingerMatch} loading={loadingOptions} disabled={optionsError} onChange={setSingerIds} />
-                <MultiSelectFilter label="شاعر" placeholder="انتخاب شاعر..." options={options.poets} selectedIds={poetIds} matchMode={poetMatch} onMatchModeChange={setPoetMatch} loading={loadingOptions} disabled={optionsError} onChange={setPoetIds} />
-                <MultiSelectFilter label="گوینده" placeholder="انتخاب گوینده..." options={options.announcers} selectedIds={announcerIds} matchMode={announcerMatch} onMatchModeChange={setAnnouncerMatch} loading={loadingOptions} disabled={optionsError} onChange={setAnnouncerIds} />
-                <MultiSelectFilter label="آهنگساز" placeholder="انتخاب آهنگساز..." options={options.composers} selectedIds={composerIds} matchMode={composerMatch} onMatchModeChange={setComposerMatch} loading={loadingOptions} disabled={optionsError} onChange={setComposerIds} />
-                <MultiSelectFilter label="تنظیم‌کننده" placeholder="انتخاب تنظیم‌کننده..." options={options.arrangers} selectedIds={arrangerIds} matchMode={arrangerMatch} onMatchModeChange={setArrangerMatch} loading={loadingOptions} disabled={optionsError} onChange={setArrangerIds} />
-                <MultiSelectFilter label="نوازنده" placeholder="انتخاب نوازنده..." options={options.performers} selectedIds={performerIds} matchMode={performerMatch} onMatchModeChange={setPerformerMatch} loading={loadingOptions} disabled={optionsError} onChange={setPerformerIds} />
-                <MultiSelectFilter label="رهبر ارکستر" placeholder="انتخاب رهبر..." options={options.orchestraLeaders} selectedIds={orchestraLeaderIds} matchMode={orchestraLeaderMatch} onMatchModeChange={setOrchestraLeaderMatch} loading={loadingOptions} disabled={optionsError} onChange={setOrchestraLeaderIds} />
+                <MultiSelectFilter label="دسته برنامه" placeholder="انتخاب دسته..." options={categorySearchOptions} selectedIds={categoryIds} loading={loadingOptions} disabled={optionsError} onChange={(ids) => setIdsParam('categoryIds', ids)} />
+                <MultiSelectFilter label="دستگاه" placeholder="انتخاب دستگاه..." options={options.modes} selectedIds={modeIds} matchMode={modeMatch} onMatchModeChange={(mode) => setMatchParam('modeMatch', mode)} loading={loadingOptions} disabled={optionsError} onChange={(ids) => setIdsParam('modeIds', ids)} />
+                <MultiSelectFilter label="ارکستر" placeholder="انتخاب ارکستر..." options={options.orchestras} selectedIds={orchestraIds} matchMode={orchestraMatch} onMatchModeChange={(mode) => setMatchParam('orchestraMatch', mode)} loading={loadingOptions} disabled={optionsError} onChange={(ids) => setIdsParam('orchestraIds', ids)} />
+                <MultiSelectFilter label="ساز" placeholder="انتخاب ساز..." options={options.instruments} selectedIds={instrumentIds} matchMode={instrumentMatch} onMatchModeChange={(mode) => setMatchParam('instrumentMatch', mode)} loading={loadingOptions} disabled={optionsError} onChange={(ids) => setIdsParam('instrumentIds', ids)} />
+                <MultiSelectFilter label="خواننده" placeholder="انتخاب خواننده..." options={options.singers} selectedIds={singerIds} matchMode={singerMatch} onMatchModeChange={(mode) => setMatchParam('singerMatch', mode)} loading={loadingOptions} disabled={optionsError} onChange={(ids) => setIdsParam('singerIds', ids)} />
+                <MultiSelectFilter label="شاعر" placeholder="انتخاب شاعر..." options={options.poets} selectedIds={poetIds} matchMode={poetMatch} onMatchModeChange={(mode) => setMatchParam('poetMatch', mode)} loading={loadingOptions} disabled={optionsError} onChange={(ids) => setIdsParam('poetIds', ids)} />
+                <MultiSelectFilter label="گوینده" placeholder="انتخاب گوینده..." options={options.announcers} selectedIds={announcerIds} matchMode={announcerMatch} onMatchModeChange={(mode) => setMatchParam('announcerMatch', mode)} loading={loadingOptions} disabled={optionsError} onChange={(ids) => setIdsParam('announcerIds', ids)} />
+                <MultiSelectFilter label="آهنگساز" placeholder="انتخاب آهنگساز..." options={options.composers} selectedIds={composerIds} matchMode={composerMatch} onMatchModeChange={(mode) => setMatchParam('composerMatch', mode)} loading={loadingOptions} disabled={optionsError} onChange={(ids) => setIdsParam('composerIds', ids)} />
+                <MultiSelectFilter label="تنظیم‌کننده" placeholder="انتخاب تنظیم‌کننده..." options={options.arrangers} selectedIds={arrangerIds} matchMode={arrangerMatch} onMatchModeChange={(mode) => setMatchParam('arrangerMatch', mode)} loading={loadingOptions} disabled={optionsError} onChange={(ids) => setIdsParam('arrangerIds', ids)} />
+                <MultiSelectFilter label="نوازنده" placeholder="انتخاب نوازنده..." options={options.performers} selectedIds={performerIds} matchMode={performerMatch} onMatchModeChange={(mode) => setMatchParam('performerMatch', mode)} loading={loadingOptions} disabled={optionsError} onChange={(ids) => setIdsParam('performerIds', ids)} />
+                <MultiSelectFilter label="رهبر ارکستر" placeholder="انتخاب رهبر..." options={options.orchestraLeaders} selectedIds={orchestraLeaderIds} matchMode={orchestraLeaderMatch} onMatchModeChange={(mode) => setMatchParam('orchestraLeaderMatch', mode)} loading={loadingOptions} disabled={optionsError} onChange={(ids) => setIdsParam('orchestraLeaderIds', ids)} />
               </div>
 
               {optionsError && (
@@ -790,9 +922,9 @@ function SearchPage() {
         <Pagination className="order-2 justify-start md:order-1">
           <PaginationContent>
             <PaginationItem>
-              <PaginationPrevious
+                <PaginationPrevious
                 size="default"
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                onClick={() => updateSearch((prev) => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
                 className={`cursor-pointer ${page === 1 ? 'pointer-events-none opacity-30 shadow-none' : ''}`}
               />
             </PaginationItem>
@@ -800,7 +932,7 @@ function SearchPage() {
             <PaginationItem>
               <PaginationNext
                 size="default"
-                onClick={() => setPage((current) => Math.min(results.totalPages, current + 1))}
+                onClick={() => updateSearch((prev) => ({ ...prev, page: Math.min(results.totalPages, prev.page + 1) }))}
                 className={`cursor-pointer ${page === results.totalPages ? 'pointer-events-none opacity-30 shadow-none' : ''}`}
               />
             </PaginationItem>
