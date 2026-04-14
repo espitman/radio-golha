@@ -30,6 +30,7 @@ import com.radiogolha.mobile.theme.GolhaColors
 import com.radiogolha.mobile.theme.GolhaRadius
 import com.radiogolha.mobile.theme.GolhaSpacing
 import com.radiogolha.mobile.ui.home.*
+import com.radiogolha.mobile.PlatformBackHandler
 import com.radiogolha.mobile.ui.people.comparePersianTexts
 import com.radiogolha.mobile.ui.programs.ProgramTrackRow
 import com.radiogolha.mobile.ui.programs.SkeletonTrackRow
@@ -115,6 +116,10 @@ fun SearchScreen(
             state.allResults = state.allResults + r.results
             state.isLoadingMore = false
         }
+    }
+
+    PlatformBackHandler(enabled = state.currentPage == SearchPage.Results) {
+        state.currentPage = SearchPage.Filters
     }
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
