@@ -17,6 +17,7 @@ enum class SearchFilterType(val label: String) {
     Composer("آهنگساز"),
     Arranger("تنظیم‌کننده"),
     OrchestraLeader("رهبر ارکستر"),
+    Transcript("متن برنامه"),
 }
 
 data class SearchOptionsUiState(
@@ -44,6 +45,7 @@ data class SearchOptionsUiState(
         SearchFilterType.Composer -> composers
         SearchFilterType.Arranger -> arrangers
         SearchFilterType.OrchestraLeader -> orchestraLeaders
+        SearchFilterType.Transcript -> emptyList()
     }
 }
 
@@ -83,6 +85,7 @@ data class ActiveFilters(
         SearchFilterType.Composer -> composerIds
         SearchFilterType.Arranger -> arrangerIds
         SearchFilterType.OrchestraLeader -> orchestraLeaderIds
+        SearchFilterType.Transcript -> emptySet()
     }
 
     fun withToggled(type: SearchFilterType, id: Long): ActiveFilters {
@@ -99,6 +102,7 @@ data class ActiveFilters(
             SearchFilterType.Composer -> copy(composerIds = toggle(composerIds))
             SearchFilterType.Arranger -> copy(arrangerIds = toggle(arrangerIds))
             SearchFilterType.OrchestraLeader -> copy(orchestraLeaderIds = toggle(orchestraLeaderIds))
+            SearchFilterType.Transcript -> this
         }
     }
 
@@ -114,10 +118,12 @@ data class ActiveFilters(
         SearchFilterType.Composer -> copy(composerIds = emptySet())
         SearchFilterType.Arranger -> copy(arrangerIds = emptySet())
         SearchFilterType.OrchestraLeader -> copy(orchestraLeaderIds = emptySet())
+        SearchFilterType.Transcript -> copy(transcriptQuery = "")
     }
 
     fun matchModeFor(type: SearchFilterType): MatchMode = when (type) {
         SearchFilterType.Category -> MatchMode.Any
+        SearchFilterType.Transcript -> MatchMode.Any
         SearchFilterType.Singer -> singerMatch
         SearchFilterType.Mode -> modeMatch
         SearchFilterType.Orchestra -> orchestraMatch
@@ -132,6 +138,7 @@ data class ActiveFilters(
 
     fun withMatchMode(type: SearchFilterType, mode: MatchMode): ActiveFilters = when (type) {
         SearchFilterType.Category -> this
+        SearchFilterType.Transcript -> this
         SearchFilterType.Singer -> copy(singerMatch = mode)
         SearchFilterType.Mode -> copy(modeMatch = mode)
         SearchFilterType.Orchestra -> copy(orchestraMatch = mode)

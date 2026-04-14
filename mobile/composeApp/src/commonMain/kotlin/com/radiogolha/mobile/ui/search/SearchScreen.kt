@@ -161,40 +161,65 @@ fun SearchScreen(
     }
 }
 
+private data class ActiveChip(val type: SearchFilterType, val id: Long, val label: String)
+
 @Composable
 private fun ActiveFilterChips(
     activeFilters: ActiveFilters,
     searchOptions: SearchOptionsUiState,
+    onRemove: (SearchFilterType, Long) -> Unit = { _, _ -> },
+    onRemoveTranscript: () -> Unit = {},
 ) {
     val chips = remember(activeFilters, searchOptions) {
         buildList {
-            SearchFilterType.entries.forEach { type ->
+            // Transcript as a chip
+            if (activeFilters.transcriptQuery.isNotBlank()) {
+                add(ActiveChip(SearchFilterType.Transcript, -1, "متن: ${activeFilters.transcriptQuery}"))
+            }
+            SearchFilterType.entries.filter { it != SearchFilterType.Transcript }.forEach { type ->
                 activeFilters.idsFor(type).forEach { id ->
                     val name = searchOptions.optionsFor(type).find { it.id == id }?.name ?: return@forEach
-                    add("${type.label}: $name")
+                    add(ActiveChip(type, id, name))
                 }
             }
         }
     }
     if (chips.isEmpty()) return
     LazyRow(
-        modifier = Modifier.padding(horizontal = GolhaSpacing.ScreenHorizontal),
+        modifier = Modifier.padding(horizontal = GolhaSpacing.ScreenHorizontal).padding(vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        items(chips) { label ->
+        items(chips, key = { "${it.type}-${it.id}" }) { chip ->
             Surface(
                 shape = RoundedCornerShape(16.dp),
-                color = GolhaColors.BadgeBackground,
-                border = BorderStroke(0.5.dp, GolhaColors.Border),
+                color = GolhaColors.PrimaryAccent.copy(alpha = 0.12f),
+                border = BorderStroke(0.5.dp, GolhaColors.PrimaryAccent.copy(alpha = 0.3f)),
             ) {
-                Text(
-                    text = label,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = GolhaColors.PrimaryText,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Row(
+                    modifier = Modifier.padding(start = 10.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        text = chip.label,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = GolhaColors.PrimaryText,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Surface(
+                        modifier = Modifier.size(18.dp).clickable {
+                            if (chip.type == SearchFilterType.Transcript) onRemoveTranscript()
+                            else onRemove(chip.type, chip.id)
+                        },
+                        shape = CircleShape,
+                        color = GolhaColors.PrimaryAccent.copy(alpha = 0.2f),
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text("✕", style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp), color = GolhaColors.PrimaryText)
+                        }
+                    }
+                }
             }
         }
     }
@@ -235,16 +260,6 @@ private fun FiltersPage(
                 .padding(horizontal = GolhaSpacing.ScreenHorizontal)
                 .padding(top = 16.dp, bottom = 8.dp),
         )
-
-        // Text search
-        SearchInputField(
-            query = activeFilters.transcriptQuery,
-            onQueryChange = { onFiltersChanged(activeFilters.copy(transcriptQuery = it)) },
-            modifier = Modifier.padding(horizontal = GolhaSpacing.ScreenHorizontal).padding(bottom = 8.dp),
-        )
-
-        // Active filter chips
-        ActiveFilterChips(activeFilters = activeFilters, searchOptions = searchOptions)
 
         // Filter type tabs
         ScrollableTabRow(
@@ -290,7 +305,7 @@ private fun FiltersPage(
         }
 
         // Any/All toggle
-        if (selectedFilterType != SearchFilterType.Category && selectedIds.isNotEmpty()) {
+        if (selectedFilterType != SearchFilterType.Category && selectedFilterType != SearchFilterType.Transcript && selectedIds.isNotEmpty()) {
             MatchModeToggle(
                 matchMode = activeFilters.matchModeFor(selectedFilterType),
                 onChanged = { onFiltersChanged(activeFilters.withMatchMode(selectedFilterType, it)) },
@@ -298,8 +313,26 @@ private fun FiltersPage(
             )
         }
 
-        // In-filter search
-        if (currentOptions.size > 10) {
+        // Active filter chips (below toggle)
+        ActiveFilterChips(
+            activeFilters = activeFilters,
+            searchOptions = searchOptions,
+            onRemove = { type, id -> onFiltersChanged(activeFilters.withToggled(type, id)) },
+            onRemoveTranscript = { onFiltersChanged(activeFilters.copy(transcriptQuery = "")) },
+        )
+
+        // Transcript tab content
+        if (selectedFilterType == SearchFilterType.Transcript) {
+            SearchInputField(
+                query = activeFilters.transcriptQuery,
+                onQueryChange = { onFiltersChanged(activeFilters.copy(transcriptQuery = it)) },
+                modifier = Modifier.padding(horizontal = GolhaSpacing.ScreenHorizontal).padding(top = 8.dp),
+            )
+            Spacer(modifier = Modifier.weight(1f))
+        }
+
+        // In-filter search (for non-transcript tabs)
+        if (selectedFilterType != SearchFilterType.Transcript && currentOptions.size > 10) {
             Surface(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = GolhaSpacing.ScreenHorizontal).padding(top = 8.dp),
                 shape = RoundedCornerShape(12.dp),
@@ -327,8 +360,10 @@ private fun FiltersPage(
             }
         }
 
-        // Options list
-        LazyColumn(
+        // Options list (not for Transcript tab)
+        if (selectedFilterType == SearchFilterType.Transcript) {
+            // Already handled above
+        } else LazyColumn(
             modifier = Modifier.weight(1f).padding(top = 8.dp),
             contentPadding = PaddingValues(horizontal = GolhaSpacing.ScreenHorizontal, vertical = 4.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -440,9 +475,9 @@ private fun ResultsPage(
             }
         }
 
-        // Active filter chips
+        // Active filter chips (read-only in results)
         ActiveFilterChips(activeFilters = activeFilters, searchOptions = searchOptions)
-        if (activeFilters.activeFilterCount > 0) Spacer(modifier = Modifier.height(8.dp))
+        if (activeFilters.hasAnyFilter) Spacer(modifier = Modifier.height(4.dp))
 
         // Results
         if (isLoading) {
