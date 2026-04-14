@@ -25,6 +25,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -102,15 +103,21 @@ fun SectionTitle(
             thickness = 1.dp,
         )
         if (onSeeAllClick != null) {
-            Text(
+            Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(GolhaRadius.Small))
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(GolhaColors.BadgeBackground)
+                    .border(1.dp, GolhaColors.Border, RoundedCornerShape(12.dp))
                     .clickable { onSeeAllClick() }
-                    .padding(horizontal = 8.dp, vertical = 2.dp),
-                text = "همه",
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Medium),
-                color = GolhaColors.SecondaryText,
-            )
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = "همه",
+                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                    color = GolhaColors.PrimaryText,
+                )
+            }
         }
     }
 }
@@ -585,12 +592,13 @@ fun TopTracksSection(
                     .clickable(enabled = !isRefreshing) { onRefresh() },
                 contentAlignment = Alignment.Center
             ) {
-                GolhaLineIcon(
-                    icon = GolhaIcon.Refresh,
-                    modifier = Modifier
-                        .size(16.dp)
-                        .graphicsLayer { rotationZ = rotation.value },
+                Icon(
+                    imageVector = RefreshIcon,
+                    contentDescription = null,
                     tint = GolhaColors.SecondaryText,
+                    modifier = Modifier
+                        .size(18.dp)
+                        .graphicsLayer { rotationZ = rotation.value },
                 )
             }
         }
@@ -1794,4 +1802,13 @@ fun GolhaLineIcon(
             }
         }
     }
+}
+
+private val RefreshIcon: androidx.compose.ui.graphics.vector.ImageVector by lazy {
+    val pathData = androidx.compose.ui.graphics.vector.PathParser().parsePathString(
+        "M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"
+    ).toNodes()
+    androidx.compose.ui.graphics.vector.ImageVector.Builder(defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f)
+        .apply { addPath(pathData, fill = androidx.compose.ui.graphics.SolidColor(Color.Black)) }
+        .build()
 }

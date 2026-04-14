@@ -259,7 +259,6 @@ private fun ProgramHeaderLayout(
             }
         }
     }
-}
 
 @Composable
 private fun DetailTabSelector(
