@@ -16,24 +16,26 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.radiogolha.mobile.theme.DarkPatternBackground
 import com.radiogolha.mobile.theme.GolhaColors
-import com.radiogolha.mobile.theme.GolhaPatternBackground
 import com.radiogolha.mobile.theme.GolhaRadius
 import com.radiogolha.mobile.ui.home.GolhaIcon
 import com.radiogolha.mobile.ui.home.GolhaLineIcon
@@ -44,6 +46,13 @@ import com.radiogolha.mobile.ui.programs.loadProgramEpisodeDetail
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+
+private val DarkBg = Color(0xFF0A1628)
+private val DarkSurface = Color(0xFF132039)
+private val Gold = Color(0xFFD4A843)
+private val GoldDim = Color(0xFF8B7435)
+private val TextWhite = Color(0xFFF0ECE3)
+private val TextDim = Color(0xFF8A95A8)
 
 @Composable
 fun NowPlayingScreen(
@@ -61,18 +70,11 @@ fun NowPlayingScreen(
     onSeekBack10: () -> Unit = {},
     onSeekForward10: () -> Unit = {},
 ) {
-    val infiniteTransition = rememberInfiniteTransition()
-    val glowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 0.6f,
-        animationSpec = infiniteRepeatable(animation = tween(2000, easing = LinearEasing), repeatMode = RepeatMode.Reverse)
-    )
-
     // Seekbar State
     var sliderValue by remember { mutableFloatStateOf(currentPositionMs.toFloat()) }
     var isDragging by remember { mutableStateOf(false) }
 
-    // Episode detail: timeline + singer avatars
+    // Episode detail
     var timeline by remember(currentTrack?.id) { mutableStateOf<List<TimelineSegmentUiModel>>(emptyList()) }
     var singerImages by remember(currentTrack?.id) { mutableStateOf<List<String>>(emptyList()) }
     LaunchedEffect(currentTrack?.id) {
@@ -82,46 +84,32 @@ fun NowPlayingScreen(
         singerImages = detail?.singers?.mapNotNull { it.avatar }?.distinct() ?: emptyList()
     }
 
-    // Image Cycle Logic — singer avatars only, fallback to coverUrl
     val images = remember(singerImages, currentTrack) {
         val list = mutableListOf<String>()
-        if (singerImages.isNotEmpty()) {
-            singerImages.forEach { list.add(it) }
-        } else {
-            currentTrack?.coverUrl?.let { list.add(it) }
-        }
+        if (singerImages.isNotEmpty()) singerImages.forEach { list.add(it) }
+        else currentTrack?.coverUrl?.let { list.add(it) }
         list.distinct()
     }
     var currentImageIndex by remember(currentTrack) { mutableStateOf(0) }
-
     if (images.size > 1) {
         LaunchedEffect(images) {
-            while (true) {
-                delay(7000)
-                currentImageIndex = (currentImageIndex + 1) % images.size
-            }
+            while (true) { delay(7000); currentImageIndex = (currentImageIndex + 1) % images.size }
         }
     }
+
     val activeSegment by remember(timeline) {
         derivedStateOf {
             if (timeline.isEmpty()) null
-            else timeline.indices.lastOrNull { i ->
-                sliderValue >= parsePlayerTimeToMs(timeline[i].startTime)
-            }?.let { timeline[it] }
+            else timeline.indices.lastOrNull { sliderValue >= parsePlayerTimeToMs(timeline[it].startTime) }?.let { timeline[it] }
         }
     }
 
-    // Sync state from player periodically or on significant drift
     LaunchedEffect(currentPositionMs) {
         if (!isDragging) {
             val drift = kotlin.math.abs(sliderValue - currentPositionMs.toFloat())
-            if (drift > 2000f || !isPlaying) {
-                sliderValue = currentPositionMs.toFloat()
-            }
+            if (drift > 2000f || !isPlaying) sliderValue = currentPositionMs.toFloat()
         }
     }
-
-    // Local smooth interpolation loop
     LaunchedEffect(isPlaying) {
         if (isPlaying) {
             var lastUpdate = System.currentTimeMillis()
@@ -129,204 +117,273 @@ fun NowPlayingScreen(
                 delay(16)
                 if (!isDragging) {
                     val now = System.currentTimeMillis()
-                    val elapsed = now - lastUpdate
-                    sliderValue = (sliderValue + elapsed).coerceAtMost(durationMs.toFloat())
+                    sliderValue = (sliderValue + (now - lastUpdate)).coerceAtMost(durationMs.toFloat())
                     lastUpdate = now
-                } else {
-                    lastUpdate = System.currentTimeMillis()
-                }
+                } else lastUpdate = System.currentTimeMillis()
             }
         }
     }
 
-    GolhaPatternBackground {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Box(modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, GolhaColors.SoftSand.copy(alpha = 0.5f), GolhaColors.PrimaryAccent.copy(alpha = 0.15f)))))
+    // Animations
+    val infiniteTransition = rememberInfiniteTransition(label = "player")
+    val ringRotation by infiniteTransition.animateFloat(
+        initialValue = 0f, targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween(6000, easing = LinearEasing)),
+        label = "ringRot",
+    )
+    val glowPulse by infiniteTransition.animateFloat(
+        initialValue = 0.15f, targetValue = 0.35f,
+        animationSpec = infiniteRepeatable(tween(2500, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "glow",
+    )
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(DarkBg)
+            .drawBehind {
+                // Ambient glow behind artwork
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(Gold.copy(alpha = glowPulse), Color.Transparent),
+                        center = Offset(size.width * 0.5f, size.height * 0.32f),
+                        radius = size.width * 0.5f,
+                    ),
+                    radius = size.width * 0.5f,
+                    center = Offset(size.width * 0.5f, size.height * 0.32f),
+                )
+            }
+    ) {
+        // Eslimi pattern overlay
+        DarkPatternBackground(modifier = Modifier.fillMaxSize())
 
-            Column(
-                modifier = Modifier.fillMaxSize().statusBarsPadding().padding(horizontal = 28.dp, vertical = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+        Column(
+            modifier = Modifier.fillMaxSize().statusBarsPadding().padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                // Header
-                Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                    IconButton(onClick = onBackClick, modifier = Modifier.background(GolhaColors.Surface.copy(alpha = 0.5f), CircleShape)) {
-                        GolhaLineIcon(icon = GolhaIcon.Back, modifier = Modifier.size(24.dp), tint = GolhaColors.PrimaryText)
-                    }
-                    Text(text = "در حال پخش", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp), color = GolhaColors.PrimaryText)
-                    IconButton(onClick = onInfoClick, modifier = Modifier.background(GolhaColors.Surface.copy(alpha = 0.5f), CircleShape)) {
-                        GolhaLineIcon(icon = GolhaIcon.Info, modifier = Modifier.size(24.dp), tint = GolhaColors.PrimaryText)
-                    }
+                IconButton(onClick = onBackClick, modifier = Modifier.size(40.dp)) {
+                    GolhaLineIcon(icon = GolhaIcon.Back, modifier = Modifier.size(22.dp), tint = TextDim)
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("در حال پخش", style = MaterialTheme.typography.labelSmall, color = TextDim)
+                }
+                IconButton(onClick = onInfoClick, modifier = Modifier.size(40.dp)) {
+                    GolhaLineIcon(icon = GolhaIcon.Info, modifier = Modifier.size(22.dp), tint = TextDim)
+                }
+            }
+
+            Spacer(modifier = Modifier.weight(0.08f))
+
+            // Vinyl Artwork
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth(0.75f).aspectRatio(1f)) {
+                // Outer rotating ring
+                Canvas(modifier = Modifier.fillMaxSize().graphicsLayer { rotationZ = ringRotation }) {
+                    val stroke = 1.5.dp.toPx()
+                    val r = (size.minDimension - stroke) / 2f
+                    drawCircle(Gold.copy(alpha = 0.15f), r, style = Stroke(stroke))
+                    drawArc(Gold.copy(alpha = 0.7f), 0f, 120f, false, style = Stroke(stroke, cap = StrokeCap.Round), topLeft = Offset(stroke / 2, stroke / 2), size = Size(size.width - stroke, size.height - stroke))
                 }
 
-                Spacer(modifier = Modifier.weight(0.12f))
-
-                // Artwork Frame
-                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth().aspectRatio(1f)) {
-                    Box(modifier = Modifier.fillMaxSize(0.95f).border(1.dp, GolhaColors.PrimaryAccent.copy(alpha = 0.3f), CircleShape))
-                    Box(modifier = Modifier.fillMaxSize(0.88f).border(2.dp, GolhaColors.PrimaryAccent.copy(alpha = 0.6f), CircleShape).shadow(24.dp, CircleShape, spotColor = GolhaColors.PrimaryAccent))
-
-                    Surface(modifier = Modifier.fillMaxSize(0.82f).clip(CircleShape), color = GolhaColors.Surface, shadowElevation = 12.dp) {
-                        Box(contentAlignment = Alignment.Center) {
-                            if (images.isNotEmpty()) {
-                                AnimatedContent(
-                                    targetState = images[currentImageIndex],
-                                    transitionSpec = {
-                                        (fadeIn(animationSpec = tween(1500)) + scaleIn(initialScale = 0.95f, animationSpec = tween(1500)))
-                                            .togetherWith(fadeOut(animationSpec = tween(1500)) + scaleOut(targetScale = 1.05f, animationSpec = tween(1500)))
-                                    },
-                                    modifier = Modifier.fillMaxSize()
-                                ) { imageUrl ->
-                                    ArtistAvatar(name = currentTrack?.artist ?: "", imageUrl = imageUrl, tint = GolhaColors.SoftBlue, modifier = Modifier.fillMaxSize())
-                                }
-                            } else {
-                                ArtistAvatar(name = currentTrack?.artist ?: "", imageUrl = null, tint = GolhaColors.SoftBlue, modifier = Modifier.fillMaxSize())
-                            }
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.weight(0.1f))
-
-                // Track Info
-                Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(text = currentTrack?.title ?: "قطعه نامشخص", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center), color = GolhaColors.PrimaryText, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    Text(text = currentTrack?.artist ?: "هنرمند نامشخص", style = MaterialTheme.typography.titleLarge.copy(color = GolhaColors.SecondaryText, textAlign = TextAlign.Center), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-
-                Spacer(modifier = Modifier.weight(0.06f))
-
-                // Custom Seekbar
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    val maxVal = durationMs.toFloat().coerceAtLeast(1f)
-                    val thumbColor = GolhaColors.PrimaryAccent
-                    val activeColor = GolhaColors.PrimaryAccent
-                    val inactiveColor = GolhaColors.Border.copy(alpha = 0.4f)
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(36.dp)
-                            .pointerInput(maxVal) {
-                                detectTapGestures { offset ->
-                                    val fraction = (offset.x / size.width).coerceIn(0f, 1f)
-                                    sliderValue = fraction * maxVal
-                                    onSeek(sliderValue.toLong())
-                                }
-                            }
-                            .pointerInput(maxVal) {
-                                detectHorizontalDragGestures(
-                                    onDragStart = { isDragging = true },
-                                    onDragEnd = {
-                                        isDragging = false
-                                        onSeek(sliderValue.toLong())
-                                    },
-                                    onHorizontalDrag = { change, _ ->
-                                        val fraction = (change.position.x / size.width).coerceIn(0f, 1f)
-                                        sliderValue = fraction * maxVal
-                                    }
-                                )
-                            }
-                    ) {
-                        Canvas(modifier = Modifier.fillMaxSize()) {
-                            val progress = sliderValue.coerceIn(0f, maxVal) / maxVal
-                            val trackY = size.height / 2
-                            val trackH = 4.dp.toPx()
-                            val thumbR = 10.dp.toPx()
-                            val thumbX = progress * size.width
-
-                            drawLine(inactiveColor, Offset(0f, trackY), Offset(size.width, trackY), trackH, StrokeCap.Round)
-                            if (thumbX > 0f) {
-                                drawLine(activeColor, Offset(0f, trackY), Offset(thumbX, trackY), trackH, StrokeCap.Round)
-                            }
-                            drawCircle(thumbColor, thumbR, Offset(thumbX, trackY))
-                            drawCircle(Color.White.copy(alpha = 0.9f), thumbR, Offset(thumbX, trackY), style = Stroke(2.dp.toPx()))
-                        }
-                    }
-
-                    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(text = formatTime(sliderValue.toLong()), style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold), color = GolhaColors.PrimaryText.copy(alpha = 0.8f))
-                        Text(text = formatTime(durationMs), style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold), color = GolhaColors.SecondaryText.copy(alpha = 0.6f))
-                    }
-                }
-
-                Spacer(modifier = Modifier.weight(0.12f))
-
-                // Controls
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onPreviousClick, modifier = Modifier.size(48.dp).background(GolhaColors.Surface.copy(alpha = 0.6f), CircleShape)) {
-                        GolhaLineIcon(icon = GolhaIcon.SkipPrevious, modifier = Modifier.size(26.dp), tint = GolhaColors.PrimaryText)
-                    }
-                    IconButton(onClick = onSeekBack10, modifier = Modifier.size(48.dp).background(GolhaColors.Surface.copy(alpha = 0.6f), CircleShape)) {
-                        Icon(Replay10Icon, contentDescription = null, tint = GolhaColors.PrimaryText, modifier = Modifier.size(28.dp))
-                    }
-                    Box(contentAlignment = Alignment.Center) {
-                        Box(modifier = Modifier.size(92.dp).graphicsLayer { alpha = glowAlpha; scaleX = 1.1f; scaleY = 1.1f }.background(GolhaColors.PrimaryAccent.copy(alpha = 0.4f), CircleShape))
-                        Surface(modifier = Modifier.size(84.dp).clickable { onTogglePlayback() }, shape = CircleShape, color = GolhaColors.PrimaryAccent, shadowElevation = 12.dp) {
-                            Box(contentAlignment = Alignment.Center) {
-                                if (isLoading) {
-                                    CircularProgressIndicator(modifier = Modifier.size(36.dp), color = GolhaColors.OnAccent, strokeWidth = 3.dp)
-                                } else {
-                                    GolhaLineIcon(icon = if (isPlaying) GolhaIcon.Pause else GolhaIcon.Play, modifier = Modifier.size(38.dp), tint = GolhaColors.OnAccent)
-                                }
-                            }
-                        }
-                    }
-                    IconButton(onClick = onSeekForward10, modifier = Modifier.size(48.dp).background(GolhaColors.Surface.copy(alpha = 0.6f), CircleShape)) {
-                        Icon(Forward10Icon, contentDescription = null, tint = GolhaColors.PrimaryText, modifier = Modifier.size(28.dp))
-                    }
-                    IconButton(onClick = onNextClick, modifier = Modifier.size(48.dp).background(GolhaColors.Surface.copy(alpha = 0.6f), CircleShape)) {
-                        GolhaLineIcon(icon = GolhaIcon.SkipNext, modifier = Modifier.size(26.dp), tint = GolhaColors.PrimaryText)
-                    }
-                }
-
-                Spacer(modifier = Modifier.weight(0.06f))
-
-                // Active Segment (fixed height — always occupies space, fades content in/out)
+                // Avatar
                 Surface(
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
-                    shape = RoundedCornerShape(GolhaRadius.Card),
-                    color = if (activeSegment != null) GolhaColors.Surface.copy(alpha = 0.7f) else Color.Transparent,
-                    border = if (activeSegment != null) androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.5f)) else null,
+                    modifier = Modifier.fillMaxSize(0.85f).clip(CircleShape),
+                    color = DarkSurface,
+                    shadowElevation = 24.dp,
                 ) {
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = activeSegment != null,
-                        enter = fadeIn(),
-                        exit = fadeOut(),
+                    if (images.isNotEmpty()) {
+                        AnimatedContent(
+                            targetState = images[currentImageIndex],
+                            transitionSpec = {
+                                (fadeIn(tween(1500)) + scaleIn(initialScale = 0.95f, animationSpec = tween(1500)))
+                                    .togetherWith(fadeOut(tween(1500)) + scaleOut(targetScale = 1.05f, animationSpec = tween(1500)))
+                            },
+                            modifier = Modifier.fillMaxSize(),
+                        ) { imageUrl ->
+                            ArtistAvatar(name = currentTrack?.artist ?: "", imageUrl = imageUrl, tint = GolhaColors.SoftBlue, modifier = Modifier.fillMaxSize())
+                        }
+                    } else {
+                        ArtistAvatar(name = currentTrack?.artist ?: "", imageUrl = null, tint = GolhaColors.SoftBlue, modifier = Modifier.fillMaxSize())
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.weight(0.06f))
+
+            // Track Info
+            Text(
+                text = currentTrack?.title ?: "قطعه نامشخص",
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold, textAlign = TextAlign.Center),
+                color = TextWhite,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = currentTrack?.artist ?: "هنرمند نامشخص",
+                style = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.Center),
+                color = Gold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+
+            Spacer(modifier = Modifier.weight(0.05f))
+
+            // Seekbar
+            PlayerSeekbar(
+                value = sliderValue,
+                maxValue = durationMs.toFloat().coerceAtLeast(1f),
+                isDragging = isDragging,
+                onDragStart = { isDragging = true },
+                onDragEnd = { isDragging = false; onSeek(sliderValue.toLong()) },
+                onValueChange = { sliderValue = it },
+                onTap = { sliderValue = it; onSeek(it.toLong()) },
+            )
+            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(formatTime(sliderValue.toLong()), style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium), color = TextDim)
+                Text(formatTime(durationMs), style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium), color = TextDim)
+            }
+
+            Spacer(modifier = Modifier.weight(0.05f))
+
+            // Controls
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+                ControlButton(icon = GolhaIcon.SkipPrevious, size = 44.dp, iconSize = 22.dp, onClick = onPreviousClick)
+                IconButton(onClick = onSeekBack10, modifier = Modifier.size(44.dp)) {
+                    Icon(Replay10Icon, contentDescription = null, tint = TextWhite, modifier = Modifier.size(26.dp))
+                }
+
+                // Play/Pause
+                Box(contentAlignment = Alignment.Center) {
+                    if (isPlaying) {
+                        Box(modifier = Modifier.size(76.dp).graphicsLayer { alpha = glowPulse * 1.5f }.background(Gold.copy(alpha = 0.3f), CircleShape))
+                    }
+                    Surface(
+                        modifier = Modifier.size(68.dp).clickable { onTogglePlayback() },
+                        shape = CircleShape,
+                        color = Gold,
+                        shadowElevation = 8.dp,
                     ) {
-                        activeSegment?.let { seg ->
-                            Row(
-                                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            ) {
-                                Box(
-                                    modifier = Modifier.size(26.dp).background(GolhaColors.PrimaryAccent.copy(alpha = 0.15f), CircleShape),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    GolhaLineIcon(icon = GolhaIcon.Play, modifier = Modifier.size(11.dp), tint = GolhaColors.PrimaryAccent)
-                                }
-                                Text(
-                                    text = buildString {
-                                        append(seg.modeName ?: "بخش اجرایی")
-                                        if (seg.singers.isNotEmpty()) append("  •  ${seg.singers.joinToString(" و ")}")
-                                    },
-                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Medium),
-                                    color = GolhaColors.PrimaryText,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.weight(1f),
-                                )
-                                Text(
-                                    text = seg.startTime ?: "",
-                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                                    color = GolhaColors.PrimaryAccent,
-                                )
+                        Box(contentAlignment = Alignment.Center) {
+                            if (isLoading) {
+                                CircularProgressIndicator(modifier = Modifier.size(28.dp), color = DarkBg, strokeWidth = 2.5.dp)
+                            } else {
+                                GolhaLineIcon(icon = if (isPlaying) GolhaIcon.Pause else GolhaIcon.Play, modifier = Modifier.size(30.dp), tint = DarkBg)
                             }
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.weight(0.09f))
+                IconButton(onClick = onSeekForward10, modifier = Modifier.size(44.dp)) {
+                    Icon(Forward10Icon, contentDescription = null, tint = TextWhite, modifier = Modifier.size(26.dp))
+                }
+                ControlButton(icon = GolhaIcon.SkipNext, size = 44.dp, iconSize = 22.dp, onClick = onNextClick)
+            }
+
+            Spacer(modifier = Modifier.weight(0.04f))
+
+            // Active Segment
+            AnimatedVisibility(
+                visible = activeSegment != null,
+                enter = fadeIn() + slideInVertically { it / 2 },
+                exit = fadeOut(),
+            ) {
+                activeSegment?.let { seg ->
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
+                        color = DarkSurface,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Gold.copy(alpha = 0.15f)),
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            Box(modifier = Modifier.size(24.dp).background(Gold.copy(alpha = 0.15f), CircleShape), contentAlignment = Alignment.Center) {
+                                GolhaLineIcon(icon = GolhaIcon.Play, modifier = Modifier.size(10.dp), tint = Gold)
+                            }
+                            Text(
+                                text = buildString {
+                                    append(seg.modeName ?: "بخش اجرایی")
+                                    if (seg.singers.isNotEmpty()) append("  •  ${seg.singers.joinToString(" و ")}")
+                                },
+                                style = MaterialTheme.typography.labelMedium,
+                                color = TextWhite.copy(alpha = 0.8f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Text(seg.startTime ?: "", style = MaterialTheme.typography.labelSmall, color = Gold)
+                        }
+                    }
+                }
+            }
+            if (activeSegment == null) Spacer(modifier = Modifier.height(44.dp))
+
+            Spacer(modifier = Modifier.weight(0.06f))
+        }
+    }
+}
+
+@Composable
+private fun ControlButton(icon: GolhaIcon, size: androidx.compose.ui.unit.Dp, iconSize: androidx.compose.ui.unit.Dp, onClick: () -> Unit) {
+    IconButton(onClick = onClick, modifier = Modifier.size(size)) {
+        GolhaLineIcon(icon = icon, modifier = Modifier.size(iconSize), tint = TextWhite)
+    }
+}
+
+@Composable
+private fun PlayerSeekbar(
+    value: Float, maxValue: Float, isDragging: Boolean,
+    onDragStart: () -> Unit, onDragEnd: () -> Unit, onValueChange: (Float) -> Unit, onTap: (Float) -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(32.dp)
+            .pointerInput(maxValue) {
+                detectTapGestures { offset ->
+                    val frac = (offset.x / size.width).coerceIn(0f, 1f)
+                    onTap(frac * maxValue)
+                }
+            }
+            .pointerInput(maxValue) {
+                detectHorizontalDragGestures(
+                    onDragStart = { onDragStart() },
+                    onDragEnd = { onDragEnd() },
+                    onHorizontalDrag = { change, _ ->
+                        val frac = (change.position.x / size.width).coerceIn(0f, 1f)
+                        onValueChange(frac * maxValue)
+                    }
+                )
+            }
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val progress = value.coerceIn(0f, maxValue) / maxValue
+            val y = size.height / 2
+            val trackH = 3.dp.toPx()
+            val thumbR = if (isDragging) 8.dp.toPx() else 6.dp.toPx()
+            val thumbX = progress * size.width
+
+            // Track background
+            drawLine(TextDim.copy(alpha = 0.2f), Offset(0f, y), Offset(size.width, y), trackH, StrokeCap.Round)
+            // Active track
+            if (thumbX > 0f) {
+                drawLine(
+                    brush = Brush.horizontalGradient(listOf(GoldDim, Gold)),
+                    start = Offset(0f, y), end = Offset(thumbX, y),
+                    strokeWidth = trackH, cap = StrokeCap.Round,
+                )
+            }
+            // Thumb
+            drawCircle(Gold, thumbR, Offset(thumbX, y))
+            if (isDragging) {
+                drawCircle(Gold.copy(alpha = 0.2f), thumbR * 2.5f, Offset(thumbX, y))
             }
         }
     }

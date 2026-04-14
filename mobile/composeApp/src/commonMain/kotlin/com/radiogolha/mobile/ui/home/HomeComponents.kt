@@ -483,7 +483,7 @@ fun DuetsBanner(
 }
 
 @Composable
-private fun AnimatedAvatarRing(rotation: Float, modifier: Modifier = Modifier) {
+internal fun AnimatedAvatarRing(rotation: Float, modifier: Modifier = Modifier) {
     val gold = GolhaColors.BannerDetail
     Canvas(modifier = modifier.graphicsLayer { rotationZ = rotation }) {
         val stroke = 2.5.dp.toPx()

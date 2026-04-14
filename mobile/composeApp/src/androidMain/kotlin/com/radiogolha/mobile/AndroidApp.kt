@@ -57,6 +57,11 @@ fun AndroidApp() {
     
     // Bottom Sheet State
     var showPlayerSheet by remember { mutableStateOf(false) }
+    val view = androidx.compose.ui.platform.LocalView.current
+    LaunchedEffect(showPlayerSheet) {
+        val window = (view.context as? android.app.Activity)?.window ?: return@LaunchedEffect
+        androidx.core.view.WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = !showPlayerSheet
+    }
     val playerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -326,6 +331,7 @@ fun AndroidApp() {
             }
 
             if (showPlayerSheet) {
+                val playerDarkBg = Color(0xFF0A1628)
                 ModalBottomSheet(
                     onDismissRequest = { showPlayerSheet = false },
                     sheetState = playerSheetState,
@@ -334,10 +340,10 @@ fun AndroidApp() {
                             modifier = Modifier
                                 .padding(vertical = 12.dp)
                                 .size(width = 32.dp, height = 4.dp)
-                                .background(Color.Gray.copy(alpha = 0.4f), CircleShape)
+                                .background(Color.White.copy(alpha = 0.25f), CircleShape)
                         )
                     },
-                    containerColor = GolhaColors.ScreenBackground,
+                    containerColor = playerDarkBg,
                     shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
                     scrimColor = Color.Black.copy(alpha = 0.45f),
                 ) {

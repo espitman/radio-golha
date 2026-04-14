@@ -30,17 +30,33 @@ fun GolhaPatternBackground(
             .background(GolhaColors.ScreenBackground),
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            drawRepeatingStarPattern()
+            drawRepeatingStarPattern(
+                lineColor = GolhaColors.PrimaryAccent.copy(alpha = 0.105f),
+                detailColor = GolhaColors.PrimaryAccent.copy(alpha = 0.075f),
+                frameColor = GolhaColors.PrimaryAccent.copy(alpha = 0.055f),
+            )
         }
 
         content()
     }
 }
 
-private fun DrawScope.drawRepeatingStarPattern() {
-    val lineColor = GolhaColors.PrimaryAccent.copy(alpha = 0.105f)
-    val detailColor = GolhaColors.PrimaryAccent.copy(alpha = 0.075f)
-    val frameColor = GolhaColors.PrimaryAccent.copy(alpha = 0.055f)
+@Composable
+fun DarkPatternBackground(modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        drawRepeatingStarPattern(
+            lineColor = Color(0xFFD4A843).copy(alpha = 0.06f),
+            detailColor = Color(0xFFD4A843).copy(alpha = 0.04f),
+            frameColor = Color(0xFFD4A843).copy(alpha = 0.03f),
+        )
+    }
+}
+
+private fun DrawScope.drawRepeatingStarPattern(
+    lineColor: Color = GolhaColors.PrimaryAccent.copy(alpha = 0.105f),
+    detailColor: Color = GolhaColors.PrimaryAccent.copy(alpha = 0.075f),
+    frameColor: Color = GolhaColors.PrimaryAccent.copy(alpha = 0.055f),
+) {
 
     val majorStroke = Stroke(
         width = 2.2.dp.toPx(),

@@ -15,6 +15,11 @@ import androidx.compose.ui.unit.dp
 import com.radiogolha.mobile.theme.GolhaColors
 import com.radiogolha.mobile.theme.GolhaRadius
 import com.radiogolha.mobile.theme.GolhaSpacing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -168,12 +173,16 @@ private fun DuetBannerCard(
                         Text("$trackCount ترک", style = MaterialTheme.typography.labelSmall, color = GolhaColors.Surface.copy(alpha = 0.5f))
                     }
                 }
+                val inf = rememberInfiniteTransition(label = "duetRing")
+                val borderRot by inf.animateFloat(0f, 360f, infiniteRepeatable(tween(8000, easing = LinearEasing)), label = "rot")
                 Box(modifier = Modifier.size(width = 130.dp, height = 90.dp)) {
                     Box(modifier = Modifier.size(80.dp).align(Alignment.CenterEnd)) {
-                        ArtistAvatar(name = singer2, imageUrl = singer2Avatar, tint = GolhaColors.BannerDetail, modifier = Modifier.fillMaxSize().border(2.dp, GolhaColors.BannerDetail.copy(alpha = 0.6f), CircleShape))
+                        AnimatedAvatarRing(rotation = borderRot, modifier = Modifier.fillMaxSize())
+                        ArtistAvatar(name = singer2, imageUrl = singer2Avatar, tint = GolhaColors.BannerDetail, modifier = Modifier.fillMaxSize().padding(3.dp))
                     }
                     Box(modifier = Modifier.size(80.dp).align(Alignment.CenterStart)) {
-                        ArtistAvatar(name = singer1, imageUrl = singer1Avatar, tint = GolhaColors.BannerDetail, modifier = Modifier.fillMaxSize().border(2.dp, GolhaColors.BannerDetail.copy(alpha = 0.8f), CircleShape))
+                        AnimatedAvatarRing(rotation = -borderRot, modifier = Modifier.fillMaxSize())
+                        ArtistAvatar(name = singer1, imageUrl = singer1Avatar, tint = GolhaColors.BannerDetail, modifier = Modifier.fillMaxSize().padding(3.dp))
                     }
                 }
             }
