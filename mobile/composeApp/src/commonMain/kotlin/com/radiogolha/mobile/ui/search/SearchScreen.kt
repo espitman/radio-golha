@@ -36,10 +36,22 @@ import com.radiogolha.mobile.ui.programs.SkeletonTrackRow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private enum class SearchPage { Filters, Results }
+enum class SearchPage { Filters, Results }
+
+class SearchState {
+    var searchOptions by mutableStateOf(SearchOptionsUiState())
+    var activeFilters by mutableStateOf(ActiveFilters())
+    var results by mutableStateOf(SearchResultsUiState())
+    var allResults by mutableStateOf<List<SearchResultUiModel>>(emptyList())
+    var isLoading by mutableStateOf(false)
+    var isLoadingMore by mutableStateOf(false)
+    var currentPage by mutableStateOf(SearchPage.Filters)
+    var optionsLoaded by mutableStateOf(false)
+}
 
 @Composable
 fun SearchScreen(
+    state: SearchState,
     bottomNavItems: List<BottomNavItemUiModel>,
     onBottomNavSelected: (AppTab) -> Unit,
     onProgramClick: (Long) -> Unit = {},
@@ -53,38 +65,35 @@ fun SearchScreen(
     onTrackClick: (Long) -> Unit = {},
     onExpandPlayer: () -> Unit = {},
 ) {
-    var searchOptions by remember { mutableStateOf(SearchOptionsUiState()) }
-    var activeFilters by remember { mutableStateOf(ActiveFilters()) }
-    var results by remember { mutableStateOf(SearchResultsUiState()) }
-    var allResults by remember { mutableStateOf<List<SearchResultUiModel>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(false) }
-    var isLoadingMore by remember { mutableStateOf(false) }
-    var currentPage by remember { mutableStateOf(SearchPage.Filters) }
     var selectedFilterType by remember { mutableStateOf(SearchFilterType.Category) }
     var filterSearchQuery by remember { mutableStateOf("") }
 
+    // Load search options once
     LaunchedEffect(Unit) {
-        withContext(Dispatchers.Default) {
-            searchOptions = runCatching { loadSearchOptions() }.getOrDefault(SearchOptionsUiState())
+        if (!state.optionsLoaded) {
+            withContext(Dispatchers.Default) {
+                state.searchOptions = runCatching { loadSearchOptions() }.getOrDefault(SearchOptionsUiState())
+            }
+            state.optionsLoaded = true
         }
     }
 
     LaunchedEffect(selectedFilterType) { filterSearchQuery = "" }
 
     val doSearch: () -> Unit = {
-        currentPage = SearchPage.Results
-        isLoading = true
-        allResults = emptyList()
+        state.currentPage = SearchPage.Results
+        state.isLoading = true
+        state.allResults = emptyList()
     }
 
-    LaunchedEffect(currentPage, isLoading) {
-        if (currentPage == SearchPage.Results && isLoading) {
+    LaunchedEffect(state.currentPage, state.isLoading) {
+        if (state.currentPage == SearchPage.Results && state.isLoading) {
             val r = withContext(Dispatchers.Default) {
-                runCatching { searchPrograms(activeFilters, 1) }.getOrDefault(SearchResultsUiState())
+                runCatching { searchPrograms(state.activeFilters, 1) }.getOrDefault(SearchResultsUiState())
             }
-            results = r
-            allResults = r.results
-            isLoading = false
+            state.results = r
+            state.allResults = r.results
+            state.isLoading = false
         }
     }
 
@@ -93,18 +102,18 @@ fun SearchScreen(
         derivedStateOf {
             val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
             val totalItems = listState.layoutInfo.totalItemsCount
-            lastVisible >= totalItems - 3 && !isLoading && !isLoadingMore && results.page < results.totalPages && currentPage == SearchPage.Results
+            lastVisible >= totalItems - 3 && !state.isLoading && !state.isLoadingMore && state.results.page < state.results.totalPages && state.allResults.isNotEmpty()
         }
     }
     LaunchedEffect(shouldLoadMore) {
         if (shouldLoadMore) {
-            isLoadingMore = true
+            state.isLoadingMore = true
             val r = withContext(Dispatchers.Default) {
-                runCatching { searchPrograms(activeFilters, results.page + 1) }.getOrDefault(SearchResultsUiState())
+                runCatching { searchPrograms(state.activeFilters, state.results.page + 1) }.getOrDefault(SearchResultsUiState())
             }
-            results = r
-            allResults = allResults + r.results
-            isLoadingMore = false
+            state.results = r
+            state.allResults = state.allResults + r.results
+            state.isLoadingMore = false
         }
     }
 
@@ -128,32 +137,32 @@ fun SearchScreen(
                     )
                 }
             ) { innerPadding ->
-                when (currentPage) {
+                when (state.currentPage) {
                     SearchPage.Filters -> FiltersPage(
                         innerPadding = innerPadding,
-                        activeFilters = activeFilters,
-                        searchOptions = searchOptions,
+                        activeFilters = state.activeFilters,
+                        searchOptions = state.searchOptions,
                         selectedFilterType = selectedFilterType,
                         filterSearchQuery = filterSearchQuery,
                         onFilterTypeChange = { selectedFilterType = it },
                         onFilterSearchChange = { filterSearchQuery = it },
-                        onFiltersChanged = { activeFilters = it },
+                        onFiltersChanged = { state.activeFilters = it },
                         onSearch = doSearch,
                     )
                     SearchPage.Results -> ResultsPage(
                         innerPadding = innerPadding,
                         listState = listState,
-                        results = allResults,
-                        total = results.total,
-                        isLoading = isLoading,
-                        isLoadingMore = isLoadingMore,
-                        activeFilters = activeFilters,
-                        searchOptions = searchOptions,
+                        results = state.allResults,
+                        total = state.results.total,
+                        isLoading = state.isLoading,
+                        isLoadingMore = state.isLoadingMore,
+                        activeFilters = state.activeFilters,
+                        searchOptions = state.searchOptions,
                         currentTrack = currentTrack,
                         isPlayerPlaying = isPlayerPlaying,
                         onProgramClick = onProgramClick,
                         onPlayTrack = onPlayTrack,
-                        onBackToFilters = { currentPage = SearchPage.Filters },
+                        onBackToFilters = { state.currentPage = SearchPage.Filters },
                     )
                 }
             }

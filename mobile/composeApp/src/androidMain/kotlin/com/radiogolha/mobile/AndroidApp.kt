@@ -31,6 +31,7 @@ import com.radiogolha.mobile.ui.settings.SettingsScreen
 import com.radiogolha.mobile.ui.singers.*
 import com.radiogolha.mobile.ui.orchestras.*
 import com.radiogolha.mobile.ui.search.SearchScreen
+import com.radiogolha.mobile.ui.search.SearchState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -87,6 +88,7 @@ fun AndroidApp() {
     var lastCategoryTitle by remember { mutableStateOf("") }
     var isCategoryLoading by remember { mutableStateOf(false) }
 
+    val searchState = remember { SearchState() }
     var homeUiState by remember { mutableStateOf<HomeUiState?>(null) }
     var isHomeLoading by remember { mutableStateOf(false) }
     var isRefreshingTopTracks by remember { mutableStateOf(false) }
@@ -187,6 +189,7 @@ fun AndroidApp() {
 
                 composable(AndroidRoute.Search.route) {
                     SearchScreen(
+                        state = searchState,
                         bottomNavItems = bottomNavItems,
                         onBottomNavSelected = onTabSelected,
                         onProgramClick = { programId -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(programId)) },
@@ -358,7 +361,7 @@ private fun AppTab.toRoute(): AndroidRoute = when (this) {
 
 private fun buildBottomNavItems(selectedTab: AppTab): List<BottomNavItemUiModel> = listOf(
     BottomNavItemUiModel(label = "خانه", icon = GolhaIcon.Home, tab = AppTab.Home, selected = selectedTab == AppTab.Home),
-    BottomNavItemUiModel(label = "جستجو", icon = GolhaIcon.Search, tab = AppTab.Search, selected = selectedTab == AppTab.Search),
     BottomNavItemUiModel(label = "کتابخانه", icon = GolhaIcon.Library, tab = AppTab.Library, selected = selectedTab == AppTab.Library),
+    BottomNavItemUiModel(label = "جستجو", icon = GolhaIcon.Search, tab = AppTab.Search, selected = selectedTab == AppTab.Search),
     BottomNavItemUiModel(label = "حساب من", icon = GolhaIcon.Account, tab = AppTab.Account, selected = selectedTab == AppTab.Account),
 )
