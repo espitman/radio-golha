@@ -45,6 +45,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import org.jetbrains.compose.resources.painterResource
+import radiogolha_mobile.composeapp.generated.resources.Res
+import radiogolha_mobile.composeapp.generated.resources.mandala_pattern
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.CornerRadius
@@ -820,33 +824,32 @@ fun MiniPlayerBar(
                 }
             }
     ) {
-        // Eslimi pattern layer
-        Canvas(modifier = Modifier.matchParentSize()) {
-            val patternColor = gold.copy(alpha = glowA)
-            val step = size.height * 1.2f
-            val offset = patternOffset * step
-            val cols = (size.width / step).toInt() + 2
-            for (i in -1..cols) {
-                val cx = i * step + offset
-                // Six-point stars
-                val cy = size.height / 2
-                val r = step * 0.18f
-                val points = List(12) { idx ->
-                    val cr = if (idx % 2 == 0) r else r * 0.46f
-                    val angle = Math.toRadians((-90.0) + idx * 30.0)
-                    Offset(
-                        cx + (kotlin.math.cos(angle) * cr).toFloat(),
-                        cy + (kotlin.math.sin(angle) * cr).toFloat(),
-                    )
-                }
-                val path = androidx.compose.ui.graphics.Path().apply {
-                    moveTo(points.first().x, points.first().y)
-                    points.drop(1).forEach { lineTo(it.x, it.y) }
-                    close()
-                }
-                drawPath(path, patternColor, style = Stroke(width = 1.dp.toPx(), cap = StrokeCap.Round))
-            }
-        }
+        // Mandala patterns - multiple with different speeds/sizes, drifting
+        val rot1 by inf.animateFloat(0f, 360f, infiniteRepeatable(tween(50000, easing = LinearEasing)), label = "r1")
+        val rot2 by inf.animateFloat(0f, -360f, infiniteRepeatable(tween(70000, easing = LinearEasing)), label = "r2")
+        val rot3 by inf.animateFloat(0f, 360f, infiniteRepeatable(tween(40000, easing = LinearEasing)), label = "r3")
+        val rot4 by inf.animateFloat(0f, -360f, infiniteRepeatable(tween(55000, easing = LinearEasing)), label = "r4")
+        val rot5 by inf.animateFloat(0f, 360f, infiniteRepeatable(tween(65000, easing = LinearEasing)), label = "r5")
+        val drift1 by inf.animateFloat(-60f, 60f, infiniteRepeatable(tween(8000, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse), label = "d1")
+        val drift2 by inf.animateFloat(50f, -50f, infiniteRepeatable(tween(10000, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse), label = "d2")
+        val drift3 by inf.animateFloat(-40f, 40f, infiniteRepeatable(tween(7000, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse), label = "d3")
+        val a1 by inf.animateFloat(0.04f, 0.10f, infiniteRepeatable(tween(3000, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse), label = "ma1")
+        val a2 by inf.animateFloat(0.06f, 0.13f, infiniteRepeatable(tween(4000, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse), label = "ma2")
+        val a3 by inf.animateFloat(0.03f, 0.08f, infiniteRepeatable(tween(2500, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse), label = "ma3")
+        val a4 by inf.animateFloat(0.05f, 0.11f, infiniteRepeatable(tween(3500, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse), label = "ma4")
+        val a5 by inf.animateFloat(0.03f, 0.07f, infiniteRepeatable(tween(5000, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse), label = "ma5")
+        val mandala = painterResource(Res.drawable.mandala_pattern)
+
+        androidx.compose.foundation.Image(painter = mandala, contentDescription = null, contentScale = ContentScale.Fit,
+            modifier = Modifier.size(70.dp).align(Alignment.CenterEnd).graphicsLayer { rotationZ = rot1; alpha = a1; translationX = 12.dp.toPx() + drift1 })
+        androidx.compose.foundation.Image(painter = mandala, contentDescription = null, contentScale = ContentScale.Fit,
+            modifier = Modifier.size(50.dp).align(Alignment.CenterStart).graphicsLayer { rotationZ = rot2; alpha = a2; translationX = (-6).dp.toPx() + drift2 })
+        androidx.compose.foundation.Image(painter = mandala, contentDescription = null, contentScale = ContentScale.Fit,
+            modifier = Modifier.size(35.dp).align(Alignment.Center).graphicsLayer { rotationZ = rot3; alpha = a3; translationX = 50.dp.toPx() + drift3 })
+        androidx.compose.foundation.Image(painter = mandala, contentDescription = null, contentScale = ContentScale.Fit,
+            modifier = Modifier.size(45.dp).align(Alignment.Center).graphicsLayer { rotationZ = rot4; alpha = a4; translationX = (-60).dp.toPx() + drift1 * 0.7f })
+        androidx.compose.foundation.Image(painter = mandala, contentDescription = null, contentScale = ContentScale.Fit,
+            modifier = Modifier.size(30.dp).align(Alignment.Center).graphicsLayer { rotationZ = rot5; alpha = a5; translationX = (-20).dp.toPx() + drift2 * 0.5f })
 
         Column(modifier = Modifier.fillMaxWidth()) {
             // Progress bar at top - LTR
@@ -857,7 +860,7 @@ fun MiniPlayerBar(
             }
 
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 7.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
@@ -891,7 +894,7 @@ fun MiniPlayerBar(
                     )
                     Text(
                         text = currentTrack?.artist ?: "...",
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.bodySmall,
                         color = gold.copy(alpha = 0.7f),
                         maxLines = 1, overflow = TextOverflow.Ellipsis,
                     )
@@ -904,8 +907,8 @@ fun MiniPlayerBar(
                 if (formattedPlaybackTime != null) {
                     Text(
                         text = formattedPlaybackTime,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = textDim,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                        color = textWhite,
                     )
                 }
             }
