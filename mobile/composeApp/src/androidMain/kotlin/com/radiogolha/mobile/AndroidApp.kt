@@ -119,6 +119,12 @@ fun AndroidApp() {
 
             librarySingers = runCatching { loadSingersUiState() }.getOrDefault(emptyList())
 
+            // Preload search options so singer_id -> name is available for playlist banners
+            if (!searchState.optionsLoaded) {
+                searchState.searchOptions = runCatching { com.radiogolha.mobile.ui.search.loadSearchOptions() }.getOrDefault(com.radiogolha.mobile.ui.search.SearchOptionsUiState())
+                searchState.optionsLoaded = true
+            }
+
             // Enrich duets with avatars and track counts (background)
             fun findAvatar(name: String) = librarySingers.find { it.name == name }?.imageUrl
             enrichedDuets = enrichedDuets.map {
@@ -323,9 +329,17 @@ fun AndroidApp() {
                     val filters = remember(entry) { entry?.let { playlistRepo.parseFilters(it) } }
                     if (entry != null && filters != null) {
                         val playlistName = entry.name
+                        val singerIdToName = remember(searchState.searchOptions) {
+                            searchState.searchOptions.singers.associate { it.id to it.name }
+                        }
+                        val singerAvatarByName = remember(librarySingers) {
+                            librarySingers.filter { it.imageUrl != null }.associate { it.name to it.imageUrl!! }
+                        }
                         PlaylistDetailScreen(
                             playlistName = playlistName,
                             filters = filters!!,
+                            singerIdToName = singerIdToName,
+                            singerAvatarsByName = singerAvatarByName,
                             bottomNavItems = bottomNavItems,
                             onBottomNavSelected = onTabSelected,
                             onBackClick = { navController.popBackStack() },

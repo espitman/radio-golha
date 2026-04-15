@@ -33,6 +33,7 @@ import com.radiogolha.mobile.theme.GolhaColors
 import com.radiogolha.mobile.theme.GolhaRadius
 import com.radiogolha.mobile.theme.GolhaSpacing
 import com.radiogolha.mobile.ui.home.*
+import com.radiogolha.mobile.ui.home.AnimatedAvatarRing
 import com.radiogolha.mobile.ui.programs.ProgramTrackRow
 import com.radiogolha.mobile.ui.programs.SkeletonTrackRow
 import com.radiogolha.mobile.ui.root.TabRootScreen
@@ -43,6 +44,8 @@ import kotlinx.coroutines.withContext
 fun PlaylistDetailScreen(
     playlistName: String,
     filters: ActiveFilters,
+    singerIdToName: Map<Long, String> = emptyMap(),
+    singerAvatarsByName: Map<String, String> = emptyMap(),
     bottomNavItems: List<BottomNavItemUiModel>,
     onBottomNavSelected: (AppTab) -> Unit,
     onBackClick: () -> Unit,
@@ -156,9 +159,16 @@ fun PlaylistDetailScreen(
         onExpandPlayer = onExpandPlayer,
         onBackClick = onBackClick,
         content = {
-            // Banner
+            // Banner - from filter singer IDs, resolve name then avatar
             item {
-                PlaylistBanner(name = playlistName, trackCount = allResults.size)
+                val avatarUrls = filters.singerIds.toList().take(2).mapNotNull { id ->
+                    singerIdToName[id]?.let { singerAvatarsByName[it] }
+                }
+                PlaylistBanner(
+                    name = playlistName,
+                    trackCount = allResults.size,
+                    avatarUrls = avatarUrls,
+                )
             }
 
             // Action buttons
@@ -249,14 +259,16 @@ fun PlaylistDetailScreen(
 }
 
 @Composable
-private fun PlaylistBanner(name: String, trackCount: Int) {
+private fun PlaylistBanner(name: String, trackCount: Int, avatarUrls: List<String> = emptyList()) {
     val darkBg = Color(0xFF0B2161)
     val gold = Color(0xFFE3BF55)
     val textWhite = Color(0xFFF0ECE3)
+    val showAvatars = avatarUrls.isNotEmpty() && avatarUrls.size <= 2
 
     val inf = rememberInfiniteTransition(label = "plBanner")
     val glowA by inf.animateFloat(0.04f, 0.10f, infiniteRepeatable(tween(3500, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse), label = "a")
     val glowR by inf.animateFloat(0.40f, 0.55f, infiniteRepeatable(tween(4000, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse), label = "r")
+    val ringRot by inf.animateFloat(0f, 360f, infiniteRepeatable(tween(8000, easing = androidx.compose.animation.core.LinearEasing)), label = "ring")
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -266,22 +278,47 @@ private fun PlaylistBanner(name: String, trackCount: Int) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .requiredHeight(100.dp)
+                .requiredHeight(if (showAvatars) 120.dp else 100.dp)
                 .drawBehind {
                     drawCircle(gold.copy(alpha = glowA), size.minDimension * glowR, Offset(size.width * 0.8f, size.height * 0.3f))
                     drawCircle(gold.copy(alpha = glowA * 0.6f), size.minDimension * glowR * 0.7f, Offset(size.width * 0.15f, size.height * 0.75f))
-                }
-                .padding(horizontal = 20.dp),
-            contentAlignment = Alignment.CenterStart,
+                },
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    GolhaLineIcon(icon = GolhaIcon.Library, modifier = Modifier.size(18.dp), tint = gold.copy(alpha = 0.6f))
-                    Text("لیست من", style = MaterialTheme.typography.labelSmall, color = textWhite.copy(alpha = 0.5f))
+            Row(
+                modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // Text
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        GolhaLineIcon(icon = GolhaIcon.Library, modifier = Modifier.size(18.dp), tint = gold.copy(alpha = 0.6f))
+                        Text("لیست من", style = MaterialTheme.typography.labelSmall, color = textWhite.copy(alpha = 0.5f))
+                    }
+                    Text(name, style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold), color = gold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    if (trackCount > 0) {
+                        Text("$trackCount برنامه", style = MaterialTheme.typography.labelSmall, color = textWhite.copy(alpha = 0.5f))
+                    }
                 }
-                Text(name, style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold), color = gold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                if (trackCount > 0) {
-                    Text("$trackCount برنامه", style = MaterialTheme.typography.labelSmall, color = textWhite.copy(alpha = 0.5f))
+
+                // Avatars (1 or 2 singers)
+                if (showAvatars) {
+                    if (avatarUrls.size == 1) {
+                        Box(modifier = Modifier.size(80.dp)) {
+                            AnimatedAvatarRing(rotation = ringRot, modifier = Modifier.fillMaxSize())
+                            ArtistAvatar(name = "", imageUrl = avatarUrls[0], tint = gold, modifier = Modifier.fillMaxSize().padding(3.dp))
+                        }
+                    } else {
+                        Box(modifier = Modifier.size(width = 120.dp, height = 80.dp)) {
+                            Box(modifier = Modifier.size(70.dp).align(Alignment.CenterEnd)) {
+                                AnimatedAvatarRing(rotation = ringRot, modifier = Modifier.fillMaxSize())
+                                ArtistAvatar(name = "", imageUrl = avatarUrls[1], tint = gold, modifier = Modifier.fillMaxSize().padding(3.dp))
+                            }
+                            Box(modifier = Modifier.size(70.dp).align(Alignment.CenterStart)) {
+                                AnimatedAvatarRing(rotation = -ringRot, modifier = Modifier.fillMaxSize())
+                                ArtistAvatar(name = "", imageUrl = avatarUrls[0], tint = gold, modifier = Modifier.fillMaxSize().padding(3.dp))
+                            }
+                        }
+                    }
                 }
             }
         }
