@@ -544,6 +544,11 @@ fun SavedPlaylistsSection(
     modifier: Modifier = Modifier,
 ) {
     if (playlists.isEmpty()) return
+
+    val inf = rememberInfiniteTransition(label = "playlistGlow")
+    val glowA by inf.animateFloat(0.04f, 0.10f, infiniteRepeatable(tween(3000, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse), label = "plA")
+    val glowR by inf.animateFloat(0.35f, 0.50f, infiniteRepeatable(tween(3500, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse), label = "plR")
+
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large),
@@ -557,23 +562,33 @@ fun SavedPlaylistsSection(
             items(playlists) { playlist ->
                 Surface(
                     modifier = Modifier
-                        .widthIn(min = 140.dp, max = 180.dp)
-                        .height(56.dp)
+                        .widthIn(min = 160.dp, max = 200.dp)
+                        .height(72.dp)
                         .clickable { onPlaylistClick(playlist.id) },
                     shape = RoundedCornerShape(GolhaRadius.Card),
                     color = GolhaColors.BannerBackground,
+                    shadowElevation = GolhaElevation.Card,
                 ) {
                     Box(
-                        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .drawBehind {
+                                drawCircle(GolhaColors.BannerDetail.copy(alpha = glowA), size.minDimension * glowR, Offset(size.width * 0.85f, size.height * 0.3f))
+                                drawCircle(GolhaColors.BannerDetail.copy(alpha = glowA * 0.6f), size.minDimension * glowR * 0.7f, Offset(size.width * 0.1f, size.height * 0.8f))
+                            }
+                            .padding(horizontal = 16.dp),
                         contentAlignment = Alignment.CenterStart,
                     ) {
-                        Text(
-                            text = playlist.name,
-                            style = MaterialTheme.typography.titleSmall,
-                            color = GolhaColors.BannerDetail,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            GolhaLineIcon(icon = GolhaIcon.Library, modifier = Modifier.size(16.dp), tint = GolhaColors.BannerDetail.copy(alpha = 0.5f))
+                            Text(
+                                text = playlist.name,
+                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                color = GolhaColors.BannerDetail,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
                 }
             }

@@ -329,6 +329,15 @@ fun AndroidApp() {
                             bottomNavItems = bottomNavItems,
                             onBottomNavSelected = onTabSelected,
                             onBackClick = { navController.popBackStack() },
+                            onRename = { newName ->
+                                playlistRepo.rename(playlistId, newName)
+                                savedPlaylists = playlistRepo.getAll().map { SavedPlaylistUiModel(it.id, it.name) }
+                            },
+                            onDelete = {
+                                playlistRepo.delete(playlistId)
+                                savedPlaylists = playlistRepo.getAll().map { SavedPlaylistUiModel(it.id, it.name) }
+                                navController.popBackStack()
+                            },
                             onProgramClick = { id -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(id)) },
                             onPlayTrack = { track -> playerManager.play(track) },
                             currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading,

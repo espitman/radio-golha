@@ -43,6 +43,11 @@ class PlaylistRepository(context: Context) {
         return id
     }
 
+    fun rename(id: Long, newName: String) {
+        val all = getAll().map { if (it.id == id) it.copy(name = newName) else it }
+        persist(all)
+    }
+
     fun delete(id: Long) {
         val all = getAll().filter { it.id != id }
         persist(all)
