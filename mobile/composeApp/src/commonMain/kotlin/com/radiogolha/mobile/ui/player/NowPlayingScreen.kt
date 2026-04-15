@@ -264,10 +264,8 @@ fun NowPlayingScreen(
                 }
 
                 // Play/Pause
-                Box(contentAlignment = Alignment.Center) {
-                    if (isPlaying) {
-                        Box(modifier = Modifier.size(76.dp).graphicsLayer { alpha = glowPulse * 1.5f }.background(Gold.copy(alpha = 0.3f), CircleShape))
-                    }
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(76.dp)) {
+                    Box(modifier = Modifier.size(76.dp).graphicsLayer { alpha = if (isPlaying) glowPulse * 1.5f else 0f }.background(Gold.copy(alpha = 0.3f), CircleShape))
                     Surface(
                         modifier = Modifier.size(68.dp).clickable { onTogglePlayback() },
                         shape = CircleShape,
