@@ -32,6 +32,8 @@ import com.radiogolha.mobile.ui.singers.*
 import com.radiogolha.mobile.ui.orchestras.*
 import com.radiogolha.mobile.ui.search.SearchScreen
 import com.radiogolha.mobile.ui.search.SearchState
+import com.radiogolha.mobile.ui.search.PlaylistDetailScreen
+import com.radiogolha.mobile.data.PlaylistRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -90,6 +92,8 @@ fun AndroidApp() {
     var isCategoryLoading by remember { mutableStateOf(false) }
 
     val searchState = remember { SearchState() }
+    val playlistRepo = remember { PlaylistRepository(context) }
+    var savedPlaylists by remember { mutableStateOf(playlistRepo.getAll().map { SavedPlaylistUiModel(it.id, it.name) }) }
     var enrichedDuets by remember { mutableStateOf(listOf(
         DuetPairUiModel("هایده", "محمدرضا شجریان"),
         DuetPairUiModel("حسین قوامی", "مرضیه"),
@@ -178,6 +182,8 @@ fun AndroidApp() {
                         state = if (isHomeLoading && homeUiState == null) null else homeUiState?.copy(bottomNavItems = bottomNavItems),
                         bottomNavItems = bottomNavItems,
                         duets = enrichedDuets,
+                        savedPlaylists = savedPlaylists,
+                        onPlaylistClick = { id -> navController.navigate(AndroidRoute.PlaylistDetail.createRoute(id)) },
                         onOpenAllSingers = { navController.navigate(AndroidRoute.Library.createRoute("singers")) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } },
                         onOpenAllMusicians = { navController.navigate(AndroidRoute.Library.createRoute("musicians")) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } },
                         isRefreshingTopTracks = isRefreshingTopTracks,
@@ -206,6 +212,10 @@ fun AndroidApp() {
                         onBottomNavSelected = onTabSelected,
                         onProgramClick = { programId -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(programId)) },
                         onPlayTrack = { track -> playerManager.play(track) },
+                        onSavePlaylist = { name, filters ->
+                            playlistRepo.save(name, filters)
+                            savedPlaylists = playlistRepo.getAll().map { SavedPlaylistUiModel(it.id, it.name) }
+                        },
                         currentTrack = currentTrack,
                         isPlayerPlaying = isPlayerPlaying,
                         isPlayerLoading = isPlayerLoading,
@@ -307,6 +317,29 @@ fun AndroidApp() {
                     )
                 }
 
+                composable(route = AndroidRoute.PlaylistDetail.route, arguments = listOf(navArgument("id") { type = NavType.LongType })) { backStackEntry ->
+                    val playlistId = backStackEntry.arguments?.getLong("id") ?: 0L
+                    val entry = remember(playlistId) { playlistRepo.getById(playlistId) }
+                    val filters = remember(entry) { entry?.let { playlistRepo.parseFilters(it) } }
+                    if (entry != null && filters != null) {
+                        val playlistName = entry.name
+                        PlaylistDetailScreen(
+                            playlistName = playlistName,
+                            filters = filters!!,
+                            bottomNavItems = bottomNavItems,
+                            onBottomNavSelected = onTabSelected,
+                            onBackClick = { navController.popBackStack() },
+                            onProgramClick = { id -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(id)) },
+                            onPlayTrack = { track -> playerManager.play(track) },
+                            currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading,
+                            currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs,
+                            onTogglePlayerPlayback = { playerManager.togglePlayback() },
+                            onTrackClick = { id -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(id)) },
+                            onExpandPlayer = { showPlayerSheet = true },
+                        )
+                    }
+                }
+
                 composable(AndroidRoute.Account.route) {
                     SettingsScreen(bottomNavItems = bottomNavItems, onExpandPlayer = { showPlayerSheet = true }, onBottomNavSelected = onTabSelected, isDebugDatabaseToolsEnabled = isDebugDatabaseToolsEnabled(), isImportingDatabase = isImportingDatabase, currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onImportDebugDatabase = { if (!isImportingDatabase) { scope.launch { isImportingDatabase = true; val result = importDebugDatabase(); showDebugToast(result.message); if (result.success) { reloadToken += 1; navController.navigate(AndroidRoute.Home.route) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } } ; isImportingDatabase = false } } })
                 }
@@ -389,6 +422,7 @@ private sealed class AndroidRoute(val route: String) {
     data object ProgramEpisodeDetail : AndroidRoute("program_episode_detail/{id}") { fun createRoute(id: Long) = "program_episode_detail/$id" }
     data object OrchestraDetail : AndroidRoute("orchestra_detail/{id}/{name}") { fun createRoute(id: Long, name: String) = "orchestra_detail/$id/$name" }
     data object DuetDetail : AndroidRoute("duet_detail/{singer1}/{singer2}") { fun createRoute(s1: String, s2: String) = "duet_detail/$s1/$s2" }
+    data object PlaylistDetail : AndroidRoute("playlist_detail/{id}") { fun createRoute(id: Long) = "playlist_detail/$id" }
 }
 
 private fun AppTab.toRoute(): AndroidRoute = when (this) {

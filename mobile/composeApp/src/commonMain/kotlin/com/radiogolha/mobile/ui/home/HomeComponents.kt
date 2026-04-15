@@ -538,6 +538,50 @@ fun DuetsBannerSkeleton(modifier: Modifier = Modifier) {
 }
 
 @Composable
+fun SavedPlaylistsSection(
+    playlists: List<SavedPlaylistUiModel>,
+    onPlaylistClick: (Long) -> Unit = {},
+    modifier: Modifier = Modifier,
+) {
+    if (playlists.isEmpty()) return
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large),
+    ) {
+        SectionTitle(title = "لیست‌های من")
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(GolhaSpacing.CardGap),
+            contentPadding = PaddingValues(horizontal = GolhaSpacing.ScreenHorizontal),
+        ) {
+            items(playlists) { playlist ->
+                Surface(
+                    modifier = Modifier
+                        .widthIn(min = 140.dp, max = 180.dp)
+                        .height(56.dp)
+                        .clickable { onPlaylistClick(playlist.id) },
+                    shape = RoundedCornerShape(GolhaRadius.Card),
+                    color = GolhaColors.BannerBackground,
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                        contentAlignment = Alignment.CenterStart,
+                    ) {
+                        Text(
+                            text = playlist.name,
+                            style = MaterialTheme.typography.titleSmall,
+                            color = GolhaColors.BannerDetail,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun TopTracksSection(
     tracks: List<TrackUiModel>,
     isRefreshing: Boolean,
@@ -1803,6 +1847,17 @@ fun GolhaLineIcon(
                     size = androidx.compose.ui.geometry.Size(size.width * 0.18f, size.height * 0.20f),
                     style = Stroke(width = stroke * 0.85f, cap = StrokeCap.Round)
                 )
+            }
+            GolhaIcon.Save -> {
+                // Floppy disk icon
+                val pad = size.width * 0.15f
+                val r = size.width * 0.08f
+                // Outer rounded rect
+                drawRoundRect(tint, topLeft = Offset(pad, pad), size = androidx.compose.ui.geometry.Size(size.width - pad * 2, size.height - pad * 2), cornerRadius = androidx.compose.ui.geometry.CornerRadius(r, r), style = Stroke(width = stroke, cap = StrokeCap.Round, join = StrokeJoin.Round))
+                // Top tab
+                drawRect(tint, topLeft = Offset(size.width * 0.32f, pad), size = androidx.compose.ui.geometry.Size(size.width * 0.36f, size.height * 0.22f), style = Stroke(width = stroke * 0.8f))
+                // Bottom label area
+                drawRoundRect(tint, topLeft = Offset(size.width * 0.28f, size.height * 0.52f), size = androidx.compose.ui.geometry.Size(size.width * 0.44f, size.height * 0.22f), cornerRadius = androidx.compose.ui.geometry.CornerRadius(r * 0.5f, r * 0.5f), style = Stroke(width = stroke * 0.8f))
             }
         }
     }

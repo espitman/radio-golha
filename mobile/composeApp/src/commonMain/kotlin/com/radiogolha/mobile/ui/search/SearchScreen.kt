@@ -57,6 +57,7 @@ fun SearchScreen(
     onBottomNavSelected: (AppTab) -> Unit,
     onProgramClick: (Long) -> Unit = {},
     onPlayTrack: (TrackUiModel) -> Unit = {},
+    onSavePlaylist: (String, ActiveFilters) -> Unit = { _, _ -> },
     currentTrack: TrackUiModel? = null,
     isPlayerPlaying: Boolean = false,
     isPlayerLoading: Boolean = false,
@@ -168,6 +169,7 @@ fun SearchScreen(
                         onProgramClick = onProgramClick,
                         onPlayTrack = onPlayTrack,
                         onBackToFilters = { state.currentPage = SearchPage.Filters },
+                        onSavePlaylist = onSavePlaylist,
                     )
                 }
             }
@@ -428,6 +430,7 @@ private fun FiltersPage(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ResultsPage(
     innerPadding: PaddingValues,
@@ -443,14 +446,60 @@ private fun ResultsPage(
     onProgramClick: (Long) -> Unit,
     onPlayTrack: (TrackUiModel) -> Unit,
     onBackToFilters: () -> Unit,
+    onSavePlaylist: (String, ActiveFilters) -> Unit = { _, _ -> },
 ) {
+    var showSaveDialog by remember { mutableStateOf(false) }
+    var playlistName by remember { mutableStateOf("") }
+
+    if (showSaveDialog) {
+        ModalBottomSheet(
+            onDismissRequest = { showSaveDialog = false },
+            containerColor = GolhaColors.ScreenBackground,
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        ) {
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    Text("ذخیره لیست", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = GolhaColors.PrimaryText)
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = GolhaColors.Surface,
+                        border = BorderStroke(1.dp, GolhaColors.Border),
+                    ) {
+                        BasicTextField(
+                            value = playlistName,
+                            onValueChange = { playlistName = it },
+                            modifier = Modifier.fillMaxWidth().padding(14.dp),
+                            textStyle = TextStyle(color = GolhaColors.PrimaryText, fontSize = 16.sp),
+                            cursorBrush = SolidColor(GolhaColors.PrimaryAccent),
+                            singleLine = true,
+                            decorationBox = { inner ->
+                                if (playlistName.isEmpty()) Text("نام لیست...", color = GolhaColors.SecondaryText.copy(alpha = 0.5f))
+                                inner()
+                            },
+                        )
+                    }
+                    Button(
+                        onClick = { onSavePlaylist(playlistName, activeFilters); showSaveDialog = false; playlistName = "" },
+                        enabled = playlistName.isNotBlank(),
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = GolhaColors.PrimaryAccent),
+                    ) { Text("ذخیره", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)) }
+                }
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(bottom = innerPadding.calculateBottomPadding())
             .statusBarsPadding(),
     ) {
-        // Header - back button on the left (end in RTL)
+        // Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -458,7 +507,6 @@ private fun ResultsPage(
                 .padding(top = 16.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Title + badge on the right (start in RTL)
             Row(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
@@ -480,7 +528,21 @@ private fun ResultsPage(
                     }
                 }
             }
-            // Back button on the left (end in RTL)
+            // Save button
+            if (!isLoading && results.isNotEmpty()) {
+                Surface(
+                    modifier = Modifier.size(36.dp).clickable { showSaveDialog = true },
+                    shape = CircleShape,
+                    color = GolhaColors.BadgeBackground,
+                    border = BorderStroke(1.dp, GolhaColors.Border),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        GolhaLineIcon(icon = GolhaIcon.Save, modifier = Modifier.size(18.dp), tint = GolhaColors.PrimaryText)
+                    }
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+            // Back button
             Surface(
                 modifier = Modifier.size(36.dp).clickable { onBackToFilters() },
                 shape = CircleShape,

@@ -89,6 +89,11 @@ data class DuetPairUiModel(
     val label: String = "$singer1 و $singer2",
 )
 
+data class SavedPlaylistUiModel(
+    val id: Long,
+    val name: String,
+)
+
 data class HomeUiState(
     val programs: List<ProgramUiModel>,
     val singers: List<SingerUiModel>,
@@ -122,6 +127,7 @@ enum class GolhaIcon {
     Info,
     SeekBack10,
     SeekForward10,
+    Save,
 }
 
 data class PerformerUiModel(

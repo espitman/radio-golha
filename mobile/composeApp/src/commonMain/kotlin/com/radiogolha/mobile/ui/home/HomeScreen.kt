@@ -49,6 +49,8 @@ fun HomeScreen(
     onMusicianClick: (Long) -> Unit = {},
     duets: List<DuetPairUiModel> = emptyList(),
     onDuetClick: (DuetPairUiModel) -> Unit = {},
+    savedPlaylists: List<SavedPlaylistUiModel> = emptyList(),
+    onPlaylistClick: (Long) -> Unit = {},
     onExpandPlayer: () -> Unit = {},
     onBottomNavSelected: (AppTab) -> Unit = {},
 ) {
@@ -121,6 +123,14 @@ fun HomeScreen(
                                 onSeeAllClick = onOpenAllMusicians,
                                 onMusicianClick = onMusicianClick,
                             )
+                        }
+                        if (savedPlaylists.isNotEmpty()) {
+                            item {
+                                SavedPlaylistsSection(
+                                    playlists = savedPlaylists,
+                                    onPlaylistClick = onPlaylistClick,
+                                )
+                            }
                         }
                         item {
                             TopTracksSection(
