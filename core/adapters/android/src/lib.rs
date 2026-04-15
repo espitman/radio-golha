@@ -591,6 +591,48 @@ fn ordered_modes_json(db_path: &str) -> Result<String, String> {
     to_string(&modes).map_err(|e| e.to_string())
 }
 
+fn programs_by_mode_json(db_path: &str, mode_id: i64) -> Result<String, String> {
+    let core = RadioGolhaCore::open(db_path).map_err(|e| e.to_string())?;
+    let conn = core.connection();
+    let mut stmt = conn.prepare(
+        "
+        SELECT p.id, p.title, p.no,
+               COALESCE(
+                   (SELECT GROUP_CONCAT(a.name, ' و ')
+                    FROM program_singers ps
+                    JOIN singer s ON s.id = ps.singer_id
+                    JOIN artist a ON a.id = s.artist_id
+                    WHERE ps.program_id = p.id),
+                   'ناشناس'
+               ) AS artist_names,
+               (SELECT GROUP_CONCAT(m2.name, ' و ')
+                FROM program_modes pm2 JOIN mode m2 ON m2.id = pm2.mode_id
+                WHERE pm2.program_id = p.id) AS mode_names,
+               (SELECT MAX(end_time) FROM program_timeline WHERE program_id = p.id) AS duration,
+               p.audio_url
+        FROM program p
+        JOIN program_modes pm ON pm.program_id = p.id
+        WHERE pm.mode_id = ?1
+        ORDER BY p.no ASC, p.id ASC
+        "
+    ).map_err(|e| e.to_string())?;
+
+    let rows = stmt.query_map([mode_id], |row| {
+        Ok(AndroidCategoryProgramItem {
+            id: row.get(0)?,
+            title: row.get(1)?,
+            no: row.get(2)?,
+            artist: row.get(3)?,
+            mode: row.get(4)?,
+            duration: row.get(5)?,
+            audio_url: row.get(6)?,
+        })
+    }).map_err(|e| e.to_string())?;
+
+    let items: Vec<_> = rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())?;
+    to_string(&items).map_err(|e| e.to_string())
+}
+
 fn search_options_json(db_path: &str) -> Result<String, String> {
     let core = RadioGolhaCore::open(db_path).map_err(|e| e.to_string())?;
     let options = core.program_search_options().map_err(|e| e.to_string())?;
@@ -795,6 +837,16 @@ pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getProgramsByOr
     orchestra_id: i64,
 ) -> jstring {
     jni_json_response(&mut env, db_path, |path| programs_by_orchestra_json(path, orchestra_id))
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getProgramsByModeJson(
+    mut env: JNIEnv,
+    _class: JClass,
+    db_path: JString,
+    mode_id: i64,
+) -> jstring {
+    jni_json_response(&mut env, db_path, |path| programs_by_mode_json(path, mode_id))
 }
 
 #[unsafe(no_mangle)]

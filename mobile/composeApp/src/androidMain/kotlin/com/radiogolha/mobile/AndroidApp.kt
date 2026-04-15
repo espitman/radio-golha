@@ -209,7 +209,10 @@ fun AndroidApp() {
                         onMusicianClick = { artistId -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId)) },
                         onDuetClick = { duet -> navController.navigate(AndroidRoute.DuetDetail.createRoute(duet.singer1, duet.singer2)) },
                         orderedModes = orderedModes,
-                        onDastgahClick = { name -> navController.navigate(AndroidRoute.DastgahDetail.createRoute(name)) },
+                        onDastgahClick = { name ->
+                            val id = searchState.searchOptions.modes.find { it.name == name }?.id
+                            if (id != null) navController.navigate(AndroidRoute.DastgahDetail.createRoute(id, name))
+                        },
                         onExpandPlayer = { showPlayerSheet = true },
                         onBottomNavSelected = onTabSelected,
                     )
@@ -367,29 +370,22 @@ fun AndroidApp() {
                     }
                 }
 
-                composable(route = AndroidRoute.DastgahDetail.route, arguments = listOf(navArgument("name") { type = NavType.StringType })) { backStackEntry ->
-                    val dastgahName = backStackEntry.arguments?.getString("name") ?: ""
-                    val modeId = remember(dastgahName, searchState.searchOptions) {
-                        searchState.searchOptions.modes.find { it.name == dastgahName }?.id
-                    }
-                    if (modeId != null) {
-                        val filters = remember(modeId) { com.radiogolha.mobile.ui.search.ActiveFilters(modeIds = setOf(modeId)) }
-                        PlaylistDetailScreen(
-                            playlistName = dastgahName,
-                            filters = filters,
-                            showActions = false,
-                            bottomNavItems = bottomNavItems,
-                            onBottomNavSelected = onTabSelected,
-                            onBackClick = { navController.popBackStack() },
-                            onProgramClick = { id -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(id)) },
-                            onPlayTrack = { track -> playerManager.play(track) },
-                            currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading,
-                            currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs,
-                            onTogglePlayerPlayback = { playerManager.togglePlayback() },
-                            onTrackClick = { id -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(id)) },
-                            onExpandPlayer = { showPlayerSheet = true },
-                        )
-                    }
+                composable(route = AndroidRoute.DastgahDetail.route, arguments = listOf(navArgument("id") { type = NavType.LongType }, navArgument("name") { type = NavType.StringType })) { backStackEntry ->
+                    val modeId = backStackEntry.arguments?.getLong("id") ?: 0L
+                    val modeName = backStackEntry.arguments?.getString("name") ?: ""
+                    ModeDetailScreen(
+                        modeId = modeId, modeName = modeName,
+                        bottomNavItems = bottomNavItems,
+                        onBottomNavSelected = onTabSelected,
+                        onBackClick = { navController.popBackStack() },
+                        onTrackClick = { id -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(id)) },
+                        onPlayTrack = { track -> playerManager.play(track) },
+                        onArtistClick = { id -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(id)) },
+                        currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading,
+                        currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs,
+                        onTogglePlayerPlayback = { playerManager.togglePlayback() },
+                        onExpandPlayer = { showPlayerSheet = true },
+                    )
                 }
 
                 composable(AndroidRoute.Account.route) {
@@ -475,7 +471,7 @@ private sealed class AndroidRoute(val route: String) {
     data object OrchestraDetail : AndroidRoute("orchestra_detail/{id}/{name}") { fun createRoute(id: Long, name: String) = "orchestra_detail/$id/$name" }
     data object DuetDetail : AndroidRoute("duet_detail/{singer1}/{singer2}") { fun createRoute(s1: String, s2: String) = "duet_detail/$s1/$s2" }
     data object PlaylistDetail : AndroidRoute("playlist_detail/{id}") { fun createRoute(id: Long) = "playlist_detail/$id" }
-    data object DastgahDetail : AndroidRoute("dastgah_detail/{name}") { fun createRoute(name: String) = "dastgah_detail/$name" }
+    data object DastgahDetail : AndroidRoute("dastgah_detail/{id}/{name}") { fun createRoute(id: Long, name: String) = "dastgah_detail/$id/$name" }
 }
 
 private fun AppTab.toRoute(): AndroidRoute = when (this) {
