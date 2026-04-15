@@ -670,23 +670,8 @@ impl RadioGolhaCore {
         }
     }
 
-    pub fn get_duet_pairs(&self) -> CoreResult<Vec<(String, String)>> {
-        let config = self.get_config("duet_pairs")?;
-        let pairs: Vec<Vec<i64>> = config
-            .and_then(|json| serde_json::from_str(&json).ok())
-            .unwrap_or_default();
-        let mut result = Vec::new();
-        for pair in pairs {
-            if pair.len() != 2 { continue; }
-            let name1: Option<String> = self.connection()
-                .query_row("SELECT a.name FROM singer s JOIN artist a ON a.id = s.artist_id WHERE s.id = ?1", [pair[0]], |r| r.get(0)).ok();
-            let name2: Option<String> = self.connection()
-                .query_row("SELECT a.name FROM singer s JOIN artist a ON a.id = s.artist_id WHERE s.id = ?1", [pair[1]], |r| r.get(0)).ok();
-            if let (Some(n1), Some(n2)) = (name1, name2) {
-                result.push((n1, n2));
-            }
-        }
-        Ok(result)
+    pub fn get_duet_pairs_raw(&self) -> CoreResult<String> {
+        Ok(self.get_config("duet_pairs")?.unwrap_or_else(|| "[]".to_string()))
     }
 
     pub fn program_search_options(&self) -> CoreResult<ProgramSearchOptions> {

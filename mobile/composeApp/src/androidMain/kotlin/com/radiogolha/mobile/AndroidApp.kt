@@ -35,6 +35,7 @@ import com.radiogolha.mobile.ui.search.SearchState
 import com.radiogolha.mobile.ui.search.PlaylistDetailScreen
 import com.radiogolha.mobile.data.PlaylistRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -105,34 +106,38 @@ fun AndroidApp() {
         isLibraryLoading = true
         isHomeLoading = true
         withContext(Dispatchers.Default) {
-            val hState = runCatching { loadHomeUiState() }.getOrNull()
-            librarySingers = runCatching { loadSingersUiState() }.getOrDefault(emptyList())
-            orderedModes = runCatching { loadOrderedModes() }.getOrDefault(emptyList())
-
-            // Load duet pairs
-            val basePairs = runCatching { loadDuetPairsConfig() }.getOrDefault(emptyList())
-            fun findAvatar(name: String) = librarySingers.find { it.name == name }?.imageUrl
-            enrichedDuets = basePairs.map {
-                val count = runCatching { loadDuetPrograms(it.singer1, it.singer2).size }.getOrDefault(0)
-                it.copy(singer1Avatar = findAvatar(it.singer1), singer2Avatar = findAvatar(it.singer2), trackCount = count)
+            // All queries in parallel
+            val dHome = async { runCatching { loadHomeUiState() }.getOrNull() }
+            val dSingers = async { runCatching { loadSingersUiState() }.getOrDefault(emptyList()) }
+            val dModes = async { runCatching { loadOrderedModes() }.getOrDefault(emptyList()) }
+            val dDuets = async { runCatching { loadDuetPairsConfig() }.getOrDefault(emptyList()) }
+            val dMusicians = async { runCatching { loadMusiciansUiState() }.getOrDefault(emptyList()) }
+            val dOrchestras = async { runCatching { loadOrchestrasUiState() }.getOrDefault(emptyList()) }
+            val dPrograms = async { runCatching { com.radiogolha.mobile.ui.programs.loadProgramsUiState() }.getOrDefault(emptyList()) }
+            val dSearchOpts = async {
+                if (!searchState.optionsLoaded) runCatching { com.radiogolha.mobile.ui.search.loadSearchOptions() }.getOrDefault(com.radiogolha.mobile.ui.search.SearchOptionsUiState())
+                else searchState.searchOptions
             }
 
-            // Set home state AFTER duets are ready so everything appears together
+            // Await all
+            val hState = dHome.await()
+            librarySingers = dSingers.await()
+            orderedModes = dModes.await()
+            enrichedDuets = dDuets.await()
+
+            // Show home
             if (hState != null) {
                 homeUiState = hState.copy(topTracks = hState.topTracks.take(visibleTrackCount))
                 prefetchedTopTracks = hState.topTracks.drop(visibleTrackCount).take(visibleTrackCount)
             }
             isHomeLoading = false
 
-            // Preload search options
-            if (!searchState.optionsLoaded) {
-                searchState.searchOptions = runCatching { com.radiogolha.mobile.ui.search.loadSearchOptions() }.getOrDefault(com.radiogolha.mobile.ui.search.SearchOptionsUiState())
-                searchState.optionsLoaded = true
-            }
-
-            libraryMusicians = runCatching { loadMusiciansUiState() }.getOrDefault(emptyList())
-            libraryOrchestras = runCatching { loadOrchestrasUiState() }.getOrDefault(emptyList())
-            libraryPrograms = runCatching { com.radiogolha.mobile.ui.programs.loadProgramsUiState() }.getOrDefault(emptyList())
+            // Library & search options
+            searchState.searchOptions = dSearchOpts.await()
+            searchState.optionsLoaded = true
+            libraryMusicians = dMusicians.await()
+            libraryOrchestras = dOrchestras.await()
+            libraryPrograms = dPrograms.await()
             isLibraryLoading = false
         }
     }

@@ -597,9 +597,7 @@ fn config_json(db_path: &str, key: &str) -> Result<String, String> {
 
 fn duet_pairs_config_json(db_path: &str) -> Result<String, String> {
     let core = RadioGolhaCore::open(db_path).map_err(|e| e.to_string())?;
-    let pairs = core.get_duet_pairs().map_err(|e| e.to_string())?;
-    let arr: Vec<_> = pairs.iter().map(|(s1, s2)| json!({"singer1": s1, "singer2": s2})).collect();
-    to_string(&arr).map_err(|e| e.to_string())
+    core.get_duet_pairs_raw().map_err(|e| e.to_string())
 }
 
 fn ordered_modes_json(db_path: &str) -> Result<String, String> {

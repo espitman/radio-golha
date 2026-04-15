@@ -149,7 +149,13 @@ actual fun loadDuetPairsConfig(): List<DuetPairUiModel> {
     return buildList {
         for (i in 0 until arr.length()) {
             val item = arr.getJSONObject(i)
-            add(DuetPairUiModel(singer1 = item.getString("singer1"), singer2 = item.getString("singer2")))
+            add(DuetPairUiModel(
+                singer1 = item.getString("singer1"),
+                singer2 = item.getString("singer2"),
+                singer1Avatar = item.optNullableString("singer1Avatar"),
+                singer2Avatar = item.optNullableString("singer2Avatar"),
+                trackCount = item.optInt("trackCount", 0),
+            ))
         }
     }
 }
