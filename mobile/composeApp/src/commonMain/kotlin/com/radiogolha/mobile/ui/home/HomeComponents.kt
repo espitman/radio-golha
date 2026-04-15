@@ -787,103 +787,127 @@ fun MiniPlayerBar(
     onTrackClick: (Long) -> Unit = {},
     onExpand: () -> Unit = {},
 ) {
-    Surface(
-        tonalElevation = 0.dp,
-        shadowElevation = 0.dp,
-        color = GolhaColors.Surface.copy(alpha = 0.98f),
-        border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.82f)),
+    val darkBg = Color(0xFF0B2161)
+    val gold = Color(0xFFD4A843)
+    val textWhite = Color(0xFFF0ECE3)
+    val textDim = Color(0xFF8A95A8)
+
+    val playbackProgress = remember(currentTrack?.id, currentPositionMs, durationMs) {
+        if (durationMs > 0L) (currentPositionMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f) else 0f
+    }
+
+    // Animated pattern offset
+    val inf = rememberInfiniteTransition(label = "miniPattern")
+    val patternOffset by inf.animateFloat(
+        initialValue = 0f, targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(12000, easing = LinearEasing)),
+        label = "patOff",
+    )
+    val glowA by inf.animateFloat(
+        initialValue = 0.03f, targetValue = 0.07f,
+        animationSpec = infiniteRepeatable(tween(3000, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse),
+        label = "miniGlow",
+    )
+
+    Box(
         modifier = Modifier
+            .fillMaxWidth()
+            .background(darkBg)
             .clickable(enabled = currentTrack != null) { onExpand() }
             .pointerInput(Unit) {
                 detectVerticalDragGestures { change, dragAmount ->
-                    if (dragAmount < -15) {
-                        onExpand()
-                        change.consume()
-                    }
+                    if (dragAmount < -15) { onExpand(); change.consume() }
                 }
             }
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = GolhaSpacing.ScreenHorizontal, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            val playbackProgress = remember(currentTrack?.id, currentPositionMs, durationMs) {
-                if (durationMs > 0L) {
-                    (currentPositionMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
-                } else {
-                    0f
+        // Eslimi pattern layer
+        Canvas(modifier = Modifier.matchParentSize()) {
+            val patternColor = gold.copy(alpha = glowA)
+            val step = size.height * 1.2f
+            val offset = patternOffset * step
+            val cols = (size.width / step).toInt() + 2
+            for (i in -1..cols) {
+                val cx = i * step + offset
+                // Six-point stars
+                val cy = size.height / 2
+                val r = step * 0.18f
+                val points = List(12) { idx ->
+                    val cr = if (idx % 2 == 0) r else r * 0.46f
+                    val angle = Math.toRadians((-90.0) + idx * 30.0)
+                    Offset(
+                        cx + (kotlin.math.cos(angle) * cr).toFloat(),
+                        cy + (kotlin.math.sin(angle) * cr).toFloat(),
+                    )
+                }
+                val path = androidx.compose.ui.graphics.Path().apply {
+                    moveTo(points.first().x, points.first().y)
+                    points.drop(1).forEach { lineTo(it.x, it.y) }
+                    close()
+                }
+                drawPath(path, patternColor, style = Stroke(width = 1.dp.toPx(), cap = StrokeCap.Round))
+            }
+        }
+
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // Progress bar at top - LTR
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                Box(modifier = Modifier.fillMaxWidth().height(3.dp).background(gold.copy(alpha = 0.2f))) {
+                    Box(modifier = Modifier.height(3.dp).fillMaxWidth(playbackProgress).background(gold))
                 }
             }
-            Box(
-                modifier = Modifier
-                    .size(46.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(
-                    progress = { playbackProgress },
-                    modifier = Modifier.matchParentSize(),
-                    color = GolhaColors.PrimaryText,
-                    trackColor = GolhaColors.Border.copy(alpha = 0.55f),
-                    strokeWidth = 2.6.dp,
-                )
 
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                // Play/Pause button
                 Box(
                     modifier = Modifier
-                        .size(38.dp)
+                        .size(40.dp)
                         .clip(CircleShape)
-                        .background(GolhaColors.BadgeBackground)
-                        .border(1.dp, GolhaColors.Border, CircleShape)
+                        .background(gold)
                         .clickable(enabled = !currentTrack?.audioUrl.isNullOrBlank()) { onTogglePlayback() },
                     contentAlignment = Alignment.Center,
                 ) {
                     if (isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            color = GolhaColors.PrimaryText,
-                            strokeWidth = 2.dp,
-                        )
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), color = darkBg, strokeWidth = 2.dp)
                     } else {
                         GolhaLineIcon(
                             icon = if (isPlaying) GolhaIcon.Pause else GolhaIcon.Play,
-                            modifier = Modifier.size(18.dp),
-                            tint = if (!currentTrack?.audioUrl.isNullOrBlank()) GolhaColors.PrimaryText else GolhaColors.SecondaryText.copy(alpha = 0.55f),
+                            modifier = Modifier.size(22.dp),
+                            tint = darkBg,
                         )
                     }
                 }
-            }
 
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-            ) {
-                Text(
-                    text = currentTrack?.title ?: "...",
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
-                    color = GolhaColors.PrimaryText,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = currentTrack?.artist ?: "...",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = GolhaColors.SecondaryText,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+                // Track info
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                    Text(
+                        text = currentTrack?.title ?: "...",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                        color = textWhite,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = currentTrack?.artist ?: "...",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = gold.copy(alpha = 0.7f),
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    )
+                }
 
-            val formattedPlaybackTime = remember(currentTrack?.id, currentPositionMs, durationMs) {
-                formatMiniPlayerTime(currentPositionMs, durationMs)
-            }
-            if (formattedPlaybackTime != null) {
-                Text(
-                    text = formattedPlaybackTime,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = GolhaColors.SecondaryText,
-                )
+                // Time
+                val formattedPlaybackTime = remember(currentTrack?.id, currentPositionMs, durationMs) {
+                    formatMiniPlayerTime(currentPositionMs, durationMs)
+                }
+                if (formattedPlaybackTime != null) {
+                    Text(
+                        text = formattedPlaybackTime,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = textDim,
+                    )
+                }
             }
 
         }
