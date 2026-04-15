@@ -9,7 +9,7 @@ actual fun loadSearchOptions(): SearchOptionsUiState {
     val payload = RustCoreBridge.getSearchOptionsJson(requireArchiveDbPath())
     val root = JSONObject(payload)
     return SearchOptionsUiState(
-        categories = root.optSearchOptions("categories", nameKey = "titleFa", fallbackNameKey = "title_fa"),
+        categories = root.optSearchOptions("categories", nameKey = "titleFa", fallbackNameKey = "titleFa"),
         singers = root.optSearchOptions("singers"),
         modes = root.optSearchOptions("modes"),
         orchestras = root.optSearchOptions("orchestras"),
@@ -37,15 +37,11 @@ actual fun searchPrograms(filters: ActiveFilters, page: Int): SearchResultsUiSta
                 SearchResultUiModel(
                     id = item.optLong("id"),
                     title = item.optString("title", ""),
-                    categoryName = item.optString("categoryName")
-                        .takeIf { it.isNotBlank() }
-                        ?: item.optString("category_name", ""),
+                    categoryName = item.optString("categoryName", ""),
                     no = item.optInt("no", 0),
-                    subNo = item.optString("subNo").takeIf { it.isNotBlank() }
-                        ?: item.optString("sub_no").takeIf { it.isNotBlank() },
+                    subNo = item.optString("subNo").takeIf { it.isNotBlank() },
                     duration = item.optString("duration").takeIf { it.isNotBlank() },
-                    audioUrl = item.optString("audioUrl").takeIf { it.isNotBlank() }
-                        ?: item.optString("audio_url").takeIf { it.isNotBlank() },
+                    audioUrl = item.optString("audioUrl").takeIf { it.isNotBlank() },
                     artist = item.optString("artist").takeIf { it.isNotBlank() },
                 )
             )

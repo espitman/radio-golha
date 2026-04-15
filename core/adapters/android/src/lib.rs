@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, to_string};
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct AndroidHomePayload {
     programs: Vec<AndroidProgramItem>,
     singers: Vec<AndroidSingerItem>,
@@ -15,17 +16,20 @@ struct AndroidHomePayload {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct AndroidProgramItem {
     title: String,
     episode_count: i64,
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct AndroidNamedItem {
     name: String,
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct AndroidSingerItem {
     id: i64,
     name: String,
@@ -33,6 +37,7 @@ struct AndroidSingerItem {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct AndroidSingerListItem {
     id: i64,
     name: String,
@@ -41,6 +46,7 @@ struct AndroidSingerListItem {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct AndroidMusicianItem {
     id: i64,
     name: String,
@@ -49,6 +55,7 @@ struct AndroidMusicianItem {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct AndroidMusicianListItem {
     id: i64,
     name: String,
@@ -58,6 +65,7 @@ struct AndroidMusicianListItem {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct AndroidTrackItem {
     id: i64,
     title: String,
@@ -67,6 +75,7 @@ struct AndroidTrackItem {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct AndroidCategoryProgramItem {
     id: i64,
     title: String,
@@ -78,6 +87,7 @@ struct AndroidCategoryProgramItem {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct AndroidArtistDetailPayload {
     id: i64,
     name: String,
@@ -312,7 +322,7 @@ fn orchestras_json(db_path: &str) -> Result<String, String> {
             json!({
                 "id": item.id,
                 "name": item.name,
-                "program_count": item.usage_count
+                "programCount": item.usage_count
             })
         })
         .collect();
@@ -585,6 +595,13 @@ fn config_json(db_path: &str, key: &str) -> Result<String, String> {
     to_string(&value).map_err(|e| e.to_string())
 }
 
+fn duet_pairs_config_json(db_path: &str) -> Result<String, String> {
+    let core = RadioGolhaCore::open(db_path).map_err(|e| e.to_string())?;
+    let pairs = core.get_duet_pairs().map_err(|e| e.to_string())?;
+    let arr: Vec<_> = pairs.iter().map(|(s1, s2)| json!({"singer1": s1, "singer2": s2})).collect();
+    to_string(&arr).map_err(|e| e.to_string())
+}
+
 fn ordered_modes_json(db_path: &str) -> Result<String, String> {
     let core = RadioGolhaCore::open(db_path).map_err(|e| e.to_string())?;
     let modes = core.get_ordered_modes().map_err(|e| e.to_string())?;
@@ -837,6 +854,15 @@ pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getProgramsByOr
     orchestra_id: i64,
 ) -> jstring {
     jni_json_response(&mut env, db_path, |path| programs_by_orchestra_json(path, orchestra_id))
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getDuetPairsConfigJson(
+    mut env: JNIEnv,
+    _class: JClass,
+    db_path: JString,
+) -> jstring {
+    jni_json_response(&mut env, db_path, duet_pairs_config_json)
 }
 
 #[unsafe(no_mangle)]

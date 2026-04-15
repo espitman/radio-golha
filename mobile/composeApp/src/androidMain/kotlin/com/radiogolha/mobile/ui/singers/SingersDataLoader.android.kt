@@ -17,7 +17,7 @@ actual fun loadSingersUiState(): List<SingerListItemUiModel> {
                     artistId = item.getLong("id"),
                     name = item.getString("name"),
                     imageUrl = item.optNullableString("avatar"),
-                    programCount = item.getInt("program_count"),
+                    programCount = item.getInt("programCount"),
                 )
             )
         }

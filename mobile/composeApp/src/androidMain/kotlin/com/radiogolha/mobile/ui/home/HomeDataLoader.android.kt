@@ -20,7 +20,7 @@ actual fun loadHomeUiState(): HomeUiState? {
     val singers = root.getJSONArray("singers").toSingerModels()
     val dastgahs = root.getJSONArray("dastgahs").toDastgahModels()
     val musicians = root.getJSONArray("musicians").toMusicianModels()
-    val tracks = root.getJSONArray("top_tracks").toTrackModels()
+    val tracks = root.getJSONArray("topTracks").toTrackModels()
 
     return HomeUiState(
         programs = programs,
@@ -64,11 +64,8 @@ private fun JSONArray.toProgramModels(): List<ProgramUiModel> = buildList {
         val item = getJSONObject(index)
         add(
             ProgramUiModel(
-                title = item.optString("title").takeIf { it.isNotBlank() } 
-                        ?: item.optString("titleFa").takeIf { it.isNotBlank() }
-                        ?: item.optString("title_fa").takeIf { it.isNotBlank() }
-                        ?: "برنامه بدون نام",
-                episodeCount = item.optInt("episodeCount", 0).takeIf { it > 0 } ?: item.optInt("episode_count", 0),
+                title = item.optString("title", ""),
+                episodeCount = item.optInt("episodeCount", 0),
             )
         )
     }
@@ -79,10 +76,8 @@ private fun JSONArray.toSingerModels(): List<SingerUiModel> = buildList {
         val item = getJSONObject(index)
         add(
             SingerUiModel(
-                id = item.optLong("id").takeIf { it > 0 } 
-                    ?: item.optLong("artist_id").takeIf { it > 0 }
-                    ?: item.optLong("artistId", 0L),
-                name = item.optString("name", "نامعلوم"),
+                id = item.optLong("id", 0L),
+                name = item.optString("name", ""),
                 imageUrl = item.optNullableString("avatar"),
             )
         )
@@ -100,10 +95,8 @@ private fun JSONArray.toMusicianModels(): List<MusicianUiModel> = buildList {
         val item = getJSONObject(index)
         add(
             MusicianUiModel(
-                id = item.optLong("id").takeIf { it > 0 } 
-                    ?: item.optLong("artist_id").takeIf { it > 0 }
-                    ?: item.optLong("artistId", 0L),
-                name = item.optString("name", "نامعلوم"),
+                id = item.optLong("id", 0L),
+                name = item.optString("name", ""),
                 instrument = item.optString("instrument", ""),
                 imageUrl = item.optNullableString("avatar"),
             )
@@ -118,11 +111,11 @@ internal fun JSONArray.toTrackModels(): List<TrackUiModel> = buildList {
         add(
             TrackUiModel(
                 id = item.optLong("id", 0L),
-                artistId = item.optLong("artist_id").takeIf { it > 0 } ?: item.optLong("artistId").takeIf { it > 0 },
+                artistId = item.optLong("artistId").takeIf { it > 0 },
                 title = item.optString("title", "بدون عنوان"),
                 artist = item.getString("artist").split(" - ")[0],
                 duration = item.getString("duration"),
-                audioUrl = item.optNullableString("audio_url"),
+                audioUrl = item.optNullableString("audioUrl"),
                 coverUrl = avatar,
                 artistImages = if (avatar != null) listOf(avatar) else emptyList()
             )
@@ -144,8 +137,19 @@ actual fun loadProgramsByMode(modeId: Long): List<CategoryProgramUiModel> {
                 singer = item.optString("artist", "ناشناس"),
                 duration = item.optNullableString("duration"),
                 dastgah = item.optNullableString("mode"),
-                audioUrl = item.optNullableString("audio_url"),
+                audioUrl = item.optNullableString("audioUrl"),
             ))
+        }
+    }
+}
+
+actual fun loadDuetPairsConfig(): List<DuetPairUiModel> {
+    val payload = RustCoreBridge.getDuetPairsConfigJson(requireArchiveDbPath())
+    val arr = JSONArray(payload)
+    return buildList {
+        for (i in 0 until arr.length()) {
+            val item = arr.getJSONObject(i)
+            add(DuetPairUiModel(singer1 = item.getString("singer1"), singer2 = item.getString("singer2")))
         }
     }
 }
@@ -170,7 +174,7 @@ actual fun loadDuetPrograms(singer1: String, singer2: String): List<CategoryProg
                 singer = item.optString("artist", "ناشناس"),
                 duration = item.optNullableString("duration"),
                 dastgah = item.optNullableString("mode"),
-                audioUrl = item.optNullableString("audio_url"),
+                audioUrl = item.optNullableString("audioUrl"),
             ))
         }
     }

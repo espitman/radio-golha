@@ -11,22 +11,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import com.radiogolha.mobile.theme.GolhaAppTheme
 import com.radiogolha.mobile.theme.GolhaColors
 import com.radiogolha.mobile.theme.GolhaPatternBackground
 import com.radiogolha.mobile.theme.GolhaSpacing
 import com.radiogolha.mobile.ui.programs.*
-
-private val duetPairs = listOf(
-    DuetPairUiModel("محمدرضا شجریان", "هایده"),
-    DuetPairUiModel("غلامحسین بنان", "مرضیه"),
-    DuetPairUiModel("مرضیه", "گلپا"),
-    DuetPairUiModel("الهه", "محمدرضا شجریان"),
-    DuetPairUiModel("هایده", "ایرج"),
-)
 
 @Composable
 fun HomeScreen(
@@ -159,13 +149,3 @@ fun HomeScreen(
     }
 }
 
-@Preview
-@Composable
-private fun HomeScreenPreview() {
-    GolhaAppTheme {
-        HomeScreen(
-            state = rememberSampleHomeUiState(),
-            bottomNavItems = rememberSampleHomeUiState().bottomNavItems,
-        )
-    }
-}

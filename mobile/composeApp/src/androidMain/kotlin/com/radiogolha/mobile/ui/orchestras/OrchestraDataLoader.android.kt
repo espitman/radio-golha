@@ -19,7 +19,7 @@ actual fun loadOrchestrasUiState(): List<OrchestraListItemUiModel> {
                     OrchestraListItemUiModel(
                         id = item.getLong("id"),
                         name = item.getString("name"),
-                        programCount = item.getInt("program_count"),
+                        programCount = item.getInt("programCount"),
                     )
                 )
             }
@@ -49,7 +49,7 @@ actual fun loadProgramsByOrchestra(orchestraId: Long): List<CategoryProgramUiMod
                     singer = item.optString("artist", "ناشناس"),
                     duration = item.optNullableString("duration"),
                     dastgah = item.optNullableString("mode"),
-                    audioUrl = item.optNullableString("audio_url"),
+                    audioUrl = item.optNullableString("audioUrl"),
                 )
             )
         }

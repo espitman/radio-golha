@@ -15,6 +15,7 @@ object RustCoreBridge {
     external fun getProgramDetailJson(dbPath: String, programId: Long): String
     external fun getOrchestrasJson(dbPath: String): String
     external fun getProgramsByOrchestraJson(dbPath: String, orchestraId: Long): String
+    external fun getDuetPairsConfigJson(dbPath: String): String
     external fun getProgramsByModeJson(dbPath: String, modeId: Long): String
     external fun getOrderedModesJson(dbPath: String): String
     external fun getConfigJson(dbPath: String, key: String): String

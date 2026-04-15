@@ -18,7 +18,7 @@ actual fun loadArtistDetail(artistId: Long): ArtistDetailUiModel? {
         name = root.getString("name"),
         imageUrl = root.optNullableString("avatar"),
         instrument = root.optNullableString("instrument"),
-        trackCount = root.optInt("track_count"),
+        trackCount = root.optInt("trackCount"),
         tracks = root.optJSONArray("tracks").toCategoryPrograms(root.getLong("id")),
     )
 }
@@ -28,26 +28,20 @@ private fun JSONArray?.toCategoryPrograms(artistId: Long): List<CategoryProgramU
     return buildList {
         for (index in 0 until length()) {
             val item = getJSONObject(index)
-            val title = item.optNullableString("title") 
-                ?: item.optNullableString("title_fa")
-                ?: item.optNullableString("titleFa")
-                ?: run {
-                    val cat = item.optNullableString("category") ?: item.optNullableString("category_name") ?: "برنامه"
-                    val no = item.optLong("no", 0).toString()
-                    "$cat $no"
-                }
+            val title = item.optNullableString("title")
+                ?: "برنامه ${item.optLong("no", 0)}"
             val no = item.optLong("no", 0).toString()
             add(
                 CategoryProgramUiModel(
                     id = item.optLong("id"),
                     artistId = artistId,
                     title = title,
-                    categoryName = item.optNullableString("category") ?: item.optNullableString("category_name"),
+                    categoryName = item.optNullableString("category"),
                     programNumber = no,
                     singer = item.optString("artist", "ناشناس"),
                     duration = item.optNullableString("duration"),
                     dastgah = item.optNullableString("mode"),
-                    audioUrl = item.optNullableString("audio_url"),
+                    audioUrl = item.optNullableString("audioUrl"),
                 )
             )
         }

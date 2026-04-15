@@ -95,13 +95,7 @@ fun AndroidApp() {
     val playlistRepo = remember { PlaylistRepository(context) }
     var savedPlaylists by remember { mutableStateOf(playlistRepo.getAll().map { SavedPlaylistUiModel(it.id, it.name) }) }
     var orderedModes by remember { mutableStateOf<List<String>>(emptyList()) }
-    var enrichedDuets by remember { mutableStateOf(listOf(
-        DuetPairUiModel("هایده", "محمدرضا شجریان"),
-        DuetPairUiModel("حسین قوامی", "مرضیه"),
-        DuetPairUiModel("مرضیه", "گلپا"),
-        DuetPairUiModel("غلامحسین بنان", "مرضیه"),
-        DuetPairUiModel("عهدیه", "ایرج"),
-    )) }
+    var enrichedDuets by remember { mutableStateOf<List<DuetPairUiModel>>(emptyList()) }
     var homeUiState by remember { mutableStateOf<HomeUiState?>(null) }
     var isHomeLoading by remember { mutableStateOf(true) }
     var isRefreshingTopTracks by remember { mutableStateOf(false) }
@@ -112,26 +106,28 @@ fun AndroidApp() {
         isHomeLoading = true
         withContext(Dispatchers.Default) {
             val hState = runCatching { loadHomeUiState() }.getOrNull()
+            librarySingers = runCatching { loadSingersUiState() }.getOrDefault(emptyList())
+            orderedModes = runCatching { loadOrderedModes() }.getOrDefault(emptyList())
+
+            // Load duet pairs
+            val basePairs = runCatching { loadDuetPairsConfig() }.getOrDefault(emptyList())
+            fun findAvatar(name: String) = librarySingers.find { it.name == name }?.imageUrl
+            enrichedDuets = basePairs.map {
+                val count = runCatching { loadDuetPrograms(it.singer1, it.singer2).size }.getOrDefault(0)
+                it.copy(singer1Avatar = findAvatar(it.singer1), singer2Avatar = findAvatar(it.singer2), trackCount = count)
+            }
+
+            // Set home state AFTER duets are ready so everything appears together
             if (hState != null) {
                 homeUiState = hState.copy(topTracks = hState.topTracks.take(visibleTrackCount))
                 prefetchedTopTracks = hState.topTracks.drop(visibleTrackCount).take(visibleTrackCount)
             }
             isHomeLoading = false
 
-            librarySingers = runCatching { loadSingersUiState() }.getOrDefault(emptyList())
-            orderedModes = runCatching { loadOrderedModes() }.getOrDefault(emptyList())
-
-            // Preload search options so singer_id -> name is available for playlist banners
+            // Preload search options
             if (!searchState.optionsLoaded) {
                 searchState.searchOptions = runCatching { com.radiogolha.mobile.ui.search.loadSearchOptions() }.getOrDefault(com.radiogolha.mobile.ui.search.SearchOptionsUiState())
                 searchState.optionsLoaded = true
-            }
-
-            // Enrich duets with avatars and track counts (background)
-            fun findAvatar(name: String) = librarySingers.find { it.name == name }?.imageUrl
-            enrichedDuets = enrichedDuets.map {
-                val count = runCatching { loadDuetPrograms(it.singer1, it.singer2).size }.getOrDefault(0)
-                it.copy(singer1Avatar = findAvatar(it.singer1), singer2Avatar = findAvatar(it.singer2), trackCount = count)
             }
 
             libraryMusicians = runCatching { loadMusiciansUiState() }.getOrDefault(emptyList())

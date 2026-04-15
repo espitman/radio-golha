@@ -7,66 +7,20 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 actual fun loadProgramsUiState(): List<ProgramUiModel> {
-    // 1. Get initial list from Categories JNI
-    val payload = runCatching { RustCoreBridge.getCategoriesJson(requireArchiveDbPath()) }.getOrNull()
-    val root = if (payload != null && payload.trim().startsWith("[")) JSONArray(payload) else null
-    
-    val categories = if (root != null) {
-        buildList {
-            for (index in 0 until root.length()) {
-                val item = root.getJSONObject(index)
-                add(
-                    ProgramUiModel(
-                        title = item.optString("titleFa").takeIf { it.isNotBlank() }
-                                ?: item.optString("title_fa").takeIf { it.isNotBlank() }
-                                ?: item.optString("title").takeIf { it.isNotBlank() }
-                                ?: "برنامه بدون نام",
-                        episodeCount = extractCount(item),
-                    )
-                )
-            }
-        }
-    } else emptyList()
-    
-    // 2. Load from home feed to get programs with counts
-    val homePayload = runCatching { RustCoreBridge.getHomeFeedJson(requireArchiveDbPath()) }.getOrNull() ?: "{}"
-    val homeRoot = if (homePayload.trim().startsWith("{")) JSONObject(homePayload) else JSONObject()
-    val homePrograms = homeRoot.optJSONArray("programs")?.let { array ->
+    // category_breakdown from Rust already sorted by total DESC
+    val payload = runCatching { RustCoreBridge.getHomeFeedJson(requireArchiveDbPath()) }.getOrNull() ?: "{}"
+    val root = if (payload.trim().startsWith("{")) JSONObject(payload) else JSONObject()
+    return root.optJSONArray("programs")?.let { array ->
         buildList {
             for (i in 0 until array.length()) {
                 val item = array.getJSONObject(i)
-                add(
-                    ProgramUiModel(
-                        title = item.optString("title").takeIf { it.isNotBlank() } 
-                                ?: item.optString("titleFa").takeIf { it.isNotBlank() }
-                                ?: item.optString("title_fa").takeIf { it.isNotBlank() }
-                                ?: "برنامه بدون نام",
-                        episodeCount = extractCount(item)
-                    )
-                )
+                add(ProgramUiModel(
+                    title = item.optString("title", ""),
+                    episodeCount = extractCount(item),
+                ))
             }
         }
     } ?: emptyList()
-
-    // 3. Merge: Use categories if available, otherwise homePrograms
-    val baseList = if (categories.isEmpty()) homePrograms else categories
-
-    // Merge: If base item has 0 count, try to find it in home programs
-    val merged = baseList.map { item ->
-        if (item.episodeCount > 0) item
-        else {
-            val fromHome = homePrograms.find { it.title.trim().equals(item.title.trim(), ignoreCase = true) }
-            fromHome ?: item
-        }
-    }
-
-    // Final sorting: By episodeCount Descending, then by Title
-    val result = merged.sortedWith(
-        compareByDescending<ProgramUiModel> { it.episodeCount }
-            .thenBy { it.title }
-    )
-    println("DEBUG: Loaded ${result.size} programs for Library")
-    return result
 }
 
 actual fun loadCategoryPrograms(categoryTitle: String): List<com.radiogolha.mobile.ui.home.CategoryProgramUiModel> {
@@ -78,7 +32,7 @@ actual fun loadCategoryPrograms(categoryTitle: String): List<com.radiogolha.mobi
     for (i in 0 until catRoot.length()) {
         val cat = catRoot.getJSONObject(i)
         val title = cat.optString("titleFa").takeIf { it.isNotBlank() }
-                    ?: cat.optString("title_fa").takeIf { it.isNotBlank() }
+                    ?: cat.optString("titleFa").takeIf { it.isNotBlank() }
                     ?: cat.optString("title")
         if (title.trim().equals(categoryTitle.trim(), ignoreCase = true)) {
             categoryId = cat.optLong("id", -1)
@@ -100,14 +54,14 @@ actual fun loadCategoryPrograms(categoryTitle: String): List<com.radiogolha.mobi
             val item = root.getJSONObject(i)
             val no = item.optLong("no", 0).toString()
             val title = item.optNullableString("title") 
-                ?: item.optNullableString("title_fa")
+                ?: item.optNullableString("titleFa")
                 ?: item.optNullableString("titleFa")
                 ?: "$categoryTitle $no"
                 
             add(
                 com.radiogolha.mobile.ui.home.CategoryProgramUiModel(
                     id = item.optLong("id"),
-                    artistId = item.optLong("artist_id").takeIf { it > 0 } 
+                    artistId = item.optLong("artistId").takeIf { it > 0 } 
                         ?: item.optLong("artistId").takeIf { it > 0 },
                     title = title,
                     categoryName = categoryTitle,
@@ -115,7 +69,7 @@ actual fun loadCategoryPrograms(categoryTitle: String): List<com.radiogolha.mobi
                     singer = item.optString("artist", "ناشناس"),
                     duration = item.optNullableString("duration"),
                     dastgah = item.optNullableString("mode"),
-                    audioUrl = item.optNullableString("audio_url")
+                    audioUrl = item.optNullableString("audioUrl")
                 )
             )
         }
@@ -143,11 +97,11 @@ actual fun loadProgramEpisodeDetail(programId: Long): com.radiogolha.mobile.ui.h
     return com.radiogolha.mobile.ui.home.ProgramEpisodeDetailUiModel(
         id = root.optLong("id"),
         title = root.optString("title", ""),
-        categoryName = root.optString("categoryName") ?: root.optString("category_name") ?: "",
+        categoryName = root.optString("categoryName", ""),
         no = root.optInt("no", 0),
-        subNo = root.optNullableString("subNo") ?: root.optNullableString("sub_no"),
+        subNo = root.optNullableString("subNo"),
         duration = root.optNullableString("duration"),
-        audioUrl = root.optNullableString("audioUrl") ?: root.optNullableString("audio_url"),
+        audioUrl = root.optNullableString("audioUrl"),
         singers = singers,
         poets = poets,
         announcers = announcers,
@@ -167,7 +121,7 @@ private fun JSONObject.optArtistCredits(key: String): List<com.radiogolha.mobile
     return buildList {
         for (i in 0 until array.length()) {
             val item = array.getJSONObject(i)
-            val id = item.optLong("artist_id", 0L).takeIf { it > 0 }
+            val id = item.optLong("artistId", 0L).takeIf { it > 0 }
                 ?: item.optLong("id", 0L).takeIf { it > 0 }
                 ?: item.optLong("performer_id", 0L).takeIf { it > 0 }
                 ?: item.optLong("singer_id", 0L).takeIf { it > 0 }
@@ -198,7 +152,7 @@ private fun JSONObject.optOrchestraLeaders(key: String): List<com.radiogolha.mob
     return buildList {
         for (i in 0 until array.length()) {
             val item = array.getJSONObject(i)
-            val id = item.optLong("artist_id", 0L).takeIf { it > 0 }
+            val id = item.optLong("artistId", 0L).takeIf { it > 0 }
                 ?: item.optLong("id", 0L).takeIf { it > 0 }
                 ?: item.optLong("performer_id", 0L).takeIf { it > 0 }
             add(
@@ -218,7 +172,7 @@ private fun JSONObject.optPerformers(key: String): List<com.radiogolha.mobile.ui
         for (i in 0 until array.length()) {
             val item = array.getJSONObject(i)
             val id = item.optLong("performer_id", 0L).takeIf { it > 0 }
-                ?: item.optLong("artist_id", 0L).takeIf { it > 0 }
+                ?: item.optLong("artistId", 0L).takeIf { it > 0 }
                 ?: item.optLong("id", 0L).takeIf { it > 0 }
             add(
                 com.radiogolha.mobile.ui.home.PerformerUiModel(
@@ -277,14 +231,7 @@ private fun extractProgramNumberText(title: String): String {
 }
 
 private fun extractCount(item: JSONObject): Int {
-    val keys = listOf(
-        "episodeCount", "episode_count",
-        "programCount", "program_count",
-        "itemCount", "item_count",
-        "trackCount", "track_count",
-        "total", "count",
-        "programs", "episodes"
-    )
+    val keys = listOf("episodeCount", "programCount", "itemCount", "trackCount", "total", "count")
     for (key in keys) {
         val c = item.optInt(key, 0)
         if (c > 0) return c
