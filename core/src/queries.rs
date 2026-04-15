@@ -1,4 +1,5 @@
 use rusqlite::{OptionalExtension, params, params_from_iter, types::Value};
+use serde_json;
 use std::borrow::Cow;
 
 use crate::{
@@ -634,6 +635,39 @@ impl RadioGolhaCore {
             active_category_id: category_id,
             active_singer_id: singer_id,
         })
+    }
+
+    pub fn get_config(&self, key: &str) -> CoreResult<Option<String>> {
+        let result = self.connection().query_row(
+            "SELECT value FROM app_config WHERE key = ?1",
+            [key],
+            |row| row.get(0),
+        );
+        match result {
+            Ok(value) => Ok(Some(value)),
+            Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+            Err(e) => Err(e.into()),
+        }
+    }
+
+    pub fn get_ordered_modes(&self) -> CoreResult<Vec<String>> {
+        let order = self.get_config("mode_display_order")?;
+        match order {
+            Some(json) => {
+                let ids: Vec<i64> = serde_json::from_str(&json).unwrap_or_default();
+                let mut names = Vec::new();
+                for id in ids {
+                    let name: Option<String> = self.connection()
+                        .query_row("SELECT name FROM mode WHERE id = ?1", [id], |row| row.get(0))
+                        .ok();
+                    if let Some(n) = name {
+                        names.push(n);
+                    }
+                }
+                Ok(names)
+            }
+            None => Ok(Vec::new()),
+        }
     }
 
     pub fn program_search_options(&self) -> CoreResult<ProgramSearchOptions> {

@@ -130,6 +130,12 @@ internal fun JSONArray.toTrackModels(): List<TrackUiModel> = buildList {
     }
 }
 
+actual fun loadOrderedModes(): List<String> {
+    val payload = RustCoreBridge.getOrderedModesJson(requireArchiveDbPath())
+    val arr = JSONArray(payload)
+    return buildList { for (i in 0 until arr.length()) add(arr.getString(i)) }
+}
+
 actual fun loadDuetPrograms(singer1: String, singer2: String): List<CategoryProgramUiModel> {
     val payload = RustCoreBridge.getDuetProgramsJson(requireArchiveDbPath(), singer1, singer2)
     val root = JSONArray(payload)

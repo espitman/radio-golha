@@ -49,6 +49,7 @@ fun PlaylistDetailScreen(
     bottomNavItems: List<BottomNavItemUiModel>,
     onBottomNavSelected: (AppTab) -> Unit,
     onBackClick: () -> Unit,
+    showActions: Boolean = true,
     onRename: (String) -> Unit = {},
     onDelete: () -> Unit = {},
     onProgramClick: (Long) -> Unit = {},
@@ -172,7 +173,7 @@ fun PlaylistDetailScreen(
             }
 
             // Action buttons
-            item {
+            if (showActions) item {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Surface(
                         modifier = Modifier.clickable { showRenameSheet = true },

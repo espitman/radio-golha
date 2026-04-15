@@ -43,6 +43,8 @@ fun HomeScreen(
     currentPlaybackDurationMs: Long = 0L,
     onTogglePlayerPlayback: () -> Unit = {},
     onPlayTrack: (TrackUiModel) -> Unit = {},
+    orderedModes: List<String> = emptyList(),
+    onDastgahClick: (String) -> Unit = {},
     onTrackClick: (TrackUiModel) -> Unit = {},
     onProgramClick: (ProgramUiModel) -> Unit = {},
     onSingerClick: (Long) -> Unit = {},
@@ -94,6 +96,7 @@ fun HomeScreen(
                         item { DuetsBannerSkeleton() }
                         item { ProgramsSectionSkeleton() }
                         item { SingersSectionSkeleton() }
+                        item { DastgahSectionSkeleton() }
                         item { MusiciansSectionSkeleton() }
                         item { TopTracksSectionSkeleton() }
                     } else {
@@ -116,6 +119,11 @@ fun HomeScreen(
                                 onSeeAllClick = onOpenAllSingers,
                                 onSingerClick = onSingerClick,
                             )
+                        }
+                        if (state.dastgahs.isNotEmpty()) {
+                            item {
+                                DastgahSection(items = state.dastgahs, orderedModes = orderedModes, onDastgahClick = onDastgahClick)
+                            }
                         }
                         item {
                             MusiciansSection(

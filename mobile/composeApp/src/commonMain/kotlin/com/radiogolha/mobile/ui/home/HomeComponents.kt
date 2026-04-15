@@ -304,16 +304,27 @@ fun SingersSection(
 }
 
 @Composable
-fun DastgahSection(items: List<DastgahUiModel>) {
-    Column(verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large)) {
-        SectionTitle(title = "دستگاه‌ها")
+fun DastgahSection(
+    items: List<DastgahUiModel>,
+    orderedModes: List<String> = emptyList(),
+    onDastgahClick: (String) -> Unit = {},
+) {
+    val ordered = remember(items, orderedModes) {
+        if (orderedModes.isNotEmpty()) {
+            val nameSet = items.map { it.name }.toSet()
+            orderedModes.filter { it in nameSet }.map { DastgahUiModel(it) }
+        } else items
+    }
+    if (ordered.isEmpty()) return
+    Column(modifier = Modifier.padding(vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large)) {
+        SectionTitle(title = "دستگاه‌ها / آوازها")
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(18.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
             contentPadding = PaddingValues(horizontal = GolhaSpacing.ScreenHorizontal),
         ) {
-            items(items) { item ->
-                DastgahChip(name = item.name)
+            items(ordered) { item ->
+                DastgahChip(name = item.name, onClick = { onDastgahClick(item.name) })
             }
         }
     }
@@ -1434,8 +1445,9 @@ internal fun AvatarPlaceholder(
 }
 
 @Composable
-private fun DastgahChip(name: String) {
+private fun DastgahChip(name: String, onClick: () -> Unit = {}) {
     Surface(
+        modifier = Modifier.clickable { onClick() },
         shape = RoundedCornerShape(GolhaRadius.Pill),
         color = GolhaColors.BadgeBackground,
         border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border),

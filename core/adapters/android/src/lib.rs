@@ -579,6 +579,18 @@ fn duet_programs_json(db_path: &str, singer1: &str, singer2: &str) -> Result<Str
     to_string(&items).map_err(|e| e.to_string())
 }
 
+fn config_json(db_path: &str, key: &str) -> Result<String, String> {
+    let core = RadioGolhaCore::open(db_path).map_err(|e| e.to_string())?;
+    let value = core.get_config(key).map_err(|e| e.to_string())?;
+    to_string(&value).map_err(|e| e.to_string())
+}
+
+fn ordered_modes_json(db_path: &str) -> Result<String, String> {
+    let core = RadioGolhaCore::open(db_path).map_err(|e| e.to_string())?;
+    let modes = core.get_ordered_modes().map_err(|e| e.to_string())?;
+    to_string(&modes).map_err(|e| e.to_string())
+}
+
 fn search_options_json(db_path: &str) -> Result<String, String> {
     let core = RadioGolhaCore::open(db_path).map_err(|e| e.to_string())?;
     let options = core.program_search_options().map_err(|e| e.to_string())?;
@@ -783,6 +795,29 @@ pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getProgramsByOr
     orchestra_id: i64,
 ) -> jstring {
     jni_json_response(&mut env, db_path, |path| programs_by_orchestra_json(path, orchestra_id))
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getOrderedModesJson(
+    mut env: JNIEnv,
+    _class: JClass,
+    db_path: JString,
+) -> jstring {
+    jni_json_response(&mut env, db_path, ordered_modes_json)
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getConfigJson(
+    mut env: JNIEnv,
+    _class: JClass,
+    db_path: JString,
+    key: JString,
+) -> jstring {
+    let k = match env.get_string(&key) {
+        Ok(s) => s.to_string_lossy().to_string(),
+        Err(e) => return jni_json_response(&mut env, db_path, |_| Err(e.to_string())),
+    };
+    jni_json_response(&mut env, db_path, |path| config_json(path, &k))
 }
 
 #[unsafe(no_mangle)]

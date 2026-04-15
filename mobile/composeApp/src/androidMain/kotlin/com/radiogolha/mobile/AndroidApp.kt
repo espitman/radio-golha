@@ -94,6 +94,7 @@ fun AndroidApp() {
     val searchState = remember { SearchState() }
     val playlistRepo = remember { PlaylistRepository(context) }
     var savedPlaylists by remember { mutableStateOf(playlistRepo.getAll().map { SavedPlaylistUiModel(it.id, it.name) }) }
+    var orderedModes by remember { mutableStateOf<List<String>>(emptyList()) }
     var enrichedDuets by remember { mutableStateOf(listOf(
         DuetPairUiModel("هایده", "محمدرضا شجریان"),
         DuetPairUiModel("حسین قوامی", "مرضیه"),
@@ -118,6 +119,7 @@ fun AndroidApp() {
             isHomeLoading = false
 
             librarySingers = runCatching { loadSingersUiState() }.getOrDefault(emptyList())
+            orderedModes = runCatching { loadOrderedModes() }.getOrDefault(emptyList())
 
             // Preload search options so singer_id -> name is available for playlist banners
             if (!searchState.optionsLoaded) {
@@ -206,6 +208,8 @@ fun AndroidApp() {
                         onSingerClick = { artistId -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId)) },
                         onMusicianClick = { artistId -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId)) },
                         onDuetClick = { duet -> navController.navigate(AndroidRoute.DuetDetail.createRoute(duet.singer1, duet.singer2)) },
+                        orderedModes = orderedModes,
+                        onDastgahClick = { name -> navController.navigate(AndroidRoute.DastgahDetail.createRoute(name)) },
                         onExpandPlayer = { showPlayerSheet = true },
                         onBottomNavSelected = onTabSelected,
                     )
@@ -363,6 +367,31 @@ fun AndroidApp() {
                     }
                 }
 
+                composable(route = AndroidRoute.DastgahDetail.route, arguments = listOf(navArgument("name") { type = NavType.StringType })) { backStackEntry ->
+                    val dastgahName = backStackEntry.arguments?.getString("name") ?: ""
+                    val modeId = remember(dastgahName, searchState.searchOptions) {
+                        searchState.searchOptions.modes.find { it.name == dastgahName }?.id
+                    }
+                    if (modeId != null) {
+                        val filters = remember(modeId) { com.radiogolha.mobile.ui.search.ActiveFilters(modeIds = setOf(modeId)) }
+                        PlaylistDetailScreen(
+                            playlistName = dastgahName,
+                            filters = filters,
+                            showActions = false,
+                            bottomNavItems = bottomNavItems,
+                            onBottomNavSelected = onTabSelected,
+                            onBackClick = { navController.popBackStack() },
+                            onProgramClick = { id -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(id)) },
+                            onPlayTrack = { track -> playerManager.play(track) },
+                            currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading,
+                            currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs,
+                            onTogglePlayerPlayback = { playerManager.togglePlayback() },
+                            onTrackClick = { id -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(id)) },
+                            onExpandPlayer = { showPlayerSheet = true },
+                        )
+                    }
+                }
+
                 composable(AndroidRoute.Account.route) {
                     SettingsScreen(bottomNavItems = bottomNavItems, onExpandPlayer = { showPlayerSheet = true }, onBottomNavSelected = onTabSelected, isDebugDatabaseToolsEnabled = isDebugDatabaseToolsEnabled(), isImportingDatabase = isImportingDatabase, currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onImportDebugDatabase = { if (!isImportingDatabase) { scope.launch { isImportingDatabase = true; val result = importDebugDatabase(); showDebugToast(result.message); if (result.success) { reloadToken += 1; navController.navigate(AndroidRoute.Home.route) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } } ; isImportingDatabase = false } } })
                 }
@@ -446,6 +475,7 @@ private sealed class AndroidRoute(val route: String) {
     data object OrchestraDetail : AndroidRoute("orchestra_detail/{id}/{name}") { fun createRoute(id: Long, name: String) = "orchestra_detail/$id/$name" }
     data object DuetDetail : AndroidRoute("duet_detail/{singer1}/{singer2}") { fun createRoute(s1: String, s2: String) = "duet_detail/$s1/$s2" }
     data object PlaylistDetail : AndroidRoute("playlist_detail/{id}") { fun createRoute(id: Long) = "playlist_detail/$id" }
+    data object DastgahDetail : AndroidRoute("dastgah_detail/{name}") { fun createRoute(name: String) = "dastgah_detail/$name" }
 }
 
 private fun AppTab.toRoute(): AndroidRoute = when (this) {
