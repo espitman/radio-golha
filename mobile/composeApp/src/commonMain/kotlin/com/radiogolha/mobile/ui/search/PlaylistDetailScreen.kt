@@ -14,8 +14,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.sp
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -134,7 +142,7 @@ fun PlaylistDetailScreen(
     }
 
     TabRootScreen(
-        title = playlistName,
+        title = "لیست",
         subtitle = "",
         bottomNavItems = bottomNavItems,
         onBottomNavSelected = onBottomNavSelected,
@@ -148,6 +156,11 @@ fun PlaylistDetailScreen(
         onExpandPlayer = onExpandPlayer,
         onBackClick = onBackClick,
         content = {
+            // Banner
+            item {
+                PlaylistBanner(name = playlistName, trackCount = allResults.size)
+            }
+
             // Action buttons
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -233,4 +246,44 @@ fun PlaylistDetailScreen(
             }
         }
     )
+}
+
+@Composable
+private fun PlaylistBanner(name: String, trackCount: Int) {
+    val darkBg = Color(0xFF0B2161)
+    val gold = Color(0xFFE3BF55)
+    val textWhite = Color(0xFFF0ECE3)
+
+    val inf = rememberInfiniteTransition(label = "plBanner")
+    val glowA by inf.animateFloat(0.04f, 0.10f, infiniteRepeatable(tween(3500, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse), label = "a")
+    val glowR by inf.animateFloat(0.40f, 0.55f, infiniteRepeatable(tween(4000, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse), label = "r")
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(GolhaRadius.Card),
+        color = darkBg,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .requiredHeight(100.dp)
+                .drawBehind {
+                    drawCircle(gold.copy(alpha = glowA), size.minDimension * glowR, Offset(size.width * 0.8f, size.height * 0.3f))
+                    drawCircle(gold.copy(alpha = glowA * 0.6f), size.minDimension * glowR * 0.7f, Offset(size.width * 0.15f, size.height * 0.75f))
+                }
+                .padding(horizontal = 20.dp),
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    GolhaLineIcon(icon = GolhaIcon.Library, modifier = Modifier.size(18.dp), tint = gold.copy(alpha = 0.6f))
+                    Text("لیست من", style = MaterialTheme.typography.labelSmall, color = textWhite.copy(alpha = 0.5f))
+                }
+                Text(name, style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold), color = gold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (trackCount > 0) {
+                    Text("$trackCount برنامه", style = MaterialTheme.typography.labelSmall, color = textWhite.copy(alpha = 0.5f))
+                }
+            }
+        }
+    }
 }
