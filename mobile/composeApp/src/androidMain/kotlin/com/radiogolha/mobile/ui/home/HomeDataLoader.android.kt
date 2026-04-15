@@ -44,16 +44,22 @@ actual fun loadTopTracks(): List<TrackUiModel> {
     return JSONArray(payload).toTrackModels()
 }
 
+private const val CURRENT_DB_VERSION = 2
+
 internal fun requireArchiveDbPath(): String {
     val context = AndroidAppContext.require()
     val dbFile = File(context.filesDir, "golha_database.db")
+    val versionFile = File(context.filesDir, "golha_db_version")
 
-    if (!dbFile.exists()) {
+    val installedVersion = if (versionFile.exists()) versionFile.readText().trim().toIntOrNull() ?: 0 else 0
+
+    if (!dbFile.exists() || installedVersion < CURRENT_DB_VERSION) {
         context.assets.open("golha_database.db").use { input ->
             dbFile.outputStream().use { output ->
                 input.copyTo(output)
             }
         }
+        versionFile.writeText(CURRENT_DB_VERSION.toString())
     }
 
     return dbFile.absolutePath
