@@ -90,6 +90,13 @@ fun AndroidApp() {
     var isCategoryLoading by remember { mutableStateOf(false) }
 
     val searchState = remember { SearchState() }
+    var enrichedDuets by remember { mutableStateOf(listOf(
+        DuetPairUiModel("هایده", "محمدرضا شجریان"),
+        DuetPairUiModel("حسین قوامی", "مرضیه"),
+        DuetPairUiModel("مرضیه", "گلپا"),
+        DuetPairUiModel("غلامحسین بنان", "مرضیه"),
+        DuetPairUiModel("عهدیه", "ایرج"),
+    )) }
     var homeUiState by remember { mutableStateOf<HomeUiState?>(null) }
     var isHomeLoading by remember { mutableStateOf(true) }
     var isRefreshingTopTracks by remember { mutableStateOf(false) }
@@ -107,6 +114,14 @@ fun AndroidApp() {
             isHomeLoading = false
 
             librarySingers = runCatching { loadSingersUiState() }.getOrDefault(emptyList())
+
+            // Enrich duets with avatars and track counts (background)
+            fun findAvatar(name: String) = librarySingers.find { it.name == name }?.imageUrl
+            enrichedDuets = enrichedDuets.map {
+                val count = runCatching { loadDuetPrograms(it.singer1, it.singer2).size }.getOrDefault(0)
+                it.copy(singer1Avatar = findAvatar(it.singer1), singer2Avatar = findAvatar(it.singer2), trackCount = count)
+            }
+
             libraryMusicians = runCatching { loadMusiciansUiState() }.getOrDefault(emptyList())
             libraryOrchestras = runCatching { loadOrchestrasUiState() }.getOrDefault(emptyList())
             libraryPrograms = runCatching { com.radiogolha.mobile.ui.programs.loadProgramsUiState() }.getOrDefault(emptyList())
@@ -139,13 +154,9 @@ fun AndroidApp() {
 
     val onTabSelected: (AppTab) -> Unit = { tab ->
         val route = tab.toRoute().route
-        val popped = navController.popBackStack(route, inclusive = false)
-        if (!popped) {
-            navController.navigate(route) {
-                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                launchSingleTop = true
-                restoreState = true
-            }
+        navController.navigate(route) {
+            popUpTo(navController.graph.findStartDestination().id) { saveState = false }
+            launchSingleTop = true
         }
     }
 
@@ -163,20 +174,6 @@ fun AndroidApp() {
                 startDestination = AndroidRoute.Home.route,
             ) {
                 composable(AndroidRoute.Home.route) {
-                    val enrichedDuets = remember(librarySingers) {
-                        val basePairs = listOf(
-                            DuetPairUiModel("هایده", "محمدرضا شجریان"),
-                            DuetPairUiModel("حسین قوامی", "مرضیه"),
-                            DuetPairUiModel("مرضیه", "گلپا"),
-                            DuetPairUiModel("غلامحسین بنان", "مرضیه"),
-                            DuetPairUiModel("عهدیه", "ایرج"),
-                        )
-                        fun findAvatar(name: String) = librarySingers.find { it.name == name }?.imageUrl
-                        basePairs.map {
-                            val count = runCatching { loadDuetPrograms(it.singer1, it.singer2).size }.getOrDefault(0)
-                            it.copy(singer1Avatar = findAvatar(it.singer1), singer2Avatar = findAvatar(it.singer2), trackCount = count)
-                        }
-                    }
                     HomeScreen(
                         state = if (isHomeLoading && homeUiState == null) null else homeUiState?.copy(bottomNavItems = bottomNavItems),
                         bottomNavItems = bottomNavItems,

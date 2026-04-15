@@ -85,7 +85,7 @@ fun HomeScreen(
                         top = GolhaSpacing.StatusBarTopGap,
                         bottom = innerPadding.calculateBottomPadding() + 18.dp,
                     ),
-                    verticalArrangement = Arrangement.spacedBy(GolhaSpacing.SectionGap),
+                    verticalArrangement = Arrangement.spacedBy(18.dp),
                 ) {
                     if (state == null) {
                         item { HeaderSection() }
