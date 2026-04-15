@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -60,6 +61,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -293,6 +295,7 @@ fun SingersSection(
                     subtitle = null,
                     imageUrl = singer.imageUrl,
                     tint = GolhaColors.SoftBlue,
+                    contentVerticalSpacing = 10.dp,
                     onClick = { onSingerClick(singer.id) },
                 )
             }
@@ -306,7 +309,7 @@ fun DastgahSection(items: List<DastgahUiModel>) {
         SectionTitle(title = "دستگاه‌ها")
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalArrangement = Arrangement.spacedBy(18.dp),
             contentPadding = PaddingValues(horizontal = GolhaSpacing.ScreenHorizontal),
         ) {
             items(items) { item ->
@@ -338,6 +341,7 @@ fun MusiciansSection(
                     subtitle = musician.instrument,
                     imageUrl = musician.imageUrl,
                     tint = GolhaColors.SoftRose,
+                    contentVerticalSpacing = 10.dp,
                     onClick = { onMusicianClick(musician.id) },
                 )
             }
@@ -941,7 +945,7 @@ fun SingersSectionSkeleton() {
         ) {
             items(6) {
                 Column(
-                    modifier = Modifier.widthIn(min = 76.dp, max = 88.dp),
+                    modifier = Modifier.widthIn(min = 80.dp, max = 100.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
@@ -980,7 +984,7 @@ fun MusiciansSectionSkeleton() {
         ) {
             items(6) {
                 Column(
-                    modifier = Modifier.widthIn(min = 76.dp, max = 88.dp),
+                    modifier = Modifier.widthIn(min = 80.dp, max = 100.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
@@ -1305,17 +1309,17 @@ private fun AvatarNameItem(
     subtitle: String?,
     imageUrl: String?,
     tint: Color,
+    contentVerticalSpacing: Dp = 10.dp,
     onClick: () -> Unit = {},
 ) {
     Box(
         modifier = Modifier
-            .widthIn(min = 80.dp, max = 100.dp)
+            .width(80.dp)
             .clickable { onClick() }
     ) {
         Column(
-            modifier = Modifier.padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(contentVerticalSpacing),
         ) {
             ArtistAvatar(
                 name = title,
