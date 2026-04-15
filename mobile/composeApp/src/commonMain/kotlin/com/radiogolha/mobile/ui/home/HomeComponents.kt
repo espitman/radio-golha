@@ -800,18 +800,6 @@ fun MiniPlayerBar(
         if (durationMs > 0L) (currentPositionMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f) else 0f
     }
 
-    // Animated pattern offset
-    val inf = rememberInfiniteTransition(label = "miniPattern")
-    val patternOffset by inf.animateFloat(
-        initialValue = 0f, targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(12000, easing = LinearEasing)),
-        label = "patOff",
-    )
-    val glowA by inf.animateFloat(
-        initialValue = 0.03f, targetValue = 0.07f,
-        animationSpec = infiniteRepeatable(tween(3000, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse),
-        label = "miniGlow",
-    )
 
     Box(
         modifier = Modifier
@@ -824,33 +812,6 @@ fun MiniPlayerBar(
                 }
             }
     ) {
-        // Mandala patterns - multiple with different speeds/sizes, drifting
-        val rot1 by inf.animateFloat(0f, 360f, infiniteRepeatable(tween(50000, easing = LinearEasing)), label = "r1")
-        val rot2 by inf.animateFloat(0f, -360f, infiniteRepeatable(tween(70000, easing = LinearEasing)), label = "r2")
-        val rot3 by inf.animateFloat(0f, 360f, infiniteRepeatable(tween(40000, easing = LinearEasing)), label = "r3")
-        val rot4 by inf.animateFloat(0f, -360f, infiniteRepeatable(tween(55000, easing = LinearEasing)), label = "r4")
-        val rot5 by inf.animateFloat(0f, 360f, infiniteRepeatable(tween(65000, easing = LinearEasing)), label = "r5")
-        val drift1 by inf.animateFloat(-60f, 60f, infiniteRepeatable(tween(8000, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse), label = "d1")
-        val drift2 by inf.animateFloat(50f, -50f, infiniteRepeatable(tween(10000, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse), label = "d2")
-        val drift3 by inf.animateFloat(-40f, 40f, infiniteRepeatable(tween(7000, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse), label = "d3")
-        val a1 by inf.animateFloat(0.04f, 0.10f, infiniteRepeatable(tween(3000, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse), label = "ma1")
-        val a2 by inf.animateFloat(0.06f, 0.13f, infiniteRepeatable(tween(4000, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse), label = "ma2")
-        val a3 by inf.animateFloat(0.03f, 0.08f, infiniteRepeatable(tween(2500, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse), label = "ma3")
-        val a4 by inf.animateFloat(0.05f, 0.11f, infiniteRepeatable(tween(3500, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse), label = "ma4")
-        val a5 by inf.animateFloat(0.03f, 0.07f, infiniteRepeatable(tween(5000, easing = FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse), label = "ma5")
-        val mandala = painterResource(Res.drawable.mandala_pattern)
-
-        androidx.compose.foundation.Image(painter = mandala, contentDescription = null, contentScale = ContentScale.Fit,
-            modifier = Modifier.size(70.dp).align(Alignment.CenterEnd).graphicsLayer { rotationZ = rot1; alpha = a1; translationX = 12.dp.toPx() + drift1 })
-        androidx.compose.foundation.Image(painter = mandala, contentDescription = null, contentScale = ContentScale.Fit,
-            modifier = Modifier.size(50.dp).align(Alignment.CenterStart).graphicsLayer { rotationZ = rot2; alpha = a2; translationX = (-6).dp.toPx() + drift2 })
-        androidx.compose.foundation.Image(painter = mandala, contentDescription = null, contentScale = ContentScale.Fit,
-            modifier = Modifier.size(35.dp).align(Alignment.Center).graphicsLayer { rotationZ = rot3; alpha = a3; translationX = 50.dp.toPx() + drift3 })
-        androidx.compose.foundation.Image(painter = mandala, contentDescription = null, contentScale = ContentScale.Fit,
-            modifier = Modifier.size(45.dp).align(Alignment.Center).graphicsLayer { rotationZ = rot4; alpha = a4; translationX = (-60).dp.toPx() + drift1 * 0.7f })
-        androidx.compose.foundation.Image(painter = mandala, contentDescription = null, contentScale = ContentScale.Fit,
-            modifier = Modifier.size(30.dp).align(Alignment.Center).graphicsLayer { rotationZ = rot5; alpha = a5; translationX = (-20).dp.toPx() + drift2 * 0.5f })
-
         Column(modifier = Modifier.fillMaxWidth()) {
             // Progress bar at top - LTR
             CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
