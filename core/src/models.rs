@@ -53,6 +53,7 @@ pub struct TrackSummary {
 }
 
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CategoryOption {
     pub id: i64,
     pub title_fa: String,
