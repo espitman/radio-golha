@@ -161,10 +161,6 @@ private fun ModeBanner(name: String, trackCount: Int) {
             contentAlignment = Alignment.CenterStart,
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    GolhaLineIcon(icon = GolhaIcon.Note, modifier = Modifier.size(18.dp), tint = gold.copy(alpha = 0.6f))
-                    Text("دستگاه / آواز", style = MaterialTheme.typography.labelSmall, color = textWhite.copy(alpha = 0.5f))
-                }
                 Text(name, style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold), color = gold)
                 if (trackCount > 0) {
                     Text("$trackCount برنامه", style = MaterialTheme.typography.labelSmall, color = textWhite.copy(alpha = 0.5f))
