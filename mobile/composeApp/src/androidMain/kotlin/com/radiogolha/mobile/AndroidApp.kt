@@ -165,10 +165,12 @@ fun AndroidApp() {
     }
 
     val onTabSelected: (AppTab) -> Unit = { tab ->
-        val route = tab.toRoute().route
-        navController.navigate(route) {
-            popUpTo(navController.graph.findStartDestination().id) { saveState = false }
-            launchSingleTop = true
+        if (tab != selectedTab) {
+            val route = tab.toRoute().route
+            navController.navigate(route) {
+                popUpTo(navController.graph.findStartDestination().id) { saveState = false }
+                launchSingleTop = true
+            }
         }
     }
 
