@@ -39,7 +39,9 @@ fun HomeScreen(
     onTrackClick: (TrackUiModel) -> Unit = {},
     onProgramClick: (ProgramUiModel) -> Unit = {},
     onSingerClick: (Long) -> Unit = {},
+    onSingerLongPress: (SingerUiModel) -> Unit = {},
     onMusicianClick: (Long) -> Unit = {},
+    onMusicianLongPress: (MusicianUiModel) -> Unit = {},
     duets: List<DuetPairUiModel> = emptyList(),
     onDuetClick: (DuetPairUiModel) -> Unit = {},
     savedPlaylists: List<SavedPlaylistUiModel> = emptyList(),
@@ -109,6 +111,7 @@ fun HomeScreen(
                                 singers = state.singers,
                                 onSeeAllClick = onOpenAllSingers,
                                 onSingerClick = onSingerClick,
+                                onSingerLongPress = onSingerLongPress,
                             )
                         }
                         if (state.dastgahs.isNotEmpty()) {
@@ -121,6 +124,7 @@ fun HomeScreen(
                                 musicians = state.musicians,
                                 onSeeAllClick = onOpenAllMusicians,
                                 onMusicianClick = onMusicianClick,
+                                onMusicianLongPress = onMusicianLongPress,
                             )
                         }
                         if (savedPlaylists.isNotEmpty()) {
@@ -150,4 +154,3 @@ fun HomeScreen(
         }
     }
 }
-

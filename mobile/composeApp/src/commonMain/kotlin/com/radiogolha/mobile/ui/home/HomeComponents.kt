@@ -1,9 +1,11 @@
 package com.radiogolha.mobile.ui.home
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.layout.Arrangement
@@ -282,6 +284,7 @@ fun SingersSection(
     singers: List<SingerUiModel>,
     onSeeAllClick: () -> Unit,
     onSingerClick: (Long) -> Unit = {},
+    onSingerLongPress: (SingerUiModel) -> Unit = {},
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large)) {
         SectionTitle(
@@ -301,6 +304,7 @@ fun SingersSection(
                     tint = GolhaColors.SoftBlue,
                     contentVerticalSpacing = 10.dp,
                     onClick = { onSingerClick(singer.id) },
+                    onLongPress = { onSingerLongPress(singer) },
                 )
             }
         }
@@ -339,6 +343,7 @@ fun MusiciansSection(
     musicians: List<MusicianUiModel>,
     onSeeAllClick: () -> Unit,
     onMusicianClick: (Long) -> Unit = {},
+    onMusicianLongPress: (MusicianUiModel) -> Unit = {},
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large)) {
         SectionTitle(
@@ -358,6 +363,7 @@ fun MusiciansSection(
                     tint = GolhaColors.SoftRose,
                     contentVerticalSpacing = 10.dp,
                     onClick = { onMusicianClick(musician.id) },
+                    onLongPress = { onMusicianLongPress(musician) },
                 )
             }
         }
@@ -1364,6 +1370,7 @@ private fun ProgramCard(
 }
 
 @Composable
+@OptIn(ExperimentalFoundationApi::class)
 private fun AvatarNameItem(
     title: String,
     subtitle: String?,
@@ -1371,11 +1378,15 @@ private fun AvatarNameItem(
     tint: Color,
     contentVerticalSpacing: Dp = 10.dp,
     onClick: () -> Unit = {},
+    onLongPress: () -> Unit = {},
 ) {
     Box(
         modifier = Modifier
             .width(80.dp)
-            .clickable { onClick() }
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongPress,
+            )
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,

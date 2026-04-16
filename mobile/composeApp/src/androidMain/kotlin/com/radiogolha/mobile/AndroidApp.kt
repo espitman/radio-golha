@@ -1,6 +1,8 @@
 package com.radiogolha.mobile
 
 import androidx.activity.compose.BackHandler
+import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -9,7 +11,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -46,6 +52,13 @@ import kotlinx.coroutines.withContext
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AndroidApp() {
+    data class ArtistQuickAction(
+        val artistId: Long,
+        val name: String,
+        val type: String,
+        val isFavorite: Boolean,
+    )
+
     val context = LocalContext.current
     val playerManager = remember(context) { GolhaPlayerManager(context) }
     
@@ -101,6 +114,7 @@ fun AndroidApp() {
     val favoriteRepo = remember { FavoriteArtistRepository(context) }
     var savedPlaylists by remember { mutableStateOf(playlistRepo.getAll().map { SavedPlaylistUiModel(it.id, it.name) }) }
     var trackForOptions by remember { mutableStateOf<TrackUiModel?>(null) }
+    var artistForQuickActions by remember { mutableStateOf<ArtistQuickAction?>(null) }
 
     fun refreshPlaylists() { savedPlaylists = playlistRepo.getAll().map { SavedPlaylistUiModel(it.id, it.name) } }
     var orderedModes by remember { mutableStateOf<List<String>>(emptyList()) }
@@ -218,7 +232,23 @@ fun AndroidApp() {
                         onTrackClick = { track -> if (track.id == currentTrack?.id) showPlayerSheet = true else navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(track.id)) },
                         onProgramClick = { program -> navController.navigate(AndroidRoute.CategoryPrograms.createRoute(program.title)) },
                         onSingerClick = { artistId -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId)) },
+                        onSingerLongPress = { singer ->
+                            artistForQuickActions = ArtistQuickAction(
+                                artistId = singer.id,
+                                name = singer.name,
+                                type = "singer",
+                                isFavorite = favoriteRepo.isFavorite(singer.id),
+                            )
+                        },
                         onMusicianClick = { artistId -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId)) },
+                        onMusicianLongPress = { musician ->
+                            artistForQuickActions = ArtistQuickAction(
+                                artistId = musician.id,
+                                name = musician.name,
+                                type = "performer",
+                                isFavorite = favoriteRepo.isFavorite(musician.id),
+                            )
+                        },
                         onDuetClick = { duet -> navController.navigate(AndroidRoute.DuetDetail.createRoute(duet.singer1, duet.singer2)) },
                         orderedModes = orderedModes,
                         onDastgahClick = { name ->
@@ -430,11 +460,15 @@ fun AndroidApp() {
                     val favSingers = remember(favIds, librarySingers) {
                         favIds.mapNotNull { id -> librarySingers.find { it.artistId == id } }
                     }
+                    val favMusicians = remember(favIds, libraryMusicians) {
+                        favIds.mapNotNull { id -> libraryMusicians.find { it.artistId == id } }
+                    }
                     SettingsScreen(
                         bottomNavItems = bottomNavItems,
                         onExpandPlayer = { showPlayerSheet = true },
                         onBottomNavSelected = onTabSelected,
                         favoriteSingers = favSingers,
+                        favoriteMusicians = favMusicians,
                         onArtistClick = { id -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(id)) },
                         onShowAllFavorites = { navController.navigate(AndroidRoute.AllFavorites.route) },
                         onOpenDebug = {},
@@ -475,37 +509,39 @@ fun AndroidApp() {
                     shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
                     scrimColor = Color.Black.copy(alpha = 0.45f),
                 ) {
-                    com.radiogolha.mobile.ui.player.NowPlayingScreen(
-                        currentTrack = currentTrack,
-                        isPlaying = isPlayerPlaying,
-                        isLoading = isPlayerLoading,
-                        currentPositionMs = currentPlaybackPositionMs,
-                        durationMs = currentPlaybackDurationMs,
-                        onTogglePlayback = { playerManager.togglePlayback() },
-                        onSeek = { pos -> playerManager.seekTo(pos) },
-                        onBackClick = {
-                            scope.launch {
-                                playerSheetState.hide()
-                                showPlayerSheet = false
-                            }
-                        },
-                        onInfoClick = {
-                            scope.launch {
-                                playerSheetState.hide()
-                                showPlayerSheet = false
-                            }
-                            currentTrack?.id?.let { id ->
-                                navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(id))
-                            }
-                        },
-                        onSeekBack10 = { playerManager.seekTo((currentPlaybackPositionMs - 10_000L).coerceAtLeast(0L)) },
-                        onSeekForward10 = { playerManager.seekTo((currentPlaybackPositionMs + 10_000L).coerceAtMost(currentPlaybackDurationMs)) },
-                        onVisibilityChanged = { visible ->
-                            val act = context as? android.app.Activity ?: return@NowPlayingScreen
-                            val ctrl = androidx.core.view.WindowCompat.getInsetsController(act.window, act.window.decorView)
-                            ctrl.isAppearanceLightStatusBars = !visible
-                        },
-                    )
+                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                        com.radiogolha.mobile.ui.player.NowPlayingScreen(
+                            currentTrack = currentTrack,
+                            isPlaying = isPlayerPlaying,
+                            isLoading = isPlayerLoading,
+                            currentPositionMs = currentPlaybackPositionMs,
+                            durationMs = currentPlaybackDurationMs,
+                            onTogglePlayback = { playerManager.togglePlayback() },
+                            onSeek = { pos -> playerManager.seekTo(pos) },
+                            onBackClick = {
+                                scope.launch {
+                                    playerSheetState.hide()
+                                    showPlayerSheet = false
+                                }
+                            },
+                            onInfoClick = {
+                                scope.launch {
+                                    playerSheetState.hide()
+                                    showPlayerSheet = false
+                                }
+                                currentTrack?.id?.let { id ->
+                                    navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(id))
+                                }
+                            },
+                            onSeekBack10 = { playerManager.seekTo((currentPlaybackPositionMs - 10_000L).coerceAtLeast(0L)) },
+                            onSeekForward10 = { playerManager.seekTo((currentPlaybackPositionMs + 10_000L).coerceAtMost(currentPlaybackDurationMs)) },
+                            onVisibilityChanged = { visible ->
+                                val act = context as? android.app.Activity ?: return@NowPlayingScreen
+                                val ctrl = androidx.core.view.WindowCompat.getInsetsController(act.window, act.window.decorView)
+                                ctrl.isAppearanceLightStatusBars = !visible
+                            },
+                        )
+                    }
                 }
             }
 
@@ -520,6 +556,100 @@ fun AndroidApp() {
                     onAddToPlaylist = { playlistId -> playlistRepo.addTrack(playlistId, track.id); refreshPlaylists(); trackForOptions = null },
                     onCreatePlaylist = { name -> val id = playlistRepo.createManual(name); playlistRepo.addTrack(id, track.id); refreshPlaylists(); trackForOptions = null },
                 )
+            }
+
+            artistForQuickActions?.let { artist ->
+                ModalBottomSheet(
+                    onDismissRequest = { artistForQuickActions = null },
+                    sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+                    containerColor = GolhaColors.ScreenBackground,
+                    shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+                ) {
+                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 28.dp),
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = artist.name,
+                                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                        color = GolhaColors.PrimaryText,
+                                        maxLines = 1,
+                                    )
+                                    Text(
+                                        text = if (artist.type == "singer") "خواننده" else "نوازنده",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = GolhaColors.SecondaryText,
+                                    )
+                                }
+                            }
+
+                            HorizontalDivider(color = GolhaColors.Border.copy(alpha = 0.5f))
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        if (artist.isFavorite) {
+                                            favoriteRepo.removeFavorite(artist.artistId)
+                                            Toast.makeText(context, "از علاقه‌مندی‌ها حذف شد", Toast.LENGTH_SHORT).show()
+                                        } else {
+                                            favoriteRepo.addFavorite(artist.artistId, artist.type)
+                                            Toast.makeText(context, "به علاقه‌مندی‌ها اضافه شد", Toast.LENGTH_SHORT).show()
+                                        }
+                                        reloadToken += 1
+                                        artistForQuickActions = null
+                                    }
+                                    .padding(horizontal = 24.dp, vertical = 14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                            ) {
+                                GolhaLineIcon(
+                                    icon = if (artist.isFavorite) GolhaIcon.FavoritesFilled else GolhaIcon.Favorites,
+                                    modifier = Modifier.size(20.dp),
+                                    tint = GolhaColors.SecondaryText,
+                                )
+                                Text(
+                                    text = if (artist.isFavorite) "حذف از لیست مورد علاقه" else "افزودن به لیست مورد علاقه",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = GolhaColors.PrimaryText,
+                                )
+                            }
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        navController.navigate(AndroidRoute.ArtistDetail.createRoute(artist.artistId))
+                                        artistForQuickActions = null
+                                    }
+                                    .padding(horizontal = 24.dp, vertical = 14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                            ) {
+                                GolhaLineIcon(
+                                    icon = GolhaIcon.Info,
+                                    modifier = Modifier.size(20.dp),
+                                    tint = GolhaColors.SecondaryText,
+                                )
+                                Text(
+                                    text = "مشاهده مشخصات",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = GolhaColors.PrimaryText,
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }

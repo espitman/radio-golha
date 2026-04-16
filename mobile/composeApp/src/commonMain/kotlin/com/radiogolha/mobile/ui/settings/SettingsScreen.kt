@@ -38,6 +38,7 @@ import com.radiogolha.mobile.ui.home.SingerListItemUiModel
 import com.radiogolha.mobile.ui.home.SmallPrimaryButton
 import com.radiogolha.mobile.ui.home.TrackUiModel
 import com.radiogolha.mobile.ui.home.ArtistAvatar
+import com.radiogolha.mobile.ui.home.MusicianListItemUiModel
 import androidx.compose.foundation.clickable
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -56,6 +57,7 @@ fun SettingsScreen(
     bottomNavItems: List<BottomNavItemUiModel>,
     onBottomNavSelected: (AppTab) -> Unit,
     favoriteSingers: List<SingerListItemUiModel> = emptyList(),
+    favoriteMusicians: List<MusicianListItemUiModel> = emptyList(),
     onArtistClick: (Long) -> Unit = {},
     onShowAllFavorites: () -> Unit = {},
     onOpenDebug: () -> Unit = {},
@@ -112,11 +114,11 @@ fun SettingsScreen(
                         color = GolhaColors.PrimaryText,
                     )
                 }
-                // Favorite Artists
+                // Favorite Singers
                 if (favoriteSingers.isNotEmpty()) {
                     item {
                         Text(
-                            text = "هنرمندان مورد علاقه",
+                            text = "خوانندگان مورد علاقه",
                             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                             color = GolhaColors.PrimaryText,
                         )
@@ -153,7 +155,55 @@ fun SettingsScreen(
                                 border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border),
                             ) {
                                 Box(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
-                                    Text("مشاهده همه (${favoriteSingers.size})", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold), color = GolhaColors.PrimaryText)
+                                    Text("مشاهده همه خوانندگان (${favoriteSingers.size})", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold), color = GolhaColors.PrimaryText)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Favorite Musicians
+                if (favoriteMusicians.isNotEmpty()) {
+                    item {
+                        Text(
+                            text = "نوازندگان مورد علاقه",
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                            color = GolhaColors.PrimaryText,
+                        )
+                    }
+                    val displayLimit = 5
+                    val displayList = favoriteMusicians.take(displayLimit)
+                    items(displayList) { musician ->
+                        Surface(
+                            modifier = Modifier.fillMaxWidth().clickable { onArtistClick(musician.artistId) },
+                            shape = RoundedCornerShape(GolhaRadius.Card),
+                            color = GolhaColors.Surface,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.5f)),
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                ArtistAvatar(name = musician.name, imageUrl = musician.imageUrl, tint = GolhaColors.SoftRose, modifier = Modifier.size(48.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(musician.name, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold), color = GolhaColors.PrimaryText)
+                                    Text(musician.instrument ?: "نوازنده", style = MaterialTheme.typography.bodySmall, color = GolhaColors.SecondaryText)
+                                }
+                                GolhaLineIcon(icon = GolhaIcon.FavoritesFilled, modifier = Modifier.size(18.dp), tint = GolhaColors.PrimaryAccent)
+                            }
+                        }
+                    }
+                    if (favoriteMusicians.size > displayLimit) {
+                        item {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth().clickable { onShowAllFavorites() },
+                                shape = RoundedCornerShape(GolhaRadius.Card),
+                                color = GolhaColors.BadgeBackground,
+                                border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border),
+                            ) {
+                                Box(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
+                                    Text("مشاهده همه نوازندگان (${favoriteMusicians.size})", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold), color = GolhaColors.PrimaryText)
                                 }
                             }
                         }
