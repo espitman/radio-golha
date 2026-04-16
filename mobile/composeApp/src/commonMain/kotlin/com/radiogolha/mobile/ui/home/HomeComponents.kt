@@ -140,7 +140,7 @@ fun HeaderSection(modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "رادیو گلها",
+            text = "رادیو گل‌ها",
             style = MaterialTheme.typography.headlineLarge,
             color = GolhaColors.PrimaryText,
         )
