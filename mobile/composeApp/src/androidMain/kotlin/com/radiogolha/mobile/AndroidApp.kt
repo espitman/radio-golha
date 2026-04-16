@@ -251,6 +251,7 @@ fun AndroidApp() {
                         onPlaylistClick = { id -> navController.navigate(AndroidRoute.PlaylistDetail.createRoute(id)) },
                         onOpenAllSingers = { navController.navigate(AndroidRoute.Library.createRoute("singers")) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } },
                         onOpenAllMusicians = { navController.navigate(AndroidRoute.Library.createRoute("musicians")) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } },
+                        onOpenAllPlaylists = { navController.navigate(AndroidRoute.Account.createRoute(1)) },
                         isRefreshingTopTracks = isRefreshingTopTracks,
                         onRefreshTopTracks = onRefreshTracks,
                         currentTrack = currentTrack,
@@ -489,7 +490,11 @@ fun AndroidApp() {
                     )
                 }
 
-                composable(AndroidRoute.Account.route) {
+                composable(
+                    route = AndroidRoute.Account.route,
+                    arguments = listOf(navArgument("tab") { defaultValue = -1; type = NavType.IntType })
+                ) { backStackEntry ->
+                    val initialTab = backStackEntry.arguments?.getInt("tab")?.takeIf { it != -1 } ?: 0
                     val favIds = remember(favoritesReloadToken) { favoriteRepo.getFavoriteIds() }
                     val favSingers = remember(favIds, librarySingers) {
                         favIds.mapNotNull { id -> librarySingers.find { it.artistId == id } }
@@ -503,6 +508,7 @@ fun AndroidApp() {
                         onBottomNavSelected = onTabSelected,
                         favoriteSingers = favSingers,
                         favoriteMusicians = favMusicians,
+                        initialTabIndex = initialTab,
                         onArtistClick = { id -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(id)) },
                         onShowAllFavorites = { navController.navigate(AndroidRoute.AllFavorites.route) },
                         onOpenDebug = {},
@@ -725,7 +731,7 @@ private sealed class AndroidRoute(val route: String) {
     data object Home : AndroidRoute("home")
     data object Search : AndroidRoute("search")
     data object Library : AndroidRoute("library") { fun createRoute(tab: String) = "library?tab=$tab" }
-    data object Account : AndroidRoute("account")
+    data object Account : AndroidRoute("account?tab={tab}") { fun createRoute(tab: Int? = null) = if (tab != null) "account?tab=$tab" else "account" }
     data object Singers : AndroidRoute("singers")
     data object Musicians : AndroidRoute("musicians")
     data object ArtistDetail : AndroidRoute("artist_detail/{id}") { fun createRoute(id: Long) = "artist_detail/$id" }

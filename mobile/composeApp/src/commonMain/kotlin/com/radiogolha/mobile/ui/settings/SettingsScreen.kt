@@ -43,6 +43,7 @@ fun SettingsScreen(
     mostPlayedTracks: List<TrackUiModel> = emptyList(),
     recentlyPlayedTracks: List<TrackUiModel> = emptyList(),
     savedPlaylists: List<SavedPlaylistUiModel> = emptyList(),
+    initialTabIndex: Int = 0,
     onTrackClick: (Long) -> Unit = {},
     onPlayTrack: (TrackUiModel) -> Unit = {},
     onTrackLongClick: (TrackUiModel) -> Unit = {},
@@ -51,7 +52,7 @@ fun SettingsScreen(
 ) {
     var aboutTapCount by rememberSaveable { mutableIntStateOf(0) }
     var isDebugToolsVisible by rememberSaveable { mutableStateOf(false) }
-    var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
+    var selectedTabIndex by rememberSaveable(initialTabIndex) { mutableIntStateOf(initialTabIndex) }
     val tabs = listOf("علاقه‌مندی‌ها", "لیست پخش", "اخیر", "محبوب", "درباره")
 
     CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides LayoutDirection.Rtl) {

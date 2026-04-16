@@ -24,6 +24,7 @@ fun HomeScreen(
     bottomNavItems: List<BottomNavItemUiModel>,
     onOpenAllSingers: () -> Unit = {},
     onOpenAllMusicians: () -> Unit = {},
+    onOpenAllPlaylists: () -> Unit = {},
     isRefreshingTopTracks: Boolean = false,
     onRefreshTopTracks: () -> Unit = {},
     currentTrack: TrackUiModel? = null,
@@ -133,6 +134,7 @@ fun HomeScreen(
                                 SavedPlaylistsSection(
                                     playlists = savedPlaylists,
                                     onPlaylistClick = onPlaylistClick,
+                                    onSeeAllClick = onOpenAllPlaylists,
                                 )
                             }
                         }

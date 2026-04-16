@@ -676,6 +676,7 @@ fun DuetsBannerSkeleton(modifier: Modifier = Modifier) {
 fun SavedPlaylistsSection(
     playlists: List<SavedPlaylistUiModel>,
     onPlaylistClick: (Long) -> Unit = {},
+    onSeeAllClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     if (playlists.isEmpty()) return
@@ -688,7 +689,10 @@ fun SavedPlaylistsSection(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(GolhaSpacing.Large),
     ) {
-        SectionTitle(title = "لیست‌های من")
+        SectionTitle(
+            title = "لیست‌های من",
+            onSeeAllClick = onSeeAllClick
+        )
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(GolhaSpacing.CardGap),
