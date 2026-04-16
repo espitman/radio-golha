@@ -107,18 +107,6 @@ fun HomeScreen(
                                 onProgramClick = onProgramClick
                             )
                         }
-                        if (recentlyPlayed.isNotEmpty()) {
-                            item {
-                                RecentlyPlayedSection(
-                                    tracks = recentlyPlayed,
-                                    onTrackClick = onTrackClick,
-                                    onPlayTrack = onPlayTrack,
-                                    onTrackLongClick = onTrackLongClick,
-                                    currentTrackId = currentTrack?.id,
-                                    isPlayerPlaying = isPlayerPlaying,
-                                )
-                            }
-                        }
                         item {
                             SingersSection(
                                 singers = state.singers,

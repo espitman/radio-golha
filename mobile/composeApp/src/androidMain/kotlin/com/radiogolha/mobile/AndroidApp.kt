@@ -512,6 +512,7 @@ fun AndroidApp() {
                         currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs,
                         onTogglePlayerPlayback = { playerManager.togglePlayback() },
                         onImportDebugDatabase = { if (!isImportingDatabase) { scope.launch { isImportingDatabase = true; val result = importDebugDatabase(); showDebugToast(result.message); if (result.success) { reloadToken += 1; navController.navigate(AndroidRoute.Home.route) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } }; isImportingDatabase = false } } },
+                        recentlyPlayedTracks = recentlyPlayedTracks,
                         mostPlayedTracks = mostPlayedTracks,
                         onTrackClick = { id -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(id)) },
                         onPlayTrack = { track -> playerManager.play(track) },
@@ -691,6 +692,29 @@ fun AndroidApp() {
             }
         }
     }
+}
+
+private suspend fun loadTracksByIds(ids: List<Long>): List<TrackUiModel> = withContext(Dispatchers.Default) {
+    if (ids.isEmpty()) return@withContext emptyList()
+    val idsJson = org.json.JSONArray(ids).toString()
+    val dbPath = com.radiogolha.mobile.ui.home.requireArchiveDbPath()
+    val jsonStr = RustCoreBridge.getProgramsByIdsJson(dbPath, idsJson)
+    val jsonArray = org.json.JSONArray(jsonStr)
+    val tracks = mutableListOf<TrackUiModel>()
+    for (i in 0 until jsonArray.length()) {
+        val obj = jsonArray.getJSONObject(i)
+        tracks.add(TrackUiModel(
+            id = obj.getLong("id"),
+            artistId = if (obj.isNull("artist_id")) null else obj.getLong("artist_id"),
+            title = obj.getString("title"),
+            artist = obj.getString("artist"),
+            duration = if (obj.isNull("duration")) null else obj.getString("duration"),
+            audioUrl = obj.getString("audio_url"),
+            coverUrl = if (obj.isNull("cover_url")) null else obj.getString("cover_url"),
+            artistImages = if (obj.isNull("cover_url")) emptyList() else listOf(obj.getString("cover_url"))
+        ))
+    }
+    tracks
 }
 
 private sealed class AndroidRoute(val route: String) {
