@@ -1,25 +1,23 @@
 package com.radiogolha.mobile.ui.settings
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.shape.*
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.material3.*
+import androidx.compose.animation.core.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.*
+import androidx.compose.ui.draw.*
+import androidx.compose.ui.geometry.*
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.text.font.*
+import androidx.compose.ui.text.style.*
+import androidx.compose.ui.unit.*
 import com.radiogolha.mobile.theme.*
 import com.radiogolha.mobile.ui.home.*
 
@@ -44,14 +42,17 @@ fun SettingsScreen(
     onExpandPlayer: () -> Unit = {},
     mostPlayedTracks: List<TrackUiModel> = emptyList(),
     recentlyPlayedTracks: List<TrackUiModel> = emptyList(),
+    savedPlaylists: List<SavedPlaylistUiModel> = emptyList(),
     onTrackClick: (Long) -> Unit = {},
     onPlayTrack: (TrackUiModel) -> Unit = {},
     onTrackLongClick: (TrackUiModel) -> Unit = {},
+    onPlaylistClick: (Long) -> Unit = {},
+    onPlaylistLongClick: (Long) -> Unit = {},
 ) {
     var aboutTapCount by rememberSaveable { mutableIntStateOf(0) }
     var isDebugToolsVisible by rememberSaveable { mutableStateOf(false) }
     var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
-    val tabs = listOf("علاقه‌مندی‌ها", "اخیر", "محبوب", "درباره")
+    val tabs = listOf("علاقه‌مندی‌ها", "لیست پخش", "اخیر", "محبوب", "درباره")
 
     CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides LayoutDirection.Rtl) {
         GolhaPatternBackground {
@@ -110,7 +111,7 @@ fun SettingsScreen(
                                 ) {
                                     Text(
                                         text = title,
-                                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal),
+                                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal, fontSize = 11.sp),
                                         color = if (selected) Color.White else GolhaColors.SecondaryText
                                     )
                                 }
@@ -153,7 +154,18 @@ fun SettingsScreen(
                                     }
                                 }
                             }
-                            1 -> { // Recently Played (Recent)
+                            1 -> { // Playlists
+                                if (savedPlaylists.isEmpty()) {
+                                    item {
+                                        EmptyStatePlaceholder(text = "هنوز لیست پخشی نساخته‌اید.")
+                                    }
+                                } else {
+                                    items(savedPlaylists) { playlist ->
+                                        PlaylistAccountItem(playlist, onPlaylistClick, onPlaylistLongClick)
+                                    }
+                                }
+                            }
+                            2 -> { // Recently Played (Recent)
                                 if (recentlyPlayedTracks.isEmpty()) {
                                     item {
                                         EmptyStatePlaceholder(text = "تاریخچه پخش شما خالی است.")
@@ -191,7 +203,7 @@ fun SettingsScreen(
                                     }
                                 }
                             }
-                            2 -> { // Most Played (Popular)
+                            3 -> { // Most Played (Popular)
                                 if (mostPlayedTracks.isEmpty()) {
                                     item {
                                         EmptyStatePlaceholder(text = "هنوز آهنگ محبوب خاصی ندارید.")
@@ -229,7 +241,7 @@ fun SettingsScreen(
                                     }
                                 }
                             }
-                            3 -> { // About
+                            4 -> { // About
                                 item { AboutAppSection(onTap = {
                                     aboutTapCount++
                                     if (aboutTapCount == 2) {
@@ -453,6 +465,76 @@ private fun DebugDatabaseCard(
                 loading = isImportingDatabase,
                 onClick = onImportDebugDatabase,
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun PlaylistAccountItem(
+    playlist: SavedPlaylistUiModel,
+    onClick: (Long) -> Unit,
+    onLongClick: (Long) -> Unit,
+) {
+    val inf = rememberInfiniteTransition(label = "playlistGlow")
+    val glowA by inf.animateFloat(0.04f, 0.10f, infiniteRepeatable(tween(3000, easing = androidx.compose.animation.core.FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse), label = "plA")
+    val glowR by inf.animateFloat(0.35f, 0.50f, infiniteRepeatable(tween(3500, easing = androidx.compose.animation.core.FastOutSlowInEasing), androidx.compose.animation.core.RepeatMode.Reverse), label = "plR")
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(84.dp)
+            .combinedClickable(
+                onClick = { onClick(playlist.id) },
+                onLongClick = { onLongClick(playlist.id) }
+            ),
+        shape = RoundedCornerShape(GolhaRadius.Card),
+        color = GolhaColors.BannerBackground,
+        shadowElevation = GolhaElevation.Card,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .drawBehind {
+                    drawCircle(GolhaColors.BannerDetail.copy(alpha = glowA), size.minDimension * glowR, Offset(size.width * 0.9f, size.height * 0.4f))
+                    drawCircle(GolhaColors.BannerDetail.copy(alpha = glowA * 0.6f), size.minDimension * glowR * 0.7f, Offset(size.width * 0.1f, size.height * 0.8f))
+                }
+                .padding(horizontal = 20.dp),
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        GolhaLineIcon(icon = GolhaIcon.Library, modifier = Modifier.size(16.dp), tint = GolhaColors.BannerDetail.copy(alpha = 0.6f))
+                        Text(
+                            text = "لیست پخش",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = GolhaColors.BannerDetail.copy(alpha = 0.7f)
+                        )
+                    }
+                    Text(
+                        text = playlist.name,
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        color = GolhaColors.BannerDetail,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+
+                Surface(
+                    shape = CircleShape,
+                    color = GolhaColors.BannerDetail.copy(alpha = 0.1f),
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        GolhaLineIcon(icon = GolhaIcon.Back, modifier = Modifier.size(18.dp), tint = GolhaColors.BannerDetail)
+                    }
+                }
+            }
         }
     }
 }

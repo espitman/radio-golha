@@ -514,9 +514,12 @@ fun AndroidApp() {
                         onImportDebugDatabase = { if (!isImportingDatabase) { scope.launch { isImportingDatabase = true; val result = importDebugDatabase(); showDebugToast(result.message); if (result.success) { reloadToken += 1; navController.navigate(AndroidRoute.Home.route) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } }; isImportingDatabase = false } } },
                         recentlyPlayedTracks = recentlyPlayedTracks,
                         mostPlayedTracks = mostPlayedTracks,
+                        savedPlaylists = savedPlaylists,
                         onTrackClick = { id -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(id)) },
                         onPlayTrack = { track -> playerManager.play(track) },
                         onTrackLongClick = { track -> trackForOptions = track },
+                        onPlaylistClick = { id -> navController.navigate(AndroidRoute.PlaylistDetail.createRoute(id)) },
+                        onPlaylistLongClick = { id -> /* handle if needed */ },
                     )
                 }
                 
