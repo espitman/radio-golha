@@ -43,6 +43,7 @@ fun ModeDetailScreen(
     onBackClick: () -> Unit,
     onTrackClick: (Long) -> Unit = {},
     onPlayTrack: (TrackUiModel) -> Unit = {},
+    onTrackLongClick: (TrackUiModel) -> Unit = {},
     onArtistClick: (Long) -> Unit = {},
     currentTrack: TrackUiModel? = null,
     isPlayerPlaying: Boolean = false,
@@ -119,6 +120,7 @@ fun ModeDetailScreen(
                                     isPlaying = isActive && isPlayerPlaying,
                                     onTrackClick = { onTrackClick(program.id) },
                                     onPlayClick = { onPlayTrack(program.toTrackUiModel()) },
+                                    onLongClick = { onTrackLongClick(program.toTrackUiModel()) },
                                     onArtistClick = onArtistClick,
                                 )
                                 if (index != programs!!.lastIndex) {

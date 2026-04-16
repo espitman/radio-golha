@@ -57,6 +57,7 @@ fun SearchScreen(
     onBottomNavSelected: (AppTab) -> Unit,
     onProgramClick: (Long) -> Unit = {},
     onPlayTrack: (TrackUiModel) -> Unit = {},
+    onTrackLongClick: (TrackUiModel) -> Unit = {},
     onSavePlaylist: (String, ActiveFilters) -> Unit = { _, _ -> },
     currentTrack: TrackUiModel? = null,
     isPlayerPlaying: Boolean = false,
@@ -168,6 +169,7 @@ fun SearchScreen(
                         isPlayerPlaying = isPlayerPlaying,
                         onProgramClick = onProgramClick,
                         onPlayTrack = onPlayTrack,
+                        onTrackLongClick = onTrackLongClick,
                         onBackToFilters = { state.currentPage = SearchPage.Filters },
                         onSavePlaylist = onSavePlaylist,
                     )
@@ -445,6 +447,7 @@ private fun ResultsPage(
     isPlayerPlaying: Boolean,
     onProgramClick: (Long) -> Unit,
     onPlayTrack: (TrackUiModel) -> Unit,
+    onTrackLongClick: (TrackUiModel) -> Unit = {},
     onBackToFilters: () -> Unit,
     onSavePlaylist: (String, ActiveFilters) -> Unit = { _, _ -> },
 ) {
@@ -618,6 +621,7 @@ private fun ResultsPage(
                                         isPlaying = isActive && isPlayerPlaying,
                                         onTrackClick = { onProgramClick(result.id) },
                                         onPlayClick = { onPlayTrack(track) },
+                                        onLongClick = { onTrackLongClick(track) },
                                     )
                                     if (index != results.lastIndex) {
                                         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp), color = GolhaColors.Border.copy(alpha = 0.65f))

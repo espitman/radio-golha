@@ -1,8 +1,10 @@
 package com.radiogolha.mobile.ui.programs
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,6 +24,7 @@ import com.radiogolha.mobile.theme.GolhaRadius
 import com.radiogolha.mobile.theme.GolhaSpacing
 import com.radiogolha.mobile.ui.home.*
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ProgramTrackRow(
     track: TrackUiModel,
@@ -30,13 +33,14 @@ fun ProgramTrackRow(
     onTrackClick: () -> Unit,
     onPlayClick: () -> Unit,
     onArtistClick: (Long) -> Unit = {},
+    onLongClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .clickable { onTrackClick() }
+            .combinedClickable(onClick = onTrackClick, onLongClick = onLongClick)
             .background(if (isActive) GolhaColors.BadgeBackground.copy(alpha = 0.42f) else Color.Transparent)
             .padding(horizontal = 8.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,

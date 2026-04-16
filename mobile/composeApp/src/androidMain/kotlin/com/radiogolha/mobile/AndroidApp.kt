@@ -34,6 +34,9 @@ import com.radiogolha.mobile.ui.search.SearchScreen
 import com.radiogolha.mobile.ui.search.SearchState
 import com.radiogolha.mobile.ui.search.PlaylistDetailScreen
 import com.radiogolha.mobile.data.PlaylistRepository
+import com.radiogolha.mobile.data.PlaylistType
+import com.radiogolha.mobile.ui.programs.TrackOptionsSheet
+import com.radiogolha.mobile.ui.programs.PlaylistOptionItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -95,6 +98,9 @@ fun AndroidApp() {
     val searchState = remember { SearchState() }
     val playlistRepo = remember { PlaylistRepository(context) }
     var savedPlaylists by remember { mutableStateOf(playlistRepo.getAll().map { SavedPlaylistUiModel(it.id, it.name) }) }
+    var trackForOptions by remember { mutableStateOf<TrackUiModel?>(null) }
+
+    fun refreshPlaylists() { savedPlaylists = playlistRepo.getAll().map { SavedPlaylistUiModel(it.id, it.name) } }
     var orderedModes by remember { mutableStateOf<List<String>>(emptyList()) }
     var enrichedDuets by remember { mutableStateOf<List<DuetPairUiModel>>(emptyList()) }
     var homeUiState by remember { mutableStateOf<HomeUiState?>(null) }
@@ -206,6 +212,7 @@ fun AndroidApp() {
                         currentPlaybackDurationMs = currentPlaybackDurationMs,
                         onTogglePlayerPlayback = { playerManager.togglePlayback() },
                         onPlayTrack = { track -> playerManager.play(track) },
+                        onTrackLongClick = { track -> trackForOptions = track },
                         onTrackClick = { track -> if (track.id == currentTrack?.id) showPlayerSheet = true else navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(track.id)) },
                         onProgramClick = { program -> navController.navigate(AndroidRoute.CategoryPrograms.createRoute(program.title)) },
                         onSingerClick = { artistId -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId)) },
@@ -228,6 +235,7 @@ fun AndroidApp() {
                         onBottomNavSelected = onTabSelected,
                         onProgramClick = { programId -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(programId)) },
                         onPlayTrack = { track -> playerManager.play(track) },
+                        onTrackLongClick = { track -> trackForOptions = track },
                         onSavePlaylist = { name, filters ->
                             playlistRepo.save(name, filters)
                             savedPlaylists = playlistRepo.getAll().map { SavedPlaylistUiModel(it.id, it.name) }
@@ -280,17 +288,19 @@ fun AndroidApp() {
                 composable(route = AndroidRoute.CategoryPrograms.route, arguments = listOf(navArgument("title") { type = NavType.StringType })) { backStackEntry ->
                     val title = backStackEntry.arguments?.getString("title") ?: ""
                     LaunchedEffect(title) { if (title != lastCategoryTitle) { categoryPrograms = emptyList(); isCategoryLoading = true; try { categoryPrograms = withContext(Dispatchers.Default) { loadCategoryPrograms(title) } } finally { isCategoryLoading = false; lastCategoryTitle = title } } }
-                    CategoryProgramsScreen(categoryTitle = title, programs = categoryPrograms, isLoading = isCategoryLoading, bottomNavItems = bottomNavItems, onExpandPlayer = { showPlayerSheet = true }, onBottomNavSelected = onTabSelected, onProgramClick = { program -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(program.id)) }, onPlayTrack = { track -> playerManager.play(track) }, onBackClick = { navController.popBackStack() }, currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onTrackClick = { trackId -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(trackId)) })
+                    CategoryProgramsScreen(categoryTitle = title, programs = categoryPrograms, isLoading = isCategoryLoading, bottomNavItems = bottomNavItems, onExpandPlayer = { showPlayerSheet = true }, onBottomNavSelected = onTabSelected, onProgramClick = { program -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(program.id)) }, onPlayTrack = { track -> playerManager.play(track) },
+                        onTrackLongClick = { track -> trackForOptions = track }, onBackClick = { navController.popBackStack() }, currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onTrackClick = { trackId -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(trackId)) })
                 }
 
                 composable(route = AndroidRoute.ProgramEpisodeDetail.route, arguments = listOf(navArgument("id") { type = NavType.LongType })) { backStackEntry ->
                     val programId = backStackEntry.arguments?.getLong("id") ?: 0L
-                    ProgramEpisodeDetailScreen(programId = programId, bottomNavItems = bottomNavItems, onExpandPlayer = { showPlayerSheet = true }, onBottomNavSelected = onTabSelected, onBackClick = { navController.popBackStack() }, currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onSeek = { pos -> playerManager.seekTo(pos) }, onArtistClick = { artistId -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId)) }, onOrchestraClick = { name -> val orch = libraryOrchestras.find { it.name == name }; if (orch != null) navController.navigate(AndroidRoute.OrchestraDetail.createRoute(orch.id, orch.name)) }, onPlayProgram = { detail -> val artistImages = (detail.singers.mapNotNull { it.avatar } + detail.performers.mapNotNull { it.avatar } + detail.composers.mapNotNull { it.avatar } + detail.arrangers.mapNotNull { it.avatar } + detail.orchestras.mapNotNull { it.avatar }).distinct(); playerManager.play(TrackUiModel(id = detail.id, title = detail.title, artist = detail.singers.map { it.name }.joinToString(" و ").takeIf { it.isNotBlank() } ?: "ناشناس", duration = detail.duration, audioUrl = detail.audioUrl, artistImages = artistImages)) })
+                    ProgramEpisodeDetailScreen(programId = programId, bottomNavItems = bottomNavItems, onExpandPlayer = { showPlayerSheet = true }, onBottomNavSelected = onTabSelected, onBackClick = { navController.popBackStack() }, currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onSeek = { pos -> playerManager.seekTo(pos) }, onArtistClick = { artistId -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId)) }, onOrchestraClick = { name -> val orch = libraryOrchestras.find { it.name == name }; if (orch != null) navController.navigate(AndroidRoute.OrchestraDetail.createRoute(orch.id, orch.name)) }, onAddToPlaylist = { track -> trackForOptions = track }, onPlayProgram = { detail -> val artistImages = (detail.singers.mapNotNull { it.avatar } + detail.performers.mapNotNull { it.avatar } + detail.composers.mapNotNull { it.avatar } + detail.arrangers.mapNotNull { it.avatar } + detail.orchestras.mapNotNull { it.avatar }).distinct(); playerManager.play(TrackUiModel(id = detail.id, title = detail.title, artist = detail.singers.map { it.name }.joinToString(" و ").takeIf { it.isNotBlank() } ?: "ناشناس", duration = detail.duration, audioUrl = detail.audioUrl, artistImages = artistImages)) })
                 }
 
                 composable(route = AndroidRoute.ArtistDetail.route, arguments = listOf(navArgument("id") { type = NavType.LongType })) { backStackEntry ->
                     val artistId = backStackEntry.arguments?.getLong("id") ?: 0L
-                    ArtistDetailScreen(artistId = artistId, bottomNavItems = bottomNavItems, onExpandPlayer = { showPlayerSheet = true }, onBottomNavSelected = onTabSelected, onBackClick = { navController.popBackStack() }, onProgramClick = { program -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(program.id)) }, onPlayTrack = { track -> playerManager.play(track) }, currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onTrackClick = { trackId -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(trackId)) })
+                    ArtistDetailScreen(artistId = artistId, bottomNavItems = bottomNavItems, onExpandPlayer = { showPlayerSheet = true }, onBottomNavSelected = onTabSelected, onBackClick = { navController.popBackStack() }, onProgramClick = { program -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(program.id)) }, onPlayTrack = { track -> playerManager.play(track) },
+                        onTrackLongClick = { track -> trackForOptions = track }, currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onTrackClick = { trackId -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(trackId)) })
                 }
 
                 composable(route = AndroidRoute.OrchestraDetail.route, arguments = listOf(navArgument("id") { type = NavType.LongType }, navArgument("name") { type = NavType.StringType })) { backStackEntry ->
@@ -304,6 +314,7 @@ fun AndroidApp() {
                         onBackClick = { navController.popBackStack() },
                         onTrackClick = { trackId -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(trackId)) },
                         onPlayTrack = { track -> playerManager.play(track) },
+                        onTrackLongClick = { track -> trackForOptions = track },
                         onArtistClick = { id -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(id)) },
                         currentTrack = currentTrack,
                         isPlayerPlaying = isPlayerPlaying,
@@ -327,6 +338,7 @@ fun AndroidApp() {
                         onBackClick = { navController.popBackStack() },
                         onTrackClick = { trackId -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(trackId)) },
                         onPlayTrack = { track -> playerManager.play(track) },
+                        onTrackLongClick = { track -> trackForOptions = track },
                         currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading,
                         currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs,
                         onTogglePlayerPlayback = { playerManager.togglePlayback() },
@@ -337,34 +349,27 @@ fun AndroidApp() {
                 composable(route = AndroidRoute.PlaylistDetail.route, arguments = listOf(navArgument("id") { type = NavType.LongType })) { backStackEntry ->
                     val playlistId = backStackEntry.arguments?.getLong("id") ?: 0L
                     val entry = remember(playlistId) { playlistRepo.getById(playlistId) }
-                    val filters = remember(entry) { entry?.let { playlistRepo.parseFilters(it) } }
-                    if (entry != null && filters != null) {
-                        val playlistName = entry.name
-                        val singerIdToName = remember(searchState.searchOptions) {
-                            searchState.searchOptions.singers.associate { it.id to it.name }
-                        }
-                        val singerAvatarByName = remember(librarySingers) {
-                            librarySingers.filter { it.imageUrl != null }.associate { it.name to it.imageUrl!! }
-                        }
+                    if (entry != null) {
+                        val isManual = entry.type == PlaylistType.MANUAL
+                        val filters = if (!isManual) playlistRepo.parseFilters(entry) else com.radiogolha.mobile.ui.search.ActiveFilters()
+                        val singerIdToName = remember(searchState.searchOptions) { searchState.searchOptions.singers.associate { it.id to it.name } }
+                        val singerAvatarByName = remember(librarySingers) { librarySingers.filter { it.imageUrl != null }.associate { it.name to it.imageUrl!! } }
                         PlaylistDetailScreen(
-                            playlistName = playlistName,
-                            filters = filters!!,
+                            playlistName = entry.name,
+                            filters = filters,
+                            trackIds = entry.trackIds,
+                            isManual = isManual,
                             singerIdToName = singerIdToName,
                             singerAvatarsByName = singerAvatarByName,
                             bottomNavItems = bottomNavItems,
                             onBottomNavSelected = onTabSelected,
                             onBackClick = { navController.popBackStack() },
-                            onRename = { newName ->
-                                playlistRepo.rename(playlistId, newName)
-                                savedPlaylists = playlistRepo.getAll().map { SavedPlaylistUiModel(it.id, it.name) }
-                            },
-                            onDelete = {
-                                playlistRepo.delete(playlistId)
-                                savedPlaylists = playlistRepo.getAll().map { SavedPlaylistUiModel(it.id, it.name) }
-                                navController.popBackStack()
-                            },
+                            onRename = { newName -> playlistRepo.rename(playlistId, newName); refreshPlaylists() },
+                            onDelete = { playlistRepo.delete(playlistId); refreshPlaylists(); navController.popBackStack() },
+                            onRemoveTrack = if (isManual) { { trackId -> playlistRepo.removeTrack(playlistId, trackId); refreshPlaylists() } } else null,
                             onProgramClick = { id -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(id)) },
                             onPlayTrack = { track -> playerManager.play(track) },
+                        onTrackLongClick = { track -> trackForOptions = track },
                             currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading,
                             currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs,
                             onTogglePlayerPlayback = { playerManager.togglePlayback() },
@@ -384,6 +389,7 @@ fun AndroidApp() {
                         onBackClick = { navController.popBackStack() },
                         onTrackClick = { id -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(id)) },
                         onPlayTrack = { track -> playerManager.play(track) },
+                        onTrackLongClick = { track -> trackForOptions = track },
                         onArtistClick = { id -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(id)) },
                         currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading,
                         currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs,
@@ -458,6 +464,18 @@ fun AndroidApp() {
                 }
             }
 
+            // Track long-press options
+            trackForOptions?.let { track ->
+                TrackOptionsSheet(
+                    track = track,
+                    manualPlaylists = playlistRepo.getManualPlaylists().map { PlaylistOptionItem(it.id, it.name) },
+                    onDismiss = { trackForOptions = null },
+                    onGoToProgram = { navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(track.id)) },
+                    onGoToArtist = { track.artistId?.let { navController.navigate(AndroidRoute.ArtistDetail.createRoute(it)) } },
+                    onAddToPlaylist = { playlistId -> playlistRepo.addTrack(playlistId, track.id); refreshPlaylists(); trackForOptions = null },
+                    onCreatePlaylist = { name -> val id = playlistRepo.createManual(name); playlistRepo.addTrack(id, track.id); refreshPlaylists(); trackForOptions = null },
+                )
+            }
         }
     }
 }

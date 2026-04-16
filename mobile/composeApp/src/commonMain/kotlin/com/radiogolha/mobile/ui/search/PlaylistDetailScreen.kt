@@ -43,7 +43,9 @@ import kotlinx.coroutines.withContext
 @Composable
 fun PlaylistDetailScreen(
     playlistName: String,
-    filters: ActiveFilters,
+    filters: ActiveFilters = ActiveFilters(),
+    trackIds: List<Long> = emptyList(),
+    isManual: Boolean = false,
     singerIdToName: Map<Long, String> = emptyMap(),
     singerAvatarsByName: Map<String, String> = emptyMap(),
     bottomNavItems: List<BottomNavItemUiModel>,
@@ -52,8 +54,10 @@ fun PlaylistDetailScreen(
     showActions: Boolean = true,
     onRename: (String) -> Unit = {},
     onDelete: () -> Unit = {},
+    onRemoveTrack: ((Long) -> Unit)? = null,
     onProgramClick: (Long) -> Unit = {},
     onPlayTrack: (TrackUiModel) -> Unit = {},
+    onTrackLongClick: (TrackUiModel) -> Unit = {},
     currentTrack: TrackUiModel? = null,
     isPlayerPlaying: Boolean = false,
     isPlayerLoading: Boolean = false,
@@ -68,17 +72,26 @@ fun PlaylistDetailScreen(
     var page by remember { mutableStateOf(1) }
     var totalPages by remember { mutableStateOf(1) }
 
-    LaunchedEffect(filters) {
-        val r = withContext(Dispatchers.Default) {
-            runCatching { searchPrograms(filters, 1) }.getOrDefault(SearchResultsUiState())
+    LaunchedEffect(filters, trackIds, isManual) {
+        if (isManual) {
+            val programs = withContext(Dispatchers.Default) {
+                runCatching { com.radiogolha.mobile.ui.home.loadProgramsByIds(trackIds) }.getOrDefault(emptyList())
+            }
+            allResults = programs.map { SearchResultUiModel(id = it.id, title = it.title, categoryName = it.categoryName ?: "", no = it.programNumber.toIntOrNull() ?: 0, subNo = null, duration = it.duration, audioUrl = it.audioUrl, artist = it.singer) }
+            results = allResults
+        } else {
+            val r = withContext(Dispatchers.Default) {
+                runCatching { searchPrograms(filters, 1) }.getOrDefault(SearchResultsUiState())
+            }
+            results = r.results
+            allResults = r.results
+            page = r.page
+            totalPages = r.totalPages
         }
-        results = r.results
-        allResults = r.results
-        page = r.page
-        totalPages = r.totalPages
     }
 
     val isLoading = results == null
+    var showSettingsSheet by remember { mutableStateOf(false) }
     var showRenameSheet by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var renameText by remember(playlistName) { mutableStateOf(playlistName) }
@@ -145,6 +158,48 @@ fun PlaylistDetailScreen(
         }
     }
 
+    // Settings bottom sheet
+    if (showSettingsSheet) {
+        @OptIn(ExperimentalMaterial3Api::class)
+        ModalBottomSheet(
+            onDismissRequest = { showSettingsSheet = false },
+            containerColor = GolhaColors.ScreenBackground,
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        ) {
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                Column(modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp)) {
+                    // Header - same as TrackOptionsSheet
+                    Row(
+                        modifier = Modifier.padding(horizontal = 24.dp).padding(bottom = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(playlistName, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = GolhaColors.PrimaryText, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text("تنظیمات لیست", style = MaterialTheme.typography.bodySmall, color = GolhaColors.SecondaryText)
+                        }
+                    }
+                    HorizontalDivider(color = GolhaColors.Border.copy(alpha = 0.5f))
+                    // Options - same style as TrackOptionsSheet OptionRow
+                    Row(
+                        modifier = Modifier.fillMaxWidth().clickable { showSettingsSheet = false; showRenameSheet = true }.padding(horizontal = 24.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        GolhaLineIcon(icon = GolhaIcon.Note, modifier = Modifier.size(20.dp), tint = GolhaColors.SecondaryText)
+                        Text("تغییر نام", style = MaterialTheme.typography.bodyLarge, color = GolhaColors.PrimaryText)
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth().clickable { showSettingsSheet = false; showDeleteConfirm = true }.padding(horizontal = 24.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        GolhaLineIcon(icon = GolhaIcon.Delete, modifier = Modifier.size(20.dp), tint = GolhaColors.SecondaryText)
+                        Text("حذف لیست", style = MaterialTheme.typography.bodyLarge, color = GolhaColors.PrimaryText)
+                    }
+                }
+            }
+        }
+    }
+
     TabRootScreen(
         title = "لیست",
         subtitle = "",
@@ -169,34 +224,9 @@ fun PlaylistDetailScreen(
                     name = playlistName,
                     trackCount = allResults.size,
                     avatarUrls = avatarUrls,
+                    showActions = showActions,
+                    onSettingsClick = { showSettingsSheet = true },
                 )
-            }
-
-            // Action buttons
-            if (showActions) item {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Surface(
-                        modifier = Modifier.clickable { showRenameSheet = true },
-                        shape = RoundedCornerShape(12.dp),
-                        color = GolhaColors.BadgeBackground,
-                        border = BorderStroke(1.dp, GolhaColors.Border),
-                    ) {
-                        Row(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                            GolhaLineIcon(icon = GolhaIcon.Note, modifier = Modifier.size(14.dp), tint = GolhaColors.PrimaryText)
-                            Text("تغییر نام", style = MaterialTheme.typography.labelMedium, color = GolhaColors.PrimaryText)
-                        }
-                    }
-                    Surface(
-                        modifier = Modifier.clickable { showDeleteConfirm = true },
-                        shape = RoundedCornerShape(12.dp),
-                        color = Color.Red.copy(alpha = 0.08f),
-                        border = BorderStroke(1.dp, Color.Red.copy(alpha = 0.2f)),
-                    ) {
-                        Row(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text("حذف", style = MaterialTheme.typography.labelMedium, color = Color.Red.copy(alpha = 0.7f))
-                        }
-                    }
-                }
             }
 
             if (isLoading) {
@@ -245,6 +275,7 @@ fun PlaylistDetailScreen(
                                     isPlaying = isActive && isPlayerPlaying,
                                     onTrackClick = { onProgramClick(result.id) },
                                     onPlayClick = { onPlayTrack(track) },
+                                    onLongClick = { onTrackLongClick(track) },
                                 )
                                 if (index != allResults.lastIndex) {
                                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp), color = GolhaColors.Border.copy(alpha = 0.65f))
@@ -260,7 +291,7 @@ fun PlaylistDetailScreen(
 }
 
 @Composable
-private fun PlaylistBanner(name: String, trackCount: Int, avatarUrls: List<String> = emptyList()) {
+private fun PlaylistBanner(name: String, trackCount: Int, avatarUrls: List<String> = emptyList(), showActions: Boolean = true, onSettingsClick: () -> Unit = {}) {
     val darkBg = Color(0xFF0B2161)
     val gold = Color(0xFFE3BF55)
     val textWhite = Color(0xFFF0ECE3)
@@ -295,7 +326,20 @@ private fun PlaylistBanner(name: String, trackCount: Int, avatarUrls: List<Strin
                         GolhaLineIcon(icon = GolhaIcon.Library, modifier = Modifier.size(18.dp), tint = gold.copy(alpha = 0.6f))
                         Text("لیست من", style = MaterialTheme.typography.labelSmall, color = textWhite.copy(alpha = 0.5f))
                     }
-                    Text(name, style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold), color = gold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(name, style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold), color = gold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                        if (showActions) {
+                            Surface(
+                                modifier = Modifier.size(28.dp).clickable { onSettingsClick() },
+                                shape = CircleShape,
+                                color = gold.copy(alpha = 0.15f),
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    GolhaLineIcon(icon = GolhaIcon.More, modifier = Modifier.size(14.dp), tint = gold)
+                                }
+                            }
+                        }
+                    }
                     if (trackCount > 0) {
                         Text("$trackCount برنامه", style = MaterialTheme.typography.labelSmall, color = textWhite.copy(alpha = 0.5f))
                     }

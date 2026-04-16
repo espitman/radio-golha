@@ -619,6 +619,7 @@ fun TopTracksSection(
     onPlayTrack: (TrackUiModel) -> Unit,
     onArtistClick: (Long) -> Unit = {},
     onTrackClick: (TrackUiModel) -> Unit = {},
+    onTrackLongClick: (TrackUiModel) -> Unit = {},
     currentTrackId: Long? = null,
     isPlayerPlaying: Boolean = false,
     modifier: Modifier = Modifier
@@ -713,6 +714,7 @@ fun TopTracksSection(
                             onPlayClick = { onPlayTrack(track) },
                             onTrackClick = { onTrackClick(track) },
                             onArtistClick = onArtistClick,
+                            onLongClick = { onTrackLongClick(track) },
                         )
                         if (index != displayedTracks.lastIndex) {
                             HorizontalDivider(
@@ -1873,6 +1875,29 @@ fun GolhaLineIcon(
                 drawRect(tint, topLeft = Offset(size.width * 0.32f, pad), size = androidx.compose.ui.geometry.Size(size.width * 0.36f, size.height * 0.22f), style = Stroke(width = stroke * 0.8f))
                 // Bottom label area
                 drawRoundRect(tint, topLeft = Offset(size.width * 0.28f, size.height * 0.52f), size = androidx.compose.ui.geometry.Size(size.width * 0.44f, size.height * 0.22f), cornerRadius = androidx.compose.ui.geometry.CornerRadius(r * 0.5f, r * 0.5f), style = Stroke(width = stroke * 0.8f))
+            }
+            GolhaIcon.Delete -> {
+                // Trash can icon
+                val pad = size.width * 0.2f
+                val w = size.width - pad * 2
+                val top = size.height * 0.3f
+                // Lid
+                drawLine(tint, Offset(pad - size.width * 0.05f, top), Offset(size.width - pad + size.width * 0.05f, top), stroke, StrokeCap.Round)
+                // Handle
+                drawLine(tint, Offset(size.width * 0.38f, top), Offset(size.width * 0.38f, size.height * 0.2f), stroke * 0.8f, StrokeCap.Round)
+                drawLine(tint, Offset(size.width * 0.38f, size.height * 0.2f), Offset(size.width * 0.62f, size.height * 0.2f), stroke * 0.8f, StrokeCap.Round)
+                drawLine(tint, Offset(size.width * 0.62f, size.height * 0.2f), Offset(size.width * 0.62f, top), stroke * 0.8f, StrokeCap.Round)
+                // Body
+                val bodyPath = Path().apply {
+                    moveTo(pad + size.width * 0.02f, top)
+                    lineTo(pad + size.width * 0.06f, size.height * 0.82f)
+                    lineTo(size.width - pad - size.width * 0.06f, size.height * 0.82f)
+                    lineTo(size.width - pad - size.width * 0.02f, top)
+                }
+                drawPath(bodyPath, tint, style = Stroke(width = stroke, cap = StrokeCap.Round, join = StrokeJoin.Round))
+                // Lines inside
+                drawLine(tint, Offset(size.width * 0.4f, size.height * 0.4f), Offset(size.width * 0.4f, size.height * 0.72f), stroke * 0.7f, StrokeCap.Round)
+                drawLine(tint, Offset(size.width * 0.6f, size.height * 0.4f), Offset(size.width * 0.6f, size.height * 0.72f), stroke * 0.7f, StrokeCap.Round)
             }
         }
     }

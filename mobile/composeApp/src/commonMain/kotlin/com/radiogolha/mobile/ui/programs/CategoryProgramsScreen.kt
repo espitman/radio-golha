@@ -37,6 +37,7 @@ fun CategoryProgramsScreen(
     onBottomNavSelected: (AppTab) -> Unit,
     onProgramClick: (CategoryProgramUiModel) -> Unit = {},
     onPlayTrack: (TrackUiModel) -> Unit,
+    onTrackLongClick: (TrackUiModel) -> Unit = {},
     onArtistClick: (Long) -> Unit = {},
     onBackClick: () -> Unit,
     currentTrack: TrackUiModel? = null,
@@ -109,6 +110,7 @@ fun CategoryProgramsScreen(
                                     isPlaying = isActive && isPlayerPlaying,
                                     onTrackClick = { onTrackClick(program.id) },
                                     onPlayClick = { onPlayTrack(program.toTrackUiModel()) },
+                                    onLongClick = { onTrackLongClick(program.toTrackUiModel()) },
                                     onArtistClick = onArtistClick,
                                 )
                                 if (index != programs.lastIndex) {

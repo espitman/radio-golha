@@ -63,6 +63,8 @@ fun ProgramEpisodeDetailScreen(
     onPlayProgram: (ProgramEpisodeDetailUiModel) -> Unit = {},
     onArtistClick: (Long) -> Unit = {},
     onOrchestraClick: (String) -> Unit = {},
+    onAddToPlaylist: (TrackUiModel) -> Unit = {},
+    onTrackLongClick: (TrackUiModel) -> Unit = {},
     onTrackClick: (Long) -> Unit = {},
     onExpandPlayer: () -> Unit = {},
     onSeek: (Long) -> Unit = {},
@@ -121,7 +123,12 @@ fun ProgramEpisodeDetailScreen(
                         isLoading = isLoading,
                         progress = 0f,
                         isPlaying = isThisPlaying,
-                        onPlayClick = { detail?.let { onPlayProgram(it) } }
+                        onPlayClick = { detail?.let { onPlayProgram(it) } },
+                        onAddToPlaylist = {
+                            detail?.let { d ->
+                                onAddToPlaylist(TrackUiModel(id = d.id, title = d.title, artist = d.singers.joinToString(" و ") { it.name }, duration = d.duration, audioUrl = d.audioUrl))
+                            }
+                        },
                     )
                 }
 
@@ -196,7 +203,8 @@ private fun ProgramHeaderLayout(
     isLoading: Boolean = false,
     progress: Float = 0f,
     isPlaying: Boolean = false,
-    onPlayClick: () -> Unit = {}
+    onPlayClick: () -> Unit = {},
+    onAddToPlaylist: () -> Unit = {},
 ) {
     val darkBg = Color(0xFF0B2161)
     val gold = Color(0xFFE3BF55)
@@ -239,15 +247,27 @@ private fun ProgramHeaderLayout(
                                 maxLines = 1,
                                 modifier = Modifier.basicMarquee()
                             )
-                            Button(
-                                onClick = onPlayClick,
-                                modifier = Modifier.fillMaxWidth(0.7f).height(54.dp),
-                                shape = RoundedCornerShape(GolhaRadius.Pill),
-                                colors = ButtonDefaults.buttonColors(containerColor = gold)
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    GolhaLineIcon(icon = if (isPlaying) GolhaIcon.Pause else GolhaIcon.Play, modifier = Modifier.size(24.dp), tint = darkBg)
-                                    Text(text = if (isPlaying) "توقف پخش" else "پخش برنامه", style = MaterialTheme.typography.titleMedium, color = darkBg)
+                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth(0.85f)) {
+                                Button(
+                                    onClick = onPlayClick,
+                                    modifier = Modifier.weight(1f).height(50.dp),
+                                    shape = RoundedCornerShape(GolhaRadius.Pill),
+                                    colors = ButtonDefaults.buttonColors(containerColor = gold)
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        GolhaLineIcon(icon = if (isPlaying) GolhaIcon.Pause else GolhaIcon.Play, modifier = Modifier.size(20.dp), tint = darkBg)
+                                        Text(text = if (isPlaying) "توقف" else "پخش", style = MaterialTheme.typography.titleSmall, color = darkBg)
+                                    }
+                                }
+                                OutlinedButton(
+                                    onClick = onAddToPlaylist,
+                                    modifier = Modifier.height(50.dp),
+                                    shape = RoundedCornerShape(GolhaRadius.Pill),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, gold.copy(alpha = 0.5f)),
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        GolhaLineIcon(icon = GolhaIcon.Library, modifier = Modifier.size(18.dp), tint = gold)
+                                    }
                                 }
                             }
                         }

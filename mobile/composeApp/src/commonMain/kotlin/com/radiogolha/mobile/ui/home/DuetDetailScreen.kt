@@ -43,6 +43,7 @@ fun DuetDetailScreen(
     onBackClick: () -> Unit,
     onTrackClick: (Long) -> Unit = {},
     onPlayTrack: (TrackUiModel) -> Unit = {},
+    onTrackLongClick: (TrackUiModel) -> Unit = {},
     currentTrack: TrackUiModel? = null,
     isPlayerPlaying: Boolean = false,
     isPlayerLoading: Boolean = false,
@@ -126,6 +127,7 @@ fun DuetDetailScreen(
                                     isPlaying = isActive && isPlayerPlaying,
                                     onTrackClick = { onTrackClick(program.id) },
                                     onPlayClick = { onPlayTrack(program.toTrackUiModel()) },
+                                    onLongClick = { onTrackLongClick(program.toTrackUiModel()) },
                                 )
                                 if (index != programs!!.lastIndex) {
                                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp), color = GolhaColors.Border.copy(alpha = 0.65f))

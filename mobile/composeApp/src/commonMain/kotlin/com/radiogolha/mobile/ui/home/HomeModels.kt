@@ -128,6 +128,7 @@ enum class GolhaIcon {
     SeekBack10,
     SeekForward10,
     Save,
+    Delete,
 }
 
 data class PerformerUiModel(

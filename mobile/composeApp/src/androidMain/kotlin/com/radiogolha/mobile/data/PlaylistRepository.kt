@@ -7,11 +7,15 @@ import com.radiogolha.mobile.ui.search.MatchMode
 import org.json.JSONArray
 import org.json.JSONObject
 
+enum class PlaylistType { SEARCH, MANUAL }
+
 data class PlaylistEntry(
     val id: Long,
     val name: String,
-    val filtersJson: String,
-    val createdAt: Long,
+    val type: PlaylistType = PlaylistType.SEARCH,
+    val filtersJson: String = "{}",
+    val trackIds: List<Long> = emptyList(),
+    val createdAt: Long = System.currentTimeMillis(),
 )
 
 class PlaylistRepository(context: Context) {
@@ -23,10 +27,14 @@ class PlaylistRepository(context: Context) {
         return buildList {
             for (i in 0 until arr.length()) {
                 val obj = arr.getJSONObject(i)
+                val type = if (obj.optString("type") == "manual") PlaylistType.MANUAL else PlaylistType.SEARCH
+                val trackIds = obj.optJSONArray("trackIds")?.let { a -> buildList { for (j in 0 until a.length()) add(a.getLong(j)) } } ?: emptyList()
                 add(PlaylistEntry(
                     id = obj.optLong("id"),
                     name = obj.optString("name", ""),
+                    type = type,
                     filtersJson = obj.optString("filtersJson", "{}"),
+                    trackIds = trackIds,
                     createdAt = obj.optLong("createdAt"),
                 ))
             }
@@ -38,9 +46,35 @@ class PlaylistRepository(context: Context) {
     fun save(name: String, filters: ActiveFilters): Long {
         val all = getAll().toMutableList()
         val id = (all.maxOfOrNull { it.id } ?: 0) + 1
-        all.add(PlaylistEntry(id = id, name = name, filtersJson = filtersToJson(filters), createdAt = System.currentTimeMillis()))
+        all.add(PlaylistEntry(id = id, name = name, type = PlaylistType.SEARCH, filtersJson = filtersToJson(filters)))
         persist(all)
         return id
+    }
+
+    fun createManual(name: String): Long {
+        val all = getAll().toMutableList()
+        val id = (all.maxOfOrNull { it.id } ?: 0) + 1
+        all.add(PlaylistEntry(id = id, name = name, type = PlaylistType.MANUAL))
+        persist(all)
+        return id
+    }
+
+    fun addTrack(playlistId: Long, trackId: Long) {
+        val all = getAll().map {
+            if (it.id == playlistId && it.type == PlaylistType.MANUAL && trackId !in it.trackIds)
+                it.copy(trackIds = it.trackIds + trackId)
+            else it
+        }
+        persist(all)
+    }
+
+    fun removeTrack(playlistId: Long, trackId: Long) {
+        val all = getAll().map {
+            if (it.id == playlistId && it.type == PlaylistType.MANUAL)
+                it.copy(trackIds = it.trackIds - trackId)
+            else it
+        }
+        persist(all)
     }
 
     fun rename(id: Long, newName: String) {
@@ -55,13 +89,17 @@ class PlaylistRepository(context: Context) {
 
     fun parseFilters(entry: PlaylistEntry): ActiveFilters = jsonToFilters(entry.filtersJson)
 
+    fun getManualPlaylists(): List<PlaylistEntry> = getAll().filter { it.type == PlaylistType.MANUAL }
+
     private fun persist(items: List<PlaylistEntry>) {
         val arr = JSONArray()
         items.forEach { entry ->
             arr.put(JSONObject().apply {
                 put("id", entry.id)
                 put("name", entry.name)
+                put("type", if (entry.type == PlaylistType.MANUAL) "manual" else "search")
                 put("filtersJson", entry.filtersJson)
+                put("trackIds", JSONArray(entry.trackIds))
                 put("createdAt", entry.createdAt)
             })
         }

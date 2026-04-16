@@ -129,6 +129,27 @@ internal fun JSONArray.toTrackModels(): List<TrackUiModel> = buildList {
     }
 }
 
+actual fun loadProgramsByIds(ids: List<Long>): List<CategoryProgramUiModel> {
+    if (ids.isEmpty()) return emptyList()
+    val payload = RustCoreBridge.getProgramsByIdsJson(requireArchiveDbPath(), org.json.JSONArray(ids).toString())
+    val root = JSONArray(payload)
+    return buildList {
+        for (i in 0 until root.length()) {
+            val item = root.getJSONObject(i)
+            add(CategoryProgramUiModel(
+                id = item.optLong("id"),
+                title = item.optNullableString("title") ?: "برنامه ${item.optLong("no")}",
+                categoryName = null,
+                programNumber = item.optLong("no", 0).toString(),
+                singer = item.optString("artist", "ناشناس"),
+                duration = item.optNullableString("duration"),
+                dastgah = item.optNullableString("mode"),
+                audioUrl = item.optNullableString("audioUrl"),
+            ))
+        }
+    }
+}
+
 actual fun loadProgramsByMode(modeId: Long): List<CategoryProgramUiModel> {
     val payload = RustCoreBridge.getProgramsByModeJson(requireArchiveDbPath(), modeId)
     val root = JSONArray(payload)

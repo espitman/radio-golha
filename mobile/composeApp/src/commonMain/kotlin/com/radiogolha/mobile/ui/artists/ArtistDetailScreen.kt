@@ -56,6 +56,7 @@ fun ArtistDetailScreen(
     onBackClick: () -> Unit,
     onProgramClick: (CategoryProgramUiModel) -> Unit = {},
     onPlayTrack: (TrackUiModel) -> Unit = {},
+    onTrackLongClick: (TrackUiModel) -> Unit = {},
     onArtistClick: (Long) -> Unit = {},
     currentTrack: TrackUiModel? = null,
     isPlayerPlaying: Boolean = false,
@@ -141,6 +142,7 @@ fun ArtistDetailScreen(
                                             isPlaying = isActive && isPlayerPlaying,
                                             onTrackClick = { onProgramClick(program) },
                                             onPlayClick = { onPlayTrack(program.toTrackUiModel()) },
+                                            onLongClick = { onTrackLongClick(program.toTrackUiModel()) },
                                             onArtistClick = onArtistClick,
                                         )
                                         if (index != resolvedDetail.tracks.lastIndex) {
