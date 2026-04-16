@@ -136,21 +136,14 @@ fun HeaderSection(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = GolhaSpacing.ScreenHorizontal),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "گل‌ها",
+            text = "رادیو گلها",
             style = MaterialTheme.typography.headlineLarge,
             color = GolhaColors.PrimaryText,
         )
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(GolhaSpacing.Small),
-        ) {
-            CircularActionButton(icon = GolhaIcon.Favorites)
-            CircularActionButton(icon = GolhaIcon.Profile)
-        }
     }
 }
 
