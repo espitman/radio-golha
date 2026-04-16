@@ -23,4 +23,13 @@ object RustCoreBridge {
     external fun getSearchOptionsJson(dbPath: String): String
     external fun searchProgramsJson(dbPath: String, filtersJson: String): String
     external fun getDuetProgramsJson(dbPath: String, singer1: String, singer2: String): String
+
+    // User Data (Playlists)
+    external fun getAllPlaylists(userDbPath: String): String
+    external fun getPlaylist(userDbPath: String, id: Long): String
+    external fun createPlaylist(userDbPath: String, requestJson: String): String
+    external fun renamePlaylist(userDbPath: String, id: Long, name: String): String
+    external fun deletePlaylist(userDbPath: String, id: Long): String
+    external fun addTrackToPlaylist(userDbPath: String, playlistId: Long, trackId: Long): String
+    external fun removeTrackFromPlaylist(userDbPath: String, playlistId: Long, trackId: Long): String
 }

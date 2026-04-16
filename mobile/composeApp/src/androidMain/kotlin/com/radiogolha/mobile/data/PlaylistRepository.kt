@@ -1,11 +1,12 @@
 package com.radiogolha.mobile.data
 
 import android.content.Context
-import android.content.SharedPreferences
+import com.radiogolha.mobile.RustCoreBridge
 import com.radiogolha.mobile.ui.search.ActiveFilters
 import com.radiogolha.mobile.ui.search.MatchMode
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 
 enum class PlaylistType { SEARCH, MANUAL }
 
@@ -19,91 +20,81 @@ data class PlaylistEntry(
 )
 
 class PlaylistRepository(context: Context) {
-    private val prefs: SharedPreferences = context.getSharedPreferences("playlists", Context.MODE_PRIVATE)
+    private val userDbPath: String = File(context.filesDir, "user_data.db").absolutePath
 
     fun getAll(): List<PlaylistEntry> {
-        val json = prefs.getString("items", null) ?: return emptyList()
-        val arr = runCatching { JSONArray(json) }.getOrDefault(JSONArray())
-        return buildList {
-            for (i in 0 until arr.length()) {
-                val obj = arr.getJSONObject(i)
-                val type = if (obj.optString("type") == "manual") PlaylistType.MANUAL else PlaylistType.SEARCH
-                val trackIds = obj.optJSONArray("trackIds")?.let { a -> buildList { for (j in 0 until a.length()) add(a.getLong(j)) } } ?: emptyList()
-                add(PlaylistEntry(
-                    id = obj.optLong("id"),
-                    name = obj.optString("name", ""),
-                    type = type,
-                    filtersJson = obj.optString("filtersJson", "{}"),
-                    trackIds = trackIds,
-                    createdAt = obj.optLong("createdAt"),
-                ))
-            }
-        }.sortedByDescending { it.createdAt }
+        val payload = RustCoreBridge.getAllPlaylists(userDbPath)
+        return parsePlaylistArray(payload)
     }
 
-    fun getById(id: Long): PlaylistEntry? = getAll().find { it.id == id }
+    fun getById(id: Long): PlaylistEntry? {
+        val payload = RustCoreBridge.getPlaylist(userDbPath, id)
+        val obj = runCatching { JSONObject(payload) }.getOrNull() ?: return null
+        if (obj.has("error") || !obj.has("id")) return null
+        return parsePlaylistObject(obj)
+    }
 
     fun save(name: String, filters: ActiveFilters): Long {
-        val all = getAll().toMutableList()
-        val id = (all.maxOfOrNull { it.id } ?: 0) + 1
-        all.add(PlaylistEntry(id = id, name = name, type = PlaylistType.SEARCH, filtersJson = filtersToJson(filters)))
-        persist(all)
-        return id
+        val req = JSONObject().apply {
+            put("name", name)
+            put("type", "search")
+            put("filtersJson", filtersToJson(filters))
+        }
+        val result = RustCoreBridge.createPlaylist(userDbPath, req.toString())
+        return runCatching { JSONObject(result).getLong("id") }.getOrDefault(0)
     }
 
     fun createManual(name: String): Long {
-        val all = getAll().toMutableList()
-        val id = (all.maxOfOrNull { it.id } ?: 0) + 1
-        all.add(PlaylistEntry(id = id, name = name, type = PlaylistType.MANUAL))
-        persist(all)
-        return id
+        val req = JSONObject().apply {
+            put("name", name)
+            put("type", "manual")
+        }
+        val result = RustCoreBridge.createPlaylist(userDbPath, req.toString())
+        return runCatching { JSONObject(result).getLong("id") }.getOrDefault(0)
     }
 
     fun addTrack(playlistId: Long, trackId: Long) {
-        val all = getAll().map {
-            if (it.id == playlistId && it.type == PlaylistType.MANUAL && trackId !in it.trackIds)
-                it.copy(trackIds = it.trackIds + trackId)
-            else it
-        }
-        persist(all)
+        RustCoreBridge.addTrackToPlaylist(userDbPath, playlistId, trackId)
     }
 
     fun removeTrack(playlistId: Long, trackId: Long) {
-        val all = getAll().map {
-            if (it.id == playlistId && it.type == PlaylistType.MANUAL)
-                it.copy(trackIds = it.trackIds - trackId)
-            else it
-        }
-        persist(all)
+        RustCoreBridge.removeTrackFromPlaylist(userDbPath, playlistId, trackId)
     }
 
     fun rename(id: Long, newName: String) {
-        val all = getAll().map { if (it.id == id) it.copy(name = newName) else it }
-        persist(all)
+        RustCoreBridge.renamePlaylist(userDbPath, id, newName)
     }
 
     fun delete(id: Long) {
-        val all = getAll().filter { it.id != id }
-        persist(all)
+        RustCoreBridge.deletePlaylist(userDbPath, id)
     }
 
     fun parseFilters(entry: PlaylistEntry): ActiveFilters = jsonToFilters(entry.filtersJson)
 
     fun getManualPlaylists(): List<PlaylistEntry> = getAll().filter { it.type == PlaylistType.MANUAL }
 
-    private fun persist(items: List<PlaylistEntry>) {
-        val arr = JSONArray()
-        items.forEach { entry ->
-            arr.put(JSONObject().apply {
-                put("id", entry.id)
-                put("name", entry.name)
-                put("type", if (entry.type == PlaylistType.MANUAL) "manual" else "search")
-                put("filtersJson", entry.filtersJson)
-                put("trackIds", JSONArray(entry.trackIds))
-                put("createdAt", entry.createdAt)
-            })
+    private fun parsePlaylistArray(payload: String): List<PlaylistEntry> {
+        val arr = runCatching { JSONArray(payload) }.getOrDefault(JSONArray())
+        return buildList {
+            for (i in 0 until arr.length()) {
+                add(parsePlaylistObject(arr.getJSONObject(i)))
+            }
         }
-        prefs.edit().putString("items", arr.toString()).apply()
+    }
+
+    private fun parsePlaylistObject(obj: JSONObject): PlaylistEntry {
+        val type = if (obj.optString("type") == "manual") PlaylistType.MANUAL else PlaylistType.SEARCH
+        val trackIds = obj.optJSONArray("trackIds")?.let { a ->
+            buildList { for (j in 0 until a.length()) add(a.getLong(j)) }
+        } ?: emptyList()
+        return PlaylistEntry(
+            id = obj.optLong("id"),
+            name = obj.optString("name", ""),
+            type = type,
+            filtersJson = obj.optString("filtersJson", "{}"),
+            trackIds = trackIds,
+            createdAt = obj.optLong("createdAt"),
+        )
     }
 
     companion object {

@@ -2,6 +2,7 @@ use jni::JNIEnv;
 use jni::objects::{JClass, JString};
 use jni::sys::jstring;
 use radiogolha_core::{LookupKind, ProgramSearchFilters, ProgramSortField, RadioGolhaCore, SearchMatchMode, SortDirection};
+use radiogolha_core::user_data::UserDataStore;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, to_string};
 
@@ -976,4 +977,114 @@ pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getDuetPrograms
         Err(e) => return jni_json_response(&mut env, db_path, |_| Err(e.to_string())),
     };
     jni_json_response(&mut env, db_path, |path| duet_programs_json(path, &s1, &s2))
+}
+
+// ── User Data (Playlists) ──
+
+fn user_data_json_response(
+    env: &mut JNIEnv,
+    user_db_path: JString,
+    builder: impl FnOnce(&UserDataStore) -> Result<String, String>,
+) -> jstring {
+    let path = match env.get_string(&user_db_path) {
+        Ok(p) => p.to_string_lossy().to_string(),
+        Err(e) => {
+            let err = json!({ "error": e.to_string() }).to_string();
+            return env.new_string(err).expect("JNI string").into_raw();
+        }
+    };
+    let store = match UserDataStore::open(&path) {
+        Ok(s) => s,
+        Err(e) => {
+            let err = json!({ "error": e.to_string() }).to_string();
+            return env.new_string(err).expect("JNI string").into_raw();
+        }
+    };
+    let payload = match builder(&store) {
+        Ok(json) => json,
+        Err(e) => json!({ "error": e }).to_string(),
+    };
+    env.new_string(payload).expect("JNI string").into_raw()
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getAllPlaylists(
+    mut env: JNIEnv, _class: JClass, user_db_path: JString,
+) -> jstring {
+    user_data_json_response(&mut env, user_db_path, |store| {
+        let playlists = store.get_all_playlists().map_err(|e| e.to_string())?;
+        to_string(&playlists).map_err(|e| e.to_string())
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getPlaylist(
+    mut env: JNIEnv, _class: JClass, user_db_path: JString, id: i64,
+) -> jstring {
+    user_data_json_response(&mut env, user_db_path, |store| {
+        let playlist = store.get_playlist(id).map_err(|e| e.to_string())?;
+        to_string(&playlist).map_err(|e| e.to_string())
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_createPlaylist(
+    mut env: JNIEnv, _class: JClass, user_db_path: JString, request_json: JString,
+) -> jstring {
+    let req = match env.get_string(&request_json) {
+        Ok(s) => s.to_string_lossy().to_string(),
+        Err(e) => return user_data_json_response(&mut env, user_db_path, |_| Err(e.to_string())),
+    };
+    user_data_json_response(&mut env, user_db_path, |store| {
+        let parsed: serde_json::Value = serde_json::from_str(&req).map_err(|e| e.to_string())?;
+        let name = parsed["name"].as_str().unwrap_or("");
+        let ptype = parsed["type"].as_str().unwrap_or("search");
+        let filters = parsed.get("filtersJson").and_then(|v| v.as_str()).unwrap_or("{}");
+        let id = store.create_playlist(name, ptype, filters).map_err(|e| e.to_string())?;
+        Ok(json!({ "id": id }).to_string())
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_renamePlaylist(
+    mut env: JNIEnv, _class: JClass, user_db_path: JString, id: i64, name: JString,
+) -> jstring {
+    let n = match env.get_string(&name) {
+        Ok(s) => s.to_string_lossy().to_string(),
+        Err(e) => return user_data_json_response(&mut env, user_db_path, |_| Err(e.to_string())),
+    };
+    user_data_json_response(&mut env, user_db_path, |store| {
+        store.rename_playlist(id, &n).map_err(|e| e.to_string())?;
+        Ok("{}".to_string())
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_deletePlaylist(
+    mut env: JNIEnv, _class: JClass, user_db_path: JString, id: i64,
+) -> jstring {
+    user_data_json_response(&mut env, user_db_path, |store| {
+        store.delete_playlist(id).map_err(|e| e.to_string())?;
+        Ok("{}".to_string())
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_addTrackToPlaylist(
+    mut env: JNIEnv, _class: JClass, user_db_path: JString, playlist_id: i64, track_id: i64,
+) -> jstring {
+    user_data_json_response(&mut env, user_db_path, |store| {
+        store.add_track(playlist_id, track_id).map_err(|e| e.to_string())?;
+        Ok("{}".to_string())
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_removeTrackFromPlaylist(
+    mut env: JNIEnv, _class: JClass, user_db_path: JString, playlist_id: i64, track_id: i64,
+) -> jstring {
+    user_data_json_response(&mut env, user_db_path, |store| {
+        store.remove_track(playlist_id, track_id).map_err(|e| e.to_string())?;
+        Ok("{}".to_string())
+    })
 }
