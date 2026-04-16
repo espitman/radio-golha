@@ -703,15 +703,16 @@ private suspend fun loadTracksByIds(ids: List<Long>): List<TrackUiModel> = withC
     val tracks = mutableListOf<TrackUiModel>()
     for (i in 0 until jsonArray.length()) {
         val obj = jsonArray.getJSONObject(i)
+        val coverVal = if (obj.isNull("cover_url")) null else obj.getString("cover_url")
         tracks.add(TrackUiModel(
             id = obj.getLong("id"),
-            artistId = if (obj.isNull("artist_id")) null else obj.getLong("artist_id"),
-            title = obj.getString("title"),
-            artist = obj.getString("artist"),
+            artistId = if (obj.isNull("artist_id")) null else obj.optLong("artist_id"),
+            title = obj.optString("title", "بدون عنوان"),
+            artist = obj.optString("artist", "هنرمند ناشناس"),
             duration = if (obj.isNull("duration")) null else obj.getString("duration"),
-            audioUrl = obj.getString("audio_url"),
-            coverUrl = if (obj.isNull("cover_url")) null else obj.getString("cover_url"),
-            artistImages = if (obj.isNull("cover_url")) emptyList() else listOf(obj.getString("cover_url"))
+            audioUrl = obj.optString("audio_url", ""),
+            coverUrl = coverVal,
+            artistImages = if (coverVal == null) emptyList() else listOf(coverVal)
         ))
     }
     tracks

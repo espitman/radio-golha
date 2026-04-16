@@ -1,56 +1,27 @@
 package com.radiogolha.mobile.ui.settings
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import com.radiogolha.mobile.theme.GolhaColors
-import com.radiogolha.mobile.theme.GolhaElevation
-import com.radiogolha.mobile.theme.GolhaPatternBackground
-import com.radiogolha.mobile.theme.GolhaRadius
-import com.radiogolha.mobile.theme.GolhaSpacing
-import com.radiogolha.mobile.ui.home.AppTab
-import com.radiogolha.mobile.ui.home.BottomNavItemUiModel
-import com.radiogolha.mobile.ui.home.BottomNavigationWithMiniPlayer
-import com.radiogolha.mobile.ui.home.GolhaIcon
-import com.radiogolha.mobile.ui.home.GolhaLineIcon
-import com.radiogolha.mobile.ui.home.SingerListItemUiModel
-import com.radiogolha.mobile.ui.home.SmallPrimaryButton
-import com.radiogolha.mobile.ui.home.TrackUiModel
-import com.radiogolha.mobile.ui.home.ArtistAvatar
-import com.radiogolha.mobile.ui.home.MusicianListItemUiModel
-import androidx.compose.foundation.clickable
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.items
-import androidx.compose.ui.graphics.Color
+import com.radiogolha.mobile.theme.*
+import com.radiogolha.mobile.ui.home.*
 
 @Composable
 fun SettingsScreen(
@@ -80,7 +51,7 @@ fun SettingsScreen(
     var aboutTapCount by rememberSaveable { mutableIntStateOf(0) }
     var isDebugToolsVisible by rememberSaveable { mutableStateOf(false) }
     var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
-    val tabs = listOf("علاقه‌مندی‌ها", "تاریخچه", "درباره")
+    val tabs = listOf("علاقه‌مندی‌ها", "اخیر", "محبوب", "درباره")
 
     CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides LayoutDirection.Rtl) {
         GolhaPatternBackground {
@@ -154,7 +125,7 @@ fun SettingsScreen(
                             end = GolhaSpacing.ScreenHorizontal,
                             bottom = innerPadding.calculateBottomPadding() + 22.dp,
                         ),
-                        verticalArrangement = Arrangement.spacedBy(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         when (selectedTabIndex) {
                             0 -> { // Favorites
@@ -166,7 +137,7 @@ fun SettingsScreen(
                                 
                                 if (favoriteSingers.isNotEmpty()) {
                                     item {
-                                        Text(text = "خوانندگان مورد علاقه", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = GolhaColors.PrimaryText)
+                                        Text(text = "خوانندگان مورد علاقه", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = GolhaColors.PrimaryText, modifier = Modifier.padding(bottom = 6.dp))
                                     }
                                     items(favoriteSingers) { singer ->
                                         ArtistFavoriteItem(singer, onArtistClick)
@@ -175,55 +146,90 @@ fun SettingsScreen(
 
                                 if (favoriteMusicians.isNotEmpty()) {
                                     item {
-                                        Text(text = "نوازندگان مورد علاقه", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = GolhaColors.PrimaryText)
+                                        Text(text = "نوازندگان مورد علاقه", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = GolhaColors.PrimaryText, modifier = Modifier.padding(vertical = 6.dp))
                                     }
                                     items(favoriteMusicians) { musician ->
                                         MusicianFavoriteItem(musician, onArtistClick)
                                     }
                                 }
                             }
-                            1 -> { // History
-                                if (recentlyPlayedTracks.isEmpty() && mostPlayedTracks.isEmpty()) {
+                            1 -> { // Recently Played (Recent)
+                                if (recentlyPlayedTracks.isEmpty()) {
                                     item {
                                         EmptyStatePlaceholder(text = "تاریخچه پخش شما خالی است.")
                                     }
-                                }
-
-                                if (recentlyPlayedTracks.isNotEmpty()) {
+                                } else {
                                     item {
-                                        Text(text = "اخیراً شنیده شده", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = GolhaColors.PrimaryText)
-                                    }
-                                    items(recentlyPlayedTracks) { track ->
-                                        com.radiogolha.mobile.ui.programs.ProgramTrackRow(
-                                            track = track,
-                                            onTrackClick = { onTrackClick(track.id) },
-                                            onPlayClick = { onPlayTrack(track) },
-                                            onLongClick = { onTrackLongClick(track) },
-                                            onArtistClick = { id -> onArtistClick(id) },
-                                            isActive = currentTrack?.id == track.id,
-                                            isPlaying = currentTrack?.id == track.id && isPlayerPlaying,
-                                        )
-                                    }
-                                }
-
-                                if (mostPlayedTracks.isNotEmpty()) {
-                                    item {
-                                        Text(text = "محبوب‌ترین‌های شما", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = GolhaColors.PrimaryText)
-                                    }
-                                    items(mostPlayedTracks) { track ->
-                                        com.radiogolha.mobile.ui.programs.ProgramTrackRow(
-                                            track = track,
-                                            onTrackClick = { onTrackClick(track.id) },
-                                            onPlayClick = { onPlayTrack(track) },
-                                            onLongClick = { onTrackLongClick(track) },
-                                            onArtistClick = { id -> onArtistClick(id) },
-                                            isActive = currentTrack?.id == track.id,
-                                            isPlaying = currentTrack?.id == track.id && isPlayerPlaying,
-                                        )
+                                        CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides LayoutDirection.Ltr) {
+                                            Column(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .background(GolhaColors.Surface, RoundedCornerShape(GolhaRadius.Card))
+                                                    .border(1.dp, GolhaColors.Border.copy(alpha = 0.6f), RoundedCornerShape(GolhaRadius.Card))
+                                                    .padding(vertical = 8.dp),
+                                            ) {
+                                                recentlyPlayedTracks.forEachIndexed { index, track ->
+                                                    val isActive = currentTrack?.id == track.id
+                                                    com.radiogolha.mobile.ui.programs.ProgramTrackRow(
+                                                        track = track,
+                                                        onTrackClick = { onTrackClick(track.id) },
+                                                        onPlayClick = { onPlayTrack(track) },
+                                                        onLongClick = { onTrackLongClick(track) },
+                                                        onArtistClick = { id -> onArtistClick(id) },
+                                                        isActive = isActive,
+                                                        isPlaying = isActive && isPlayerPlaying,
+                                                    )
+                                                    if (index != recentlyPlayedTracks.lastIndex) {
+                                                        HorizontalDivider(
+                                                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                                                            color = GolhaColors.Border.copy(alpha = 0.65f),
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
-                            2 -> { // About
+                            2 -> { // Most Played (Popular)
+                                if (mostPlayedTracks.isEmpty()) {
+                                    item {
+                                        EmptyStatePlaceholder(text = "هنوز آهنگ محبوب خاصی ندارید.")
+                                    }
+                                } else {
+                                    item {
+                                        CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides LayoutDirection.Ltr) {
+                                            Column(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .background(GolhaColors.Surface, RoundedCornerShape(GolhaRadius.Card))
+                                                    .border(1.dp, GolhaColors.Border.copy(alpha = 0.6f), RoundedCornerShape(GolhaRadius.Card))
+                                                    .padding(vertical = 8.dp),
+                                            ) {
+                                                mostPlayedTracks.forEachIndexed { index, track ->
+                                                    val isActive = currentTrack?.id == track.id
+                                                    com.radiogolha.mobile.ui.programs.ProgramTrackRow(
+                                                        track = track,
+                                                        onTrackClick = { onTrackClick(track.id) },
+                                                        onPlayClick = { onPlayTrack(track) },
+                                                        onLongClick = { onTrackLongClick(track) },
+                                                        onArtistClick = { id -> onArtistClick(id) },
+                                                        isActive = isActive,
+                                                        isPlaying = isActive && isPlayerPlaying,
+                                                    )
+                                                    if (index != mostPlayedTracks.lastIndex) {
+                                                        HorizontalDivider(
+                                                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                                                            color = GolhaColors.Border.copy(alpha = 0.65f),
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            3 -> { // About
                                 item { AboutAppSection(onTap = {
                                     aboutTapCount++
                                     if (aboutTapCount == 2) {
