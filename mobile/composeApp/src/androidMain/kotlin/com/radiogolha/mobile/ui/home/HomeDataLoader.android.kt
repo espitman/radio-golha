@@ -52,8 +52,24 @@ internal fun requireArchiveDbPath(): String {
     val versionFile = File(context.filesDir, "golha_db_version")
 
     val installedVersion = if (versionFile.exists()) versionFile.readText().trim().toIntOrNull() ?: 0 else 0
+    
+    // Check if we need to refresh the database from assets
+    var shouldRefresh = !dbFile.exists() || installedVersion < CURRENT_DB_VERSION
+    
+    // Additional check for development: if the asset size is different from the installed file size, refresh it
+    if (!shouldRefresh && dbFile.exists()) {
+        runCatching {
+            context.assets.openFd("golha_database.db").use { fd ->
+                if (fd.length != dbFile.length()) {
+                    shouldRefresh = true
+                }
+            }
+        }.onFailure {
+            // Some systems don't support openFd for compressed assets, fallback to simple version check
+        }
+    }
 
-    if (!dbFile.exists() || installedVersion < CURRENT_DB_VERSION) {
+    if (shouldRefresh) {
         context.assets.open("golha_database.db").use { input ->
             dbFile.outputStream().use { output ->
                 input.copyTo(output)

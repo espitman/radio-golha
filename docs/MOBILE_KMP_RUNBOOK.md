@@ -4,8 +4,8 @@ This document explains how to open the Android phone emulator and run the debug 
 
 Canonical rule for this repo:
 
-- Every time Codex runs the mobile app on the emulator, it must reinstall the app first so the bundled database is copied fresh from APK assets into app storage.
-- Do not rely on `am start` alone after a database change, because the app only copies `golha_database.db` on first launch for a given install.
+- Every time Codex runs the mobile app on the emulator, it should use `adb install -r` to preserve user data (like favorites).
+- The app now automatically detects changes in the bundled `golha_database.db` by comparing file sizes, so a full uninstall is no longer required to refresh the archive.
 
 ---
 
@@ -110,20 +110,11 @@ When boot is complete:
 
 ---
 
-## 5. Reinstall The Debug APK
+## 5. Install/Update The Debug APK
 
-Always reinstall before launch.
+Use `install -r` to update the app while preserving user data (like favorites stored in `user_data.db`).
 
-First uninstall the currently installed app:
-
-```bash
-export ANDROID_HOME="/Users/espitman/Library/Android/sdk"
-export ANDROID_SDK_ROOT="/Users/espitman/Library/Android/sdk"
-
-"$HOME/Library/Android/sdk/platform-tools/adb" \
-  -s emulator-5554 \
-  uninstall com.radiogolha.mobile || true
-```
+// Skip uninstall to preserve favorites
 
 Then install the debug APK:
 
@@ -144,10 +135,10 @@ Performing Streamed Install
 Success
 ```
 
-Why this is required:
+Why this is better:
 
-- The app copies `golha_database.db` from APK assets into internal storage only when that file does not already exist.
-- Reinstalling guarantees the next launch starts from the database bundled into the current APK.
+- Standard `install -r` preserves the `user_data.db` where favorites are stored.
+- The app now has logic in `HomeDataLoader.android.kt` to Refresh the `golha_database.db` asset if its size changes, ensuring the archive is always up-to-date without wiping user data.
 
 ---
 
@@ -244,8 +235,6 @@ export ANDROID_HOME="/Users/espitman/Library/Android/sdk"
 export ANDROID_SDK_ROOT="/Users/espitman/Library/Android/sdk"
 
 ./gradlew :composeApp:assembleDebug
-"$HOME/Library/Android/sdk/emulator/emulator" -avd Medium_Phone_API_36.0 -gpu swiftshader_indirect -no-snapshot-load
-"$HOME/Library/Android/sdk/platform-tools/adb" -s emulator-5554 uninstall com.radiogolha.mobile || true
 "$HOME/Library/Android/sdk/platform-tools/adb" -s emulator-5554 install -r -t ./composeApp/build/outputs/apk/debug/composeApp-debug.apk
 "$HOME/Library/Android/sdk/platform-tools/adb" -s emulator-5554 shell am start -W -n com.radiogolha.mobile/.MainActivity
 ```
