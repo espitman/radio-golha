@@ -97,6 +97,7 @@ fun AndroidApp() {
 
     // Shared State
     var reloadToken by remember { mutableIntStateOf(0) }
+    var favoritesReloadToken by remember { mutableIntStateOf(0) }
     var isImportingDatabase by remember { mutableStateOf(false) }
     
     var librarySingers by remember { mutableStateOf<List<SingerListItemUiModel>>(emptyList()) }
@@ -331,13 +332,14 @@ fun AndroidApp() {
 
                 composable(route = AndroidRoute.ArtistDetail.route, arguments = listOf(navArgument("id") { type = NavType.LongType })) { backStackEntry ->
                     val artistId = backStackEntry.arguments?.getLong("id") ?: 0L
-                    var isFav by remember(artistId) { mutableStateOf(favoriteRepo.isFavorite(artistId)) }
+                    val isFav = remember(artistId, favoritesReloadToken) { favoriteRepo.isFavorite(artistId) }
                     ArtistDetailScreen(artistId = artistId, bottomNavItems = bottomNavItems, onExpandPlayer = { showPlayerSheet = true }, onBottomNavSelected = onTabSelected, onBackClick = { navController.popBackStack() }, onProgramClick = { program -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(program.id)) }, onPlayTrack = { track -> playerManager.play(track) },
                         onTrackLongClick = { track -> trackForOptions = track },
                         isFavorite = isFav,
                         onToggleFavorite = {
-                            isFav = favoriteRepo.toggleFavorite(artistId)
-                            android.widget.Toast.makeText(context, if (isFav) "به علاقه‌مندی‌ها اضافه شد" else "از علاقه‌مندی‌ها حذف شد", android.widget.Toast.LENGTH_SHORT).show()
+                            val newFav = favoriteRepo.toggleFavorite(artistId)
+                            favoritesReloadToken += 1
+                            android.widget.Toast.makeText(context, if (newFav) "به علاقه‌مندی‌ها اضافه شد" else "از علاقه‌مندی‌ها حذف شد", android.widget.Toast.LENGTH_SHORT).show()
                         },
                         currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onTrackClick = { trackId -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(trackId)) })
                 }
@@ -438,7 +440,7 @@ fun AndroidApp() {
                 }
 
                 composable(AndroidRoute.AllFavorites.route) {
-                    val favIds = remember { favoriteRepo.getFavoriteIds() }
+                    val favIds = remember(favoritesReloadToken) { favoriteRepo.getFavoriteIds() }
                     val allFavSingers = remember(favIds, librarySingers) {
                         favIds.mapNotNull { id -> librarySingers.find { it.artistId == id } }
                     }
@@ -456,7 +458,7 @@ fun AndroidApp() {
                 }
 
                 composable(AndroidRoute.Account.route) {
-                    val favIds = remember { favoriteRepo.getFavoriteIds() }
+                    val favIds = remember(favoritesReloadToken) { favoriteRepo.getFavoriteIds() }
                     val favSingers = remember(favIds, librarySingers) {
                         favIds.mapNotNull { id -> librarySingers.find { it.artistId == id } }
                     }
@@ -606,7 +608,7 @@ fun AndroidApp() {
                                             favoriteRepo.addFavorite(artist.artistId, artist.type)
                                             Toast.makeText(context, "به علاقه‌مندی‌ها اضافه شد", Toast.LENGTH_SHORT).show()
                                         }
-                                        reloadToken += 1
+                                        favoritesReloadToken += 1
                                         artistForQuickActions = null
                                     }
                                     .padding(horizontal = 24.dp, vertical = 14.dp),
