@@ -1550,6 +1550,18 @@ fun GolhaLineIcon(
                 drawPath(heart, tint, style = Stroke(width = stroke))
             }
 
+            GolhaIcon.FavoritesFilled -> {
+                val heart = Path().apply {
+                    moveTo(size.width * 0.50f, size.height * 0.82f)
+                    cubicTo(size.width * 0.18f, size.height * 0.60f, size.width * 0.14f, size.height * 0.26f, size.width * 0.35f, size.height * 0.22f)
+                    cubicTo(size.width * 0.48f, size.height * 0.22f, size.width * 0.50f, size.height * 0.34f, size.width * 0.50f, size.height * 0.34f)
+                    cubicTo(size.width * 0.50f, size.height * 0.34f, size.width * 0.52f, size.height * 0.22f, size.width * 0.65f, size.height * 0.22f)
+                    cubicTo(size.width * 0.86f, size.height * 0.26f, size.width * 0.82f, size.height * 0.60f, size.width * 0.50f, size.height * 0.82f)
+                    close()
+                }
+                drawPath(heart, tint, style = Fill)
+            }
+
             GolhaIcon.Profile,
             GolhaIcon.Account -> {
                 // Head

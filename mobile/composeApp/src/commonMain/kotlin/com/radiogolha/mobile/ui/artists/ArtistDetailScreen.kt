@@ -8,6 +8,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -58,6 +59,8 @@ fun ArtistDetailScreen(
     onPlayTrack: (TrackUiModel) -> Unit = {},
     onTrackLongClick: (TrackUiModel) -> Unit = {},
     onArtistClick: (Long) -> Unit = {},
+    isFavorite: Boolean = false,
+    onToggleFavorite: () -> Unit = {},
     currentTrack: TrackUiModel? = null,
     isPlayerPlaying: Boolean = false,
     isPlayerLoading: Boolean = false,
@@ -115,7 +118,9 @@ fun ArtistDetailScreen(
                     ArtistHeaderLayout(
                         detail = resolvedDetail,
                         isLoading = resolvedDetail == null,
-                        progress = collapseProgress
+                        progress = collapseProgress,
+                        isFavorite = isFavorite,
+                        onToggleFavorite = onToggleFavorite,
                     )
                 }
 
@@ -180,7 +185,9 @@ fun ArtistDetailScreen(
 private fun ArtistHeaderLayout(
     detail: ArtistDetailUiModel? = null,
     isLoading: Boolean = false,
-    progress: Float = 0f // 0 = Expand, 1 = Collapse
+    progress: Float = 0f,
+    isFavorite: Boolean = false,
+    onToggleFavorite: () -> Unit = {},
 ) {
     // Animate values based on progress
     val currentPadding = lerp(18.dp, 10.dp, progress)
@@ -241,17 +248,35 @@ private fun ArtistHeaderLayout(
                     }
 
                     if (!isLoading && detail != null) {
-                        Surface(
+                        Row(
                             modifier = Modifier.alpha(contentAlpha),
-                            color = gold.copy(alpha = 0.15f),
-                            shape = RoundedCornerShape(10.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
-                                text = "${detail.trackCount} برنامه",
-                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold, fontSize = 14.sp),
-                                color = gold,
-                            )
+                            Surface(
+                                color = gold.copy(alpha = 0.15f),
+                                shape = RoundedCornerShape(10.dp),
+                            ) {
+                                Text(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                                    text = "${detail.trackCount} برنامه",
+                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold, fontSize = 14.sp),
+                                    color = gold,
+                                )
+                            }
+                            Surface(
+                                modifier = Modifier.size(36.dp).clickable { onToggleFavorite() },
+                                shape = CircleShape,
+                                color = if (isFavorite) gold.copy(alpha = 0.25f) else gold.copy(alpha = 0.1f),
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    GolhaLineIcon(
+                                        icon = if (isFavorite) GolhaIcon.FavoritesFilled else GolhaIcon.Favorites,
+                                        modifier = Modifier.size(18.dp),
+                                        tint = if (isFavorite) gold else textDim,
+                                    )
+                                }
+                            }
                         }
                     } else {
                         Box(Modifier.width(84.dp).height(38.dp).background(skeletonColor, RoundedCornerShape(10.dp)))

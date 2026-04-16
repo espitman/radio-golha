@@ -50,6 +50,11 @@ impl UserDataStore {
                 added_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000),
                 PRIMARY KEY (playlist_id, track_id)
             );
+            CREATE TABLE IF NOT EXISTS favorite_artists (
+                artist_id INTEGER PRIMARY KEY,
+                artist_type TEXT NOT NULL DEFAULT 'singer',
+                added_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000)
+            );
             ",
         )?;
 
@@ -147,6 +152,40 @@ impl UserDataStore {
     pub fn get_manual_playlists(&self) -> CoreResult<Vec<Playlist>> {
         let all = self.get_all_playlists()?;
         Ok(all.into_iter().filter(|p| p.playlist_type == "manual").collect())
+    }
+
+    // ── Favorite Artists ──
+
+    pub fn add_favorite_artist(&self, artist_id: i64, artist_type: &str) -> CoreResult<()> {
+        self.conn.execute(
+            "INSERT OR IGNORE INTO favorite_artists (artist_id, artist_type) VALUES (?1, ?2)",
+            params![artist_id, artist_type],
+        )?;
+        Ok(())
+    }
+
+    pub fn remove_favorite_artist(&self, artist_id: i64) -> CoreResult<()> {
+        self.conn.execute("DELETE FROM favorite_artists WHERE artist_id = ?1", [artist_id])?;
+        Ok(())
+    }
+
+    pub fn is_favorite_artist(&self, artist_id: i64) -> CoreResult<bool> {
+        let count: i64 = self.conn.query_row(
+            "SELECT COUNT(*) FROM favorite_artists WHERE artist_id = ?1", [artist_id], |r| r.get(0),
+        )?;
+        Ok(count > 0)
+    }
+
+    pub fn get_favorite_artist_ids(&self) -> CoreResult<Vec<i64>> {
+        let mut stmt = self.conn.prepare("SELECT artist_id FROM favorite_artists ORDER BY added_at DESC")?;
+        let rows = stmt.query_map([], |row| row.get(0))?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    pub fn get_favorite_artist_ids_by_type(&self, artist_type: &str) -> CoreResult<Vec<i64>> {
+        let mut stmt = self.conn.prepare("SELECT artist_id FROM favorite_artists WHERE artist_type = ?1 ORDER BY added_at DESC")?;
+        let rows = stmt.query_map([artist_type], |row| row.get(0))?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 
     fn get_track_ids(&self, playlist_id: i64) -> CoreResult<Vec<i64>> {

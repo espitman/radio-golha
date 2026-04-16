@@ -33,13 +33,29 @@ import com.radiogolha.mobile.ui.home.BottomNavItemUiModel
 import com.radiogolha.mobile.ui.home.BottomNavigationWithMiniPlayer
 import com.radiogolha.mobile.ui.home.GolhaIcon
 import com.radiogolha.mobile.ui.home.GolhaLineIcon
+import com.radiogolha.mobile.ui.home.SingerListItemUiModel
 import com.radiogolha.mobile.ui.home.SmallPrimaryButton
 import com.radiogolha.mobile.ui.home.TrackUiModel
+import com.radiogolha.mobile.ui.home.ArtistAvatar
+import androidx.compose.foundation.clickable
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun SettingsScreen(
     bottomNavItems: List<BottomNavItemUiModel>,
     onBottomNavSelected: (AppTab) -> Unit,
+    favoriteSingers: List<SingerListItemUiModel> = emptyList(),
+    onArtistClick: (Long) -> Unit = {},
+    onShowAllFavorites: () -> Unit = {},
+    onOpenDebug: () -> Unit = {},
     isDebugDatabaseToolsEnabled: Boolean,
     isImportingDatabase: Boolean,
     onImportDebugDatabase: () -> Unit,
@@ -90,13 +106,78 @@ fun SettingsScreen(
                         color = GolhaColors.PrimaryText,
                     )
                 }
-                item {
-                    Text(
-                        text = "تنظیمات و ابزارهای این نسخه از اپ را اینجا می‌بینی.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = GolhaColors.SecondaryText,
-                    )
+                // Favorite Artists
+                if (favoriteSingers.isNotEmpty()) {
+                    item {
+                        Text(
+                            text = "هنرمندان مورد علاقه",
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                            color = GolhaColors.PrimaryText,
+                        )
+                    }
+                    val displayLimit = 5
+                    val displayList = favoriteSingers.take(displayLimit)
+                    items(displayList) { singer ->
+                        Surface(
+                            modifier = Modifier.fillMaxWidth().clickable { onArtistClick(singer.artistId) },
+                            shape = RoundedCornerShape(GolhaRadius.Card),
+                            color = GolhaColors.Surface,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.5f)),
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                ArtistAvatar(name = singer.name, imageUrl = singer.imageUrl, tint = GolhaColors.SoftBlue, modifier = Modifier.size(48.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(singer.name, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold), color = GolhaColors.PrimaryText)
+                                    Text("${singer.programCount} برنامه", style = MaterialTheme.typography.bodySmall, color = GolhaColors.SecondaryText)
+                                }
+                                GolhaLineIcon(icon = GolhaIcon.FavoritesFilled, modifier = Modifier.size(18.dp), tint = GolhaColors.PrimaryAccent)
+                            }
+                        }
+                    }
+                    if (favoriteSingers.size > displayLimit) {
+                        item {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth().clickable { onShowAllFavorites() },
+                                shape = RoundedCornerShape(GolhaRadius.Card),
+                                color = GolhaColors.BadgeBackground,
+                                border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border),
+                            ) {
+                                Box(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
+                                    Text("مشاهده همه (${favoriteSingers.size})", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold), color = GolhaColors.PrimaryText)
+                                }
+                            }
+                        }
+                    }
                 }
+
+                // About app
+                item {
+                    var aboutClickCount by remember { mutableIntStateOf(0) }
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().clickable {
+                            aboutClickCount++
+                            if (aboutClickCount >= 3) { aboutClickCount = 0; onOpenDebug() }
+                        },
+                        shape = RoundedCornerShape(GolhaRadius.Card),
+                        color = GolhaColors.Surface,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.5f)),
+                        shadowElevation = GolhaElevation.Card,
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(20.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Text("درباره اپ", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = GolhaColors.PrimaryText)
+                            Text("رادیو گل‌ها - مجموعه برنامه‌های گل‌های رنگارنگ رادیو ایران", style = MaterialTheme.typography.bodyMedium, color = GolhaColors.SecondaryText)
+                            Text("نسخه ۰.۱.۰", style = MaterialTheme.typography.labelSmall, color = GolhaColors.SecondaryText.copy(alpha = 0.6f))
+                        }
+                    }
+                }
+
                 item {
                     if (isDebugDatabaseToolsEnabled) {
                         DebugDatabaseCard(

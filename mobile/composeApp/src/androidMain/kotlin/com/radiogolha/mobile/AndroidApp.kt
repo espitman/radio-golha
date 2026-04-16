@@ -35,6 +35,7 @@ import com.radiogolha.mobile.ui.search.SearchState
 import com.radiogolha.mobile.ui.search.PlaylistDetailScreen
 import com.radiogolha.mobile.data.PlaylistRepository
 import com.radiogolha.mobile.data.PlaylistType
+import com.radiogolha.mobile.data.FavoriteArtistRepository
 import com.radiogolha.mobile.ui.programs.TrackOptionsSheet
 import com.radiogolha.mobile.ui.programs.PlaylistOptionItem
 import kotlinx.coroutines.Dispatchers
@@ -97,6 +98,7 @@ fun AndroidApp() {
 
     val searchState = remember { SearchState() }
     val playlistRepo = remember { PlaylistRepository(context) }
+    val favoriteRepo = remember { FavoriteArtistRepository(context) }
     var savedPlaylists by remember { mutableStateOf(playlistRepo.getAll().map { SavedPlaylistUiModel(it.id, it.name) }) }
     var trackForOptions by remember { mutableStateOf<TrackUiModel?>(null) }
 
@@ -299,8 +301,15 @@ fun AndroidApp() {
 
                 composable(route = AndroidRoute.ArtistDetail.route, arguments = listOf(navArgument("id") { type = NavType.LongType })) { backStackEntry ->
                     val artistId = backStackEntry.arguments?.getLong("id") ?: 0L
+                    var isFav by remember(artistId) { mutableStateOf(favoriteRepo.isFavorite(artistId)) }
                     ArtistDetailScreen(artistId = artistId, bottomNavItems = bottomNavItems, onExpandPlayer = { showPlayerSheet = true }, onBottomNavSelected = onTabSelected, onBackClick = { navController.popBackStack() }, onProgramClick = { program -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(program.id)) }, onPlayTrack = { track -> playerManager.play(track) },
-                        onTrackLongClick = { track -> trackForOptions = track }, currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onTrackClick = { trackId -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(trackId)) })
+                        onTrackLongClick = { track -> trackForOptions = track },
+                        isFavorite = isFav,
+                        onToggleFavorite = {
+                            isFav = favoriteRepo.toggleFavorite(artistId)
+                            android.widget.Toast.makeText(context, if (isFav) "به علاقه‌مندی‌ها اضافه شد" else "از علاقه‌مندی‌ها حذف شد", android.widget.Toast.LENGTH_SHORT).show()
+                        },
+                        currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onTrackClick = { trackId -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(trackId)) })
                 }
 
                 composable(route = AndroidRoute.OrchestraDetail.route, arguments = listOf(navArgument("id") { type = NavType.LongType }, navArgument("name") { type = NavType.StringType })) { backStackEntry ->
@@ -398,8 +407,44 @@ fun AndroidApp() {
                     )
                 }
 
+                composable(AndroidRoute.AllFavorites.route) {
+                    val favIds = remember { favoriteRepo.getFavoriteIds() }
+                    val allFavSingers = remember(favIds, librarySingers) {
+                        favIds.mapNotNull { id -> librarySingers.find { it.artistId == id } }
+                    }
+                    SingersScreen(
+                        singers = allFavSingers,
+                        bottomNavItems = bottomNavItems,
+                        onBottomNavSelected = onTabSelected,
+                        onBackClick = { navController.popBackStack() },
+                        onSingerClick = { id -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(id)) },
+                        currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading,
+                        currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs,
+                        onTogglePlayerPlayback = { playerManager.togglePlayback() },
+                        onExpandPlayer = { showPlayerSheet = true },
+                    )
+                }
+
                 composable(AndroidRoute.Account.route) {
-                    SettingsScreen(bottomNavItems = bottomNavItems, onExpandPlayer = { showPlayerSheet = true }, onBottomNavSelected = onTabSelected, isDebugDatabaseToolsEnabled = isDebugDatabaseToolsEnabled(), isImportingDatabase = isImportingDatabase, currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onImportDebugDatabase = { if (!isImportingDatabase) { scope.launch { isImportingDatabase = true; val result = importDebugDatabase(); showDebugToast(result.message); if (result.success) { reloadToken += 1; navController.navigate(AndroidRoute.Home.route) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } } ; isImportingDatabase = false } } })
+                    val favIds = remember { favoriteRepo.getFavoriteIds() }
+                    val favSingers = remember(favIds, librarySingers) {
+                        favIds.mapNotNull { id -> librarySingers.find { it.artistId == id } }
+                    }
+                    SettingsScreen(
+                        bottomNavItems = bottomNavItems,
+                        onExpandPlayer = { showPlayerSheet = true },
+                        onBottomNavSelected = onTabSelected,
+                        favoriteSingers = favSingers,
+                        onArtistClick = { id -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(id)) },
+                        onShowAllFavorites = { navController.navigate(AndroidRoute.AllFavorites.route) },
+                        onOpenDebug = {},
+                        isDebugDatabaseToolsEnabled = isDebugDatabaseToolsEnabled(),
+                        isImportingDatabase = isImportingDatabase,
+                        currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading,
+                        currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs,
+                        onTogglePlayerPlayback = { playerManager.togglePlayback() },
+                        onImportDebugDatabase = { if (!isImportingDatabase) { scope.launch { isImportingDatabase = true; val result = importDebugDatabase(); showDebugToast(result.message); if (result.success) { reloadToken += 1; navController.navigate(AndroidRoute.Home.route) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } }; isImportingDatabase = false } } },
+                    )
                 }
                 
                 composable(AndroidRoute.Singers.route) { 
@@ -492,6 +537,7 @@ private sealed class AndroidRoute(val route: String) {
     data object ProgramEpisodeDetail : AndroidRoute("program_episode_detail/{id}") { fun createRoute(id: Long) = "program_episode_detail/$id" }
     data object OrchestraDetail : AndroidRoute("orchestra_detail/{id}/{name}") { fun createRoute(id: Long, name: String) = "orchestra_detail/$id/$name" }
     data object DuetDetail : AndroidRoute("duet_detail/{singer1}/{singer2}") { fun createRoute(s1: String, s2: String) = "duet_detail/$s1/$s2" }
+    data object AllFavorites : AndroidRoute("all_favorites")
     data object PlaylistDetail : AndroidRoute("playlist_detail/{id}") { fun createRoute(id: Long) = "playlist_detail/$id" }
     data object DastgahDetail : AndroidRoute("dastgah_detail/{id}/{name}") { fun createRoute(id: Long, name: String) = "dastgah_detail/$id/$name" }
 }

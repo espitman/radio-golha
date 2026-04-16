@@ -33,4 +33,10 @@ object RustCoreBridge {
     external fun addTrackToPlaylist(userDbPath: String, playlistId: Long, trackId: Long): String
     external fun removeTrackFromPlaylist(userDbPath: String, playlistId: Long, trackId: Long): String
     external fun getManualPlaylists(userDbPath: String): String
+
+    // Favorite Artists
+    external fun addFavoriteArtist(userDbPath: String, artistId: Long, artistType: String): String
+    external fun removeFavoriteArtist(userDbPath: String, artistId: Long): String
+    external fun isFavoriteArtist(userDbPath: String, artistId: Long): String
+    external fun getFavoriteArtistIds(userDbPath: String, artistType: String): String
 }

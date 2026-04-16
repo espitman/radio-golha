@@ -1098,3 +1098,57 @@ pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getManualPlayli
         to_string(&playlists).map_err(|e| e.to_string())
     })
 }
+
+// ── Favorite Artists ──
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_addFavoriteArtist(
+    mut env: JNIEnv, _class: JClass, user_db_path: JString, artist_id: i64, artist_type: JString,
+) -> jstring {
+    let atype = match env.get_string(&artist_type) {
+        Ok(s) => s.to_string_lossy().to_string(),
+        Err(e) => return user_data_json_response(&mut env, user_db_path, |_| Err(e.to_string())),
+    };
+    user_data_json_response(&mut env, user_db_path, |store| {
+        store.add_favorite_artist(artist_id, &atype).map_err(|e| e.to_string())?;
+        Ok("{}".to_string())
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_removeFavoriteArtist(
+    mut env: JNIEnv, _class: JClass, user_db_path: JString, artist_id: i64,
+) -> jstring {
+    user_data_json_response(&mut env, user_db_path, |store| {
+        store.remove_favorite_artist(artist_id).map_err(|e| e.to_string())?;
+        Ok("{}".to_string())
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_isFavoriteArtist(
+    mut env: JNIEnv, _class: JClass, user_db_path: JString, artist_id: i64,
+) -> jstring {
+    user_data_json_response(&mut env, user_db_path, |store| {
+        let fav = store.is_favorite_artist(artist_id).map_err(|e| e.to_string())?;
+        Ok(json!({ "favorite": fav }).to_string())
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getFavoriteArtistIds(
+    mut env: JNIEnv, _class: JClass, user_db_path: JString, artist_type: JString,
+) -> jstring {
+    let atype = match env.get_string(&artist_type) {
+        Ok(s) => s.to_string_lossy().to_string(),
+        Err(e) => return user_data_json_response(&mut env, user_db_path, |_| Err(e.to_string())),
+    };
+    user_data_json_response(&mut env, user_db_path, |store| {
+        let ids = if atype.is_empty() {
+            store.get_favorite_artist_ids().map_err(|e| e.to_string())?
+        } else {
+            store.get_favorite_artist_ids_by_type(&atype).map_err(|e| e.to_string())?
+        };
+        to_string(&ids).map_err(|e| e.to_string())
+    })
+}
