@@ -226,15 +226,22 @@ fun SettingsScreen(
                             2 -> { // About
                                 item { AboutAppSection(onTap = {
                                     aboutTapCount++
-                                    if (aboutTapCount >= 3) {
-                                        aboutTapCount = 0
+                                    if (aboutTapCount == 2) {
+                                        com.radiogolha.mobile.debug.showDebugToast("یک کلیک دیگر تا فعال‌سازی حالت توسعه‌دهنده")
+                                    } else if (aboutTapCount >= 3) {
                                         isDebugToolsVisible = true
                                         onOpenDebug()
                                     }
                                 }) }
-                                if (isDebugToolsVisible && isDebugDatabaseToolsEnabled) {
-                                    item {
+                                
+                                item {
+                                    androidx.compose.animation.AnimatedVisibility(
+                                        visible = isDebugToolsVisible && isDebugDatabaseToolsEnabled,
+                                        enter = androidx.compose.animation.expandVertically() + androidx.compose.animation.fadeIn(),
+                                        exit = androidx.compose.animation.shrinkVertically() + androidx.compose.animation.fadeOut()
+                                    ) {
                                         Surface(
+                                            modifier = Modifier.padding(top = 8.dp),
                                             shape = RoundedCornerShape(GolhaRadius.Card),
                                             color = GolhaColors.Surface,
                                             tonalElevation = 0.dp,
