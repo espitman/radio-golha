@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
@@ -39,11 +40,13 @@ import com.radiogolha.mobile.ui.home.TrackUiModel
 import com.radiogolha.mobile.ui.home.ArtistAvatar
 import androidx.compose.foundation.clickable
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.graphics.Color
@@ -67,6 +70,9 @@ fun SettingsScreen(
     onTogglePlayerPlayback: () -> Unit = {},
     onExpandPlayer: () -> Unit = {},
 ) {
+    var aboutTapCount by rememberSaveable { mutableIntStateOf(0) }
+    var isDebugToolsVisible by rememberSaveable { mutableStateOf(false) }
+
     CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides LayoutDirection.Rtl) {
         GolhaPatternBackground {
             Scaffold(
@@ -156,11 +162,14 @@ fun SettingsScreen(
 
                 // About app
                 item {
-                    var aboutClickCount by remember { mutableIntStateOf(0) }
                     Surface(
                         modifier = Modifier.fillMaxWidth().clickable {
-                            aboutClickCount++
-                            if (aboutClickCount >= 3) { aboutClickCount = 0; onOpenDebug() }
+                            aboutTapCount += 1
+                            if (aboutTapCount >= 3) {
+                                aboutTapCount = 0
+                                isDebugToolsVisible = true
+                                onOpenDebug()
+                            }
                         },
                         shape = RoundedCornerShape(GolhaRadius.Card),
                         color = GolhaColors.Surface,
@@ -169,23 +178,74 @@ fun SettingsScreen(
                     ) {
                         Column(
                             modifier = Modifier.padding(20.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(18.dp),
                         ) {
-                            Text("درباره اپ", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = GolhaColors.PrimaryText)
-                            Text("رادیو گل‌ها - مجموعه برنامه‌های گل‌های رنگارنگ رادیو ایران", style = MaterialTheme.typography.bodyMedium, color = GolhaColors.SecondaryText)
-                            Text("نسخه ۰.۱.۰", style = MaterialTheme.typography.labelSmall, color = GolhaColors.SecondaryText.copy(alpha = 0.6f))
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(56.dp)
+                                        .clip(RoundedCornerShape(18.dp))
+                                        .background(GolhaColors.BadgeBackground),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    GolhaLineIcon(
+                                        icon = GolhaIcon.Account,
+                                        modifier = Modifier.size(24.dp),
+                                        tint = GolhaColors.PrimaryText,
+                                    )
+                                }
+
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                ) {
+                                    Text(
+                                        "درباره ما",
+                                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                        color = GolhaColors.PrimaryText,
+                                    )
+                                    Text(
+                                        "آرشیو شنیداری برنامه‌های ماندگار گل‌ها",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = GolhaColors.SecondaryText,
+                                    )
+                                }
+                            }
+
+                            Surface(
+                                shape = RoundedCornerShape(20.dp),
+                                color = GolhaColors.SoftSand.copy(alpha = 0.42f),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.35f)),
+                            ) {
+                                Text(
+                                    text = "رادیو گل‌ها مجموعه‌ای از برنامه‌های گل‌های رنگارنگ رادیو ایران را با تجربه‌ای ساده، مرتب و امروزی کنار هم آورده است.",
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = GolhaColors.PrimaryText.copy(alpha = 0.88f),
+                                )
+                            }
+
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            ) {
+                                AboutMetaChip(label = "نسخه ۰.۱.۰")
+                                AboutMetaChip(label = "آرشیو گل‌ها")
+                            }
                         }
                     }
                 }
 
-                item {
-                    if (isDebugDatabaseToolsEnabled) {
+                if (isDebugToolsVisible && isDebugDatabaseToolsEnabled) {
+                    item {
                         DebugDatabaseCard(
                             isImportingDatabase = isImportingDatabase,
                             onImportDebugDatabase = onImportDebugDatabase,
                         )
-                    } else {
-                        PlaceholderSettingsCard()
                     }
                 }
             }
@@ -229,36 +289,18 @@ private fun DebugDatabaseCard(
 }
 
 @Composable
-private fun PlaceholderSettingsCard() {
+private fun AboutMetaChip(label: String) {
     Surface(
-        shape = RoundedCornerShape(GolhaRadius.Card),
-        color = GolhaColors.Surface,
-        tonalElevation = 0.dp,
-        shadowElevation = GolhaElevation.Card,
-        border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border),
+        shape = RoundedCornerShape(999.dp),
+        color = GolhaColors.SoftBlue.copy(alpha = 0.45f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, GolhaColors.Border.copy(alpha = 0.4f)),
     ) {
-        Box(
+        Text(
+            text = label,
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 18.dp, vertical = 24.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                GolhaLineIcon(
-                    icon = GolhaIcon.Account,
-                    modifier = Modifier.padding(2.dp),
-                    tint = GolhaColors.SecondaryText,
-                )
-                Text(
-                    text = "بخش‌های بیشتر این صفحه بعداً کامل می‌شوند.",
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                    color = GolhaColors.PrimaryText,
-                    textAlign = TextAlign.Center,
-                )
-            }
-        }
+                .padding(horizontal = 14.dp, vertical = 9.dp),
+            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+            color = GolhaColors.PrimaryText,
+        )
     }
 }
