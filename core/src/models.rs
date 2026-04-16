@@ -190,6 +190,7 @@ pub struct DashboardOverview {
 }
 
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PerformerCredit {
     pub artist_id: i64,
     pub name: String,
@@ -198,6 +199,7 @@ pub struct PerformerCredit {
 }
 
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct OrchestraLeaderCredit {
     pub artist_id: i64,
     pub orchestra: String,
@@ -206,6 +208,7 @@ pub struct OrchestraLeaderCredit {
 }
 
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TimelineSegment {
     pub id: i64,
     pub start_time: Option<String>,
@@ -215,12 +218,12 @@ pub struct TimelineSegment {
     pub poets: Vec<String>,
     pub announcers: Vec<String>,
     pub orchestras: Vec<String>,
-    #[serde(rename = "orchestraLeaders")]
     pub orchestra_leaders: Vec<OrchestraLeaderCredit>,
     pub performers: Vec<PerformerCredit>,
 }
 
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TranscriptVerse {
     pub segment_order: i64,
     pub verse_order: i64,
@@ -228,6 +231,7 @@ pub struct TranscriptVerse {
 }
 
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ArtistCredit {
     pub artist_id: Option<i64>,
     pub name: String,
@@ -235,6 +239,7 @@ pub struct ArtistCredit {
 }
 
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ProgramDetail {
     pub id: i64,
     pub title: String,

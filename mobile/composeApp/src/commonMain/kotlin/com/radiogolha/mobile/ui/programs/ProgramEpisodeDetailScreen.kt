@@ -62,6 +62,7 @@ fun ProgramEpisodeDetailScreen(
     onTogglePlayerPlayback: () -> Unit = {},
     onPlayProgram: (ProgramEpisodeDetailUiModel) -> Unit = {},
     onArtistClick: (Long) -> Unit = {},
+    onOrchestraClick: (String) -> Unit = {},
     onTrackClick: (Long) -> Unit = {},
     onExpandPlayer: () -> Unit = {},
     onSeek: (Long) -> Unit = {},
@@ -96,7 +97,7 @@ fun ProgramEpisodeDetailScreen(
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         TabRootScreen(
             title = "برنامه",
-            subtitle = detail?.categoryName ?: "",
+            subtitle = "",
             bottomNavItems = bottomNavItems,
             onBottomNavSelected = onBottomNavSelected,
             currentTrack = currentTrack,
@@ -136,7 +137,7 @@ fun ProgramEpisodeDetailScreen(
 
                     // 3. Carousels
                     if (d.singers.isNotEmpty()) item { ArtistCarousel(title = "خوانندگان", artists = d.singers, onArtistClick = onArtistClick) }
-                    if (d.orchestras.isNotEmpty()) item { ArtistCarousel(title = "ارکسترها", artists = d.orchestras, onArtistClick = onArtistClick) }
+                    if (d.orchestras.isNotEmpty()) item { ArtistCarousel(title = "ارکسترها", artists = d.orchestras, onArtistClick = { }, onNameClick = { name -> onOrchestraClick(name) }) }
                     if (d.orchestraLeaders.isNotEmpty()) {
                         val leaders = d.orchestraLeaders.map { ArtistCreditUiModel(it.artistId, it.name, null) }
                         item { ArtistCarousel(title = "رهبران ارکستر", artists = leaders, onArtistClick = onArtistClick, subtitleGetter = { l -> d.orchestraLeaders.find { it.name == l.name }?.orchestra }) }
@@ -459,13 +460,16 @@ private fun InfoTile(modifier: Modifier, label: String, value: String, icon: Gol
 }
 
 @Composable
-private fun ArtistCarousel(title: String, artists: List<ArtistCreditUiModel>, onArtistClick: (Long) -> Unit = {}, subtitleGetter: ((ArtistCreditUiModel) -> String?)? = null) {
+private fun ArtistCarousel(title: String, artists: List<ArtistCreditUiModel>, onArtistClick: (Long) -> Unit = {}, onNameClick: ((String) -> Unit)? = null, subtitleGetter: ((ArtistCreditUiModel) -> String?)? = null) {
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         SectionTitle(title = title)
         Spacer(modifier = Modifier.height(14.dp))
         LazyRow(contentPadding = PaddingValues(horizontal = GolhaSpacing.ScreenHorizontal), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             items(artists) { artist ->
-                ArtistCarouselItem(artist = artist, subtitle = subtitleGetter?.invoke(artist), onClick = { artist.artistId?.let { onArtistClick(it) } })
+                ArtistCarouselItem(artist = artist, subtitle = subtitleGetter?.invoke(artist), onClick = {
+                    if (onNameClick != null) onNameClick(artist.name)
+                    else artist.artistId?.let { onArtistClick(it) }
+                })
             }
         }
     }

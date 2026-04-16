@@ -91,8 +91,8 @@ actual fun loadProgramEpisodeDetail(programId: Long): com.radiogolha.mobile.ui.h
     val composers = root.optArtistCredits("composers")
     val arrangers = root.optArtistCredits("arrangers")
     val orchestras = root.optArtistCredits("orchestras")
-    val orchestraLeaders = root.optOrchestraLeaders("orchestraLeaders").takeIf { it.isNotEmpty() } ?: root.optOrchestraLeaders("orchestra_leaders")
-    val performers = root.optPerformers("performers").takeIf { it.isNotEmpty() } ?: root.optPerformers("program_performers")
+    val orchestraLeaders = root.optOrchestraLeaders("orchestraLeaders")
+    val performers = root.optPerformers("performers")
 
     return com.radiogolha.mobile.ui.home.ProgramEpisodeDetailUiModel(
         id = root.optLong("id"),
@@ -121,14 +121,9 @@ private fun JSONObject.optArtistCredits(key: String): List<com.radiogolha.mobile
     return buildList {
         for (i in 0 until array.length()) {
             val item = array.getJSONObject(i)
-            val id = item.optLong("artistId", 0L).takeIf { it > 0 }
-                ?: item.optLong("id", 0L).takeIf { it > 0 }
-                ?: item.optLong("performer_id", 0L).takeIf { it > 0 }
-                ?: item.optLong("singer_id", 0L).takeIf { it > 0 }
-                ?: item.optLong("musician_id", 0L).takeIf { it > 0 }
             add(
                 com.radiogolha.mobile.ui.home.ArtistCreditUiModel(
-                    artistId = id,
+                    artistId = item.optLong("artistId", 0L).takeIf { it > 0 },
                     name = item.optString("name", ""),
                     avatar = item.optNullableString("avatar")
                 )
@@ -154,7 +149,7 @@ private fun JSONObject.optOrchestraLeaders(key: String): List<com.radiogolha.mob
             val item = array.getJSONObject(i)
             val id = item.optLong("artistId", 0L).takeIf { it > 0 }
                 ?: item.optLong("id", 0L).takeIf { it > 0 }
-                ?: item.optLong("performer_id", 0L).takeIf { it > 0 }
+                ?: item.optLong("performerId", 0L).takeIf { it > 0 }
             add(
                 com.radiogolha.mobile.ui.home.OrchestraLeaderUiModel(
                     artistId = id,
@@ -171,7 +166,7 @@ private fun JSONObject.optPerformers(key: String): List<com.radiogolha.mobile.ui
     return buildList {
         for (i in 0 until array.length()) {
             val item = array.getJSONObject(i)
-            val id = item.optLong("performer_id", 0L).takeIf { it > 0 }
+            val id = item.optLong("performerId", 0L).takeIf { it > 0 }
                 ?: item.optLong("artistId", 0L).takeIf { it > 0 }
                 ?: item.optLong("id", 0L).takeIf { it > 0 }
             add(
@@ -194,15 +189,15 @@ private fun JSONObject.optTimeline(key: String): List<com.radiogolha.mobile.ui.h
             add(
                 com.radiogolha.mobile.ui.home.TimelineSegmentUiModel(
                     id = item.optLong("id"),
-                    startTime = item.optNullableString("startTime") ?: item.optNullableString("start_time"),
-                    endTime = item.optNullableString("endTime") ?: item.optNullableString("end_time"),
-                    modeName = item.optNullableString("modeName") ?: item.optNullableString("mode_name"),
+                    startTime = item.optNullableString("startTime"),
+                    endTime = item.optNullableString("endTime"),
+                    modeName = item.optNullableString("modeName"),
                     singers = item.optStringList("singers"),
                     poets = item.optStringList("poets"),
                     announcers = item.optStringList("announcers"),
                     orchestras = item.optStringList("orchestras"),
-                    orchestraLeaders = item.optOrchestraLeaders("orchestraLeaders").takeIf { it.isNotEmpty() } ?: item.optOrchestraLeaders("orchestra_leaders"),
-                    performers = item.optPerformers("performers").takeIf { it.isNotEmpty() } ?: item.optPerformers("program_performers")
+                    orchestraLeaders = item.optOrchestraLeaders("orchestraLeaders"),
+                    performers = item.optPerformers("performers")
                 )
             )
         }
