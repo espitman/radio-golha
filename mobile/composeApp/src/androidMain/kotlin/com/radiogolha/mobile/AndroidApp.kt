@@ -82,13 +82,21 @@ fun AndroidApp() {
     
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
+    var lastActiveTab by remember { mutableStateOf(AppTab.Home) }
     val selectedTab = remember(currentDestination) {
         val route = currentDestination?.route ?: ""
-        when {
-            route.startsWith(AndroidRoute.Account.route) -> AppTab.Account
-            route.startsWith(AndroidRoute.Library.route) -> AppTab.Library
-            route.startsWith(AndroidRoute.Search.route) -> AppTab.Search
-            else -> AppTab.Home
+        val matchedTab = when {
+            route.startsWith("account") -> AppTab.Account
+            route.startsWith("library") -> AppTab.Library
+            route.startsWith("search") -> AppTab.Search
+            route.startsWith("home") -> AppTab.Home
+            else -> null
+        }
+        if (matchedTab != null) {
+            lastActiveTab = matchedTab
+            matchedTab
+        } else {
+            lastActiveTab
         }
     }
     val bottomNavItems = remember(selectedTab) {
