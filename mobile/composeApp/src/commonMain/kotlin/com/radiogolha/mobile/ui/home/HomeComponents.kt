@@ -131,6 +131,126 @@ fun SectionTitle(
 }
 
 @Composable
+fun RecentlyPlayedSection(
+    tracks: List<TrackUiModel>,
+    onTrackClick: (TrackUiModel) -> Unit,
+    onPlayTrack: (TrackUiModel) -> Unit,
+    onTrackLongClick: (TrackUiModel) -> Unit,
+    currentTrackId: Long?,
+    isPlayerPlaying: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    if (tracks.isEmpty()) return
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        SectionTitle(title = "اخیراً شنیده شده")
+
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = GolhaSpacing.ScreenHorizontal),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            items(tracks, key = { it.id }) { track ->
+                val isActive = track.id == currentTrackId
+                RecentlyPlayedCard(
+                    track = track,
+                    isActive = isActive,
+                    isPlaying = isActive && isPlayerPlaying,
+                    onClick = { onTrackClick(track) },
+                    onPlayClick = { onPlayTrack(track) },
+                    onLongClick = { onTrackLongClick(track) },
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun RecentlyPlayedCard(
+    track: TrackUiModel,
+    isActive: Boolean,
+    isPlaying: Boolean,
+    onClick: () -> Unit,
+    onPlayClick: () -> Unit,
+    onLongClick: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier
+            .width(140.dp)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick,
+            ),
+        shape = RoundedCornerShape(16.dp),
+        color = GolhaColors.Surface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, if (isActive) GolhaColors.PrimaryAccent else GolhaColors.Border.copy(alpha = 0.5f)),
+        shadowElevation = if (isActive) 4.dp else 1.dp,
+    ) {
+        Column(
+            modifier = Modifier.padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(GolhaColors.BadgeBackground),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (track.coverUrl != null) {
+                    ArtistAvatar(name = track.artist, imageUrl = track.coverUrl, tint = GolhaColors.SoftBlue, modifier = Modifier.fillMaxSize())
+                } else {
+                    Box(modifier = Modifier.size(48.dp).background(GolhaColors.PrimaryAccent.copy(alpha = 0.1f), CircleShape), contentAlignment = Alignment.Center) {
+                        GolhaLineIcon(icon = GolhaIcon.Note, modifier = Modifier.size(24.dp), tint = GolhaColors.PrimaryAccent)
+                    }
+                }
+
+                // Play Button Overlay
+                Surface(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(8.dp)
+                        .size(32.dp)
+                        .clickable { onPlayClick() },
+                    shape = CircleShape,
+                    color = if (isActive) GolhaColors.PrimaryAccent else Color.White,
+                    shadowElevation = 4.dp,
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        GolhaLineIcon(
+                            icon = if (isPlaying) GolhaIcon.Pause else GolhaIcon.Play,
+                            modifier = Modifier.size(16.dp),
+                            tint = if (isActive) Color.White else GolhaColors.PrimaryAccent,
+                        )
+                    }
+                }
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = track.title,
+                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                    color = GolhaColors.PrimaryText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = track.artist,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = GolhaColors.SecondaryText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun HeaderSection(modifier: Modifier = Modifier) {
     Row(
         modifier = modifier

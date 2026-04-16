@@ -42,6 +42,7 @@ import com.radiogolha.mobile.ui.search.PlaylistDetailScreen
 import com.radiogolha.mobile.data.PlaylistRepository
 import com.radiogolha.mobile.data.PlaylistType
 import com.radiogolha.mobile.data.FavoriteArtistRepository
+import com.radiogolha.mobile.data.PlaybackRepository
 import com.radiogolha.mobile.ui.programs.TrackOptionsSheet
 import com.radiogolha.mobile.ui.programs.PlaylistOptionItem
 import kotlinx.coroutines.Dispatchers
@@ -98,6 +99,7 @@ fun AndroidApp() {
     // Shared State
     var reloadToken by remember { mutableIntStateOf(0) }
     var favoritesReloadToken by remember { mutableIntStateOf(0) }
+    var playbackReloadToken by remember { mutableIntStateOf(0) }
     var isImportingDatabase by remember { mutableStateOf(false) }
     
     var librarySingers by remember { mutableStateOf<List<SingerListItemUiModel>>(emptyList()) }
@@ -113,6 +115,7 @@ fun AndroidApp() {
     val searchState = remember { SearchState() }
     val playlistRepo = remember { PlaylistRepository(context) }
     val favoriteRepo = remember { FavoriteArtistRepository(context) }
+    val playbackRepo = remember { PlaybackRepository(context) }
     var savedPlaylists by remember { mutableStateOf(playlistRepo.getAll().map { SavedPlaylistUiModel(it.id, it.name) }) }
     var trackForOptions by remember { mutableStateOf<TrackUiModel?>(null) }
     var artistForQuickActions by remember { mutableStateOf<ArtistQuickAction?>(null) }
@@ -124,6 +127,8 @@ fun AndroidApp() {
     var isHomeLoading by remember { mutableStateOf(true) }
     var isRefreshingTopTracks by remember { mutableStateOf(false) }
     var prefetchedTopTracks by remember { mutableStateOf<List<TrackUiModel>>(emptyList()) }
+    var recentlyPlayedTracks by remember { mutableStateOf<List<TrackUiModel>>(emptyList()) }
+    var mostPlayedTracks by remember { mutableStateOf<List<TrackUiModel>>(emptyList()) }
 
     LaunchedEffect(reloadToken) {
         isLibraryLoading = true
@@ -162,6 +167,32 @@ fun AndroidApp() {
             libraryOrchestras = dOrchestras.await()
             libraryPrograms = dPrograms.await()
             isLibraryLoading = false
+        }
+    }
+
+    // Load History & Stats
+    LaunchedEffect(playbackReloadToken, reloadToken) {
+        withContext(Dispatchers.Default) {
+            val recentIds = playbackRepo.getRecentlyPlayedIds(10)
+            val mostIds = playbackRepo.getMostPlayedIds(10)
+            
+            if (recentIds.isNotEmpty()) {
+                recentlyPlayedTracks = runCatching { loadTracksByIds(recentIds) }.getOrDefault(emptyList())
+            }
+            if (mostIds.isNotEmpty()) {
+                mostPlayedTracks = runCatching { loadTracksByIds(mostIds) }.getOrDefault(emptyList())
+            }
+        }
+    }
+
+    // Record Playback
+    LaunchedEffect(currentTrack?.id) {
+        val id = currentTrack?.id
+        if (id != null) {
+            withContext(Dispatchers.Default) {
+                playbackRepo.recordPlayback(id)
+                playbackReloadToken++
+            }
         }
     }
 
@@ -258,6 +289,7 @@ fun AndroidApp() {
                         },
                         onExpandPlayer = { showPlayerSheet = true },
                         onBottomNavSelected = onTabSelected,
+                        recentlyPlayed = recentlyPlayedTracks,
                     )
                 }
 
@@ -480,6 +512,10 @@ fun AndroidApp() {
                         currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs,
                         onTogglePlayerPlayback = { playerManager.togglePlayback() },
                         onImportDebugDatabase = { if (!isImportingDatabase) { scope.launch { isImportingDatabase = true; val result = importDebugDatabase(); showDebugToast(result.message); if (result.success) { reloadToken += 1; navController.navigate(AndroidRoute.Home.route) { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } }; isImportingDatabase = false } } },
+                        mostPlayedTracks = mostPlayedTracks,
+                        onTrackClick = { id -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(id)) },
+                        onPlayTrack = { track -> playerManager.play(track) },
+                        onTrackLongClick = { track -> trackForOptions = track },
                     )
                 }
                 

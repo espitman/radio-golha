@@ -48,6 +48,7 @@ fun HomeScreen(
     onPlaylistClick: (Long) -> Unit = {},
     onExpandPlayer: () -> Unit = {},
     onBottomNavSelected: (AppTab) -> Unit = {},
+    recentlyPlayed: List<TrackUiModel> = emptyList(),
 ) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         GolhaPatternBackground {
@@ -105,6 +106,18 @@ fun HomeScreen(
                                 programs = state.programs,
                                 onProgramClick = onProgramClick
                             )
+                        }
+                        if (recentlyPlayed.isNotEmpty()) {
+                            item {
+                                RecentlyPlayedSection(
+                                    tracks = recentlyPlayed,
+                                    onTrackClick = onTrackClick,
+                                    onPlayTrack = onPlayTrack,
+                                    onTrackLongClick = onTrackLongClick,
+                                    currentTrackId = currentTrack?.id,
+                                    isPlayerPlaying = isPlayerPlaying,
+                                )
+                            }
                         }
                         item {
                             SingersSection(

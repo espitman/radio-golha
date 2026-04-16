@@ -55,10 +55,43 @@ impl UserDataStore {
                 artist_type TEXT NOT NULL DEFAULT 'singer',
                 added_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000)
             );
+            CREATE TABLE IF NOT EXISTS playback_history (
+                track_id INTEGER PRIMARY KEY,
+                play_count INTEGER NOT NULL DEFAULT 1,
+                last_played_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000)
+            );
             ",
         )?;
 
         Ok(Self { conn })
+    }
+
+    pub fn record_playback(&self, track_id: i64) -> CoreResult<()> {
+        self.conn.execute(
+            "INSERT INTO playback_history (track_id, last_played_at, play_count)
+             VALUES (?1, (strftime('%s','now') * 1000), 1)
+             ON CONFLICT(track_id) DO UPDATE SET
+                play_count = play_count + 1,
+                last_played_at = (strftime('%s','now') * 1000)",
+            params![track_id],
+        )?;
+        Ok(())
+    }
+
+    pub fn get_recent_tracks(&self, limit: i64) -> CoreResult<Vec<i64>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT track_id FROM playback_history ORDER BY last_played_at DESC LIMIT ?1",
+        )?;
+        let rows = stmt.query_map([limit], |row| row.get(0))?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    pub fn get_most_played_tracks(&self, limit: i64) -> CoreResult<Vec<i64>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT track_id FROM playback_history ORDER BY play_count DESC, last_played_at DESC LIMIT ?1",
+        )?;
+        let rows = stmt.query_map([limit], |row| row.get(0))?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 
     pub fn get_all_playlists(&self) -> CoreResult<Vec<Playlist>> {

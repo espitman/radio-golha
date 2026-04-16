@@ -1152,3 +1152,45 @@ pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getFavoriteArti
         to_string(&ids).map_err(|e| e.to_string())
     })
 }
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_recordPlayback(
+    mut env: JNIEnv,
+    _class: JClass,
+    db_path: JString,
+    track_id: i64,
+) -> jstring {
+    jni_json_response(&mut env, db_path, |path| {
+        let store = UserDataStore::open(path).map_err(|e| e.to_string())?;
+        store.record_playback(track_id).map_err(|e| e.to_string())?;
+        Ok("{}".to_string())
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getRecentlyPlayedIds(
+    mut env: JNIEnv,
+    _class: JClass,
+    db_path: JString,
+    limit: i64,
+) -> jstring {
+    jni_json_response(&mut env, db_path, |path| {
+        let store = UserDataStore::open(path).map_err(|e| e.to_string())?;
+        let ids = store.get_recent_tracks(limit).map_err(|e| e.to_string())?;
+        to_string(&ids).map_err(|e| e.to_string())
+    })
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getMostPlayedIds(
+    mut env: JNIEnv,
+    _class: JClass,
+    db_path: JString,
+    limit: i64,
+) -> jstring {
+    jni_json_response(&mut env, db_path, |path| {
+        let store = UserDataStore::open(path).map_err(|e| e.to_string())?;
+        let ids = store.get_most_played_tracks(limit).map_err(|e| e.to_string())?;
+        to_string(&ids).map_err(|e| e.to_string())
+    })
+}

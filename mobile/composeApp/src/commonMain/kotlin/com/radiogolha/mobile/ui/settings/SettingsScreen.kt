@@ -71,6 +71,10 @@ fun SettingsScreen(
     currentPlaybackDurationMs: Long = 0L,
     onTogglePlayerPlayback: () -> Unit = {},
     onExpandPlayer: () -> Unit = {},
+    mostPlayedTracks: List<TrackUiModel> = emptyList(),
+    onTrackClick: (Long) -> Unit = {},
+    onPlayTrack: (TrackUiModel) -> Unit = {},
+    onTrackLongClick: (TrackUiModel) -> Unit = {},
 ) {
     var aboutTapCount by rememberSaveable { mutableIntStateOf(0) }
     var isDebugToolsVisible by rememberSaveable { mutableStateOf(false) }
@@ -207,6 +211,27 @@ fun SettingsScreen(
                                 }
                             }
                         }
+                    }
+                }
+
+                // Most Played Tracks
+                if (mostPlayedTracks.isNotEmpty()) {
+                    item {
+                        Text(
+                            text = "محبوب‌ترین‌های شما",
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                            color = GolhaColors.PrimaryText,
+                        )
+                    }
+                    items(mostPlayedTracks) { track ->
+                        TrackListItem(
+                            track = track,
+                            onClick = { onTrackClick(track.id) },
+                            onPlayClick = { onPlayTrack(track) },
+                            onLongClick = { onTrackLongClick(track) },
+                            isActive = currentTrack?.id == track.id,
+                            isPlaying = currentTrack?.id == track.id && isPlayerPlaying,
+                        )
                     }
                 }
 
