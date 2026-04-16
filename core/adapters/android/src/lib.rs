@@ -1088,3 +1088,13 @@ pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_removeTrackFrom
         Ok("{}".to_string())
     })
 }
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getManualPlaylists(
+    mut env: JNIEnv, _class: JClass, user_db_path: JString,
+) -> jstring {
+    user_data_json_response(&mut env, user_db_path, |store| {
+        let playlists = store.get_manual_playlists().map_err(|e| e.to_string())?;
+        to_string(&playlists).map_err(|e| e.to_string())
+    })
+}

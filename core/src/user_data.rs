@@ -144,6 +144,11 @@ impl UserDataStore {
         Ok(())
     }
 
+    pub fn get_manual_playlists(&self) -> CoreResult<Vec<Playlist>> {
+        let all = self.get_all_playlists()?;
+        Ok(all.into_iter().filter(|p| p.playlist_type == "manual").collect())
+    }
+
     fn get_track_ids(&self, playlist_id: i64) -> CoreResult<Vec<i64>> {
         let mut stmt = self.conn.prepare(
             "SELECT track_id FROM playlist_tracks WHERE playlist_id = ?1 ORDER BY added_at ASC",

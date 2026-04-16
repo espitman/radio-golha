@@ -71,7 +71,10 @@ class PlaylistRepository(context: Context) {
 
     fun parseFilters(entry: PlaylistEntry): ActiveFilters = jsonToFilters(entry.filtersJson)
 
-    fun getManualPlaylists(): List<PlaylistEntry> = getAll().filter { it.type == PlaylistType.MANUAL }
+    fun getManualPlaylists(): List<PlaylistEntry> {
+        val payload = RustCoreBridge.getManualPlaylists(userDbPath)
+        return parsePlaylistArray(payload)
+    }
 
     private fun parsePlaylistArray(payload: String): List<PlaylistEntry> {
         val arr = runCatching { JSONArray(payload) }.getOrDefault(JSONArray())
