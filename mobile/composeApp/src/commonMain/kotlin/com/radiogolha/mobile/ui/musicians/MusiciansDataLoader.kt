@@ -1,5 +1,19 @@
 package com.radiogolha.mobile.ui.musicians
 
-import com.radiogolha.mobile.ui.home.MusicianListItemUiModel
+import com.radiogolha.mobile.RustCoreBridge
+import com.radiogolha.mobile.ui.home.*
+import kotlinx.serialization.decodeFromString
 
-expect fun loadMusiciansUiState(): List<MusicianListItemUiModel>
+fun loadMusiciansUiState(): List<MusicianListItemUiModel> {
+    val payload = RustCoreBridge.getMusiciansJson(requireArchiveDbPath())
+    val response = json.decodeFromString<List<MusicianDto>>(payload)
+    return response.map { 
+        MusicianListItemUiModel(
+            id = it.id,
+            artistId = it.id,
+            name = it.name,
+            instrument = it.instrument,
+            imageUrl = it.avatar
+        )
+    }
+}
