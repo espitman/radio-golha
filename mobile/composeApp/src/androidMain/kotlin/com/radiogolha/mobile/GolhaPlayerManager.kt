@@ -23,9 +23,17 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
+@Composable
+actual fun rememberGolhaPlayer(): GolhaPlayer {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val player = remember(context) { GolhaPlayerManager(context) }
+    androidx.compose.runtime.DisposableEffect(player) {
+        onDispose { player.release() }
+    }
+    return player
+}
 
-class GolhaPlayerManager(private val context: Context) {
+class GolhaPlayerManager(private val context: Context) : GolhaPlayer {
     private var controllerFuture: ListenableFuture<MediaController>? = null
     private val player: Player? get() = if (controllerFuture?.isDone == true) controllerFuture?.get() else null
     

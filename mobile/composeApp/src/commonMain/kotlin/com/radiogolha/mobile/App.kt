@@ -36,6 +36,13 @@ import kotlinx.coroutines.withContext
 @Composable
 @Composable
 fun App() {
+    val player = rememberGolhaPlayer()
+    val currentTrack by player.currentTrack.collectAsState()
+    val isPlayerPlaying by player.isPlaying.collectAsState()
+    val isPlayerLoading by player.isLoading.collectAsState()
+    val currentPlaybackPositionMs by player.currentPositionMs.collectAsState()
+    val currentPlaybackDurationMs by player.durationMs.collectAsState()
+
     // Multi-stack navigation state
     val navigationStacks = remember {
         mutableStateMapOf<AppTab, List<AppRoute>>().apply {
@@ -115,6 +122,12 @@ fun App() {
                     onBottomNavSelected = { onTabSelected(it) },
                     onBackClick = { pop() },
                     onSingerClick = { id -> push(AppRoute.ArtistDetail(id)) },
+                    currentTrack = currentTrack,
+                    isPlayerPlaying = isPlayerPlaying,
+                    isPlayerLoading = isPlayerLoading,
+                    currentPlaybackPositionMs = currentPlaybackPositionMs,
+                    currentPlaybackDurationMs = currentPlaybackDurationMs,
+                    onTogglePlayerPlayback = { player.togglePlayback() },
                 )
             }
 
@@ -125,6 +138,12 @@ fun App() {
                     onBottomNavSelected = { onTabSelected(it) },
                     onBackClick = { pop() },
                     onMusicianClick = { id -> push(AppRoute.ArtistDetail(id)) },
+                    currentTrack = currentTrack,
+                    isPlayerPlaying = isPlayerPlaying,
+                    isPlayerLoading = isPlayerLoading,
+                    currentPlaybackPositionMs = currentPlaybackPositionMs,
+                    currentPlaybackDurationMs = currentPlaybackDurationMs,
+                    onTogglePlayerPlayback = { player.togglePlayback() },
                 )
             }
 
@@ -135,6 +154,13 @@ fun App() {
                     onBottomNavSelected = { onTabSelected(it) },
                     onBackClick = { pop() },
                     onArtistClick = { id -> push(AppRoute.ArtistDetail(id)) },
+                    onPlayTrack = { player.play(it) },
+                    currentTrack = currentTrack,
+                    isPlayerPlaying = isPlayerPlaying,
+                    isPlayerLoading = isPlayerLoading,
+                    currentPlaybackPositionMs = currentPlaybackPositionMs,
+                    currentPlaybackDurationMs = currentPlaybackDurationMs,
+                    onTogglePlayerPlayback = { player.togglePlayback() },
                 )
             }
 
@@ -146,9 +172,15 @@ fun App() {
                     onBottomNavSelected = { onTabSelected(it) },
                     onBackClick = { pop() },
                     onTrackClick = { trackId -> push(AppRoute.ProgramEpisodeDetail(trackId)) },
-                    onPlayTrack = { /* Handle play */ },
+                    onPlayTrack = { player.play(it) },
                     onArtistClick = { id -> push(AppRoute.ArtistDetail(id)) },
-                    onProgramClick = { program -> push(AppRoute.ProgramEpisodeDetail(program.id)) }
+                    onProgramClick = { program -> push(AppRoute.ProgramEpisodeDetail(program.id)) },
+                    currentTrack = currentTrack,
+                    isPlayerPlaying = isPlayerPlaying,
+                    isPlayerLoading = isPlayerLoading,
+                    currentPlaybackPositionMs = currentPlaybackPositionMs,
+                    currentPlaybackDurationMs = currentPlaybackDurationMs,
+                    onTogglePlayerPlayback = { player.togglePlayback() },
                 )
             }
 
@@ -161,6 +193,13 @@ fun App() {
                     onBackClick = { pop() },
                     onTrackClick = { trackId -> push(AppRoute.ProgramEpisodeDetail(trackId)) },
                     onArtistClick = { id -> push(AppRoute.ArtistDetail(id)) },
+                    onPlayTrack = { player.play(it) },
+                    currentTrack = currentTrack,
+                    isPlayerPlaying = isPlayerPlaying,
+                    isPlayerLoading = isPlayerLoading,
+                    currentPlaybackPositionMs = currentPlaybackPositionMs,
+                    currentPlaybackDurationMs = currentPlaybackDurationMs,
+                    onTogglePlayerPlayback = { player.togglePlayback() },
                 )
             }
 
@@ -171,6 +210,13 @@ fun App() {
                     onBottomNavSelected = { onTabSelected(it) },
                     onBackClick = { pop() },
                     onArtistClick = { id -> push(AppRoute.ArtistDetail(id)) },
+                    currentTrack = currentTrack,
+                    isPlayerPlaying = isPlayerPlaying,
+                    isPlayerLoading = isPlayerLoading,
+                    currentPlaybackPositionMs = currentPlaybackPositionMs,
+                    currentPlaybackDurationMs = currentPlaybackDurationMs,
+                    onTogglePlayerPlayback = { player.togglePlayback() },
+                    onSeek = { player.seekTo(it) },
                 )
             }
 
@@ -188,6 +234,13 @@ fun App() {
                             onSingerClick = { id -> push(AppRoute.ArtistDetail(id)) },
                             onMusicianClick = { id -> push(AppRoute.ArtistDetail(id)) },
                             onBottomNavSelected = { onTabSelected(it) },
+                            onPlayTrack = { player.play(it) },
+                            currentTrack = currentTrack,
+                            isPlayerPlaying = isPlayerPlaying,
+                            isPlayerLoading = isPlayerLoading,
+                            currentPlaybackPositionMs = currentPlaybackPositionMs,
+                            currentPlaybackDurationMs = currentPlaybackDurationMs,
+                            onTogglePlayerPlayback = { player.togglePlayback() },
                         )
                     }
 
@@ -197,6 +250,13 @@ fun App() {
                             onBottomNavSelected = { onTabSelected(it) },
                             onTrackClick = { trackId -> push(AppRoute.ProgramEpisodeDetail(trackId)) },
                             onArtistClick = { id -> push(AppRoute.ArtistDetail(id)) },
+                            onPlayTrack = { player.play(it) },
+                            currentTrack = currentTrack,
+                            isPlayerPlaying = isPlayerPlaying,
+                            isPlayerLoading = isPlayerLoading,
+                            currentPlaybackPositionMs = currentPlaybackPositionMs,
+                            currentPlaybackDurationMs = currentPlaybackDurationMs,
+                            onTogglePlayerPlayback = { player.togglePlayback() },
                         )
                     }
 
@@ -225,6 +285,13 @@ fun App() {
                                     push(AppRoute.OrchestraDetail(id, orchestra.name))
                                 }
                             },
+                            currentTrack = currentTrack,
+                            isPlayerPlaying = isPlayerPlaying,
+                            isPlayerLoading = isPlayerLoading,
+                            currentPlaybackPositionMs = currentPlaybackPositionMs,
+                            currentPlaybackDurationMs = currentPlaybackDurationMs,
+                            onTogglePlayerPlayback = { player.togglePlayback() },
+                            onTrackClick = { trackId -> push(AppRoute.ProgramEpisodeDetail(trackId)) }
                         )
                     }
 
@@ -268,6 +335,33 @@ private sealed interface AppRoute {
     data class ProgramEpisodeDetail(val programId: Long) : AppRoute
     data class OrchestraDetail(val id: Long, val name: String) : AppRoute
 }
+
+private fun buildBottomNavItems(selectedTab: AppTab): List<BottomNavItemUiModel> = listOf(
+    BottomNavItemUiModel(
+        label = "خانه",
+        icon = GolhaIcon.Home,
+        tab = AppTab.Home,
+        selected = selectedTab == AppTab.Home,
+    ),
+    BottomNavItemUiModel(
+        label = "جستجو",
+        icon = GolhaIcon.Search,
+        tab = AppTab.Search,
+        selected = selectedTab == AppTab.Search,
+    ),
+    BottomNavItemUiModel(
+        label = "کتابخانه",
+        icon = GolhaIcon.Library,
+        tab = AppTab.Library,
+        selected = selectedTab == AppTab.Library,
+    ),
+    BottomNavItemUiModel(
+        label = "حساب من",
+        icon = GolhaIcon.Account,
+        tab = AppTab.Account,
+        selected = selectedTab == AppTab.Account,
+    ),
+)
 
 private fun buildBottomNavItems(selectedTab: AppTab): List<BottomNavItemUiModel> = listOf(
     BottomNavItemUiModel(
