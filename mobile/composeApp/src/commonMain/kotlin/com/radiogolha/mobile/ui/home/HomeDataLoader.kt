@@ -7,19 +7,24 @@ import kotlinx.serialization.json.Json
 expect fun requireArchiveDbPath(): String
 
 fun loadHomeUiState(): HomeUiState? {
-    val payload = RustCoreBridge.getHomeFeedJson(requireArchiveDbPath())
-    if (payload.isBlank()) return null
-    
-    val response = json.decodeFromString<HomeFeedResponse>(payload)
-    
-    return HomeUiState(
-        programs = response.categories.map { ProgramUiModel(it.id, it.title, it.episodeCount) },
-        singers = response.singers.map { SingerUiModel(it.id, it.name, it.avatar) },
-        dastgahs = response.dastgahs.map { DastgahUiModel(it.name) },
-        musicians = response.musicians.map { MusicianUiModel(it.id, it.name, it.instrument, it.avatar) },
-        topTracks = response.topTracks.map { it.toTrackUiModel() },
-        bottomNavItems = emptyList()
-    )
+    return try {
+        val payload = RustCoreBridge.getHomeFeedJson(requireArchiveDbPath())
+        if (payload.isBlank()) return null
+        
+        val response = json.decodeFromString<HomeFeedResponse>(payload)
+        
+        HomeUiState(
+            programs = response.categories.map { ProgramUiModel(it.id, it.title, it.episodeCount) },
+            singers = response.singers.map { SingerUiModel(it.id, it.name, it.avatar) },
+            dastgahs = response.dastgahs.map { DastgahUiModel(it.name) },
+            musicians = response.musicians.map { MusicianUiModel(it.id, it.name, it.instrument, it.avatar) },
+            topTracks = response.topTracks.map { it.toTrackUiModel() },
+            bottomNavItems = emptyList()
+        )
+    } catch (e: Exception) {
+        println("ERROR_GOLHA: loading home state: ${e.message ?: "unknown error"}")
+        null
+    }
 }
 
 fun loadTopTracks(): List<TrackUiModel> {

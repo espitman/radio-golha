@@ -12,13 +12,14 @@ actual object RustCoreBridge {
         if (ptr != null) {
             radiogolha_free_string(ptr)
         }
-        println("DEBUG: Native result ($result)")
+        println("DEBUG_GOLHA: Native result ($result)")
         return result
     }
 
     actual fun getCategoriesJson(dbPath: String): String = ""
     
     actual fun getHomeFeedJson(dbPath: String): String = callNative { 
+        println("DEBUG_GOLHA: Calling getHomeFeedJson with path: $dbPath")
         get_home_feed_json(dbPath) 
     }
     

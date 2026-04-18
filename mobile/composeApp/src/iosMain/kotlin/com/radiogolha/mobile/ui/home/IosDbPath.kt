@@ -3,12 +3,14 @@
 package com.radiogolha.mobile.ui.home
 
 import platform.Foundation.*
+private var cachedDbPath: String? = null
 
 actual fun requireArchiveDbPath(): String {
-    val fileManager = NSFileManager.defaultManager
-    val bundlePath = NSBundle.mainBundle.pathForResource("golha_database", "db")
-        ?: throw IllegalStateException("Database file not found in bundle")
+    return cachedDbPath ?: throw IllegalStateException("Database path not initialized")
+}
 
+fun initDatabase(bundlePath: String): String {
+    val fileManager = NSFileManager.defaultManager
     val appSupportDir = fileManager.URLForDirectory(
         NSApplicationSupportDirectory,
         NSUserDomainMask,
@@ -22,19 +24,13 @@ actual fun requireArchiveDbPath(): String {
     }
 
     val dbPath = "$appSupportDir/golha_database.db"
-    println("iOS DB PATH: $dbPath")
     
-    // For debugging, always refresh from bundle
+    // Always refresh for debugging
     if (fileManager.fileExistsAtPath(dbPath)) {
         fileManager.removeItemAtPath(dbPath, null)
     }
     
-    val success = fileManager.copyItemAtPath(bundlePath, dbPath, null)
-    if (!success) {
-        println("ERROR: Failed to copy database from $bundlePath to $dbPath")
-    } else {
-        println("SUCCESS: Database refreshed at $dbPath")
-    }
-    
+    fileManager.copyItemAtPath(bundlePath, dbPath, null)
+    cachedDbPath = dbPath
     return dbPath
 }
