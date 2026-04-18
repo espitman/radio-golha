@@ -400,7 +400,14 @@ fun App() {
                             savedPlaylists = savedPlaylists,
                             onTrackClick = { id -> push(AppRoute.ProgramEpisodeDetail(id)) },
                             onPlayTrack = { player.play(it) },
-                            onTrackLongClick = { selectedTrackForOptions = it }
+                            onTrackLongClick = { selectedTrackForOptions = it },
+                            currentTrack = currentTrack,
+                            isPlayerPlaying = isPlayerPlaying,
+                            isPlayerLoading = isPlayerLoading,
+                            currentPlaybackPositionMs = currentPlaybackPositionMs,
+                            currentPlaybackDurationMs = currentPlaybackDurationMs,
+                            onTogglePlayerPlayback = { player.togglePlayback() },
+                            onExpandPlayer = { /* maybe open full player? */ }
                         )
                     }
                 }
