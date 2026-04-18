@@ -87,7 +87,7 @@ kotlin {
     targets.withType<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget>().configureEach {
         binaries.framework {
             baseName = "RadioGolhaMobile"
-            isStatic = true
+            isStatic = false
             
             val target = when(konanTarget.name) {
                 "ios_x64" -> "x86_64-apple-ios"

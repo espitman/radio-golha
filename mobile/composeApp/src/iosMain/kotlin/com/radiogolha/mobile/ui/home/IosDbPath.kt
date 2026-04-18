@@ -1,8 +1,10 @@
+@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+
 package com.radiogolha.mobile.ui.home
 
 import platform.Foundation.*
 
-internal actual fun requireArchiveDbPath(): String {
+actual fun requireArchiveDbPath(): String {
     val fileManager = NSFileManager.defaultManager
     val bundlePath = NSBundle.mainBundle.pathForResource("golha_database", "db")
         ?: throw IllegalStateException("Database file not found in bundle")
@@ -20,10 +22,18 @@ internal actual fun requireArchiveDbPath(): String {
     }
 
     val dbPath = "$appSupportDir/golha_database.db"
+    println("iOS DB PATH: $dbPath")
     
-    // Copy if not exists or if we need a refresh (same logic as Android)
-    if (!fileManager.fileExistsAtPath(dbPath)) {
-        fileManager.copyItemAtPath(bundlePath, dbPath, null)
+    // For debugging, always refresh from bundle
+    if (fileManager.fileExistsAtPath(dbPath)) {
+        fileManager.removeItemAtPath(dbPath, null)
+    }
+    
+    val success = fileManager.copyItemAtPath(bundlePath, dbPath, null)
+    if (!success) {
+        println("ERROR: Failed to copy database from $bundlePath to $dbPath")
+    } else {
+        println("SUCCESS: Database refreshed at $dbPath")
     }
     
     return dbPath

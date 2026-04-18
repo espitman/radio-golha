@@ -29,11 +29,12 @@ import com.radiogolha.mobile.ui.programs.loadProgramsUiState
 import com.radiogolha.mobile.ui.settings.SettingsScreen
 import com.radiogolha.mobile.ui.singers.SingersScreen
 import com.radiogolha.mobile.ui.singers.loadSingersUiState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@Composable
 @Composable
 fun App() {
     val player = rememberGolhaPlayer()
@@ -45,15 +46,16 @@ fun App() {
 
     // Multi-stack navigation state
     val navigationStacks = remember {
-        mutableStateMapOf<AppTab, List<AppRoute>>().apply {
-            AppTab.entries.forEach { tab ->
-                put(tab, listOf(AppRoute.Root(tab)))
-            }
+        val map = SnapshotStateMap<AppTab, List<AppRoute>>()
+        AppTab.entries.forEach { tab ->
+            map[tab] = listOf(AppRoute.Root(tab))
         }
+        map
     }
     var selectedTab by remember { mutableStateOf(AppTab.Home) }
+    val searchState = remember { com.radiogolha.mobile.ui.search.SearchState() }
     
-    val currentStack: List<AppRoute> get() = navigationStacks[selectedTab] ?: listOf(AppRoute.Root(selectedTab))
+    val currentStack: List<AppRoute> = navigationStacks[selectedTab] ?: listOf(AppRoute.Root(selectedTab))
     
     fun push(route: AppRoute) {
         val stack = navigationStacks[selectedTab]?.toMutableList() ?: mutableListOf()
@@ -246,10 +248,10 @@ fun App() {
 
                     AppTab.Search -> {
                         com.radiogolha.mobile.ui.search.SearchScreen(
+                            state = searchState,
                             bottomNavItems = bottomNavItems,
                             onBottomNavSelected = { onTabSelected(it) },
                             onTrackClick = { trackId -> push(AppRoute.ProgramEpisodeDetail(trackId)) },
-                            onArtistClick = { id -> push(AppRoute.ArtistDetail(id)) },
                             onPlayTrack = { player.play(it) },
                             currentTrack = currentTrack,
                             isPlayerPlaying = isPlayerPlaying,
@@ -272,7 +274,7 @@ fun App() {
                             onProgramClick = { category ->
                                 scope.launch {
                                     val catPrograms = withContext(Dispatchers.Default) {
-                                        com.radiogolha.mobile.ui.programs.loadCategoryPrograms(category.title)
+                                        com.radiogolha.mobile.ui.programs.loadCategoryPrograms(category.id)
                                     }
                                     push(AppRoute.CategoryPrograms(category, catPrograms))
                                 }
@@ -335,33 +337,6 @@ private sealed interface AppRoute {
     data class ProgramEpisodeDetail(val programId: Long) : AppRoute
     data class OrchestraDetail(val id: Long, val name: String) : AppRoute
 }
-
-private fun buildBottomNavItems(selectedTab: AppTab): List<BottomNavItemUiModel> = listOf(
-    BottomNavItemUiModel(
-        label = "خانه",
-        icon = GolhaIcon.Home,
-        tab = AppTab.Home,
-        selected = selectedTab == AppTab.Home,
-    ),
-    BottomNavItemUiModel(
-        label = "جستجو",
-        icon = GolhaIcon.Search,
-        tab = AppTab.Search,
-        selected = selectedTab == AppTab.Search,
-    ),
-    BottomNavItemUiModel(
-        label = "کتابخانه",
-        icon = GolhaIcon.Library,
-        tab = AppTab.Library,
-        selected = selectedTab == AppTab.Library,
-    ),
-    BottomNavItemUiModel(
-        label = "حساب من",
-        icon = GolhaIcon.Account,
-        tab = AppTab.Account,
-        selected = selectedTab == AppTab.Account,
-    ),
-)
 
 private fun buildBottomNavItems(selectedTab: AppTab): List<BottomNavItemUiModel> = listOf(
     BottomNavItemUiModel(

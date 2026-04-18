@@ -13,7 +13,7 @@ fun loadHomeUiState(): HomeUiState? {
     val response = json.decodeFromString<HomeFeedResponse>(payload)
     
     return HomeUiState(
-        programs = response.programs.map { ProgramUiModel(it.title, it.episodeCount) },
+        programs = response.categories.map { ProgramUiModel(it.id, it.title, it.episodeCount) },
         singers = response.singers.map { SingerUiModel(it.id, it.name, it.avatar) },
         dastgahs = response.dastgahs.map { DastgahUiModel(it.name) },
         musicians = response.musicians.map { MusicianUiModel(it.id, it.name, it.instrument, it.avatar) },

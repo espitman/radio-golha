@@ -9,11 +9,11 @@ fun loadMusiciansUiState(): List<MusicianListItemUiModel> {
     val response = json.decodeFromString<List<MusicianDto>>(payload)
     return response.map { 
         MusicianListItemUiModel(
-            id = it.id,
             artistId = it.id,
             name = it.name,
             instrument = it.instrument,
-            imageUrl = it.avatar
+            imageUrl = it.avatar,
+            programCount = 0 // Will need to update DTO if we want real count
         )
     }
 }

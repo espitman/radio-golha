@@ -11,7 +11,7 @@ fun loadOrchestrasUiState(): List<OrchestraListItemUiModel> {
         OrchestraListItemUiModel(
             id = it.id,
             name = it.name,
-            imageUrl = it.avatar
+            programCount = 0 // Will need to update DTO if we want real count
         )
     }
 }

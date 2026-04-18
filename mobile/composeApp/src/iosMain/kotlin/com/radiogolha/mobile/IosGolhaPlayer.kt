@@ -1,3 +1,5 @@
+@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+
 package com.radiogolha.mobile
 
 import androidx.compose.runtime.*
@@ -7,8 +9,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import platform.AVFoundation.*
 import platform.Foundation.*
-import platform.AudioToolbox.*
 import platform.AVFAudio.*
+import platform.CoreMedia.*
 
 @Composable
 actual fun rememberGolhaPlayer(): GolhaPlayer {
@@ -35,11 +37,9 @@ class IosGolhaPlayer : GolhaPlayer {
     private val _durationMs = MutableStateFlow(0L)
     override val durationMs: StateFlow<Long> = _durationMs
 
-    private var timeObserver: Any? = null
-
     init {
         setupAudioSession()
-        observePlayback()
+        startPolling()
     }
 
     private fun setupAudioSession() {
@@ -48,27 +48,25 @@ class IosGolhaPlayer : GolhaPlayer {
         session.setActive(true, error = null)
     }
 
-    private fun observePlayback() {
-        // Observe status (loading)
-        avPlayer.addObserver(observer = { _ ->
-            _isLoading.value = avPlayer.status == AVPlayerStatusUnknown
-        }, forKeyPath = "status", options = NSKeyValueObservingOptionNew, context = null)
+    private fun startPolling() {
+        scope.launch {
+            while (true) {
+                _isPlaying.value = avPlayer.rate > 0
+                _isLoading.value = avPlayer.currentItem?.status == AVPlayerItemStatusUnknown
 
-        // Observe periodic time updates
-        val interval = CMTimeMake(value = 1, timescale = 2) // 0.5 sec
-        timeObserver = avPlayer.addPeriodicTimeObserverForInterval(interval, queue = null) { time ->
-            val seconds = CMTimeGetSeconds(time)
-            _currentPositionMs.value = (seconds * 1000).toLong()
-            
-            val duration = avPlayer.currentItem?.duration
-            if (duration != null) {
-                val durationSeconds = CMTimeGetSeconds(duration)
-                if (!durationSeconds.isNaN()) {
-                    _durationMs.value = (durationSeconds * 1000).toLong()
+                val currentItem = avPlayer.currentItem
+                if (currentItem != null) {
+                    val currentTimeSec = CMTimeGetSeconds(avPlayer.currentTime())
+                    if (!currentTimeSec.isNaN()) {
+                        _currentPositionMs.value = (currentTimeSec * 1000).toLong()
+                    }
+                    val durationSec = CMTimeGetSeconds(currentItem.duration)
+                    if (!durationSec.isNaN() && durationSec > 0) {
+                        _durationMs.value = (durationSec * 1000).toLong()
+                    }
                 }
+                delay(500)
             }
-            
-            _isPlaying.value = avPlayer.rate > 0
         }
     }
 

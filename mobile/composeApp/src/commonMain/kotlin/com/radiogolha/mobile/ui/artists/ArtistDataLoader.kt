@@ -4,16 +4,18 @@ import com.radiogolha.mobile.RustCoreBridge
 import com.radiogolha.mobile.ui.home.*
 import kotlinx.serialization.decodeFromString
 
-fun loadArtistDetail(artistId: Long): ArtistDetailUiState {
+fun loadArtistDetail(artistId: Long): ArtistDetailUiModel? {
     val payload = RustCoreBridge.getArtistDetailJson(requireArchiveDbPath(), artistId)
+    if (payload.isBlank()) return null
+    
     val response = json.decodeFromString<ArtistDetailResponse>(payload)
     
-    return ArtistDetailUiState(
-        id = response.id,
+    return ArtistDetailUiModel(
+        artistId = response.id,
         name = response.name,
-        type = response.type,
-        avatar = response.avatar,
-        bio = response.bio,
-        programs = response.programs.map { it.toCategoryProgramUiModel() }
+        imageUrl = response.avatar,
+        instrument = null, // Could be found in bio if needed
+        trackCount = response.programs.size,
+        tracks = response.programs.map { it.toCategoryProgramUiModel() }
     )
 }

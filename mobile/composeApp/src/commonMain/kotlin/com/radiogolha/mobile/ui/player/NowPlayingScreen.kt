@@ -85,7 +85,9 @@ fun NowPlayingScreen(
     var singerImages by remember(currentTrack?.id) { mutableStateOf<List<String>>(emptyList()) }
     LaunchedEffect(currentTrack?.id) {
         val id = currentTrack?.id ?: return@LaunchedEffect
-        val detail = withContext(Dispatchers.Default) { runCatching { loadProgramEpisodeDetail(id) }.getOrNull() }
+        val detail: com.radiogolha.mobile.ui.home.ProgramEpisodeDetailUiModel? = withContext(Dispatchers.Default) { 
+            runCatching { loadProgramEpisodeDetail(id) }.getOrNull() 
+        }
         timeline = detail?.timeline ?: emptyList()
         singerImages = detail?.singers?.mapNotNull { it.avatar }?.distinct() ?: emptyList()
     }
@@ -118,14 +120,14 @@ fun NowPlayingScreen(
     }
     LaunchedEffect(isPlaying) {
         if (isPlaying) {
-            var lastUpdate = System.currentTimeMillis()
+            var lastUpdate = com.radiogolha.mobile.currentTimeMillis()
             while (isPlaying) {
                 delay(16)
                 if (!isDragging) {
-                    val now = System.currentTimeMillis()
+                    val now = com.radiogolha.mobile.currentTimeMillis()
                     sliderValue = (sliderValue + (now - lastUpdate)).coerceAtMost(durationMs.toFloat())
                     lastUpdate = now
-                } else lastUpdate = System.currentTimeMillis()
+                } else lastUpdate = com.radiogolha.mobile.currentTimeMillis()
             }
         }
     }

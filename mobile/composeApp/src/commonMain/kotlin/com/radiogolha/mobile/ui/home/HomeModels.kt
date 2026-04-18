@@ -1,6 +1,7 @@
 package com.radiogolha.mobile.ui.home
 
 data class ProgramUiModel(
+    val id: Long = 0,
     val title: String,
     val episodeCount: Int,
 )
