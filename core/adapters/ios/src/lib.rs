@@ -7,7 +7,16 @@ use serde_json::{json, to_string};
 // --- Helper Functions for String Management ---
 
 fn rust_str_to_c(s: String) -> *mut c_char {
-    CString::new(s).unwrap().into_raw()
+    match CString::new(s) {
+        Ok(cstr) => cstr.into_raw(),
+        Err(_) => {
+            // Ensure FFI boundary never panics on interior NUL bytes.
+            match CString::new("[]") {
+                Ok(fallback) => fallback.into_raw(),
+                Err(_) => std::ptr::null_mut(),
+            }
+        }
+    }
 }
 
 #[no_mangle]

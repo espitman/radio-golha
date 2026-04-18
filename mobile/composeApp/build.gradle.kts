@@ -54,13 +54,22 @@ val buildRustAndroid by tasks.registering(Exec::class) {
     }
 }
 
-val buildRustIos by tasks.registering(Exec::class) {
+val buildRustIos by tasks.registering {
     dependsOn(syncArchiveDb)
-    workingDir = rustIosAdapterDir
-    
-    // Default to simulator for development
-    val target = "aarch64-apple-ios-sim"
-    commandLine("cargo", "build", "--target", target)
+
+    doLast {
+        val targets = listOf(
+            "aarch64-apple-ios",      // real iPhone devices
+            "aarch64-apple-ios-sim",  // Apple Silicon simulators
+            "x86_64-apple-ios"        // Intel simulators
+        )
+        targets.forEach { target ->
+            exec {
+                workingDir = rustIosAdapterDir
+                commandLine("cargo", "build", "--target", target)
+            }
+        }
+    }
 }
 
 kotlin {

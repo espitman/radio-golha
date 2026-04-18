@@ -13,10 +13,60 @@ targets:
         CFBundleIdentifier: com.radiogolha.ios
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: com.radiogolha.ios
-      FRAMEWORK_SEARCH_PATHS: $(SRCROOT)/../composeApp/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)
+      FRAMEWORK_SEARCH_PATHS:
+        - $(SRCROOT)/../composeApp/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)
+        - $(SRCROOT)/../composeApp/build/xcode-frameworks/$(CONFIGURATION)/current
       ENABLE_USER_SCRIPT_SANDBOXING: NO
     preBuildScripts:
       - name: Run Gradle Build
         script: |
+          set -e
+          export JAVA_HOME="/Users/espitman/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+          export PATH="$HOME/.cargo/bin:$JAVA_HOME/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
           cd "$SRCROOT/.."
-          ./gradlew :composeApp:embedAndSignAppleFrameworkForXcode
+
+          if [ -z "$SDK_NAME" ]; then
+            if [ "$PLATFORM_NAME" = "iphoneos" ]; then
+              export SDK_NAME="iphoneos"
+            else
+              export SDK_NAME="iphonesimulator"
+            fi
+          fi
+
+          if [ -z "$PLATFORM_NAME" ]; then
+            case "$SDK_NAME" in
+              iphoneos*)
+                export PLATFORM_NAME="iphoneos"
+                ;;
+              *)
+                export PLATFORM_NAME="iphonesimulator"
+                ;;
+            esac
+          fi
+
+          # Xcode may not provide ARCHS early enough for KMP task inference.
+          if [ -z "$ARCHS" ]; then
+            case "$SDK_NAME" in
+              iphoneos*)
+                export ARCHS="arm64"
+                ;;
+              *)
+                export ARCHS="arm64"
+                ;;
+            esac
+          fi
+
+          export KOTLIN_FRAMEWORK_BUILD_TYPE="${CONFIGURATION}"
+          ./gradlew --no-daemon :composeApp:embedAndSignAppleFrameworkForXcode
+
+          FRAMEWORK_ROOT="$SRCROOT/../composeApp/build/xcode-frameworks/${CONFIGURATION}"
+          STABLE_DIR="$FRAMEWORK_ROOT/current"
+          rm -rf "$STABLE_DIR"
+          mkdir -p "$STABLE_DIR"
+
+          FRAMEWORK_PATH="$(find "$FRAMEWORK_ROOT" -maxdepth 3 -type d -name "RadioGolhaMobile.framework" | head -n 1)"
+          if [ -n "$FRAMEWORK_PATH" ]; then
+            cp -R "$FRAMEWORK_PATH" "$STABLE_DIR/"
+          fi
+
+          cp -v "$SRCROOT/../../database/golha_database.db" "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/golha_database.db"

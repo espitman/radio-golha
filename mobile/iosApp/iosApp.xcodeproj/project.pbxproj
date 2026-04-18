@@ -13,7 +13,7 @@
 
 /* Begin PBXFileReference section */
 		3771E0E755C03BF5A873EAE2 /* iosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iosApp.swift; sourceTree = "<group>"; };
-		86038AE1032E284E79B32AD6 /* iosApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		86038AE1032E284E79B32AD6 /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C117AD187833E2513BD2F553 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		CE8509E5A49E4A5CAAEB3ADB /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -74,8 +74,6 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
-				TargetAttributes = {
-				};
 			};
 			buildConfigurationList = FF7CA1CA754D017066F1822F /* Build configuration list for PBXProject "iosApp" */;
 			developmentRegion = en;
@@ -113,7 +111,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "export JAVA_HOME=\"/Users/espitman/Applications/Android Studio.app/Contents/jbr/Contents/Home\"\ncd \"$SRCROOT/..\"\n./gradlew :composeApp:embedAndSignAppleFrameworkForXcode\ncp -v \"$SRCROOT/../../database/golha_database.db\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/golha_database.db\"\n";
+				shellScript = "set -e\nexport JAVA_HOME=\"/Users/espitman/Applications/Android Studio.app/Contents/jbr/Contents/Home\"\nexport PATH=\"$HOME/.cargo/bin:$JAVA_HOME/bin:/opt/homebrew/bin:/usr/local/bin:$PATH\"\ncd \"$SRCROOT/..\"\n\nif [ -z \"$SDK_NAME\" ]; then\n  if [ \"$PLATFORM_NAME\" = \"iphoneos\" ]; then\n    export SDK_NAME=\"iphoneos\"\n  else\n    export SDK_NAME=\"iphonesimulator\"\n  fi\nfi\n\nif [ -z \"$PLATFORM_NAME\" ]; then\n  case \"$SDK_NAME\" in\n    iphoneos*)\n      export PLATFORM_NAME=\"iphoneos\"\n      ;;\n    *)\n      export PLATFORM_NAME=\"iphonesimulator\"\n      ;;\n  esac\nfi\n\n# Xcode may not provide ARCHS early enough for KMP task inference.\nif [ -z \"$ARCHS\" ]; then\n  case \"$SDK_NAME\" in\n    iphoneos*)\n      export ARCHS=\"arm64\"\n      ;;\n    *)\n      export ARCHS=\"arm64\"\n      ;;\n  esac\nfi\n\nexport KOTLIN_FRAMEWORK_BUILD_TYPE=\"${CONFIGURATION}\"\n./gradlew --no-daemon :composeApp:embedAndSignAppleFrameworkForXcode\n\nFRAMEWORK_ROOT=\"$SRCROOT/../composeApp/build/xcode-frameworks/${CONFIGURATION}\"\nSTABLE_DIR=\"$FRAMEWORK_ROOT/current\"\nrm -rf \"$STABLE_DIR\"\nmkdir -p \"$STABLE_DIR\"\n\nFRAMEWORK_PATH=\"$(find \"$FRAMEWORK_ROOT\" -maxdepth 3 -type d -name \"RadioGolhaMobile.framework\" | head -n 1)\"\nif [ -n \"$FRAMEWORK_PATH\" ]; then\n  cp -R \"$FRAMEWORK_PATH\" \"$STABLE_DIR/\"\nfi\n\ncp -v \"$SRCROOT/../../database/golha_database.db\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/golha_database.db\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -252,8 +250,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = UXJ4LTGWDJ;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
-				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../composeApp/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
+					FRAMEWORK_SEARCH_PATHS = (
+						"$(SRCROOT)/../composeApp/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)",
+						"$(SRCROOT)/../composeApp/build/xcode-frameworks/$(CONFIGURATION)/current",
+					);
 				INFOPLIST_FILE = iosApp/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -271,8 +273,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = UXJ4LTGWDJ;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
-				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../composeApp/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
+					FRAMEWORK_SEARCH_PATHS = (
+						"$(SRCROOT)/../composeApp/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)",
+						"$(SRCROOT)/../composeApp/build/xcode-frameworks/$(CONFIGURATION)/current",
+					);
 				INFOPLIST_FILE = iosApp/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
