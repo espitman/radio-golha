@@ -90,20 +90,32 @@ fun App() {
         value = loadHomeUiState()
     }
 
-    val programs by produceState(initialValue = emptyList(), reloadToken) {
+    var isProgramsLoading by remember { mutableStateOf(false) }
+    val programs by produceState(initialValue = emptyList<com.radiogolha.mobile.ui.home.ProgramUiModel>(), reloadToken) {
+        isProgramsLoading = true
         value = loadProgramsUiState()
+        isProgramsLoading = false
     }
 
+    var isSingersLoading by remember { mutableStateOf(false) }
     val singers by produceState(initialValue = emptyList(), reloadToken) {
+        isSingersLoading = true
         value = loadSingersUiState()
+        isSingersLoading = false
     }
 
+    var isMusiciansLoading by remember { mutableStateOf(false) }
     val musicians by produceState(initialValue = emptyList(), reloadToken) {
+        isMusiciansLoading = true
         value = loadMusiciansUiState()
+        isMusiciansLoading = false
     }
 
+    var isOrchestrasLoading by remember { mutableStateOf(false) }
     val orchestras by produceState<List<com.radiogolha.mobile.ui.home.OrchestraListItemUiModel>>(initialValue = emptyList(), reloadToken) {
+        isOrchestrasLoading = true
         value = loadOrchestrasUiState()
+        isOrchestrasLoading = false
     }
 
     // duetPairs is now part of homeState
@@ -170,8 +182,8 @@ fun App() {
 
             is AppRoute.CategoryPrograms -> {
                 com.radiogolha.mobile.ui.programs.CategoryProgramsScreen(
+                    categoryId = currentRoute.category.id,
                     categoryTitle = currentRoute.category.title,
-                    programs = currentRoute.programs,
                     bottomNavItems = bottomNavItems,
                     onBottomNavSelected = { onTabSelected(it) },
                     onBackClick = { pop() },
@@ -258,14 +270,8 @@ fun App() {
                             onTrackClick = { track -> push(AppRoute.ProgramEpisodeDetail(track.id)) },
                             onSingerClick = { id -> push(AppRoute.ArtistDetail(id)) },
                             onMusicianClick = { id -> push(AppRoute.ArtistDetail(id)) },
-                            onDuetClick = { duet ->
-                                scope.launch {
-                                    val duetTracks = withContext(Dispatchers.Default) {
-                                        com.radiogolha.mobile.ui.home.loadDuetPrograms(duet.singer1, duet.singer2)
-                                    }
-                                    push(AppRoute.DuetDetail(duet, duetTracks))
-                                }
-                            },
+                            onDuetClick = { duet -> push(AppRoute.DuetDetail(duet)) },
+                            onProgramClick = { category -> push(AppRoute.CategoryPrograms(category)) },
                             onBottomNavSelected = { onTabSelected(it) },
                             onPlayTrack = { player.play(it) },
                             currentTrack = currentTrack,
@@ -300,18 +306,17 @@ fun App() {
                             musicians = musicians,
                             orchestras = orchestras,
                             isProgramsLoading = isProgramsLoading,
+                            isSingersLoading = isSingersLoading,
+                            isMusiciansLoading = isMusiciansLoading,
                             bottomNavItems = bottomNavItems,
                             onBottomNavSelected = { onTabSelected(it) },
-                            onProgramClick = { category ->
-                                scope.launch {
-                                    val catPrograms = withContext(Dispatchers.Default) {
-                                        com.radiogolha.mobile.ui.programs.loadCategoryPrograms(category.id)
-                                    }
-                                    push(AppRoute.CategoryPrograms(category, catPrograms))
-                                }
-                            },
+                            onProgramClick = { category -> push(AppRoute.CategoryPrograms(category)) },
                             onSingerClick = { id -> push(AppRoute.ArtistDetail(id)) },
                             onMusicianClick = { id -> push(AppRoute.ArtistDetail(id)) },
+                            onInstrumentClick = { instrument ->
+                                // For now, we could just stay here or implement a detail view
+                                // But the user just wanted the tabs.
+                            },
                             onOrchestraClick = { id ->
                                 val orchestra = orchestras.find { it.id == id }
                                 if (orchestra != null) {
@@ -362,14 +367,12 @@ private sealed interface AppRoute {
     data object Musicians : AppRoute
     data class ArtistDetail(val id: Long) : AppRoute
     data class CategoryPrograms(
-        val category: com.radiogolha.mobile.ui.home.ProgramUiModel,
-        val programs: List<com.radiogolha.mobile.ui.home.CategoryProgramUiModel>
+        val category: com.radiogolha.mobile.ui.home.ProgramUiModel
     ) : AppRoute
     data class ProgramEpisodeDetail(val programId: Long) : AppRoute
     data class OrchestraDetail(val id: Long, val name: String) : AppRoute
     data class DuetDetail(
-        val duet: com.radiogolha.mobile.ui.home.DuetPairUiModel,
-        val tracks: List<com.radiogolha.mobile.ui.home.CategoryProgramUiModel>
+        val duet: com.radiogolha.mobile.ui.home.DuetPairUiModel
     ) : AppRoute
 }
 

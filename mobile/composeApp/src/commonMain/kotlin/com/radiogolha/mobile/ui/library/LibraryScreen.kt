@@ -19,12 +19,14 @@ import com.radiogolha.mobile.ui.home.*
 import com.radiogolha.mobile.ui.programs.ProgramsScreen
 import com.radiogolha.mobile.ui.singers.SingersContent
 import com.radiogolha.mobile.ui.musicians.MusiciansContent
+import com.radiogolha.mobile.ui.musicians.InstrumentsContent
 import com.radiogolha.mobile.ui.orchestras.OrchestraContent
 import kotlinx.coroutines.launch
 
 enum class LibraryTab(val title: String) {
     Programs("برنامه‌ها"),
     Singers("خواننده‌ها"),
+    Instruments("سازها"),
     Musicians("نوازندگان"),
     Orchestras("ارکسترها"),
 }
@@ -50,6 +52,7 @@ fun LibraryScreen(
     onProgramClick: (ProgramUiModel) -> Unit = {},
     onSingerClick: (Long) -> Unit = {},
     onMusicianClick: (Long) -> Unit = {},
+    onInstrumentClick: (String) -> Unit = {},
     onOrchestraClick: (Long) -> Unit = {},
     onTrackClick: (Long) -> Unit = {},
     onExpandPlayer: () -> Unit = {},
@@ -159,6 +162,13 @@ fun LibraryScreen(
                                 MusiciansContent(
                                     musicians = musicians,
                                     onMusicianClick = onMusicianClick,
+                                )
+                            }
+
+                            LibraryTab.Instruments -> {
+                                InstrumentsContent(
+                                    musicians = musicians,
+                                    onInstrumentClick = onInstrumentClick,
                                 )
                             }
 

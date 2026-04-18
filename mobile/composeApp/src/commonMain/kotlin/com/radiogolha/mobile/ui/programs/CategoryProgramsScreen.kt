@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
@@ -30,9 +31,8 @@ import com.radiogolha.mobile.ui.root.TabRootScreen
 
 @Composable
 fun CategoryProgramsScreen(
+    categoryId: Long,
     categoryTitle: String,
-    programs: List<CategoryProgramUiModel>,
-    isLoading: Boolean = false,
     bottomNavItems: List<BottomNavItemUiModel>,
     onBottomNavSelected: (AppTab) -> Unit,
     onProgramClick: (CategoryProgramUiModel) -> Unit = {},
@@ -49,6 +49,16 @@ fun CategoryProgramsScreen(
     onTrackClick: (Long) -> Unit = {},
     onExpandPlayer: () -> Unit = {},
 ) {
+    var programs by remember(categoryId) { mutableStateOf<List<CategoryProgramUiModel>?>(null) }
+
+    LaunchedEffect(categoryId) {
+        programs = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            loadCategoryPrograms(categoryId)
+        }
+    }
+
+    val isLoading = programs == null
+    val displayPrograms = programs ?: emptyList()
     TabRootScreen(
         title = "برنامه",
         subtitle = categoryTitle,
@@ -86,7 +96,7 @@ fun CategoryProgramsScreen(
                         }
                     }
                 }
-            } else if (programs.isEmpty()) {
+            } else if (displayPrograms.isEmpty()) {
                 item {
                     Box(Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
                         Text("برنامه‌ای یافت نشد", color = GolhaColors.SecondaryText)
@@ -102,7 +112,7 @@ fun CategoryProgramsScreen(
                                 .border(1.dp, GolhaColors.Border.copy(alpha = 0.6f), RoundedCornerShape(GolhaRadius.Card))
                                 .padding(vertical = 8.dp),
                         ) {
-                            programs.forEachIndexed { index, program ->
+                            displayPrograms.forEachIndexed { index, program ->
                                 val isActive = currentTrack?.id == program.id
                                 ProgramTrackRow(
                                     track = program.toTrackUiModel(),
@@ -113,7 +123,7 @@ fun CategoryProgramsScreen(
                                     onLongClick = { onTrackLongClick(program.toTrackUiModel()) },
                                     onArtistClick = onArtistClick,
                                 )
-                                if (index != programs.lastIndex) {
+                                if (index != displayPrograms.lastIndex) {
                                     HorizontalDivider(
                                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                                         color = GolhaColors.Border.copy(alpha = 0.65f),
