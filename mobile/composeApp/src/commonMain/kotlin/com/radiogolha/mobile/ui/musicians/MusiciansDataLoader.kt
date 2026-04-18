@@ -13,7 +13,7 @@ fun loadMusiciansUiState(): List<MusicianListItemUiModel> {
             name = it.name,
             instrument = it.instrument,
             imageUrl = it.avatar,
-            programCount = 0 // Will need to update DTO if we want real count
+            programCount = it.programCount
         )
     }
 }

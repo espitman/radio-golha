@@ -106,6 +106,10 @@ fun App() {
         value = loadOrchestrasUiState()
     }
 
+    val duetPairs by produceState<List<com.radiogolha.mobile.ui.home.DuetPairUiModel>>(initialValue = emptyList(), reloadToken) {
+        value = com.radiogolha.mobile.ui.home.loadDuetPairsConfig()
+    }
+
     val isProgramsLoading = programs.isEmpty()
 
     val isTopTracksRefreshing by produceState(initialValue = false, reloadToken) {
@@ -227,6 +231,7 @@ fun App() {
                     AppTab.Home -> {
                         HomeScreen(
                             state = homeState?.copy(bottomNavItems = bottomNavItems),
+                            duets = duetPairs,
                             bottomNavItems = bottomNavItems,
                             onOpenAllSingers = { push(AppRoute.Singers) },
                             onOpenAllMusicians = { push(AppRoute.Musicians) },
@@ -235,6 +240,14 @@ fun App() {
                             onTrackClick = { track -> push(AppRoute.ProgramEpisodeDetail(track.id)) },
                             onSingerClick = { id -> push(AppRoute.ArtistDetail(id)) },
                             onMusicianClick = { id -> push(AppRoute.ArtistDetail(id)) },
+                            onDuetClick = { duet ->
+                                scope.launch {
+                                    val duetTracks = withContext(Dispatchers.Default) {
+                                        com.radiogolha.mobile.ui.home.loadDuetPrograms(duet.singer1, duet.singer2)
+                                    }
+                                    push(AppRoute.DuetDetail(duet, duetTracks))
+                                }
+                            },
                             onBottomNavSelected = { onTabSelected(it) },
                             onPlayTrack = { player.play(it) },
                             currentTrack = currentTrack,

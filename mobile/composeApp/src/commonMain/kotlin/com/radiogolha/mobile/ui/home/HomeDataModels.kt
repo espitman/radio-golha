@@ -30,7 +30,8 @@ internal data class ProgramDto(
 internal data class SingerDto(
     val id: Long = 0,
     val name: String = "",
-    val avatar: String? = null
+    val avatar: String? = null,
+    val programCount: Int = 0
 )
 
 @Serializable
@@ -43,7 +44,8 @@ internal data class MusicianDto(
     val id: Long = 0,
     val name: String = "",
     val instrument: String = "",
-    val avatar: String? = null
+    val avatar: String? = null,
+    val programCount: Int = 0
 )
 
 @Serializable

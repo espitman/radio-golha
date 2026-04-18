@@ -1,6 +1,6 @@
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
-use radiogolha_core::{LookupKind, ProgramSearchFilters, ProgramSortField, RadioGolhaCore, SearchMatchMode, SortDirection};
+use radiogolha_core::{ProgramSearchFilters, ProgramSortField, RadioGolhaCore, SearchMatchMode, SortDirection};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, to_string};
 
@@ -55,30 +55,30 @@ struct IosArtistDetailResponse {
 
 #[derive(Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
-struct IosSearchFiltersDto {
-    transcript_query: Option<String>,
-    page: i64,
-    category_ids: Vec<i64>,
-    mode_ids: Vec<i64>,
-    mode_match: Option<String>,
-    orchestra_ids: Vec<i64>,
-    orchestra_match: Option<String>,
-    instrument_ids: Vec<i64>,
-    instrument_match: Option<String>,
-    singer_ids: Vec<i64>,
-    singer_match: Option<String>,
-    poet_ids: Vec<i64>,
-    poet_match: Option<String>,
-    announcer_ids: Vec<i64>,
-    announcer_match: Option<String>,
-    composer_ids: Vec<i64>,
-    composer_match: Option<String>,
-    arranger_ids: Vec<i64>,
-    arranger_match: Option<String>,
-    performer_ids: Vec<i64>,
-    performer_match: Option<String>,
-    orchestra_leader_ids: Vec<i64>,
-    orchestra_leader_match: Option<String>,
+pub struct IosSearchRequest {
+    pub transcript_query: Option<String>,
+    pub page: Option<i64>,
+    pub category_ids: Option<Vec<i64>>,
+    pub mode_ids: Option<Vec<i64>>,
+    pub mode_match: Option<String>,
+    pub orchestra_ids: Option<Vec<i64>>,
+    pub orchestra_match: Option<String>,
+    pub instrument_ids: Option<Vec<i64>>,
+    pub instrument_match: Option<String>,
+    pub singer_ids: Option<Vec<i64>>,
+    pub singer_match: Option<String>,
+    pub poet_ids: Option<Vec<i64>>,
+    pub poet_match: Option<String>,
+    pub announcer_ids: Option<Vec<i64>>,
+    pub announcer_match: Option<String>,
+    pub composer_ids: Option<Vec<i64>>,
+    pub composer_match: Option<String>,
+    pub arranger_ids: Option<Vec<i64>>,
+    pub arranger_match: Option<String>,
+    pub performer_ids: Option<Vec<i64>>,
+    pub performer_match: Option<String>,
+    pub orchestra_leader_ids: Option<Vec<i64>>,
+    pub orchestra_leader_match: Option<String>,
 }
 
 fn parse_match_mode(s: &Option<String>) -> SearchMatchMode {
@@ -130,7 +130,13 @@ pub extern "C" fn get_home_feed_json(db_path: *const c_char) -> *mut c_char {
 
             let payload = json!({
                 "programs": programs,
-                "categories": categories.iter().map(|c| json!({ "id": c.id, "title": c.title_fa, "episodeCount": 0 })).collect::<Vec<_>>(),
+                "categories": categories.iter().map(|c| {
+                    let count = programs.iter()
+                        .find(|p| p.title == c.title_fa)
+                        .map(|p| p.episode_count)
+                        .unwrap_or(0);
+                    json!({ "id": c.id, "title": c.title_fa, "episodeCount": count })
+                }).collect::<Vec<_>>(),
                 "singers": singers,
                 "dastgahs": dastgahs.iter().map(|m| json!({ "name": m.name })).collect::<Vec<_>>(),
                 "musicians": musicians,
@@ -164,7 +170,7 @@ pub extern "C" fn get_artist_detail_json(db_path: *const c_char, artist_id: i64)
                 (SELECT MAX(end_time) FROM program_timeline WHERE program_id = p.id), p.audio_url
                 FROM program p WHERE EXISTS (SELECT 1 FROM program_singers ps JOIN singer s ON s.id = ps.singer_id WHERE ps.program_id = p.id AND s.artist_id = ?1)
                 OR EXISTS (SELECT 1 FROM program_performers pp JOIN performer pf ON pf.id = pp.performer_id WHERE pp.program_id = p.id AND pf.artist_id = ?1)
-                ORDER BY p.no ASC LIMIT 100"
+                ORDER BY p.no ASC"
             ).unwrap();
             
             let programs: Vec<_> = stmt.query_map([artist_id], |row| {
@@ -218,53 +224,55 @@ pub extern "C" fn get_musicians_json(db_path: *const c_char) -> *mut c_char {
 }
 
 #[no_mangle]
-pub extern "C" fn search_programs_json(db_path: *const c_char, filters_json: *const c_char) -> *mut c_char {
+pub extern "C" fn get_search_options_json(db_path: *const c_char) -> *mut c_char {
     let path = get_path(db_path);
-    let filters_str = get_path(filters_json);
-    let req: IosSearchFiltersDto = serde_json::from_str(&filters_str).unwrap_or_default();
-    let filters = ProgramSearchFilters {
-        transcript_query: req.transcript_query,
-        category_ids: req.category_ids,
-        mode_ids: req.mode_ids,
-        mode_match: parse_match_mode(&req.mode_match),
-        orchestra_ids: req.orchestra_ids,
-        orchestra_match: parse_match_mode(&req.orchestra_match),
-        instrument_ids: req.instrument_ids,
-        instrument_match: parse_match_mode(&req.instrument_match),
-        singer_ids: req.singer_ids,
-        singer_match: parse_match_mode(&req.singer_match),
-        poet_ids: req.poet_ids,
-        poet_match: parse_match_mode(&req.poet_match),
-        announcer_ids: req.announcer_ids,
-        announcer_match: parse_match_mode(&req.announcer_match),
-        composer_ids: req.composer_ids,
-        composer_match: parse_match_mode(&req.composer_match),
-        arranger_ids: req.arranger_ids,
-        arranger_match: parse_match_mode(&req.arranger_match),
-        performer_ids: req.performer_ids,
-        performer_match: parse_match_mode(&req.performer_match),
-        orchestra_leader_ids: req.orchestra_leader_ids,
-        orchestra_leader_match: parse_match_mode(&req.orchestra_leader_match),
-        sort_field: ProgramSortField::No,
-        sort_direction: SortDirection::Asc,
-    };
     match RadioGolhaCore::open(&path) {
         Ok(core) => {
-            let result = core.search_programs(&filters, req.page).unwrap();
-            rust_str_to_c(to_string(&result).unwrap())
+            let options = core.program_search_options().unwrap();
+            rust_str_to_c(to_string(&options).unwrap_or_else(|_| "{}".to_string()))
         },
-        Err(e) => {
-            eprintln!("Error search: {:?}", e);
-            rust_str_to_c(json!({ "error": e.to_string() }).to_string())
-        }
+        Err(_) => rust_str_to_c("{}".to_string())
     }
 }
 
 #[no_mangle]
-pub extern "C" fn get_search_options_json(db_path: *const c_char) -> *mut c_char {
+pub extern "C" fn search_programs_json(db_path: *const c_char, filters_json: *const c_char) -> *mut c_char {
     let path = get_path(db_path);
+    let filters_raw = get_path(filters_json);
+    let req: IosSearchRequest = serde_json::from_str(&filters_raw).unwrap_or_default();
+    
+    let filters = ProgramSearchFilters {
+        transcript_query: req.transcript_query,
+        category_ids: req.category_ids.unwrap_or_default(),
+        mode_ids: req.mode_ids.unwrap_or_default(),
+        mode_match: parse_match_mode(&req.mode_match),
+        orchestra_ids: req.orchestra_ids.unwrap_or_default(),
+        orchestra_match: parse_match_mode(&req.orchestra_match),
+        instrument_ids: req.instrument_ids.unwrap_or_default(),
+        instrument_match: parse_match_mode(&req.instrument_match),
+        singer_ids: req.singer_ids.unwrap_or_default(),
+        singer_match: parse_match_mode(&req.singer_match),
+        poet_ids: req.poet_ids.unwrap_or_default(),
+        poet_match: parse_match_mode(&req.poet_match),
+        announcer_ids: req.announcer_ids.unwrap_or_default(),
+        announcer_match: parse_match_mode(&req.announcer_match),
+        composer_ids: req.composer_ids.unwrap_or_default(),
+        composer_match: parse_match_mode(&req.composer_match),
+        arranger_ids: req.arranger_ids.unwrap_or_default(),
+        arranger_match: parse_match_mode(&req.arranger_match),
+        performer_ids: req.performer_ids.unwrap_or_default(),
+        performer_match: parse_match_mode(&req.performer_match),
+        orchestra_leader_ids: req.orchestra_leader_ids.unwrap_or_default(),
+        orchestra_leader_match: parse_match_mode(&req.orchestra_leader_match),
+        sort_field: ProgramSortField::No,
+        sort_direction: SortDirection::Asc,
+    };
+    
     match RadioGolhaCore::open(&path) {
-        Ok(core) => rust_str_to_c(to_string(&core.program_search_options().unwrap()).unwrap()),
+        Ok(core) => {
+            let result = core.search_programs(&filters, req.page.unwrap_or(1)).unwrap();
+            rust_str_to_c(to_string(&result).unwrap_or_else(|_| "{}".to_string()))
+        },
         Err(_) => rust_str_to_c("{}".to_string())
     }
 }
@@ -277,11 +285,22 @@ pub extern "C" fn get_duet_programs_json(db_path: *const c_char, singer1: *const
     match RadioGolhaCore::open(&path) {
         Ok(core) => {
             let conn = core.connection();
-            let mut stmt = conn.prepare("SELECT p.id, p.title, p.no, COALESCE((SELECT GROUP_CONCAT(a.name, ' و ') FROM program_singers ps2 JOIN singer s2 ON s2.id = ps2.singer_id JOIN artist a ON a.id = s2.artist_id WHERE ps2.program_id = p.id), 'ناشناس'), (SELECT GROUP_CONCAT(m.name, ' و ') FROM program_modes pm JOIN mode m ON m.id = pm.mode_id WHERE pm.program_id = p.id), (SELECT MAX(end_time) FROM program_timeline WHERE program_id = p.id), p.audio_url FROM program p WHERE EXISTS (SELECT 1 FROM program_singers ps JOIN singer s ON s.id = ps.singer_id JOIN artist a ON a.id = s.artist_id WHERE ps.program_id = p.id AND a.name = ?1) AND EXISTS (SELECT 1 FROM program_singers ps JOIN singer s ON s.id = ps.singer_id JOIN artist a ON a.id = s.artist_id WHERE ps.program_id = p.id AND a.name = ?2) ORDER BY p.no ASC").unwrap();
+            let mut stmt = conn.prepare("
+                SELECT p.id, p.title, p.no,
+                       COALESCE((SELECT GROUP_CONCAT(a.name, ' و ') FROM program_singers ps2 JOIN singer s2 ON s2.id = ps2.singer_id JOIN artist a ON a.id = s2.artist_id WHERE ps2.program_id = p.id), 'ناشناس'),
+                       (SELECT GROUP_CONCAT(m.name, ' و ') FROM program_modes pm JOIN mode m ON m.id = pm.mode_id WHERE pm.program_id = p.id),
+                       (SELECT MAX(end_time) FROM program_timeline WHERE program_id = p.id),
+                       p.audio_url
+                FROM program p
+                WHERE (SELECT COUNT(*) FROM program_singers ps WHERE ps.program_id = p.id) = 2
+                  AND EXISTS (SELECT 1 FROM program_singers ps JOIN singer s ON s.id = ps.singer_id JOIN artist a ON a.id = s.artist_id WHERE ps.program_id = p.id AND a.name = ?1)
+                  AND EXISTS (SELECT 1 FROM program_singers ps JOIN singer s ON s.id = ps.singer_id JOIN artist a ON a.id = s.artist_id WHERE ps.program_id = p.id AND a.name = ?2)
+                ORDER BY p.no ASC
+            ").unwrap();
             let rows: Vec<_> = stmt.query_map([s1, s2], |row| {
                 Ok(IosCategoryProgramDto { id: row.get(0)?, title: row.get(1)?, no: row.get(2)?, artist: row.get(3)?, mode: row.get(4)?, duration: row.get(5)?, audio_url: row.get(6)? })
             }).unwrap().filter_map(|r| r.ok()).collect();
-            rust_str_to_c(to_string(&rows).unwrap())
+            rust_str_to_c(to_string(&rows).unwrap_or_else(|_| "[]".to_string()))
         },
         Err(_) => rust_str_to_c("[]".to_string())
     }
@@ -297,7 +316,7 @@ pub extern "C" fn get_programs_by_mode_json(db_path: *const c_char, mode_id: i64
             let rows: Vec<_> = stmt.query_map([mode_id], |row| {
                 Ok(IosCategoryProgramDto { id: row.get(0)?, title: row.get(1)?, no: row.get(2)?, artist: row.get(3)?, mode: row.get(4)?, duration: row.get(5)?, audio_url: row.get(6)? })
             }).unwrap().filter_map(|r| r.ok()).collect();
-            rust_str_to_c(to_string(&rows).unwrap())
+            rust_str_to_c(to_string(&rows).unwrap_or_else(|_| "[]".to_string()))
         },
         Err(_) => rust_str_to_c("[]".to_string())
     }
@@ -317,7 +336,7 @@ pub extern "C" fn get_programs_by_ids_json(db_path: *const c_char, ids_json: *co
             let rows: Vec<_> = stmt.query_map([], |row| {
                 Ok(IosCategoryProgramDto { id: row.get(0)?, title: row.get(1)?, no: row.get(2)?, artist: row.get(3)?, mode: row.get(4)?, duration: row.get(5)?, audio_url: row.get(6)? })
             }).unwrap().filter_map(|r| r.ok()).collect();
-            rust_str_to_c(to_string(&rows).unwrap())
+            rust_str_to_c(to_string(&rows).unwrap_or_else(|_| "[]".to_string()))
         },
         Err(_) => rust_str_to_c("[]".to_string())
     }
@@ -333,7 +352,7 @@ pub extern "C" fn get_programs_by_category_json(db_path: *const c_char, category
             let rows: Vec<_> = stmt.query_map([category_id], |row| {
                 Ok(IosCategoryProgramDto { id: row.get(0)?, title: row.get(1)?, no: row.get(2)?, artist: row.get(3)?, mode: row.get(4)?, duration: row.get(5)?, audio_url: row.get(6)? })
             }).unwrap().filter_map(|r| r.ok()).collect();
-            rust_str_to_c(to_string(&rows).unwrap())
+            rust_str_to_c(to_string(&rows).unwrap_or_else(|_| "[]".to_string()))
         },
         Err(_) => rust_str_to_c("[]".to_string())
     }
@@ -360,11 +379,17 @@ pub extern "C" fn get_orchestras_json(db_path: *const c_char) -> *mut c_char {
     match RadioGolhaCore::open(&path) {
         Ok(core) => {
             let conn = core.connection();
-            let mut stmt = conn.prepare("SELECT id, name FROM orchestra ORDER BY name ASC").unwrap();
+            let mut stmt = conn.prepare("
+                SELECT o.id, o.name, COUNT(DISTINCT po.program_id)
+                FROM orchestra o
+                LEFT JOIN program_orchestras po ON po.orchestra_id = o.id
+                GROUP BY o.id
+                ORDER BY o.name ASC
+            ").unwrap();
             let rows: Vec<_> = stmt.query_map([], |row| {
-                Ok(json!({ "id": row.get::<_, i64>(0)?, "name": row.get::<_, String>(1)?, "programCount": 0 }))
+                Ok(json!({ "id": row.get::<_, i64>(0)?, "name": row.get::<_, String>(1)?, "programCount": row.get::<_, i64>(2)? }))
             }).unwrap().filter_map(|r| r.ok()).collect();
-            rust_str_to_c(to_string(&rows).unwrap())
+            rust_str_to_c(to_string(&rows).unwrap_or_else(|_| "[]".to_string()))
         },
         Err(_) => rust_str_to_c("[]".to_string())
     }
@@ -380,7 +405,7 @@ pub extern "C" fn get_programs_by_orchestra_json(db_path: *const c_char, orchest
             let rows: Vec<_> = stmt.query_map([orchestra_id], |row| {
                 Ok(IosCategoryProgramDto { id: row.get(0)?, title: row.get(1)?, no: row.get(2)?, artist: row.get(3)?, mode: row.get(4)?, duration: row.get(5)?, audio_url: row.get(6)? })
             }).unwrap().filter_map(|r| r.ok()).collect();
-            rust_str_to_c(to_string(&rows).unwrap())
+            rust_str_to_c(to_string(&rows).unwrap_or_else(|_| "[]".to_string()))
         },
         Err(_) => rust_str_to_c("[]".to_string())
     }
@@ -392,7 +417,7 @@ pub extern "C" fn get_top_tracks_json(db_path: *const c_char) -> *mut c_char {
     match RadioGolhaCore::open(&path) {
         Ok(core) => {
             let tracks = core.random_vocal_track_summaries(20).unwrap_or_default();
-            rust_str_to_c(to_string(&tracks).unwrap())
+            rust_str_to_c(to_string(&tracks).unwrap_or_else(|_| "[]".to_string()))
         },
         Err(_) => rust_str_to_c("[]".to_string())
     }
@@ -402,7 +427,7 @@ pub extern "C" fn get_top_tracks_json(db_path: *const c_char) -> *mut c_char {
 pub extern "C" fn get_ordered_modes_json(db_path: *const c_char) -> *mut c_char {
     let path = get_path(db_path);
     match RadioGolhaCore::open(&path) {
-        Ok(core) => rust_str_to_c(to_string(&core.get_ordered_modes().unwrap_or_default()).unwrap()),
+        Ok(core) => rust_str_to_c(to_string(&core.get_ordered_modes().unwrap_or_default()).unwrap_or_else(|_| "[]".to_string())),
         Err(_) => rust_str_to_c("[]".to_string())
     }
 }

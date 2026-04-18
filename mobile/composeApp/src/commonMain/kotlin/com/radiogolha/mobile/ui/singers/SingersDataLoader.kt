@@ -13,7 +13,7 @@ fun loadSingersUiState(): List<SingerListItemUiModel> {
                 artistId = it.id,
                 name = it.name,
                 imageUrl = it.avatar,
-                programCount = 0
+                programCount = it.programCount
             )
         }
     } catch (e: Exception) {
