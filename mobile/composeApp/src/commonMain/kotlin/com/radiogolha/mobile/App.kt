@@ -120,7 +120,7 @@ fun App() {
 
     // duetPairs is now part of homeState
 
-    val isProgramsLoading = programs.isEmpty()
+
 
     val isTopTracksRefreshing by produceState(initialValue = false, reloadToken) {
         value = false
@@ -313,15 +313,8 @@ fun App() {
                             onProgramClick = { category -> push(AppRoute.CategoryPrograms(category)) },
                             onSingerClick = { id -> push(AppRoute.ArtistDetail(id)) },
                             onMusicianClick = { id -> push(AppRoute.ArtistDetail(id)) },
-                            onInstrumentClick = { instrument ->
-                                // For now, we could just stay here or implement a detail view
-                                // But the user just wanted the tabs.
-                            },
                             onOrchestraClick = { id ->
-                                val orchestra = orchestras.find { it.id == id }
-                                if (orchestra != null) {
-                                    push(AppRoute.OrchestraDetail(id, orchestra.name))
-                                }
+                                push(AppRoute.OrchestraDetail(id, orchestras.find { it.id == id }?.name ?: ""))
                             },
                             currentTrack = currentTrack,
                             isPlayerPlaying = isPlayerPlaying,

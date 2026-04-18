@@ -231,7 +231,7 @@ pub extern "C" fn get_musicians_json(db_path: *const c_char) -> *mut c_char {
     match RadioGolhaCore::open(&path) {
         Ok(core) => {
             let conn = core.connection();
-            let mut stmt = conn.prepare("SELECT a.id, a.name, a.avatar, p.instrument, COUNT(DISTINCT pp.program_id) FROM program_performers pp JOIN performer p ON p.id = pp.performer_id JOIN artist a ON a.id = p.artist_id GROUP BY p.id ORDER BY a.name ASC").unwrap();
+            let mut stmt = conn.prepare("SELECT a.id, a.name, a.avatar, COALESCE(i.name, 'نوازنده'), COUNT(DISTINCT pp.program_id) FROM program_performers pp JOIN performer p ON p.id = pp.performer_id JOIN artist a ON a.id = p.artist_id LEFT JOIN instrument i ON i.id = pp.instrument_id GROUP BY p.id ORDER BY a.name ASC").unwrap();
             let rows: Vec<_> = stmt.query_map([], |row| {
                 Ok(json!({ "id": row.get::<_, i64>(0)?, "name": row.get::<_, String>(1)?, "avatar": row.get::<_, Option<String>>(2)?, "instrument": row.get::<_, String>(3)?, "programCount": row.get::<_, i64>(4)? }))
             }).unwrap().filter_map(|r| r.ok()).collect();
