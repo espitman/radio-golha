@@ -18,8 +18,8 @@ fun loadHomeUiState(): HomeUiState? {
         HomeUiState(
             programs = response.categories.map { ProgramUiModel(it.id, it.title, it.episodeCount) },
             singers = response.singers.map { SingerUiModel(it.id, it.name, it.avatar, it.programCount) },
-            dastgahs = response.dastgahs.map { DastgahUiModel(it.name) },
             musicians = response.musicians.map { MusicianUiModel(it.id, it.name, it.instrument, it.avatar, it.programCount) },
+            dastgahs = response.dastgahs.map { DastgahUiModel(it.name) },
             topTracks = response.topTracks.map { it.toTrackUiModel() },
             duets = response.duets.map { 
                 DuetPairUiModel(
@@ -39,91 +39,153 @@ fun loadHomeUiState(): HomeUiState? {
 }
 
 fun loadTopTracks(): List<TrackUiModel> {
-    val payload = RustCoreBridge.getTopTracksJson(requireArchiveDbPath())
-    val tracks = json.decodeFromString<List<TrackDto>>(payload)
-    return tracks.map { it.toTrackUiModel() }
+    return try {
+        val payload = RustCoreBridge.getTopTracksJson(requireArchiveDbPath())
+        if (payload.isBlank()) return emptyList()
+        val tracks = json.decodeFromString<List<TrackDto>>(payload)
+        tracks.map { it.toTrackUiModel() }
+    } catch (e: Exception) {
+        println("ERROR loadTopTracks: ${e.message}")
+        emptyList()
+    }
 }
 
 fun loadProgramsByIds(ids: List<Long>): List<CategoryProgramUiModel> {
     if (ids.isEmpty()) return emptyList()
-    // Using a simple JSON array string for IDs as Rust bridge expects it
-    val idsJson = ids.joinToString(prefix = "[", postfix = "]", separator = ",")
-    val payload = RustCoreBridge.getProgramsByIdsJson(requireArchiveDbPath(), idsJson)
-    val response = json.decodeFromString<List<CategoryProgramDto>>(payload)
-    return response.map { it.toCategoryProgramUiModel() }
+    return try {
+        val idsJson = ids.joinToString(prefix = "[", postfix = "]", separator = ",")
+        val payload = RustCoreBridge.getProgramsByIdsJson(requireArchiveDbPath(), idsJson)
+        if (payload.isBlank()) return emptyList()
+        val response = json.decodeFromString<List<CategoryProgramDto>>(payload)
+        response.map { it.toCategoryProgramUiModel() }
+    } catch (e: Exception) {
+        println("ERROR loadProgramsByIds: ${e.message}")
+        emptyList()
+    }
 }
 
 fun loadProgramsByMode(modeId: Long): List<CategoryProgramUiModel> {
-    val payload = RustCoreBridge.getProgramsByModeJson(requireArchiveDbPath(), modeId)
-    val response = json.decodeFromString<List<CategoryProgramDto>>(payload)
-    return response.map { it.toCategoryProgramUiModel() }
+    return try {
+        val payload = RustCoreBridge.getProgramsByModeJson(requireArchiveDbPath(), modeId)
+        if (payload.isBlank()) return emptyList()
+        val response = json.decodeFromString<List<CategoryProgramDto>>(payload)
+        response.map { it.toCategoryProgramUiModel() }
+    } catch (e: Exception) {
+        println("ERROR loadProgramsByMode: ${e.message}")
+        emptyList()
+    }
 }
 
 fun loadDuetPairsConfig(): List<DuetPairUiModel> {
-    val payload = RustCoreBridge.getDuetPairsConfigJson(requireArchiveDbPath())
-    val response = json.decodeFromString<List<DuetPairDto>>(payload)
-    return response.map { 
-        DuetPairUiModel(
-            singer1 = it.singer1,
-            singer2 = it.singer2,
-            singer1Avatar = it.singer1Avatar,
-            singer2Avatar = it.singer2Avatar,
-            trackCount = it.trackCount
-        )
+    return try {
+        val payload = RustCoreBridge.getDuetPairsConfigJson(requireArchiveDbPath())
+        if (payload.isBlank()) return emptyList()
+        val response = json.decodeFromString<List<DuetPairDto>>(payload)
+        response.map { 
+            DuetPairUiModel(
+                singer1 = it.singer1,
+                singer2 = it.singer2,
+                singer1Avatar = it.singer1Avatar,
+                singer2Avatar = it.singer2Avatar,
+                trackCount = it.trackCount
+            )
+        }
+    } catch (e: Exception) {
+        println("ERROR loadDuetPairsConfig: ${e.message}")
+        emptyList()
     }
 }
 
 fun loadOrderedModes(): List<String> {
-    val payload = RustCoreBridge.getOrderedModesJson(requireArchiveDbPath())
-    return json.decodeFromString<List<String>>(payload)
+    return try {
+        val payload = RustCoreBridge.getOrderedModesJson(requireArchiveDbPath())
+        if (payload.isBlank()) return emptyList()
+        json.decodeFromString<List<String>>(payload)
+    } catch (e: Exception) {
+        println("ERROR loadOrderedModes: ${e.message}")
+        emptyList()
+    }
 }
 
 
 fun loadDuetPrograms(singer1: String, singer2: String): List<CategoryProgramUiModel> {
-    val payload = RustCoreBridge.getDuetProgramsJson(requireArchiveDbPath(), singer1, singer2)
-    val response = json.decodeFromString<List<CategoryProgramDto>>(payload)
-    return response.map { it.toCategoryProgramUiModel() }
+    return try {
+        val payload = RustCoreBridge.getDuetProgramsJson(requireArchiveDbPath(), singer1, singer2)
+        if (payload.isBlank()) return emptyList()
+        val response = json.decodeFromString<List<CategoryProgramDto>>(payload)
+        response.map { it.toCategoryProgramUiModel() }
+    } catch (e: Exception) {
+        println("ERROR loadDuetPrograms: ${e.message}")
+        emptyList()
+    }
 }
 
 fun loadRecentlyPlayedIds(limit: Long): List<Long> {
-    val payload = RustCoreBridge.getRecentlyPlayedIds(requireUserDbPath(), limit)
-    return json.decodeFromString<List<Long>>(payload)
+    return try {
+        val payload = RustCoreBridge.getRecentlyPlayedIds(requireUserDbPath(), limit)
+        if (payload.isBlank()) return emptyList()
+        json.decodeFromString<List<Long>>(payload)
+    } catch (e: Exception) {
+        println("ERROR loadRecentlyPlayedIds: ${e.message}")
+        emptyList()
+    }
 }
 
 fun loadSavedPlaylists(): List<SavedPlaylistUiModel> {
-    val payload = RustCoreBridge.getManualPlaylists(requireUserDbPath())
-    val playlists = json.decodeFromString<List<PlaylistDto>>(payload)
-    return playlists.map { SavedPlaylistUiModel(it.id, it.name) }
+    return try {
+        val payload = RustCoreBridge.getManualPlaylists(requireUserDbPath())
+        if (payload.isBlank()) return emptyList()
+        val playlists = json.decodeFromString<List<PlaylistDto>>(payload)
+        playlists.map { SavedPlaylistUiModel(it.id, it.name) }
+    } catch (e: Exception) {
+        println("ERROR loadSavedPlaylists: ${e.message}")
+        emptyList()
+    }
 }
 
 fun loadFavoriteSingers(): List<SingerListItemUiModel> {
-    val payload = RustCoreBridge.getFavoriteArtistIds(requireUserDbPath(), "artist")
-    val ids = json.decodeFromString<List<Long>>(payload)
-    if (ids.isEmpty()) return emptyList()
-    // We can't fetch full details for arbitrary IDs easily without a dedicated core bridge for "get_artists_by_ids"
-    // For now we'll return what we have in the main feed or just use a placeholder
-    // But ideally we'd use get_singers_json and filter
-    val allSingersPayload = RustCoreBridge.getSingersJson(requireArchiveDbPath())
-    val singers = json.decodeFromString<List<SingerDto>>(allSingersPayload)
-    return singers.filter { ids.contains(it.id) }.map {
-        SingerListItemUiModel(artistId = it.id, name = it.name, imageUrl = it.avatar, programCount = it.programCount)
+    return try {
+        val payload = RustCoreBridge.getFavoriteArtistIds(requireUserDbPath(), "artist")
+        if (payload.isBlank()) return emptyList()
+        val ids = json.decodeFromString<List<Long>>(payload)
+        if (ids.isEmpty()) return emptyList()
+        val allSingersPayload = RustCoreBridge.getSingersJson(requireArchiveDbPath())
+        val singers = json.decodeFromString<List<SingerDto>>(allSingersPayload)
+        singers.filter { ids.contains(it.id) }.map {
+            SingerListItemUiModel(artistId = it.id, name = it.name, imageUrl = it.avatar, programCount = it.programCount)
+        }
+    } catch (e: Exception) {
+        println("ERROR loadFavoriteSingers: ${e.message}")
+        emptyList()
     }
 }
 
 fun loadFavoriteMusicians(): List<MusicianListItemUiModel> {
-    val payload = RustCoreBridge.getFavoriteArtistIds(requireUserDbPath(), "musician")
-    val ids = json.decodeFromString<List<Long>>(payload)
-    if (ids.isEmpty()) return emptyList()
-    val allMusiciansPayload = RustCoreBridge.getMusiciansJson(requireArchiveDbPath())
-    val musicians = json.decodeFromString<List<MusicianDto>>(allMusiciansPayload)
-    return musicians.filter { ids.contains(it.id) }.map {
-        MusicianListItemUiModel(artistId = it.id, name = it.name, instrument = it.instrument, imageUrl = it.avatar, programCount = it.programCount)
+    return try {
+        val payload = RustCoreBridge.getFavoriteArtistIds(requireUserDbPath(), "musician")
+        if (payload.isBlank()) return emptyList()
+        val ids = json.decodeFromString<List<Long>>(payload)
+        if (ids.isEmpty()) return emptyList()
+        val allMusiciansPayload = RustCoreBridge.getMusiciansJson(requireArchiveDbPath())
+        val musicians = json.decodeFromString<List<MusicianDto>>(allMusiciansPayload)
+        musicians.filter { ids.contains(it.id) }.map {
+            MusicianListItemUiModel(artistId = it.id, name = it.name, instrument = it.instrument, imageUrl = it.avatar, programCount = it.programCount)
+        }
+    } catch (e: Exception) {
+        println("ERROR loadFavoriteMusicians: ${e.message}")
+        emptyList()
     }
 }
 
 fun loadMostPlayedIds(limit: Long): List<Long> {
-    val payload = RustCoreBridge.getMostPlayedIds(requireUserDbPath(), limit)
-    return json.decodeFromString<List<Long>>(payload)
+    return try {
+        val payload = RustCoreBridge.getMostPlayedIds(requireUserDbPath(), limit)
+        if (payload.isBlank()) return emptyList()
+        json.decodeFromString<List<Long>>(payload)
+    } catch (e: Exception) {
+        println("ERROR loadMostPlayedIds: ${e.message}")
+        emptyList()
+    }
 }
 
 internal fun TrackDto.toTrackUiModel() = TrackUiModel(

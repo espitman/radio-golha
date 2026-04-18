@@ -231,11 +231,19 @@ pub extern "C" fn get_musicians_json(db_path: *const c_char) -> *mut c_char {
     match RadioGolhaCore::open(&path) {
         Ok(core) => {
             let conn = core.connection();
-            let mut stmt = conn.prepare("SELECT a.id, a.name, a.avatar, COALESCE(i.name, 'نوازنده'), COUNT(DISTINCT pp.program_id) FROM program_performers pp JOIN performer p ON p.id = pp.performer_id JOIN artist a ON a.id = p.artist_id LEFT JOIN instrument i ON i.id = pp.instrument_id GROUP BY p.id ORDER BY a.name ASC").unwrap();
-            let rows: Vec<_> = stmt.query_map([], |row| {
-                Ok(json!({ "id": row.get::<_, i64>(0)?, "name": row.get::<_, String>(1)?, "avatar": row.get::<_, Option<String>>(2)?, "instrument": row.get::<_, String>(3)?, "programCount": row.get::<_, i64>(4)? }))
-            }).unwrap().filter_map(|r| r.ok()).collect();
-            rust_str_to_c(to_string(&rows).unwrap())
+            let stmt_result = conn.prepare("SELECT a.id, a.name, a.avatar, COALESCE(i.name, 'نوازنده'), COUNT(DISTINCT pp.program_id) FROM program_performers pp JOIN performer p ON p.id = pp.performer_id JOIN artist a ON a.id = p.artist_id LEFT JOIN instrument i ON i.id = pp.instrument_id GROUP BY p.id ORDER BY a.name ASC");
+            match stmt_result {
+                Ok(mut stmt) => {
+                    let rows: Vec<_> = match stmt.query_map([], |row| {
+                        Ok(json!({ "id": row.get::<_, i64>(0)?, "name": row.get::<_, String>(1)?, "avatar": row.get::<_, Option<String>>(2)?, "instrument": row.get::<_, String>(3)?, "programCount": row.get::<_, i64>(4)? }))
+                    }) {
+                        Ok(mapped) => mapped.filter_map(|r| r.ok()).collect(),
+                        Err(_) => vec![],
+                    };
+                    rust_str_to_c(to_string(&rows).unwrap_or_else(|_| "[]".to_string()))
+                },
+                Err(_) => rust_str_to_c("[]".to_string())
+            }
         },
         Err(_) => rust_str_to_c("[]".to_string())
     }
@@ -381,13 +389,15 @@ pub extern "C" fn get_program_detail_json(db_path: *const c_char, program_id: i6
     let path = get_path(db_path);
     match RadioGolhaCore::open(&path) {
         Ok(core) => {
-            let conn = core.connection();
-            let row = conn.query_row("SELECT id, title, (SELECT MAX(end_time) FROM program_timeline WHERE program_id = p.id), audio_url, description FROM program p WHERE id = ?1", [program_id], |row| {
-                Ok(json!({ "id": row.get::<_, i64>(0)?, "title": row.get::<_, String>(1)?, "duration": row.get::<_, Option<String>>(2)?, "audioUrl": row.get::<_, Option<String>>(3)?, "description": row.get::<_, Option<String>>(4)? }))
-            }).unwrap();
-            rust_str_to_c(row.to_string())
+            match core.get_program_detail(program_id) {
+                Ok(Some(detail)) => {
+                    rust_str_to_c(to_string(&detail).unwrap_or_else(|_| String::new()))
+                }
+                Ok(None) => rust_str_to_c(String::new()),
+                Err(_) => rust_str_to_c(String::new()),
+            }
         },
-        Err(_) => rust_str_to_c("{}".to_string())
+        Err(_) => rust_str_to_c(String::new())
     }
 }
 
