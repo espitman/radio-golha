@@ -16,6 +16,11 @@ fun loadArtistDetail(artistId: Long): ArtistDetailUiModel? {
         imageUrl = response.avatar,
         instrument = null, // Could be found in bio if needed
         trackCount = response.programs.size,
-        tracks = response.programs.map { it.toCategoryProgramUiModel() }
+        tracks = response.programs.map { it.toCategoryProgramUiModel() },
+        isFavorite = try {
+            RustCoreBridge.isFavoriteArtist(com.radiogolha.mobile.ui.home.requireUserDbPath(), artistId) == "true"
+        } catch (e: Exception) {
+            false
+        }
     )
 }

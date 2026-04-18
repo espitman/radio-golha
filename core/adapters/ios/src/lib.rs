@@ -1,6 +1,6 @@
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
-use radiogolha_core::{ProgramSearchFilters, ProgramSortField, RadioGolhaCore, SearchMatchMode, SortDirection};
+use radiogolha_core::{ProgramSearchFilters, ProgramSortField, RadioGolhaCore, SearchMatchMode, SortDirection, user_data::{UserDataStore, CreatePlaylistRequest}};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, to_string};
 
@@ -469,5 +469,181 @@ pub extern "C" fn get_config_json(db_path: *const c_char, key: *const c_char) ->
             rust_str_to_c(to_string(&val).unwrap_or_else(|_| "\"\"".to_string()))
         },
         Err(_) => rust_str_to_c("\"\"".to_string())
+    }
+}
+
+// --- User Data Implementation ---
+
+#[no_mangle]
+pub extern "C" fn get_all_playlists_json(user_db_path: *const c_char) -> *mut c_char {
+    let path = get_path(user_db_path);
+    match UserDataStore::open(&path) {
+        Ok(store) => rust_str_to_c(to_string(&store.get_all_playlists().unwrap_or_default()).unwrap_or_else(|_| "[]".to_string())),
+        Err(_) => rust_str_to_c("[]".to_string())
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn get_playlist_json(user_db_path: *const c_char, id: i64) -> *mut c_char {
+    let path = get_path(user_db_path);
+    match UserDataStore::open(&path) {
+        Ok(store) => {
+            let p = store.get_playlist(id).unwrap_or(None);
+            rust_str_to_c(to_string(&p).unwrap_or_else(|_| "{}".to_string()))
+        },
+        Err(_) => rust_str_to_c("{}".to_string())
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn create_playlist_bridge(user_db_path: *const c_char, request_json: *const c_char) -> *mut c_char {
+    let path = get_path(user_db_path);
+    let req_str = get_path(request_json);
+    let req: CreatePlaylistRequest = serde_json::from_str(&req_str).unwrap();
+    match UserDataStore::open(&path) {
+        Ok(store) => {
+            let id = store.create_playlist(&req.name, &req.playlist_type.unwrap_or("manual".to_string()), &req.filters_json.unwrap_or("{}".to_string())).unwrap_or(0);
+            rust_str_to_c(id.to_string())
+        },
+        Err(_) => rust_str_to_c("0".to_string())
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn rename_playlist_bridge(user_db_path: *const c_char, id: i64, name: *const c_char) -> *mut c_char {
+    let path = get_path(user_db_path);
+    let n = get_path(name);
+    match UserDataStore::open(&path) {
+        Ok(store) => {
+            store.rename_playlist(id, &n).unwrap_or(());
+            rust_str_to_c("OK".to_string())
+        },
+        Err(_) => rust_str_to_c("ERROR".to_string())
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn delete_playlist_bridge(user_db_path: *const c_char, id: i64) -> *mut c_char {
+    let path = get_path(user_db_path);
+    match UserDataStore::open(&path) {
+        Ok(store) => {
+            store.delete_playlist(id).unwrap_or(());
+            rust_str_to_c("OK".to_string())
+        },
+        Err(_) => rust_str_to_c("ERROR".to_string())
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn add_track_to_playlist_bridge(user_db_path: *const c_char, playlist_id: i64, track_id: i64) -> *mut c_char {
+    let path = get_path(user_db_path);
+    match UserDataStore::open(&path) {
+        Ok(store) => {
+            store.add_track(playlist_id, track_id).unwrap_or(());
+            rust_str_to_c("OK".to_string())
+        },
+        Err(_) => rust_str_to_c("ERROR".to_string())
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn remove_track_from_playlist_bridge(user_db_path: *const c_char, playlist_id: i64, track_id: i64) -> *mut c_char {
+    let path = get_path(user_db_path);
+    match UserDataStore::open(&path) {
+        Ok(store) => {
+            store.remove_track(playlist_id, track_id).unwrap_or(());
+            rust_str_to_c("OK".to_string())
+        },
+        Err(_) => rust_str_to_c("ERROR".to_string())
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn get_manual_playlists_json(user_db_path: *const c_char) -> *mut c_char {
+    let path = get_path(user_db_path);
+    match UserDataStore::open(&path) {
+        Ok(store) => rust_str_to_c(to_string(&store.get_manual_playlists().unwrap_or_default()).unwrap_or_else(|_| "[]".to_string())),
+        Err(_) => rust_str_to_c("[]".to_string())
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn add_favorite_artist_bridge(user_db_path: *const c_char, artist_id: i64, artist_type: *const c_char) -> *mut c_char {
+    let path = get_path(user_db_path);
+    let atype = get_path(artist_type);
+    match UserDataStore::open(&path) {
+        Ok(store) => {
+            store.add_favorite_artist(artist_id, &atype).unwrap_or(());
+            rust_str_to_c("OK".to_string())
+        },
+        Err(_) => rust_str_to_c("ERROR".to_string())
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn remove_favorite_artist_bridge(user_db_path: *const c_char, artist_id: i64) -> *mut c_char {
+    let path = get_path(user_db_path);
+    match UserDataStore::open(&path) {
+        Ok(store) => {
+            store.remove_favorite_artist(artist_id).unwrap_or(());
+            rust_str_to_c("OK".to_string())
+        },
+        Err(_) => rust_str_to_c("ERROR".to_string())
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn is_favorite_artist_bridge(user_db_path: *const c_char, artist_id: i64) -> *mut c_char {
+    let path = get_path(user_db_path);
+    match UserDataStore::open(&path) {
+        Ok(store) => rust_str_to_c(store.is_favorite_artist(artist_id).unwrap_or(false).to_string()),
+        Err(_) => rust_str_to_c("false".to_string())
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn get_favorite_artist_ids_json(user_db_path: *const c_char, artist_type: *const c_char) -> *mut c_char {
+    let path = get_path(user_db_path);
+    let atype = get_path(artist_type);
+    match UserDataStore::open(&path) {
+        Ok(store) => {
+            let ids = if atype.is_empty() {
+                store.get_favorite_artist_ids().unwrap_or_default()
+            } else {
+                store.get_favorite_artist_ids_by_type(&atype).unwrap_or_default()
+            };
+            rust_str_to_c(to_string(&ids).unwrap_or_else(|_| "[]".to_string()))
+        },
+        Err(_) => rust_str_to_c("[]".to_string())
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn record_playback_bridge(user_db_path: *const c_char, track_id: i64) -> *mut c_char {
+    let path = get_path(user_db_path);
+    match UserDataStore::open(&path) {
+        Ok(store) => {
+            store.record_playback(track_id).unwrap_or(());
+            rust_str_to_c("OK".to_string())
+        },
+        Err(_) => rust_str_to_c("ERROR".to_string())
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn get_recently_played_ids_json(user_db_path: *const c_char, limit: i64) -> *mut c_char {
+    let path = get_path(user_db_path);
+    match UserDataStore::open(&path) {
+        Ok(store) => rust_str_to_c(to_string(&store.get_recent_tracks(limit).unwrap_or_default()).unwrap_or_else(|_| "[]".to_string())),
+        Err(_) => rust_str_to_c("[]".to_string())
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn get_most_played_ids_json(user_db_path: *const c_char, limit: i64) -> *mut c_char {
+    let path = get_path(user_db_path);
+    match UserDataStore::open(&path) {
+        Ok(store) => rust_str_to_c(to_string(&store.get_most_played_tracks(limit).unwrap_or_default()).unwrap_or_else(|_| "[]".to_string())),
+        Err(_) => rust_str_to_c("[]".to_string())
     }
 }

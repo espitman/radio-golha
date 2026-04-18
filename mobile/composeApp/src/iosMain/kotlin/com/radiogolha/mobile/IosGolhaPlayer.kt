@@ -77,6 +77,13 @@ class IosGolhaPlayer : GolhaPlayer {
         _currentTrack.value = track
         _isLoading.value = true
         
+        // Record playback in local database
+        try {
+            RustCoreBridge.recordPlayback(com.radiogolha.mobile.ui.home.requireUserDbPath(), track.id)
+        } catch (e: Exception) {
+            println("GOLHA: Failed to record playback: ${e.message}")
+        }
+
         val playerItem = AVPlayerItem(uRL = url)
         avPlayer.replaceCurrentItemWithPlayerItem(playerItem)
         avPlayer.play()

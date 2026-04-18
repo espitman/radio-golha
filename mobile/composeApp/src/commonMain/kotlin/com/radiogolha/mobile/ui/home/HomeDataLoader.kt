@@ -5,6 +5,8 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
 expect fun requireArchiveDbPath(): String
+expect fun requireUserDbPath(): String
+
 
 fun loadHomeUiState(): HomeUiState? {
     return try {
@@ -83,6 +85,47 @@ fun loadDuetPrograms(singer1: String, singer2: String): List<CategoryProgramUiMo
     return response.map { it.toCategoryProgramUiModel() }
 }
 
+fun loadRecentlyPlayedIds(limit: Long): List<Long> {
+    val payload = RustCoreBridge.getRecentlyPlayedIds(requireUserDbPath(), limit)
+    return json.decodeFromString<List<Long>>(payload)
+}
+
+fun loadSavedPlaylists(): List<SavedPlaylistUiModel> {
+    val payload = RustCoreBridge.getManualPlaylists(requireUserDbPath())
+    val playlists = json.decodeFromString<List<PlaylistDto>>(payload)
+    return playlists.map { SavedPlaylistUiModel(it.id, it.name) }
+}
+
+fun loadFavoriteSingers(): List<SingerListItemUiModel> {
+    val payload = RustCoreBridge.getFavoriteArtistIds(requireUserDbPath(), "artist")
+    val ids = json.decodeFromString<List<Long>>(payload)
+    if (ids.isEmpty()) return emptyList()
+    // We can't fetch full details for arbitrary IDs easily without a dedicated core bridge for "get_artists_by_ids"
+    // For now we'll return what we have in the main feed or just use a placeholder
+    // But ideally we'd use get_singers_json and filter
+    val allSingersPayload = RustCoreBridge.getSingersJson(requireArchiveDbPath())
+    val singers = json.decodeFromString<List<SingerDto>>(allSingersPayload)
+    return singers.filter { ids.contains(it.id) }.map {
+        SingerListItemUiModel(artistId = it.id, name = it.name, imageUrl = it.avatar, programCount = it.programCount)
+    }
+}
+
+fun loadFavoriteMusicians(): List<MusicianListItemUiModel> {
+    val payload = RustCoreBridge.getFavoriteArtistIds(requireUserDbPath(), "musician")
+    val ids = json.decodeFromString<List<Long>>(payload)
+    if (ids.isEmpty()) return emptyList()
+    val allMusiciansPayload = RustCoreBridge.getMusiciansJson(requireArchiveDbPath())
+    val musicians = json.decodeFromString<List<MusicianDto>>(allMusiciansPayload)
+    return musicians.filter { ids.contains(it.id) }.map {
+        MusicianListItemUiModel(artistId = it.id, name = it.name, instrument = it.instrument, imageUrl = it.avatar, programCount = it.programCount)
+    }
+}
+
+fun loadMostPlayedIds(limit: Long): List<Long> {
+    val payload = RustCoreBridge.getMostPlayedIds(requireUserDbPath(), limit)
+    return json.decodeFromString<List<Long>>(payload)
+}
+
 internal fun TrackDto.toTrackUiModel() = TrackUiModel(
     id = id,
     artistId = artistId,
@@ -94,6 +137,7 @@ internal fun TrackDto.toTrackUiModel() = TrackUiModel(
     artistImages = if (avatar != null) listOf(avatar) else if (cover != null) listOf(cover) else emptyList()
 )
 
+
 internal fun CategoryProgramDto.toCategoryProgramUiModel() = CategoryProgramUiModel(
     id = id,
     title = title ?: "برنامه $no",
@@ -103,4 +147,10 @@ internal fun CategoryProgramDto.toCategoryProgramUiModel() = CategoryProgramUiMo
     duration = duration,
     dastgah = mode,
     audioUrl = audioUrl
+)
+
+@kotlinx.serialization.Serializable
+internal data class PlaylistDto(
+    val id: Long,
+    val name: String
 )

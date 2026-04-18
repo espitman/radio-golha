@@ -202,4 +202,5 @@ data class ArtistDetailUiModel(
     val instrument: String? = null,
     val trackCount: Int,
     val tracks: List<CategoryProgramUiModel>,
+    val isFavorite: Boolean = false,
 )

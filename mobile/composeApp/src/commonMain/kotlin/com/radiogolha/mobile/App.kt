@@ -29,6 +29,7 @@ import com.radiogolha.mobile.ui.programs.loadProgramsUiState
 import com.radiogolha.mobile.ui.settings.SettingsScreen
 import com.radiogolha.mobile.ui.singers.SingersScreen
 import com.radiogolha.mobile.ui.singers.loadSingersUiState
+import com.radiogolha.mobile.ui.programs.toTrackUiModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import kotlinx.coroutines.Dispatchers
@@ -98,14 +99,14 @@ fun App() {
     }
 
     var isSingersLoading by remember { mutableStateOf(false) }
-    val singers by produceState(initialValue = emptyList(), reloadToken) {
+    val singers by produceState<List<com.radiogolha.mobile.ui.home.SingerListItemUiModel>>(initialValue = emptyList(), reloadToken) {
         isSingersLoading = true
         value = loadSingersUiState()
         isSingersLoading = false
     }
 
     var isMusiciansLoading by remember { mutableStateOf(false) }
-    val musicians by produceState(initialValue = emptyList(), reloadToken) {
+    val musicians by produceState<List<com.radiogolha.mobile.ui.home.MusicianListItemUiModel>>(initialValue = emptyList(), reloadToken) {
         isMusiciansLoading = true
         value = loadMusiciansUiState()
         isMusiciansLoading = false
@@ -118,13 +119,40 @@ fun App() {
         isOrchestrasLoading = false
     }
 
-    // duetPairs is now part of homeState
+    // User-specific state
+    val recentlyPlayedIds by produceState(initialValue = emptyList<Long>(), reloadToken, currentTrack) {
+        value = com.radiogolha.mobile.ui.home.loadRecentlyPlayedIds(12)
+    }
+    
+    val recentlyPlayed by produceState(initialValue = emptyList<TrackUiModel>(), recentlyPlayedIds) {
+        value = com.radiogolha.mobile.ui.home.loadProgramsByIds(recentlyPlayedIds).map { it.toTrackUiModel() }
+    }
 
+    val savedPlaylists by produceState(initialValue = emptyList<com.radiogolha.mobile.ui.home.SavedPlaylistUiModel>(), reloadToken) {
+        value = com.radiogolha.mobile.ui.home.loadSavedPlaylists()
+    }
 
+    val favoriteSingers by produceState(initialValue = emptyList<com.radiogolha.mobile.ui.home.SingerListItemUiModel>(), reloadToken) {
+        value = com.radiogolha.mobile.ui.home.loadFavoriteSingers()
+    }
+
+    val favoriteMusicians by produceState(initialValue = emptyList<com.radiogolha.mobile.ui.home.MusicianListItemUiModel>(), reloadToken) {
+        value = com.radiogolha.mobile.ui.home.loadFavoriteMusicians()
+    }
+
+    val mostPlayedIds by produceState(initialValue = emptyList<Long>(), reloadToken) {
+        value = com.radiogolha.mobile.ui.home.loadMostPlayedIds(10)
+    }
+
+    val mostPlayed by produceState(initialValue = emptyList<TrackUiModel>(), mostPlayedIds) {
+        value = com.radiogolha.mobile.ui.home.loadProgramsByIds(mostPlayedIds).map { it.toTrackUiModel() }
+    }
 
     val isTopTracksRefreshing by produceState(initialValue = false, reloadToken) {
         value = false
     }
+
+    var selectedTrackForOptions by remember { mutableStateOf<TrackUiModel?>(null) }
 
     GolhaAppTheme {
         val currentRoute = currentStack.last()
@@ -171,6 +199,18 @@ fun App() {
                     onBackClick = { pop() },
                     onArtistClick = { id -> push(AppRoute.ArtistDetail(id)) },
                     onPlayTrack = { player.play(it) },
+                    onTrackLongClick = { selectedTrackForOptions = it },
+                    onToggleFavorite = {
+                        scope.launch {
+                            val isFavStr = RustCoreBridge.isFavoriteArtist(com.radiogolha.mobile.ui.home.requireUserDbPath(), currentRoute.id)
+                            if (isFavStr == "true") {
+                                RustCoreBridge.removeFavoriteArtist(com.radiogolha.mobile.ui.home.requireUserDbPath(), currentRoute.id)
+                            } else {
+                                RustCoreBridge.addFavoriteArtist(com.radiogolha.mobile.ui.home.requireUserDbPath(), currentRoute.id, "artist")
+                            }
+                            reloadToken += 1
+                        }
+                    },
                     currentTrack = currentTrack,
                     isPlayerPlaying = isPlayerPlaying,
                     isPlayerLoading = isPlayerLoading,
@@ -190,6 +230,7 @@ fun App() {
                     onTrackClick = { trackId -> push(AppRoute.ProgramEpisodeDetail(trackId)) },
                     onPlayTrack = { player.play(it) },
                     onArtistClick = { id -> push(AppRoute.ArtistDetail(id)) },
+                    onTrackLongClick = { selectedTrackForOptions = it },
                     onProgramClick = { program -> push(AppRoute.ProgramEpisodeDetail(program.id)) },
                     currentTrack = currentTrack,
                     isPlayerPlaying = isPlayerPlaying,
@@ -216,6 +257,7 @@ fun App() {
                     currentPlaybackPositionMs = currentPlaybackPositionMs,
                     currentPlaybackDurationMs = currentPlaybackDurationMs,
                     onTogglePlayerPlayback = { player.togglePlayback() },
+                    onTrackLongClick = { selectedTrackForOptions = it },
                 )
             }
 
@@ -232,6 +274,7 @@ fun App() {
                     currentPlaybackPositionMs = currentPlaybackPositionMs,
                     currentPlaybackDurationMs = currentPlaybackDurationMs,
                     onTogglePlayerPlayback = { player.togglePlayback() },
+                    onTrackLongClick = { selectedTrackForOptions = it },
                     onSeek = { player.seekTo(it) },
                 )
             }
@@ -274,6 +317,9 @@ fun App() {
                             onProgramClick = { category -> push(AppRoute.CategoryPrograms(category)) },
                             onBottomNavSelected = { onTabSelected(it) },
                             onPlayTrack = { player.play(it) },
+                            onTrackLongClick = { selectedTrackForOptions = it },
+                            recentlyPlayed = recentlyPlayed,
+                            savedPlaylists = savedPlaylists,
                             currentTrack = currentTrack,
                             isPlayerPlaying = isPlayerPlaying,
                             isPlayerLoading = isPlayerLoading,
@@ -346,10 +392,53 @@ fun App() {
                                     }
                                 }
                             },
+                            favoriteSingers = favoriteSingers,
+                            favoriteMusicians = favoriteMusicians,
+                            onArtistClick = { id -> push(AppRoute.ArtistDetail(id)) },
+                            recentlyPlayedTracks = recentlyPlayed,
+                            mostPlayedTracks = mostPlayed,
+                            savedPlaylists = savedPlaylists,
+                            onTrackClick = { id -> push(AppRoute.ProgramEpisodeDetail(id)) },
+                            onPlayTrack = { player.play(it) },
+                            onTrackLongClick = { selectedTrackForOptions = it }
                         )
                     }
                 }
             }
+        }
+
+
+        
+        selectedTrackForOptions?.let { track ->
+            com.radiogolha.mobile.ui.programs.TrackOptionsSheet(
+                track = track,
+                manualPlaylists = savedPlaylists.map { com.radiogolha.mobile.ui.programs.PlaylistOptionItem(it.id, it.name) },
+                onDismiss = { selectedTrackForOptions = null },
+                onGoToProgram = { 
+                    push(AppRoute.ProgramEpisodeDetail(track.id))
+                    selectedTrackForOptions = null
+                },
+                onGoToArtist = { 
+                    track.artistId?.let { id -> push(AppRoute.ArtistDetail(id)) }
+                    selectedTrackForOptions = null
+                },
+                onAddToPlaylist = { playlistId ->
+                    scope.launch {
+                        RustCoreBridge.addTrackToPlaylist(com.radiogolha.mobile.ui.home.requireUserDbPath(), playlistId, track.id)
+                        reloadToken += 1
+                    }
+                },
+                onCreatePlaylist = { name ->
+                    scope.launch {
+                        val json = "{\"name\":\"$name\",\"type\":\"manual\"}"
+                        val newId = RustCoreBridge.createPlaylist(com.radiogolha.mobile.ui.home.requireUserDbPath(), json).toLongOrNull() ?: 0L
+                        if (newId > 0) {
+                            RustCoreBridge.addTrackToPlaylist(com.radiogolha.mobile.ui.home.requireUserDbPath(), newId, track.id)
+                            reloadToken += 1
+                        }
+                    }
+                }
+            )
         }
     }
 }

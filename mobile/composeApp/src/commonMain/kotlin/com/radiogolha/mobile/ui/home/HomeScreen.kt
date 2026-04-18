@@ -132,15 +132,6 @@ fun HomeScreen(
                                 onMusicianLongPress = onMusicianLongPress,
                             )
                         }
-                        if (savedPlaylists.isNotEmpty()) {
-                            item {
-                                SavedPlaylistsSection(
-                                    playlists = savedPlaylists,
-                                    onPlaylistClick = onPlaylistClick,
-                                    onSeeAllClick = onOpenAllPlaylists,
-                                )
-                            }
-                        }
                         item {
                             TopTracksSection(
                                 tracks = state.topTracks,

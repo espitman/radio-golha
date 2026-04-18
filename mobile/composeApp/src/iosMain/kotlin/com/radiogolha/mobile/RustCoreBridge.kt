@@ -85,23 +85,52 @@ actual object RustCoreBridge {
         get_duet_programs_json(dbPath, singer1, singer2)
     }
     
-    // User Data - Note: These might need a separate UserDataStore implementaton in Rust
-    // For now returning defaults to avoid crashes
-    actual fun getAllPlaylists(userDbPath: String): String = "[]"
-    actual fun getPlaylist(userDbPath: String, id: Long): String = "{}"
-    actual fun createPlaylist(userDbPath: String, requestJson: String): String = ""
-    actual fun renamePlaylist(userDbPath: String, id: Long, name: String): String = ""
-    actual fun deletePlaylist(userDbPath: String, id: Long): String = ""
-    actual fun addTrackToPlaylist(userDbPath: String, playlistId: Long, trackId: Long): String = ""
-    actual fun removeTrackFromPlaylist(userDbPath: String, playlistId: Long, trackId: Long): String = ""
-    actual fun getManualPlaylists(userDbPath: String): String = "[]"
+    // User Data
+    actual fun getAllPlaylists(userDbPath: String): String = callNative {
+        get_all_playlists_json(userDbPath)
+    }
+    actual fun getPlaylist(userDbPath: String, id: Long): String = callNative {
+        get_playlist_json(userDbPath, id)
+    }
+    actual fun createPlaylist(userDbPath: String, requestJson: String): String = callNative {
+        create_playlist_bridge(userDbPath, requestJson)
+    }
+    actual fun renamePlaylist(userDbPath: String, id: Long, name: String): String = callNative {
+        rename_playlist_bridge(userDbPath, id, name)
+    }
+    actual fun deletePlaylist(userDbPath: String, id: Long): String = callNative {
+        delete_playlist_bridge(userDbPath, id)
+    }
+    actual fun addTrackToPlaylist(userDbPath: String, playlistId: Long, trackId: Long): String = callNative {
+        add_track_to_playlist_bridge(userDbPath, playlistId, trackId)
+    }
+    actual fun removeTrackFromPlaylist(userDbPath: String, playlistId: Long, trackId: Long): String = callNative {
+        remove_track_from_playlist_bridge(userDbPath, playlistId, trackId)
+    }
+    actual fun getManualPlaylists(userDbPath: String): String = callNative {
+        get_manual_playlists_json(userDbPath)
+    }
 
-    actual fun addFavoriteArtist(userDbPath: String, artistId: Long, artistType: String): String = ""
-    actual fun removeFavoriteArtist(userDbPath: String, artistId: Long): String = ""
-    actual fun isFavoriteArtist(userDbPath: String, artistId: Long): String = "false"
-    actual fun getFavoriteArtistIds(userDbPath: String, artistType: String): String = "[]"
+    actual fun addFavoriteArtist(userDbPath: String, artistId: Long, artistType: String): String = callNative {
+        add_favorite_artist_bridge(userDbPath, artistId, artistType)
+    }
+    actual fun removeFavoriteArtist(userDbPath: String, artistId: Long): String = callNative {
+        remove_favorite_artist_bridge(userDbPath, artistId)
+    }
+    actual fun isFavoriteArtist(userDbPath: String, artistId: Long): String = callNative {
+        is_favorite_artist_bridge(userDbPath, artistId)
+    }
+    actual fun getFavoriteArtistIds(userDbPath: String, artistType: String): String = callNative {
+        get_favorite_artist_ids_json(userDbPath, artistType)
+    }
 
-    actual fun recordPlayback(userDbPath: String, trackId: Long): String = ""
-    actual fun getRecentlyPlayedIds(userDbPath: String, limit: Long): String = "[]"
-    actual fun getMostPlayedIds(userDbPath: String, limit: Long): String = "[]"
+    actual fun recordPlayback(userDbPath: String, trackId: Long): String = callNative {
+        record_playback_bridge(userDbPath, trackId)
+    }
+    actual fun getRecentlyPlayedIds(userDbPath: String, limit: Long): String = callNative {
+        get_recently_played_ids_json(userDbPath, limit)
+    }
+    actual fun getMostPlayedIds(userDbPath: String, limit: Long): String = callNative {
+        get_most_played_ids_json(userDbPath, limit)
+    }
 }
