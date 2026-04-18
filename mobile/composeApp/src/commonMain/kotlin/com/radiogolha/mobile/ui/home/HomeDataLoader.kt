@@ -10,13 +10,19 @@ expect fun requireUserDbPath(): String
 
 fun loadHomeUiState(): HomeUiState? {
     return try {
-        val payload = RustCoreBridge.getHomeFeedJson(requireArchiveDbPath())
+        val archiveDbPath = requireArchiveDbPath()
+        val payload = RustCoreBridge.getHomeFeedJson(archiveDbPath)
         if (payload.isBlank()) return null
         
         val response = json.decodeFromString<HomeFeedResponse>(payload)
+        val programs = loadProgramCategoriesWithCounts(
+            archiveDbPath = archiveDbPath,
+            fallbackCategories = response.categories,
+            fallbackPrograms = response.programs
+        )
         
         HomeUiState(
-            programs = response.categories.map { ProgramUiModel(it.id, it.title, it.episodeCount) },
+            programs = programs,
             singers = response.singers.map { SingerUiModel(it.id, it.name, it.avatar, it.programCount) },
             musicians = response.musicians.map { MusicianUiModel(it.id, it.name, it.instrument, it.avatar, it.programCount) },
             dastgahs = response.dastgahs.map { DastgahUiModel(it.name) },
@@ -36,6 +42,40 @@ fun loadHomeUiState(): HomeUiState? {
         println("ERROR_GOLHA: loading home state: ${e.message ?: "unknown error"}")
         null
     }
+}
+
+internal fun loadProgramCategoriesWithCounts(
+    archiveDbPath: String,
+    fallbackCategories: List<CategoryDto> = emptyList(),
+    fallbackPrograms: List<ProgramDto> = emptyList()
+): List<ProgramUiModel> {
+    val categoriesPayload = runCatching {
+        RustCoreBridge.getCategoriesJson(archiveDbPath)
+    }.getOrDefault("")
+    val options = runCatching {
+        json.decodeFromString<List<SearchOptionDto>>(categoriesPayload)
+    }.getOrDefault(emptyList())
+
+    val countsByTitle = fallbackPrograms
+        .mapNotNull { item ->
+            val key = item.title.trim()
+            if (key.isEmpty()) null else key to item.episodeCount
+        }
+        .toMap()
+
+    if (options.isNotEmpty()) {
+        return options.mapNotNull { option ->
+            val title = (option.name ?: option.titleFa ?: "").trim()
+            if (title.isEmpty()) return@mapNotNull null
+            ProgramUiModel(
+                id = option.id,
+                title = title,
+                episodeCount = countsByTitle[title] ?: 0
+            )
+        }
+    }
+
+    return fallbackCategories.map { ProgramUiModel(it.id, it.title, it.episodeCount) }
 }
 
 fun loadTopTracks(): List<TrackUiModel> {

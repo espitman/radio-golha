@@ -35,3 +35,8 @@ actual fun requireArchiveDbPath(): String {
 
     return dbFile.absolutePath
 }
+
+actual fun requireUserDbPath(): String {
+    val context = AndroidAppContext.require()
+    return File(context.filesDir, "user_data.db").absolutePath
+}

@@ -7,10 +7,15 @@ import kotlinx.serialization.decodeFromString
 
 fun loadProgramsUiState(): List<ProgramUiModel> {
     return try {
-        val payload = RustCoreBridge.getHomeFeedJson(requireArchiveDbPath())
+        val archiveDbPath = requireArchiveDbPath()
+        val payload = RustCoreBridge.getHomeFeedJson(archiveDbPath)
         if (payload.isBlank()) return emptyList()
         val response = json.decodeFromString<HomeFeedResponse>(payload)
-        response.categories.map { ProgramUiModel(it.id, it.title, it.episodeCount) }
+        loadProgramCategoriesWithCounts(
+            archiveDbPath = archiveDbPath,
+            fallbackCategories = response.categories,
+            fallbackPrograms = response.programs
+        )
     } catch (e: Exception) {
         println("ERROR loadProgramsUiState: ${e.message}")
         emptyList()
