@@ -162,9 +162,12 @@ fun loadFavoriteSingers(): List<SingerListItemUiModel> {
 
 fun loadFavoriteMusicians(): List<MusicianListItemUiModel> {
     return try {
-        val payload = RustCoreBridge.getFavoriteArtistIds(requireUserDbPath(), "musician")
-        if (payload.isBlank()) return emptyList()
-        val ids = json.decodeFromString<List<Long>>(payload)
+        val musicianIdsPayload = RustCoreBridge.getFavoriteArtistIds(requireUserDbPath(), "musician")
+        val legacyArtistIdsPayload = RustCoreBridge.getFavoriteArtistIds(requireUserDbPath(), "artist")
+        if (musicianIdsPayload.isBlank() && legacyArtistIdsPayload.isBlank()) return emptyList()
+        val musicianIds = if (musicianIdsPayload.isBlank()) emptyList() else json.decodeFromString<List<Long>>(musicianIdsPayload)
+        val legacyArtistIds = if (legacyArtistIdsPayload.isBlank()) emptyList() else json.decodeFromString<List<Long>>(legacyArtistIdsPayload)
+        val ids = (musicianIds + legacyArtistIds).toSet()
         if (ids.isEmpty()) return emptyList()
         val allMusiciansPayload = RustCoreBridge.getMusiciansJson(requireArchiveDbPath())
         val musicians = json.decodeFromString<List<MusicianDto>>(allMusiciansPayload)

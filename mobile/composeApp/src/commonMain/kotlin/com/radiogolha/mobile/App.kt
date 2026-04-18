@@ -200,21 +200,36 @@ fun App() {
             }
 
             is AppRoute.ArtistDetail -> {
+                val isArtistFavorite by produceState(initialValue = false, currentRoute.id, reloadToken) {
+                    value = runCatching {
+                        RustCoreBridge.isFavoriteArtist(
+                            com.radiogolha.mobile.ui.home.requireUserDbPath(),
+                            currentRoute.id
+                        ) == "true"
+                    }.getOrDefault(false)
+                }
                 com.radiogolha.mobile.ui.artists.ArtistDetailScreen(
                     artistId = currentRoute.id,
                     bottomNavItems = bottomNavItems,
                     onBottomNavSelected = { onTabSelected(it) },
                     onBackClick = { pop() },
                     onArtistClick = { id -> push(AppRoute.ArtistDetail(id)) },
+                    onProgramClick = { program -> push(AppRoute.ProgramEpisodeDetail(program.id)) },
                     onPlayTrack = { player.play(it) },
                     onTrackLongClick = { selectedTrackForOptions = it },
+                    isFavorite = isArtistFavorite,
                     onToggleFavorite = {
                         scope.launch {
                             val isFavStr = RustCoreBridge.isFavoriteArtist(com.radiogolha.mobile.ui.home.requireUserDbPath(), currentRoute.id)
                             if (isFavStr == "true") {
                                 RustCoreBridge.removeFavoriteArtist(com.radiogolha.mobile.ui.home.requireUserDbPath(), currentRoute.id)
                             } else {
-                                RustCoreBridge.addFavoriteArtist(com.radiogolha.mobile.ui.home.requireUserDbPath(), currentRoute.id, "artist")
+                                val favoriteType = if (musicians.any { it.artistId == currentRoute.id }) "musician" else "artist"
+                                RustCoreBridge.addFavoriteArtist(
+                                    com.radiogolha.mobile.ui.home.requireUserDbPath(),
+                                    currentRoute.id,
+                                    favoriteType
+                                )
                             }
                             reloadToken += 1
                         }
@@ -276,6 +291,11 @@ fun App() {
                     onBottomNavSelected = { onTabSelected(it) },
                     onBackClick = { pop() },
                     onArtistClick = { id -> push(AppRoute.ArtistDetail(id)) },
+                    onOrchestraClick = { orchestraName ->
+                        val match = orchestras.firstOrNull { it.name == orchestraName }
+                            ?: orchestras.firstOrNull { it.name.trim().equals(orchestraName.trim(), ignoreCase = true) }
+                        match?.let { push(AppRoute.OrchestraDetail(it.id, it.name)) }
+                    },
                     onPlayProgram = { detail ->
                         player.play(
                             TrackUiModel(

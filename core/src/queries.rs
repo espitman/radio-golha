@@ -770,12 +770,12 @@ impl RadioGolhaCore {
     pub fn search_programs(
         &self,
         filters: &ProgramSearchFilters,
-        page: i64,
+        _page: i64,
     ) -> CoreResult<ProgramSearchResponse> {
-        let limit = 24_i64;
-        let safe_page = page.max(1);
         let total = self.count_program_search(filters)?;
-        let total_pages = ((total + limit - 1) / limit).max(1);
+        let limit = total.max(1);
+        let safe_page = 1_i64;
+        let total_pages = 1_i64;
 
         Ok(ProgramSearchResponse {
             rows: self.list_program_search_rows(filters, safe_page, limit)?,
