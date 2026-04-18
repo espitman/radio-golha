@@ -16,17 +16,20 @@ fun loadArtistDetail(artistId: Long): ArtistDetailUiModel? {
         else -> emptyList()
     }
 
-    val instrumentFromMusicians = runCatching {
-        val musiciansPayload = RustCoreBridge.getMusiciansJson(requireArchiveDbPath())
-        if (musiciansPayload.isBlank()) null
-        else {
-            val musicians = json.decodeFromString<List<MusicianDto>>(musiciansPayload)
-            musicians
-                .firstOrNull { it.id == response.id }
-                ?.instrument
-                ?.takeIf { it.isNotBlank() }
-        }
-    }.getOrNull()
+    val responseInstrument = response.instrument?.takeIf { it.isNotBlank() }
+    val instrumentFromMusicians = if (responseInstrument == null) {
+        runCatching {
+            val musiciansPayload = RustCoreBridge.getMusiciansJson(requireArchiveDbPath())
+            if (musiciansPayload.isBlank()) null
+            else {
+                val musicians = json.decodeFromString<List<MusicianDto>>(musiciansPayload)
+                musicians
+                    .firstOrNull { it.id == response.id }
+                    ?.instrument
+                    ?.takeIf { it.isNotBlank() }
+            }
+        }.getOrNull()
+    } else null
 
     val typeLabel = when (response.type.lowercase()) {
         "musician", "performer" -> "نوازنده"
@@ -38,7 +41,7 @@ fun loadArtistDetail(artistId: Long): ArtistDetailUiModel? {
         artistId = response.id,
         name = response.name,
         imageUrl = response.avatar,
-        instrument = instrumentFromMusicians ?: typeLabel,
+        instrument = responseInstrument ?: instrumentFromMusicians ?: typeLabel,
         trackCount = programs.size,
         tracks = programs.map { it.toCategoryProgramUiModel() },
         isFavorite = try {
@@ -55,6 +58,7 @@ private data class ArtistDetailBridgeResponse(
     val name: String = "",
     val type: String = "",
     val avatar: String? = null,
+    val instrument: String? = null,
     val bio: String? = null,
     val programs: List<CategoryProgramDto> = emptyList(),
     val tracks: List<CategoryProgramDto> = emptyList(),
