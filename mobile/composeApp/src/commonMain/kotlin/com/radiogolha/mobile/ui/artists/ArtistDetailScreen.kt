@@ -239,7 +239,7 @@ private fun ArtistHeaderLayout(
                         } else {
                             Text(detail.name, style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold, fontSize = titleFontSize), color = textWhite, textAlign = TextAlign.Center)
                             Text(
-                                text = detail.instrument?.takeIf { it.isNotBlank() } ?: "خواننده",
+                                text = detail.instrument?.takeIf { it.isNotBlank() } ?: "هنرمند",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = gold,
                                 textAlign = TextAlign.Center,
@@ -296,7 +296,7 @@ private fun ArtistHeaderLayout(
                             Text(detail.name, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = textWhite, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                         if (!isLoading && detail != null) {
-                            Text(detail.instrument?.takeIf { it.isNotBlank() } ?: "خواننده", style = MaterialTheme.typography.bodySmall, color = gold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(detail.instrument?.takeIf { it.isNotBlank() } ?: "هنرمند", style = MaterialTheme.typography.bodySmall, color = gold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         } else if (isLoading) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Box(Modifier.width(80.dp).height(14.dp).background(skeletonColor, RoundedCornerShape(4.dp)))

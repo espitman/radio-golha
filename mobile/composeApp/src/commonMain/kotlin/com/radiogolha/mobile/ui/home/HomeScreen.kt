@@ -133,6 +133,15 @@ fun HomeScreen(
                             )
                         }
                         item {
+                            if (savedPlaylists.isNotEmpty()) {
+                                SavedPlaylistsSection(
+                                    playlists = savedPlaylists,
+                                    onPlaylistClick = onPlaylistClick,
+                                    onSeeAllClick = onOpenAllPlaylists,
+                                )
+                            }
+                        }
+                        item {
                             TopTracksSection(
                                 tracks = state.topTracks,
                                 isRefreshing = isRefreshingTopTracks,

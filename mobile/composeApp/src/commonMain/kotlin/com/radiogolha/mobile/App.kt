@@ -23,9 +23,12 @@ import com.radiogolha.mobile.ui.home.loadTopTracks
 import com.radiogolha.mobile.ui.musicians.MusiciansScreen
 import com.radiogolha.mobile.ui.musicians.loadMusiciansUiState
 import com.radiogolha.mobile.ui.library.LibraryScreen
+import com.radiogolha.mobile.ui.library.LibraryTab
 import com.radiogolha.mobile.ui.orchestras.OrchestraDetailScreen
 import com.radiogolha.mobile.ui.orchestras.loadOrchestrasUiState
 import com.radiogolha.mobile.ui.programs.loadProgramsUiState
+import com.radiogolha.mobile.ui.search.loadSearchOptions
+import com.radiogolha.mobile.ui.search.searchPrograms
 import com.radiogolha.mobile.ui.settings.SettingsScreen
 import com.radiogolha.mobile.ui.singers.SingersScreen
 import com.radiogolha.mobile.ui.singers.loadSingersUiState
@@ -35,6 +38,9 @@ import androidx.compose.runtime.snapshots.SnapshotStateMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 
 @Composable
 fun App() {
@@ -54,6 +60,8 @@ fun App() {
         map
     }
     var selectedTab by remember { mutableStateOf(AppTab.Home) }
+    var libraryInitialTab by remember { mutableStateOf(LibraryTab.Programs) }
+    var accountInitialTab by remember { mutableStateOf(0) }
     val searchState = remember { com.radiogolha.mobile.ui.search.SearchState() }
     
     val currentStack: List<AppRoute> = navigationStacks[selectedTab] ?: listOf(AppRoute.Root(selectedTab))
@@ -268,6 +276,23 @@ fun App() {
                     onBottomNavSelected = { onTabSelected(it) },
                     onBackClick = { pop() },
                     onArtistClick = { id -> push(AppRoute.ArtistDetail(id)) },
+                    onPlayProgram = { detail ->
+                        player.play(
+                            TrackUiModel(
+                                id = detail.id,
+                                artistId = detail.singers.firstOrNull()?.artistId,
+                                title = detail.title,
+                                artist = detail.singers.joinToString(" و ") { it.name }.ifBlank { "نامشخص" },
+                                duration = detail.duration ?: "",
+                                audioUrl = detail.audioUrl,
+                                coverUrl = detail.singers.firstOrNull()?.avatar,
+                                artistImages = detail.singers.mapNotNull { it.avatar },
+                            )
+                        )
+                    },
+                    onAddToPlaylist = { track ->
+                        selectedTrackForOptions = track
+                    },
                     currentTrack = currentTrack,
                     isPlayerPlaying = isPlayerPlaying,
                     isPlayerLoading = isPlayerLoading,
@@ -276,6 +301,43 @@ fun App() {
                     onTogglePlayerPlayback = { player.togglePlayback() },
                     onTrackLongClick = { selectedTrackForOptions = it },
                     onSeek = { player.seekTo(it) },
+                )
+            }
+
+            is AppRoute.PlaylistDetail -> {
+                val playlistDetail by produceState<ManualPlaylistDetail?>(initialValue = null, currentRoute.playlistId, reloadToken) {
+                    value = loadManualPlaylistDetail(currentRoute.playlistId)
+                }
+
+                com.radiogolha.mobile.ui.search.PlaylistDetailScreen(
+                    playlistName = playlistDetail?.name ?: currentRoute.playlistName,
+                    trackIds = playlistDetail?.trackIds ?: emptyList(),
+                    isManual = true,
+                    bottomNavItems = bottomNavItems,
+                    onBottomNavSelected = { onTabSelected(it) },
+                    onBackClick = { pop() },
+                    onRename = { newName ->
+                        scope.launch {
+                            RustCoreBridge.renamePlaylist(com.radiogolha.mobile.ui.home.requireUserDbPath(), currentRoute.playlistId, newName)
+                            reloadToken += 1
+                        }
+                    },
+                    onDelete = {
+                        scope.launch {
+                            RustCoreBridge.deletePlaylist(com.radiogolha.mobile.ui.home.requireUserDbPath(), currentRoute.playlistId)
+                            pop()
+                            reloadToken += 1
+                        }
+                    },
+                    onProgramClick = { id -> push(AppRoute.ProgramEpisodeDetail(id)) },
+                    onPlayTrack = { player.play(it) },
+                    onTrackLongClick = { selectedTrackForOptions = it },
+                    currentTrack = currentTrack,
+                    isPlayerPlaying = isPlayerPlaying,
+                    isPlayerLoading = isPlayerLoading,
+                    currentPlaybackPositionMs = currentPlaybackPositionMs,
+                    currentPlaybackDurationMs = currentPlaybackDurationMs,
+                    onTogglePlayerPlayback = { player.togglePlayback() },
                 )
             }
 
@@ -299,6 +361,26 @@ fun App() {
                 )
             }
 
+            is AppRoute.ModeDetail -> {
+                com.radiogolha.mobile.ui.home.ModeDetailScreen(
+                    modeId = currentRoute.modeId,
+                    modeName = currentRoute.modeName,
+                    bottomNavItems = bottomNavItems,
+                    onBottomNavSelected = { onTabSelected(it) },
+                    onBackClick = { pop() },
+                    onTrackClick = { trackId -> push(AppRoute.ProgramEpisodeDetail(trackId)) },
+                    onPlayTrack = { player.play(it) },
+                    onTrackLongClick = { selectedTrackForOptions = it },
+                    onArtistClick = { id -> push(AppRoute.ArtistDetail(id)) },
+                    currentTrack = currentTrack,
+                    isPlayerPlaying = isPlayerPlaying,
+                    isPlayerLoading = isPlayerLoading,
+                    currentPlaybackPositionMs = currentPlaybackPositionMs,
+                    currentPlaybackDurationMs = currentPlaybackDurationMs,
+                    onTogglePlayerPlayback = { player.togglePlayback() },
+                )
+            }
+
             is AppRoute.Root -> {
                 when (currentRoute.tab) {
                     AppTab.Home -> {
@@ -306,10 +388,34 @@ fun App() {
                             state = homeState?.copy(bottomNavItems = bottomNavItems),
                             duets = homeState?.duets ?: emptyList(),
                             bottomNavItems = bottomNavItems,
-                            onOpenAllSingers = { push(AppRoute.Singers) },
-                            onOpenAllMusicians = { push(AppRoute.Musicians) },
+                            onOpenAllSingers = {
+                                libraryInitialTab = LibraryTab.Singers
+                                selectedTab = AppTab.Library
+                            },
+                            onOpenAllMusicians = {
+                                libraryInitialTab = LibraryTab.Musicians
+                                selectedTab = AppTab.Library
+                            },
+                            onOpenAllPlaylists = {
+                                accountInitialTab = 1
+                                selectedTab = AppTab.Account
+                            },
                             onRefreshTopTracks = { reloadToken += 1 },
                             isRefreshingTopTracks = isTopTracksRefreshing,
+                            onDastgahClick = { modeName ->
+                                scope.launch {
+                                    val modeId = withContext(Dispatchers.Default) {
+                                        runCatching {
+                                            val modes = loadSearchOptions().modes
+                                            modes.firstOrNull { it.name == modeName }?.id
+                                                ?: modes.firstOrNull { it.name.trim().equals(modeName.trim(), ignoreCase = true) }?.id
+                                        }.getOrNull()
+                                    }
+                                    if (modeId != null) {
+                                        push(AppRoute.ModeDetail(modeId = modeId, modeName = modeName))
+                                    }
+                                }
+                            },
                             onTrackClick = { track -> push(AppRoute.ProgramEpisodeDetail(track.id)) },
                             onSingerClick = { id -> push(AppRoute.ArtistDetail(id)) },
                             onMusicianClick = { id -> push(AppRoute.ArtistDetail(id)) },
@@ -320,6 +426,15 @@ fun App() {
                             onTrackLongClick = { selectedTrackForOptions = it },
                             recentlyPlayed = recentlyPlayed,
                             savedPlaylists = savedPlaylists,
+                            onPlaylistClick = { id ->
+                                val playlist = savedPlaylists.find { it.id == id }
+                                push(
+                                    AppRoute.PlaylistDetail(
+                                        playlistId = id,
+                                        playlistName = playlist?.name ?: "لیست من"
+                                    )
+                                )
+                            },
                             currentTrack = currentTrack,
                             isPlayerPlaying = isPlayerPlaying,
                             isPlayerLoading = isPlayerLoading,
@@ -336,6 +451,42 @@ fun App() {
                             onBottomNavSelected = { onTabSelected(it) },
                             onTrackClick = { trackId -> push(AppRoute.ProgramEpisodeDetail(trackId)) },
                             onPlayTrack = { player.play(it) },
+                            onSavePlaylist = { name, filters ->
+                                val trimmedName = name.trim()
+                                if (trimmedName.isNotBlank()) {
+                                    scope.launch {
+                                        val requestJson = "{\"name\":\"${escapeJson(trimmedName)}\",\"type\":\"manual\"}"
+                                        val newId = RustCoreBridge
+                                            .createPlaylist(com.radiogolha.mobile.ui.home.requireUserDbPath(), requestJson)
+                                            .toLongOrNull() ?: 0L
+                                        if (newId <= 0L) return@launch
+
+                                        val trackIds = linkedSetOf<Long>()
+                                        var page = 1
+                                        var totalPages = 1
+                                        do {
+                                            val result = withContext(Dispatchers.Default) {
+                                                runCatching { searchPrograms(filters, page) }
+                                                    .getOrDefault(com.radiogolha.mobile.ui.search.SearchResultsUiState())
+                                            }
+                                            result.results.forEach { trackIds += it.id }
+                                            totalPages = result.totalPages.coerceAtLeast(1)
+                                            page += 1
+                                        } while (page <= totalPages)
+
+                                        trackIds.forEach { trackId ->
+                                            RustCoreBridge.addTrackToPlaylist(
+                                                com.radiogolha.mobile.ui.home.requireUserDbPath(),
+                                                newId,
+                                                trackId
+                                            )
+                                        }
+
+                                        reloadToken += 1
+                                        push(AppRoute.PlaylistDetail(playlistId = newId, playlistName = trimmedName))
+                                    }
+                                }
+                            },
                             currentTrack = currentTrack,
                             isPlayerPlaying = isPlayerPlaying,
                             isPlayerLoading = isPlayerLoading,
@@ -347,6 +498,7 @@ fun App() {
 
                     AppTab.Library -> {
                         LibraryScreen(
+                            initialTab = libraryInitialTab,
                             programs = programs,
                             singers = singers,
                             musicians = musicians,
@@ -374,6 +526,7 @@ fun App() {
 
                     AppTab.Account -> {
                         SettingsScreen(
+                            initialTabIndex = accountInitialTab,
                             bottomNavItems = bottomNavItems,
                             onBottomNavSelected = { onTabSelected(it) },
                             isDebugDatabaseToolsEnabled = isDebugDatabaseToolsEnabled(),
@@ -401,6 +554,24 @@ fun App() {
                             onTrackClick = { id -> push(AppRoute.ProgramEpisodeDetail(id)) },
                             onPlayTrack = { player.play(it) },
                             onTrackLongClick = { selectedTrackForOptions = it },
+                            onPlaylistClick = { id ->
+                                val playlist = savedPlaylists.find { it.id == id }
+                                push(
+                                    AppRoute.PlaylistDetail(
+                                        playlistId = id,
+                                        playlistName = playlist?.name ?: "لیست من"
+                                    )
+                                )
+                            },
+                            onPlaylistLongClick = { id ->
+                                val playlist = savedPlaylists.find { it.id == id }
+                                push(
+                                    AppRoute.PlaylistDetail(
+                                        playlistId = id,
+                                        playlistName = playlist?.name ?: "لیست من"
+                                    )
+                                )
+                            },
                             currentTrack = currentTrack,
                             isPlayerPlaying = isPlayerPlaying,
                             isPlayerLoading = isPlayerLoading,
@@ -459,10 +630,48 @@ private sealed interface AppRoute {
         val category: com.radiogolha.mobile.ui.home.ProgramUiModel
     ) : AppRoute
     data class ProgramEpisodeDetail(val programId: Long) : AppRoute
+    data class ModeDetail(val modeId: Long, val modeName: String) : AppRoute
+    data class PlaylistDetail(val playlistId: Long, val playlistName: String) : AppRoute
     data class OrchestraDetail(val id: Long, val name: String) : AppRoute
     data class DuetDetail(
         val duet: com.radiogolha.mobile.ui.home.DuetPairUiModel
     ) : AppRoute
+}
+
+@Serializable
+private data class PlaylistBridgeDto(
+    val id: Long = 0,
+    val name: String = "",
+    val trackIds: List<Long> = emptyList(),
+)
+
+private data class ManualPlaylistDetail(
+    val id: Long,
+    val name: String,
+    val trackIds: List<Long>,
+)
+
+private val playlistJson = Json {
+    ignoreUnknownKeys = true
+    isLenient = true
+}
+
+private fun escapeJson(value: String): String =
+    value.replace("\\", "\\\\").replace("\"", "\\\"")
+
+private fun loadManualPlaylistDetail(playlistId: Long): ManualPlaylistDetail? {
+    return try {
+        val payload = RustCoreBridge.getPlaylist(com.radiogolha.mobile.ui.home.requireUserDbPath(), playlistId)
+        if (payload.isBlank() || payload == "null" || payload == "{}") return null
+        val dto = playlistJson.decodeFromString<PlaylistBridgeDto>(payload)
+        ManualPlaylistDetail(
+            id = dto.id,
+            name = dto.name,
+            trackIds = dto.trackIds
+        )
+    } catch (_: Exception) {
+        null
+    }
 }
 
 private fun buildBottomNavItems(selectedTab: AppTab): List<BottomNavItemUiModel> = listOf(
