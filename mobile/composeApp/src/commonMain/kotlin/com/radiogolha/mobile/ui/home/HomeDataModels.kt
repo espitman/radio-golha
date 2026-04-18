@@ -10,7 +10,8 @@ internal data class HomeFeedResponse(
     val dastgahs: List<DastgahDto> = emptyList(),
     val musicians: List<MusicianDto> = emptyList(),
     val topTracks: List<TrackDto> = emptyList(),
-    val categories: List<CategoryDto> = emptyList() // Added
+    val categories: List<CategoryDto> = emptyList(),
+    val duets: List<DuetPairDto> = emptyList()
 )
 
 @Serializable

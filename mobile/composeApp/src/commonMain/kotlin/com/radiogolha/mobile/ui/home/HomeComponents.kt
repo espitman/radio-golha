@@ -490,6 +490,7 @@ fun DuetsBanner(
     onDuetClick: (DuetPairUiModel) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    if (duets.isEmpty()) return
     val pagerState = rememberPagerState(pageCount = { duets.size })
 
     // Animated glow circles

@@ -106,9 +106,7 @@ fun App() {
         value = loadOrchestrasUiState()
     }
 
-    val duetPairs by produceState<List<com.radiogolha.mobile.ui.home.DuetPairUiModel>>(initialValue = emptyList(), reloadToken) {
-        value = com.radiogolha.mobile.ui.home.loadDuetPairsConfig()
-    }
+    // duetPairs is now part of homeState
 
     val isProgramsLoading = programs.isEmpty()
 
@@ -231,7 +229,7 @@ fun App() {
                     AppTab.Home -> {
                         HomeScreen(
                             state = homeState?.copy(bottomNavItems = bottomNavItems),
-                            duets = duetPairs,
+                            duets = homeState?.duets ?: emptyList(),
                             bottomNavItems = bottomNavItems,
                             onOpenAllSingers = { push(AppRoute.Singers) },
                             onOpenAllMusicians = { push(AppRoute.Musicians) },

@@ -22,6 +22,7 @@ data class SingerUiModel(
     val id: Long,
     val name: String,
     val imageUrl: String? = null,
+    val programCount: Int = 0,
 )
 
 data class SingerListItemUiModel(
@@ -46,6 +47,7 @@ data class MusicianUiModel(
     val name: String,
     val instrument: String,
     val imageUrl: String? = null,
+    val programCount: Int = 0,
 )
 
 data class MusicianListItemUiModel(
@@ -101,6 +103,7 @@ data class HomeUiState(
     val dastgahs: List<DastgahUiModel>,
     val musicians: List<MusicianUiModel>,
     val topTracks: List<TrackUiModel>,
+    val duets: List<DuetPairUiModel>,
     val bottomNavItems: List<BottomNavItemUiModel>,
     val isRefreshing: Boolean = false,
     val isDatabaseSyncing: Boolean = false,

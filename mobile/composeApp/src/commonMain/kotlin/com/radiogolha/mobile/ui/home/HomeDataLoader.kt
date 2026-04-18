@@ -15,10 +15,19 @@ fun loadHomeUiState(): HomeUiState? {
         
         HomeUiState(
             programs = response.categories.map { ProgramUiModel(it.id, it.title, it.episodeCount) },
-            singers = response.singers.map { SingerUiModel(it.id, it.name, it.avatar) },
+            singers = response.singers.map { SingerUiModel(it.id, it.name, it.avatar, it.programCount) },
             dastgahs = response.dastgahs.map { DastgahUiModel(it.name) },
-            musicians = response.musicians.map { MusicianUiModel(it.id, it.name, it.instrument, it.avatar) },
+            musicians = response.musicians.map { MusicianUiModel(it.id, it.name, it.instrument, it.avatar, it.programCount) },
             topTracks = response.topTracks.map { it.toTrackUiModel() },
+            duets = response.duets.map { 
+                DuetPairUiModel(
+                    singer1 = it.singer1,
+                    singer2 = it.singer2,
+                    singer1Avatar = it.singer1Avatar,
+                    singer2Avatar = it.singer2Avatar,
+                    trackCount = it.trackCount
+                )
+            },
             bottomNavItems = emptyList()
         )
     } catch (e: Exception) {

@@ -13,7 +13,9 @@ fn rust_str_to_c(s: String) -> *mut c_char {
 #[no_mangle]
 pub extern "C" fn radiogolha_free_string(s: *mut c_char) {
     if s.is_null() { return; }
-    unsafe { CString::from_raw(s); }
+    unsafe { 
+        let _ = CString::from_raw(s); 
+    }
 }
 
 fn get_path(c_str: *const c_char) -> String {
@@ -99,8 +101,8 @@ pub extern "C" fn get_home_feed_json(db_path: *const c_char) -> *mut c_char {
             
             let categories = core.program_categories().unwrap_or_default();
             let cat_breakdown = core.category_breakdown().unwrap_or_default();
-            let programs: Vec<_> = cat_breakdown.into_iter().map(|item| {
-                IosProgramDto { title: item.name, episode_count: item.total }
+            let programs: Vec<_> = cat_breakdown.iter().map(|item| {
+                IosProgramDto { title: item.name.clone(), episode_count: item.total }
             }).collect();
 
             let mut singers_stmt = conn.prepare(
@@ -111,29 +113,44 @@ pub extern "C" fn get_home_feed_json(db_path: *const c_char) -> *mut c_char {
                  GROUP BY s.id ORDER BY total DESC LIMIT 12"
             ).unwrap();
             let singers: Vec<_> = singers_stmt.query_map([], |row| {
-                Ok(json!({ "id": row.get::<_, i64>(0)?, "name": row.get::<_, String>(1)?, "avatar": row.get::<_, Option<String>>(2)? }))
+                Ok(json!({ 
+                    "id": row.get::<_, i64>(0)?, 
+                    "name": row.get::<_, String>(1)?, 
+                    "avatar": row.get::<_, Option<String>>(2)?,
+                    "programCount": row.get::<_, i64>(3)?
+                }))
             }).unwrap().filter_map(|r| r.ok()).collect();
 
             let dastgahs = core.top_modes(10).unwrap_or_default();
             
             let mut musicians_stmt = conn.prepare(
-                "SELECT a.id, a.name, a.avatar FROM program_performers pp
+                "SELECT a.id, a.name, a.avatar, COUNT(DISTINCT pp.program_id) AS total
+                 FROM program_performers pp
                  JOIN performer p ON p.id = pp.performer_id
                  JOIN artist a ON a.id = p.artist_id
-                 GROUP BY p.id ORDER BY COUNT(*) DESC LIMIT 12"
+                 GROUP BY p.id ORDER BY total DESC LIMIT 12"
             ).unwrap();
             let musicians: Vec<_> = musicians_stmt.query_map([], |row| {
-                Ok(json!({ "id": row.get::<_, i64>(0)?, "name": row.get::<_, String>(1)?, "avatar": row.get::<_, Option<String>>(2)?, "instrument": "نوازنده" }))
+                Ok(json!({ 
+                    "id": row.get::<_, i64>(0)?, 
+                    "name": row.get::<_, String>(1)?, 
+                    "avatar": row.get::<_, Option<String>>(2)?, 
+                    "instrument": "نوازنده",
+                    "programCount": row.get::<_, i64>(3)?
+                }))
             }).unwrap().filter_map(|r| r.ok()).collect();
 
             let top_tracks = core.random_vocal_track_summaries(10).unwrap_or_default();
+            
+            let duets_json = core.get_duet_pairs_raw().unwrap_or_else(|_| "[]".to_string());
+            let duets: serde_json::Value = serde_json::from_str(&duets_json).unwrap_or(json!([]));
 
             let payload = json!({
                 "programs": programs,
                 "categories": categories.iter().map(|c| {
-                    let count = programs.iter()
-                        .find(|p| p.title == c.title_fa)
-                        .map(|p| p.episode_count)
+                    let count = cat_breakdown.iter()
+                        .find(|item| item.name == c.title_fa)
+                        .map(|item| item.total)
                         .unwrap_or(0);
                     json!({ "id": c.id, "title": c.title_fa, "episodeCount": count })
                 }).collect::<Vec<_>>(),
@@ -142,7 +159,8 @@ pub extern "C" fn get_home_feed_json(db_path: *const c_char) -> *mut c_char {
                 "musicians": musicians,
                 "topTracks": top_tracks.iter().map(|t| json!({
                     "id": t.id, "title": t.title, "artist": t.artist, "duration": t.duration.clone().unwrap_or_else(|| "00:00".to_string()), "audioUrl": t.audio_url
-                })).collect::<Vec<_>>()
+                })).collect::<Vec<_>>(),
+                "duets": duets
             });
             rust_str_to_c(payload.to_string())
         },
