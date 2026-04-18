@@ -74,7 +74,9 @@ fun NowPlayingScreen(
 ) {
     DisposableEffect(Unit) {
         onVisibilityChanged(true)
-        onDispose { onVisibilityChanged(false) }
+        onDispose {
+            onVisibilityChanged(false)
+        }
     }
     // Seekbar State
     var sliderValue by remember { mutableFloatStateOf(currentPositionMs.toFloat()) }
@@ -161,13 +163,16 @@ fun NowPlayingScreen(
                 )
             }
     ) {
-        // Eslimi pattern overlay
-        DarkPatternBackground(modifier = Modifier.fillMaxSize())
+            // Eslimi pattern overlay
+            DarkPatternBackground(
+                modifier = Modifier
+                    .fillMaxSize()
+            )
 
-        Column(
-            modifier = Modifier.fillMaxSize().statusBarsPadding().padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
+            Column(
+                modifier = Modifier.fillMaxSize().statusBarsPadding().padding(horizontal = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
             // Header
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 8.dp),
@@ -332,7 +337,7 @@ fun NowPlayingScreen(
             if (activeSegment == null) Spacer(modifier = Modifier.height(44.dp))
 
             Spacer(modifier = Modifier.weight(0.06f))
-        }
+            }
     }
 }
 

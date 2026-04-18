@@ -1,6 +1,10 @@
 package com.radiogolha.mobile
 
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -32,9 +36,12 @@ import com.radiogolha.mobile.ui.search.searchPrograms
 import com.radiogolha.mobile.ui.settings.SettingsScreen
 import com.radiogolha.mobile.ui.singers.SingersScreen
 import com.radiogolha.mobile.ui.singers.loadSingersUiState
+import com.radiogolha.mobile.ui.player.NowPlayingScreen
 import com.radiogolha.mobile.ui.programs.toTrackUiModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.snapshots.SnapshotStateMap
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -42,6 +49,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App() {
     val player = rememberGolhaPlayer()
@@ -63,6 +71,7 @@ fun App() {
     var libraryInitialTab by remember { mutableStateOf(LibraryTab.Programs) }
     var accountInitialTab by remember { mutableStateOf(0) }
     val searchState = remember { com.radiogolha.mobile.ui.search.SearchState() }
+    var showNowPlayingSheet by remember { mutableStateOf(false) }
     
     val currentStack: List<AppRoute> = navigationStacks[selectedTab] ?: listOf(AppRoute.Root(selectedTab))
     
@@ -161,10 +170,20 @@ fun App() {
     }
 
     var selectedTrackForOptions by remember { mutableStateOf<TrackUiModel?>(null) }
+    LaunchedEffect(currentTrack) {
+        if (currentTrack == null) {
+            showNowPlayingSheet = false
+        }
+    }
 
     GolhaAppTheme {
         val currentRoute = currentStack.last()
         val bottomNavItems = buildBottomNavItems(selectedTab)
+        val openNowPlaying: () -> Unit = {
+            if (currentTrack != null) {
+                showNowPlayingSheet = true
+            }
+        }
         
         when (currentRoute) {
             AppRoute.Singers -> {
@@ -180,6 +199,7 @@ fun App() {
                     currentPlaybackPositionMs = currentPlaybackPositionMs,
                     currentPlaybackDurationMs = currentPlaybackDurationMs,
                     onTogglePlayerPlayback = { player.togglePlayback() },
+                    onExpandPlayer = openNowPlaying,
                 )
             }
 
@@ -196,6 +216,7 @@ fun App() {
                     currentPlaybackPositionMs = currentPlaybackPositionMs,
                     currentPlaybackDurationMs = currentPlaybackDurationMs,
                     onTogglePlayerPlayback = { player.togglePlayback() },
+                    onExpandPlayer = openNowPlaying,
                 )
             }
 
@@ -240,6 +261,7 @@ fun App() {
                     currentPlaybackPositionMs = currentPlaybackPositionMs,
                     currentPlaybackDurationMs = currentPlaybackDurationMs,
                     onTogglePlayerPlayback = { player.togglePlayback() },
+                    onExpandPlayer = openNowPlaying,
                 )
             }
 
@@ -281,6 +303,7 @@ fun App() {
                     currentPlaybackDurationMs = currentPlaybackDurationMs,
                     onTogglePlayerPlayback = { player.togglePlayback() },
                     onTrackLongClick = { selectedTrackForOptions = it },
+                    onExpandPlayer = openNowPlaying,
                 )
             }
 
@@ -321,6 +344,7 @@ fun App() {
                     onTogglePlayerPlayback = { player.togglePlayback() },
                     onTrackLongClick = { selectedTrackForOptions = it },
                     onSeek = { player.seekTo(it) },
+                    onExpandPlayer = openNowPlaying,
                 )
             }
 
@@ -358,6 +382,7 @@ fun App() {
                     currentPlaybackPositionMs = currentPlaybackPositionMs,
                     currentPlaybackDurationMs = currentPlaybackDurationMs,
                     onTogglePlayerPlayback = { player.togglePlayback() },
+                    onExpandPlayer = openNowPlaying,
                 )
             }
 
@@ -378,6 +403,7 @@ fun App() {
                     currentPlaybackPositionMs = currentPlaybackPositionMs,
                     currentPlaybackDurationMs = currentPlaybackDurationMs,
                     onTogglePlayerPlayback = { player.togglePlayback() },
+                    onExpandPlayer = openNowPlaying,
                 )
             }
 
@@ -398,8 +424,11 @@ fun App() {
                     currentPlaybackPositionMs = currentPlaybackPositionMs,
                     currentPlaybackDurationMs = currentPlaybackDurationMs,
                     onTogglePlayerPlayback = { player.togglePlayback() },
+                    onExpandPlayer = openNowPlaying,
                 )
             }
+
+            AppRoute.NowPlaying -> Unit
 
             is AppRoute.Root -> {
                 when (currentRoute.tab) {
@@ -461,6 +490,7 @@ fun App() {
                             currentPlaybackPositionMs = currentPlaybackPositionMs,
                             currentPlaybackDurationMs = currentPlaybackDurationMs,
                             onTogglePlayerPlayback = { player.togglePlayback() },
+                            onExpandPlayer = openNowPlaying,
                         )
                     }
 
@@ -513,6 +543,7 @@ fun App() {
                             currentPlaybackPositionMs = currentPlaybackPositionMs,
                             currentPlaybackDurationMs = currentPlaybackDurationMs,
                             onTogglePlayerPlayback = { player.togglePlayback() },
+                            onExpandPlayer = openNowPlaying,
                         )
                     }
 
@@ -540,6 +571,7 @@ fun App() {
                             currentPlaybackPositionMs = currentPlaybackPositionMs,
                             currentPlaybackDurationMs = currentPlaybackDurationMs,
                             onTogglePlayerPlayback = { player.togglePlayback() },
+                            onExpandPlayer = openNowPlaying,
                             onTrackClick = { trackId -> push(AppRoute.ProgramEpisodeDetail(trackId)) }
                         )
                     }
@@ -598,13 +630,47 @@ fun App() {
                             currentPlaybackPositionMs = currentPlaybackPositionMs,
                             currentPlaybackDurationMs = currentPlaybackDurationMs,
                             onTogglePlayerPlayback = { player.togglePlayback() },
-                            onExpandPlayer = { /* maybe open full player? */ }
+                            onExpandPlayer = openNowPlaying
                         )
                     }
                 }
             }
         }
 
+
+        if (showNowPlayingSheet && currentTrack != null) {
+            ModalBottomSheet(
+                onDismissRequest = { showNowPlayingSheet = false },
+                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+                dragHandle = null,
+                containerColor = Color(0xFF0A1628),
+                tonalElevation = 0.dp,
+            ) {
+                NowPlayingScreen(
+                    currentTrack = currentTrack,
+                    isPlaying = isPlayerPlaying,
+                    isLoading = isPlayerLoading,
+                    currentPositionMs = currentPlaybackPositionMs,
+                    durationMs = currentPlaybackDurationMs,
+                    onTogglePlayback = { player.togglePlayback() },
+                    onSeek = { player.seekTo(it) },
+                    onBackClick = { showNowPlayingSheet = false },
+                    onInfoClick = {
+                        showNowPlayingSheet = false
+                        currentTrack?.let { push(AppRoute.ProgramEpisodeDetail(it.id)) }
+                    },
+                    onSeekBack10 = {
+                        val target = (currentPlaybackPositionMs - 10_000L).coerceAtLeast(0L)
+                        player.seekTo(target)
+                    },
+                    onSeekForward10 = {
+                        val upper = if (currentPlaybackDurationMs > 0L) currentPlaybackDurationMs else Long.MAX_VALUE
+                        val target = (currentPlaybackPositionMs + 10_000L).coerceAtMost(upper)
+                        player.seekTo(target)
+                    },
+                )
+            }
+        }
 
         
         selectedTrackForOptions?.let { track ->
@@ -652,6 +718,7 @@ private sealed interface AppRoute {
     data class ProgramEpisodeDetail(val programId: Long) : AppRoute
     data class ModeDetail(val modeId: Long, val modeName: String) : AppRoute
     data class PlaylistDetail(val playlistId: Long, val playlistName: String) : AppRoute
+    data object NowPlaying : AppRoute
     data class OrchestraDetail(val id: Long, val name: String) : AppRoute
     data class DuetDetail(
         val duet: com.radiogolha.mobile.ui.home.DuetPairUiModel
