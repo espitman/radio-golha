@@ -224,6 +224,26 @@ fun App() {
                 )
             }
 
+            is AppRoute.DuetDetail -> {
+                com.radiogolha.mobile.ui.home.DuetDetailScreen(
+                    singer1 = currentRoute.duet.singer1,
+                    singer2 = currentRoute.duet.singer2,
+                    singer1Avatar = currentRoute.duet.singer1Avatar,
+                    singer2Avatar = currentRoute.duet.singer2Avatar,
+                    bottomNavItems = bottomNavItems,
+                    onBottomNavSelected = { onTabSelected(it) },
+                    onBackClick = { pop() },
+                    onTrackClick = { trackId -> push(AppRoute.ProgramEpisodeDetail(trackId)) },
+                    onPlayTrack = { player.play(it) },
+                    currentTrack = currentTrack,
+                    isPlayerPlaying = isPlayerPlaying,
+                    isPlayerLoading = isPlayerLoading,
+                    currentPlaybackPositionMs = currentPlaybackPositionMs,
+                    currentPlaybackDurationMs = currentPlaybackDurationMs,
+                    onTogglePlayerPlayback = { player.togglePlayback() },
+                )
+            }
+
             is AppRoute.Root -> {
                 when (currentRoute.tab) {
                     AppTab.Home -> {
@@ -347,6 +367,10 @@ private sealed interface AppRoute {
     ) : AppRoute
     data class ProgramEpisodeDetail(val programId: Long) : AppRoute
     data class OrchestraDetail(val id: Long, val name: String) : AppRoute
+    data class DuetDetail(
+        val duet: com.radiogolha.mobile.ui.home.DuetPairUiModel,
+        val tracks: List<com.radiogolha.mobile.ui.home.CategoryProgramUiModel>
+    ) : AppRoute
 }
 
 private fun buildBottomNavItems(selectedTab: AppTab): List<BottomNavItemUiModel> = listOf(

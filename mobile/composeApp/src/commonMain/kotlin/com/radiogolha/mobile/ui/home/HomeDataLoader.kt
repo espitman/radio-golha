@@ -76,6 +76,7 @@ fun loadOrderedModes(): List<String> {
     return json.decodeFromString<List<String>>(payload)
 }
 
+
 fun loadDuetPrograms(singer1: String, singer2: String): List<CategoryProgramUiModel> {
     val payload = RustCoreBridge.getDuetProgramsJson(requireArchiveDbPath(), singer1, singer2)
     val response = json.decodeFromString<List<CategoryProgramDto>>(payload)

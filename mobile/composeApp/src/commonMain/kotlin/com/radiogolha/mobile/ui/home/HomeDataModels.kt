@@ -1,5 +1,6 @@
 package com.radiogolha.mobile.ui.home
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
 
@@ -74,11 +75,11 @@ internal data class CategoryProgramDto(
 
 @Serializable
 internal data class DuetPairDto(
-    val singer1: String = "",
-    val singer2: String = "",
-    val singer1Avatar: String? = null,
-    val singer2Avatar: String? = null,
-    val trackCount: Int = 0
+    @SerialName("singer1") val singer1: String = "",
+    @SerialName("singer2") val singer2: String = "",
+    @SerialName("singer1Avatar") val singer1Avatar: String? = null,
+    @SerialName("singer2Avatar") val singer2Avatar: String? = null,
+    @SerialName("trackCount") val trackCount: Int = 0
 )
 
 @Serializable

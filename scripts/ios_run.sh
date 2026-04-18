@@ -19,9 +19,19 @@ fi
 echo "📱 Target Device: $DEVICE_ID"
 
 # 2. Build the app
-echo "🛠 Building Xcode project..."
+echo "🧹 Cleaning previous builds to ensure fresh state..."
+rm -rf ~/Library/Developer/Xcode/DerivedData/iosApp-*
+export JAVA_HOME="/Users/espitman/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+export PATH="$JAVA_HOME/bin:$PATH"
+cd "$PROJECT_ROOT/mobile"
+./gradlew clean > /dev/null
+
+echo "🔨 Pre-building Kotlin framework for iOS Simulator..."
+./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64 > /dev/null
+
+echo "🛠 Building Xcode project (this might take a minute)..."
 cd "$IOS_PROJECT_DIR"
-xcodebuild -project iosApp.xcodeproj -scheme "$SCHEME" -destination "id=$DEVICE_ID" build > /dev/null
+xcodebuild -project iosApp.xcodeproj -scheme "$SCHEME" -destination "id=$DEVICE_ID" clean build > /dev/null
 
 if [ $? -ne 0 ]; then
     echo "❌ Error: Xcode build failed."
