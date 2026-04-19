@@ -1,7 +1,17 @@
 package com.radiogolha.mobile
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.clickable
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,7 +50,13 @@ import com.radiogolha.mobile.ui.player.NowPlayingScreen
 import com.radiogolha.mobile.ui.programs.toTrackUiModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.snapshots.SnapshotStateMap
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -48,6 +64,9 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import androidx.compose.runtime.CompositionLocalProvider
+import com.radiogolha.mobile.theme.GolhaColors
+import com.radiogolha.mobile.ui.home.GolhaLineIcon
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -170,6 +189,13 @@ fun App() {
     }
 
     var selectedTrackForOptions by remember { mutableStateOf<TrackUiModel?>(null) }
+    data class ArtistQuickAction(
+        val artistId: Long,
+        val name: String,
+        val type: String,
+        val isFavorite: Boolean,
+    )
+    var artistForQuickActions by remember { mutableStateOf<ArtistQuickAction?>(null) }
     LaunchedEffect(currentTrack) {
         if (currentTrack == null) {
             showNowPlayingSheet = false
@@ -397,6 +423,7 @@ fun App() {
                     onBackClick = { pop() },
                     onTrackClick = { trackId -> push(AppRoute.ProgramEpisodeDetail(trackId)) },
                     onPlayTrack = { player.play(it) },
+                    onTrackLongClick = { selectedTrackForOptions = it },
                     currentTrack = currentTrack,
                     isPlayerPlaying = isPlayerPlaying,
                     isPlayerLoading = isPlayerLoading,
@@ -467,7 +494,33 @@ fun App() {
                             },
                             onTrackClick = { track -> push(AppRoute.ProgramEpisodeDetail(track.id)) },
                             onSingerClick = { id -> push(AppRoute.ArtistDetail(id)) },
+                            onSingerLongPress = { singer ->
+                                artistForQuickActions = ArtistQuickAction(
+                                    artistId = singer.id,
+                                    name = singer.name,
+                                    type = "singer",
+                                    isFavorite = runCatching {
+                                        RustCoreBridge.isFavoriteArtist(
+                                            com.radiogolha.mobile.ui.home.requireUserDbPath(),
+                                            singer.id
+                                        ) == "true"
+                                    }.getOrDefault(false),
+                                )
+                            },
                             onMusicianClick = { id -> push(AppRoute.ArtistDetail(id)) },
+                            onMusicianLongPress = { musician ->
+                                artistForQuickActions = ArtistQuickAction(
+                                    artistId = musician.id,
+                                    name = musician.name,
+                                    type = "performer",
+                                    isFavorite = runCatching {
+                                        RustCoreBridge.isFavoriteArtist(
+                                            com.radiogolha.mobile.ui.home.requireUserDbPath(),
+                                            musician.id
+                                        ) == "true"
+                                    }.getOrDefault(false),
+                                )
+                            },
                             onDuetClick = { duet -> push(AppRoute.DuetDetail(duet)) },
                             onProgramClick = { category -> push(AppRoute.CategoryPrograms(category)) },
                             onBottomNavSelected = { onTabSelected(it) },
@@ -501,6 +554,7 @@ fun App() {
                             onBottomNavSelected = { onTabSelected(it) },
                             onTrackClick = { trackId -> push(AppRoute.ProgramEpisodeDetail(trackId)) },
                             onPlayTrack = { player.play(it) },
+                            onTrackLongClick = { selectedTrackForOptions = it },
                             onSavePlaylist = { name, filters ->
                                 val trimmedName = name.trim()
                                 if (trimmedName.isNotBlank()) {
@@ -704,6 +758,85 @@ fun App() {
                 }
             )
         }
+
+        artistForQuickActions?.let { artist ->
+            ModalBottomSheet(
+                onDismissRequest = { artistForQuickActions = null },
+                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+                containerColor = GolhaColors.ScreenBackground,
+                tonalElevation = 0.dp,
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+            ) {
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp),
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 24.dp).padding(bottom = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = artist.name,
+                                modifier = Modifier.weight(1f),
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                color = GolhaColors.PrimaryText,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+
+                        HorizontalDivider(color = GolhaColors.Border.copy(alpha = 0.5f))
+
+                        ArtistOptionRow(
+                            icon = GolhaIcon.Favorites,
+                            text = if (artist.isFavorite) "حذف از لیست مورد علاقه" else "افزودن به لیست مورد علاقه",
+                            onClick = {
+                                scope.launch {
+                                    if (artist.isFavorite) {
+                                        RustCoreBridge.removeFavoriteArtist(
+                                            com.radiogolha.mobile.ui.home.requireUserDbPath(),
+                                            artist.artistId
+                                        )
+                                    } else {
+                                        RustCoreBridge.addFavoriteArtist(
+                                            com.radiogolha.mobile.ui.home.requireUserDbPath(),
+                                            artist.artistId,
+                                            artist.type
+                                        )
+                                    }
+                                    reloadToken += 1
+                                    artistForQuickActions = null
+                                }
+                            }
+                        )
+
+                        ArtistOptionRow(
+                            icon = GolhaIcon.Info,
+                            text = "رفتن به صفحه هنرمند",
+                            onClick = {
+                                push(AppRoute.ArtistDetail(artist.artistId))
+                                artistForQuickActions = null
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ArtistOptionRow(icon: GolhaIcon, text: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(horizontal = 24.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        GolhaLineIcon(icon = icon, modifier = Modifier.size(20.dp), tint = GolhaColors.SecondaryText)
+        Text(text, style = MaterialTheme.typography.bodyLarge, color = GolhaColors.PrimaryText)
     }
 }
 

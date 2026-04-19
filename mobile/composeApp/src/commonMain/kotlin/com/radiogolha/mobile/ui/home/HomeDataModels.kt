@@ -118,10 +118,13 @@ internal data class SearchResultsResponse(
 internal data class SearchResultDto(
     val id: Long = 0,
     val title: String = "",
+    @SerialName("category_name")
     val categoryName: String = "",
     val no: Int = 0,
+    @SerialName("sub_no")
     val subNo: String? = null,
     val duration: String? = null,
+    @SerialName("audio_url")
     val audioUrl: String? = null,
     val artist: String? = null
 )
