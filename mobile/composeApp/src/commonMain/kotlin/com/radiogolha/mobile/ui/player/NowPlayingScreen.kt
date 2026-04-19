@@ -33,6 +33,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.radiogolha.mobile.theme.DarkPatternBackground
@@ -47,6 +48,8 @@ import com.radiogolha.mobile.ui.programs.loadProgramEpisodeDetail
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalLayoutDirection
 
 private val DarkBg = Color(0xFF0A1628)
 private val DarkSurface = Color(0xFF132039)
@@ -146,23 +149,24 @@ fun NowPlayingScreen(
         animationSpec = infiniteRepeatable(tween(2500, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "glow",
     )
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(DarkBg)
-            .drawBehind {
-                // Ambient glow behind artwork
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(Gold.copy(alpha = glowPulse), Color.Transparent),
-                        center = Offset(size.width * 0.5f, size.height * 0.32f),
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(DarkBg)
+                .drawBehind {
+                    // Ambient glow behind artwork
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(Gold.copy(alpha = glowPulse), Color.Transparent),
+                            center = Offset(size.width * 0.5f, size.height * 0.32f),
+                            radius = size.width * 0.5f,
+                        ),
                         radius = size.width * 0.5f,
-                    ),
-                    radius = size.width * 0.5f,
-                    center = Offset(size.width * 0.5f, size.height * 0.32f),
-                )
-            }
-    ) {
+                        center = Offset(size.width * 0.5f, size.height * 0.32f),
+                    )
+                }
+        ) {
             // Eslimi pattern overlay
             DarkPatternBackground(
                 modifier = Modifier
@@ -179,14 +183,14 @@ fun NowPlayingScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                IconButton(onClick = onBackClick, modifier = Modifier.size(40.dp)) {
-                    GolhaLineIcon(icon = GolhaIcon.Back, modifier = Modifier.size(22.dp), tint = TextDim)
+                IconButton(onClick = onInfoClick, modifier = Modifier.size(40.dp)) {
+                    GolhaLineIcon(icon = GolhaIcon.Info, modifier = Modifier.size(22.dp), tint = TextDim)
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("در حال پخش", style = MaterialTheme.typography.labelSmall, color = TextDim)
                 }
-                IconButton(onClick = onInfoClick, modifier = Modifier.size(40.dp)) {
-                    GolhaLineIcon(icon = GolhaIcon.Info, modifier = Modifier.size(22.dp), tint = TextDim)
+                IconButton(onClick = onBackClick, modifier = Modifier.size(40.dp)) {
+                    GolhaLineIcon(icon = GolhaIcon.Back, modifier = Modifier.size(22.dp), tint = TextDim)
                 }
             }
 
@@ -265,9 +269,9 @@ fun NowPlayingScreen(
 
             // Controls
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-                ControlButton(icon = GolhaIcon.SkipPrevious, size = 44.dp, iconSize = 22.dp, onClick = onPreviousClick)
-                IconButton(onClick = onSeekBack10, modifier = Modifier.size(44.dp)) {
-                    Icon(Replay10Icon, contentDescription = null, tint = TextWhite, modifier = Modifier.size(26.dp))
+                ControlButton(icon = GolhaIcon.SkipNext, size = 44.dp, iconSize = 22.dp, onClick = onNextClick)
+                IconButton(onClick = onSeekForward10, modifier = Modifier.size(44.dp)) {
+                    Icon(Forward10Icon, contentDescription = null, tint = TextWhite, modifier = Modifier.size(26.dp))
                 }
 
                 // Play/Pause
@@ -289,10 +293,10 @@ fun NowPlayingScreen(
                     }
                 }
 
-                IconButton(onClick = onSeekForward10, modifier = Modifier.size(44.dp)) {
-                    Icon(Forward10Icon, contentDescription = null, tint = TextWhite, modifier = Modifier.size(26.dp))
+                IconButton(onClick = onSeekBack10, modifier = Modifier.size(44.dp)) {
+                    Icon(Replay10Icon, contentDescription = null, tint = TextWhite, modifier = Modifier.size(26.dp))
                 }
-                ControlButton(icon = GolhaIcon.SkipNext, size = 44.dp, iconSize = 22.dp, onClick = onNextClick)
+                ControlButton(icon = GolhaIcon.SkipPrevious, size = 44.dp, iconSize = 22.dp, onClick = onPreviousClick)
             }
 
             Spacer(modifier = Modifier.weight(0.04f))
@@ -336,8 +340,9 @@ fun NowPlayingScreen(
             }
             if (activeSegment == null) Spacer(modifier = Modifier.height(44.dp))
 
-            Spacer(modifier = Modifier.weight(0.06f))
+                Spacer(modifier = Modifier.weight(0.06f))
             }
+        }
     }
 }
 
