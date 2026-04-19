@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A1B2C3D4E5F60718293A4B5C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5061728394A5B6C /* Assets.xcassets */; };
 		48715B3CF0D9958D5E1F99C5 /* iosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3771E0E755C03BF5A873EAE2 /* iosApp.swift */; };
 		56B0305B5D3847FC6B326502 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE8509E5A49E4A5CAAEB3ADB /* ContentView.swift */; };
 /* End PBXBuildFile section */
@@ -14,6 +15,7 @@
 /* Begin PBXFileReference section */
 		3771E0E755C03BF5A873EAE2 /* iosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iosApp.swift; sourceTree = "<group>"; };
 		86038AE1032E284E79B32AD6 /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B1C2D3E4F5061728394A5B6C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C117AD187833E2513BD2F553 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		CE8509E5A49E4A5CAAEB3ADB /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -22,6 +24,7 @@
 		1DB4B685CAEE8BEFEBBAEF94 /* iosApp */ = {
 			isa = PBXGroup;
 			children = (
+				B1C2D3E4F5061728394A5B6C /* Assets.xcassets */,
 				CE8509E5A49E4A5CAAEB3ADB /* ContentView.swift */,
 				C117AD187833E2513BD2F553 /* Info.plist */,
 				3771E0E755C03BF5A873EAE2 /* iosApp.swift */,
@@ -53,6 +56,7 @@
 			buildConfigurationList = 29DCA9F0B3A40325067EB163 /* Build configuration list for PBXNativeTarget "iosApp" */;
 			buildPhases = (
 				083C6013C6AF23342D560151 /* Run Gradle Build */,
+				C1D2E3F40516273849A5B6C7 /* Resources */,
 				297B59D9CE634556D6007C40 /* Sources */,
 			);
 			buildRules = (
@@ -114,6 +118,17 @@
 				shellScript = "set -e\nexport JAVA_HOME=\"/Users/espitman/Applications/Android Studio.app/Contents/jbr/Contents/Home\"\nexport PATH=\"$HOME/.cargo/bin:$JAVA_HOME/bin:/opt/homebrew/bin:/usr/local/bin:$PATH\"\ncd \"$SRCROOT/..\"\n\nif [ -z \"$SDK_NAME\" ]; then\n  if [ \"$PLATFORM_NAME\" = \"iphoneos\" ]; then\n    export SDK_NAME=\"iphoneos\"\n  else\n    export SDK_NAME=\"iphonesimulator\"\n  fi\nfi\n\nif [ -z \"$PLATFORM_NAME\" ]; then\n  case \"$SDK_NAME\" in\n    iphoneos*)\n      export PLATFORM_NAME=\"iphoneos\"\n      ;;\n    *)\n      export PLATFORM_NAME=\"iphonesimulator\"\n      ;;\n  esac\nfi\n\n# Xcode may not provide ARCHS early enough for KMP task inference.\nif [ -z \"$ARCHS\" ]; then\n  case \"$SDK_NAME\" in\n    iphoneos*)\n      export ARCHS=\"arm64\"\n      ;;\n    *)\n      export ARCHS=\"arm64\"\n      ;;\n  esac\nfi\n\nexport KOTLIN_FRAMEWORK_BUILD_TYPE=\"${CONFIGURATION}\"\n./gradlew --no-daemon :composeApp:embedAndSignAppleFrameworkForXcode\n\nFRAMEWORK_ROOT=\"$SRCROOT/../composeApp/build/xcode-frameworks/${CONFIGURATION}\"\nSTABLE_DIR=\"$FRAMEWORK_ROOT/current\"\nrm -rf \"$STABLE_DIR\"\nmkdir -p \"$STABLE_DIR\"\n\nFRAMEWORK_PATH=\"$(find \"$FRAMEWORK_ROOT\" -maxdepth 3 -type d -name \"RadioGolhaMobile.framework\" | head -n 1)\"\nif [ -n \"$FRAMEWORK_PATH\" ]; then\n  cp -R \"$FRAMEWORK_PATH\" \"$STABLE_DIR/\"\nfi\n\ncp -v \"$SRCROOT/../../database/golha_database.db\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/golha_database.db\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C1D2E3F40516273849A5B6C7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1B2C3D4E5F60718293A4B5C /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		297B59D9CE634556D6007C40 /* Sources */ = {
