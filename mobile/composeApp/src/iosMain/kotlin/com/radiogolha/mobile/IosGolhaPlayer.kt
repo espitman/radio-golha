@@ -11,6 +11,7 @@ import platform.AVFoundation.*
 import platform.Foundation.*
 import platform.AVFAudio.*
 import platform.CoreMedia.*
+import platform.MediaPlayer.*
 import platform.UIKit.UIApplicationDidEnterBackgroundNotification
 import platform.UIKit.UIApplicationWillTerminateNotification
 
@@ -25,6 +26,7 @@ class IosGolhaPlayer : GolhaPlayer {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val prefs = NSUserDefaults.standardUserDefaults
     private var lastSavedPositionMs = 0L
+    private val remoteCommandTargets = mutableListOf<Any?>()
     
     private val _currentTrack = MutableStateFlow<TrackUiModel?>(null)
     override val currentTrack: StateFlow<TrackUiModel?> = _currentTrack
@@ -43,8 +45,10 @@ class IosGolhaPlayer : GolhaPlayer {
 
     init {
         setupAudioSession()
+        setupRemoteCommands()
         loadFromPrefs()
         restorePlayerFromSavedState()
+        updateNowPlayingInfo()
         observeAppLifecycle()
         startPolling()
     }
@@ -53,6 +57,90 @@ class IosGolhaPlayer : GolhaPlayer {
         val session = AVAudioSession.sharedInstance()
         session.setCategory(AVAudioSessionCategoryPlayback, error = null)
         session.setActive(true, error = null)
+    }
+
+    private fun setupRemoteCommands() {
+        val center = MPRemoteCommandCenter.sharedCommandCenter()
+
+        center.playCommand.removeTarget(null)
+        center.pauseCommand.removeTarget(null)
+        center.togglePlayPauseCommand.removeTarget(null)
+        center.changePlaybackPositionCommand.removeTarget(null)
+
+        center.playCommand.setEnabled(true)
+        center.pauseCommand.setEnabled(true)
+        center.togglePlayPauseCommand.setEnabled(true)
+        center.changePlaybackPositionCommand.setEnabled(true)
+
+        remoteCommandTargets += center.playCommand.addTargetWithHandler { _ ->
+            if (_currentTrack.value == null) {
+                MPRemoteCommandHandlerStatusNoSuchContent
+            } else {
+                playCurrent()
+                MPRemoteCommandHandlerStatusSuccess
+            }
+        }
+
+        remoteCommandTargets += center.pauseCommand.addTargetWithHandler { _ ->
+            if (_currentTrack.value == null) {
+                MPRemoteCommandHandlerStatusNoSuchContent
+            } else {
+                pauseCurrent()
+                MPRemoteCommandHandlerStatusSuccess
+            }
+        }
+
+        remoteCommandTargets += center.togglePlayPauseCommand.addTargetWithHandler { _ ->
+            if (_currentTrack.value == null) {
+                MPRemoteCommandHandlerStatusNoSuchContent
+            } else {
+                togglePlayback()
+                MPRemoteCommandHandlerStatusSuccess
+            }
+        }
+
+        remoteCommandTargets += center.changePlaybackPositionCommand.addTargetWithHandler { event ->
+            val positionEvent = event as? MPChangePlaybackPositionCommandEvent
+            if (positionEvent == null || _currentTrack.value == null) {
+                MPRemoteCommandHandlerStatusCommandFailed
+            } else {
+                seekTo((positionEvent.positionTime * 1000.0).toLong())
+                MPRemoteCommandHandlerStatusSuccess
+            }
+        }
+    }
+
+    private fun updateNowPlayingInfo() {
+        val track = _currentTrack.value
+        if (track == null) {
+            MPNowPlayingInfoCenter.defaultCenter().nowPlayingInfo = null
+            return
+        }
+
+        val info = mutableMapOf<Any?, Any?>()
+        info[MPMediaItemPropertyTitle] = track.title
+        info[MPMediaItemPropertyArtist] = track.artist
+        info[MPNowPlayingInfoPropertyPlaybackRate] = NSNumber.numberWithDouble(if (_isPlaying.value) 1.0 else 0.0)
+        info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = NSNumber.numberWithDouble(_currentPositionMs.value.toDouble() / 1000.0)
+
+        if (_durationMs.value > 0L) {
+            info[MPMediaItemPropertyPlaybackDuration] = NSNumber.numberWithDouble(_durationMs.value.toDouble() / 1000.0)
+        }
+
+        MPNowPlayingInfoCenter.defaultCenter().nowPlayingInfo = info
+    }
+
+    private fun playCurrent() {
+        avPlayer.play()
+        _isPlaying.value = true
+        updateNowPlayingInfo()
+    }
+
+    private fun pauseCurrent() {
+        avPlayer.pause()
+        _isPlaying.value = false
+        savePlaybackPosition(_currentPositionMs.value, _durationMs.value)
+        updateNowPlayingInfo()
     }
 
     private fun startPolling() {
@@ -78,6 +166,7 @@ class IosGolhaPlayer : GolhaPlayer {
                         _durationMs.value = durationMs
                     }
                 }
+                updateNowPlayingInfo()
                 delay(500)
             }
         }
@@ -94,12 +183,12 @@ class IosGolhaPlayer : GolhaPlayer {
 
         if (isSameTrack) {
             if (avPlayer.rate > 0) {
-                avPlayer.pause()
-                savePlaybackPosition(_currentPositionMs.value, _durationMs.value)
+                pauseCurrent()
             } else {
-                avPlayer.play()
+                playCurrent()
             }
             _isPlaying.value = avPlayer.rate > 0
+            updateNowPlayingInfo()
             return
         }
 
@@ -115,17 +204,18 @@ class IosGolhaPlayer : GolhaPlayer {
 
         val playerItem = AVPlayerItem(uRL = url)
         avPlayer.replaceCurrentItemWithPlayerItem(playerItem)
-        avPlayer.play()
+        playCurrent()
+        updateNowPlayingInfo()
     }
 
     override fun togglePlayback() {
         if (avPlayer.rate > 0) {
-            avPlayer.pause()
-            savePlaybackPosition(_currentPositionMs.value, _durationMs.value)
+            pauseCurrent()
         } else {
-            avPlayer.play()
+            playCurrent()
         }
         _isPlaying.value = avPlayer.rate > 0
+        updateNowPlayingInfo()
     }
 
     override fun seekTo(positionMs: Long) {
@@ -133,6 +223,7 @@ class IosGolhaPlayer : GolhaPlayer {
         avPlayer.seekToTime(time)
         _currentPositionMs.value = positionMs.coerceAtLeast(0L)
         savePlaybackPosition(_currentPositionMs.value, _durationMs.value)
+        updateNowPlayingInfo()
     }
 
     private fun observeAppLifecycle() {
@@ -206,5 +297,6 @@ class IosGolhaPlayer : GolhaPlayer {
         }
         avPlayer.pause()
         _isPlaying.value = false
+        updateNowPlayingInfo()
     }
 }
