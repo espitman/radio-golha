@@ -12,7 +12,7 @@ final class DesktopAppDelegate: NSObject, NSApplicationDelegate {
                 window.titleVisibility = .hidden
                 window.titlebarAppearsTransparent = true
                 window.toolbar = nil
-                window.isMovableByWindowBackground = true
+                window.isMovableByWindowBackground = false
                 window.styleMask.remove(.resizable)
                 window.standardWindowButton(.zoomButton)?.isHidden = true
                 window.standardWindowButton(.zoomButton)?.isEnabled = false

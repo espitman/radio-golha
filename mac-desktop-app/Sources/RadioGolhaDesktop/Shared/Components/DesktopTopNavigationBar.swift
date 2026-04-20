@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 enum DesktopMainTab {
     case programs
@@ -52,7 +53,12 @@ struct DesktopTopNavigationBar: View {
         }
         .frame(height: 80)
         .padding(.horizontal, 48)
-        .background(Palette.surface.opacity(0.82))
+        .background(
+            ZStack {
+                WindowDragRegion()
+                Palette.surface.opacity(0.82)
+            }
+        )
     }
 
     private func navButton(title: String, tab: DesktopMainTab) -> some View {
@@ -74,4 +80,16 @@ struct DesktopTopNavigationBar: View {
         .buttonStyle(.plain)
         .layoutPriority(1)
     }
+}
+
+private struct WindowDragRegion: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView {
+        DragRegionView()
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {}
+}
+
+private final class DragRegionView: NSView {
+    override var mouseDownCanMoveWindow: Bool { true }
 }
