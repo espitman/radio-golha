@@ -6,7 +6,6 @@ struct ArtistDetailsContentView: View {
     var onOpenArtist: (String) -> Void = { _ in }
 
     private let collaboratorsColumns = Array(repeating: GridItem(.flexible(minimum: 0), spacing: 12), count: 2)
-    private let bodyPanelsHeight: CGFloat = 436
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -27,6 +26,7 @@ struct ArtistDetailsContentView: View {
                 }
             )
         }
+        .coordinateSpace(name: "artistDetailsScroll")
         .id(artist.id)
         .frame(width: 1024)
         .background(Palette.surface)
@@ -94,10 +94,12 @@ struct ArtistDetailsContentView: View {
     private var bodySection: some View {
         HStack(alignment: .top, spacing: 24) {
             programsPanel
-                .frame(width: 670, height: bodyPanelsHeight, alignment: .top)
+                .frame(width: 670)
 
-            sidePanel
-                .frame(width: 234, height: bodyPanelsHeight, alignment: .top)
+            StickySidePanel {
+                sidePanel
+            }
+            .frame(width: 234)
         }
     }
 
@@ -105,13 +107,11 @@ struct ArtistDetailsContentView: View {
         VStack(alignment: .leading, spacing: 16) {
             panelHeader(title: "برنامه‌ها", fontSize: 18)
 
-            ScrollView(showsIndicators: true) {
-                VStack(spacing: 0) {
-                    ForEach(Array(artist.programs.enumerated()), id: \.element.id) { index, row in
-                        ProgramRow(row: row)
-                        if index < artist.programs.count - 1 {
-                            Divider().overlay(Color(hex: 0x1C1C17).opacity(0.06))
-                        }
+            VStack(spacing: 0) {
+                ForEach(Array(artist.programs.enumerated()), id: \.element.id) { index, row in
+                    ProgramRow(row: row)
+                    if index < artist.programs.count - 1 {
+                        Divider().overlay(Color(hex: 0x1C1C17).opacity(0.06))
                     }
                 }
             }
@@ -160,15 +160,32 @@ struct ArtistDetailsContentView: View {
     }
 
     private func panelHeader(title: String, fontSize: CGFloat) -> some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 8) {
             Text(title)
                 .font(.vazir(fontSize, .bold))
                 .foregroundStyle(Palette.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(height: 28, alignment: .bottomLeading)
 
             Rectangle()
                 .fill(Color(hex: 0xE5E2DA))
                 .frame(height: 1)
+        }
+    }
+}
+
+private struct StickySidePanel<Content: View>: View {
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        GeometryReader { proxy in
+            let minY = proxy.frame(in: .named("artistDetailsScroll")).minY
+            let yOffset = max(-minY, 0)
+
+            VStack {
+                content
+            }
+            .offset(y: yOffset)
         }
     }
 }
