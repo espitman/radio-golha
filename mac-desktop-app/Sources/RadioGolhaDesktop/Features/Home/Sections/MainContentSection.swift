@@ -209,17 +209,20 @@ private struct ArtistsGridSection: View {
     let items: [ArtistItem]
     let showAllAction: Bool
     let onArtistTap: (ArtistItem) -> Void
-    private let columns = Array(repeating: GridItem(.fixed(208), spacing: 32), count: 4)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 32) {
             SectionHead(title: title, showAllAction: showAllAction)
-            LazyVGrid(columns: columns, spacing: 32) {
-                ForEach(items) { item in
-                    ArtistCard(item: item, dark: false) {
-                        onArtistTap(item)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 24) {
+                    ForEach(items) { item in
+                        ArtistCard(item: item, dark: false) {
+                            onArtistTap(item)
+                        }
+                        .frame(width: 208)
                     }
                 }
+                .padding(.vertical, 4)
             }
         }
     }
@@ -230,24 +233,29 @@ private struct ModesPillsSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
-            Text("دستگاه‌ها و آوازها")
-                .font(.vazir(18, .bold))
-                .foregroundStyle(Palette.primary)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            SectionHead(title: "دستگاه‌ها و آوازها", showAllAction: false)
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 16) {
-                    ForEach(items) { mode in
-                        Text(mode.title)
-                            .font(.vazir(10.5))
-                            .foregroundStyle(Palette.text)
-                            .padding(.horizontal, 32)
-                            .padding(.vertical, 12)
-                            .background(Palette.surfaceLow, in: Capsule())
-                            .overlay(Capsule().stroke(Palette.border, lineWidth: 1))
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 16) {
+                        ForEach(items) { mode in
+                            Text(mode.title)
+                                .font(.vazir(10.5))
+                                .foregroundStyle(Palette.text)
+                                .padding(.horizontal, 32)
+                                .padding(.vertical, 12)
+                                .background(Palette.surfaceLow, in: Capsule())
+                                .overlay(Capsule().stroke(Palette.border, lineWidth: 1))
+                                .id(mode.id)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+                .onAppear {
+                    if let first = items.first?.id {
+                        proxy.scrollTo(first, anchor: .leading)
                     }
                 }
-                .padding(.vertical, 4)
             }
         }
     }

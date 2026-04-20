@@ -30,7 +30,7 @@ enum HomeDataLoader {
                 )
             }
 
-        let singers = response.singers.prefix(4).map {
+        let singers = response.singers.map {
             ArtistItem(
                 name: $0.name,
                 role: "خواننده",
@@ -38,7 +38,7 @@ enum HomeDataLoader {
             )
         }
 
-        let musicians = response.musicians.prefix(4).map {
+        let musicians = response.musicians.map {
             ArtistItem(
                 name: $0.name,
                 role: $0.instrument?.isEmpty == false ? ($0.instrument ?? "نوازنده") : "نوازنده",

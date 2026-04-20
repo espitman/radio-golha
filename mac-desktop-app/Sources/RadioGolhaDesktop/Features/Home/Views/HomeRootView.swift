@@ -14,7 +14,7 @@ struct HomeRootView: View {
     @State private var artistDetailsSourcePage: DesktopPage = .home
     @State private var selectedProgramDetails: ProgramDetailsItem? = nil
     @State private var programDetailsSourcePage: DesktopPage = .home
-    @State private var homeContent: HomeContentData = .mock
+    @State private var homeContent: HomeContentData? = nil
     @State private var homeDataLoaded = false
 
     var body: some View {
@@ -62,16 +62,22 @@ struct HomeRootView: View {
             Group {
                 switch currentPage {
                 case .home:
-                    MainContentSection(content: homeContent) { artist in
-                        openArtistDetails(
-                            ArtistDetailsFactory.fromHomeArtist(artist),
-                            sourcePage: .home
-                        )
-                    } onProgramTap: { trackTitle in
-                        openProgramDetails(
-                            ProgramDetailsFactory.fromTrackTitle(trackTitle),
-                            sourcePage: .home
-                        )
+                    if let homeContent {
+                        MainContentSection(content: homeContent) { artist in
+                            openArtistDetails(
+                                ArtistDetailsFactory.fromHomeArtist(artist),
+                                sourcePage: .home
+                            )
+                        } onProgramTap: { trackTitle in
+                            openProgramDetails(
+                                ProgramDetailsFactory.fromTrackTitle(trackTitle),
+                                sourcePage: .home
+                            )
+                        }
+                    } else {
+                        ProgressView()
+                            .tint(Palette.secondary)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 case .singers:
                     SingersContentView { singer in
