@@ -1,8 +1,14 @@
 import SwiftUI
 
 struct ProgramDetailsContentView: View {
+    private enum ContentTab {
+        case timeline
+        case lyrics
+    }
+
     let program: ProgramDetailsItem
     var onBack: () -> Void = {}
+    @State private var selectedTab: ContentTab = .timeline
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -165,17 +171,8 @@ struct ProgramDetailsContentView: View {
     private var timelineSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 20) {
-                Text("نایم‌لاین")
-                    .font(.vazir(15, .bold))
-                    .foregroundStyle(Palette.primary)
-                    .padding(.bottom, 10)
-                    .overlay(alignment: .bottom) {
-                        Rectangle().fill(Palette.secondary).frame(height: 3)
-                    }
-
-                Text("اشعار")
-                    .font(.vazir(15, .bold))
-                    .foregroundStyle(Color(hex: 0x8F8E88))
+                tabButton(title: "تایم‌لاین", tab: .timeline)
+                tabButton(title: "اشعار", tab: .lyrics)
 
                 Spacer(minLength: 0)
             }
@@ -185,13 +182,43 @@ struct ProgramDetailsContentView: View {
                 Rectangle().fill(Color(hex: 0xE5E2DA)).frame(height: 1)
             }
 
-            VStack(spacing: 14) {
-                ForEach(Array(program.timeline.enumerated()), id: \.element.id) { index, item in
-                    ProgramTimelineRow(item: item, isActive: index == 1)
+            Group {
+                switch selectedTab {
+                case .timeline:
+                    VStack(spacing: 14) {
+                        ForEach(Array(program.timeline.enumerated()), id: \.element.id) { index, item in
+                            ProgramTimelineRow(item: item, isActive: index == 1)
+                        }
+                    }
+                case .lyrics:
+                    VStack(alignment: .leading, spacing: 12) {
+                        ForEach(program.lyrics) { item in
+                            ProgramLyricsRow(item: item)
+                        }
+                    }
+                    .environment(\.layoutDirection, .rightToLeft)
                 }
             }
             .environment(\.layoutDirection, .rightToLeft)
         }
+    }
+
+    private func tabButton(title: String, tab: ContentTab) -> some View {
+        let isSelected = selectedTab == tab
+        return Button {
+            selectedTab = tab
+        } label: {
+            Text(title)
+                .font(.vazir(15, .bold))
+                .foregroundStyle(isSelected ? Palette.primary : Color(hex: 0x8F8E88))
+                .padding(.bottom, 10)
+                .overlay(alignment: .bottom) {
+                    Rectangle()
+                        .fill(isSelected ? Palette.secondary : .clear)
+                        .frame(height: 3)
+                }
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -263,5 +290,23 @@ private struct ProgramTimelineRow: View {
                 .foregroundStyle(Color(hex: 0x8F8E88))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct ProgramLyricsRow: View {
+    let item: ProgramLyricItem
+
+    var body: some View {
+        Text(item.text.replacingOccurrences(of: "\n", with: " / "))
+            .font(.vazir(12))
+            .foregroundStyle(Color(hex: 0x44403C))
+            .multilineTextAlignment(.leading)
+            .lineLimit(1)
+            .truncationMode(.tail)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 10)
+            .background(Palette.surfaceLow, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .environment(\.layoutDirection, .rightToLeft)
     }
 }

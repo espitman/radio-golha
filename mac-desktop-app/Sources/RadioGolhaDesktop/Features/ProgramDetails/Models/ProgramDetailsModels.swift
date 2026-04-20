@@ -9,6 +9,7 @@ struct ProgramDetailsItem: Identifiable {
     let coverImageURL: String
     let artists: [ProgramArtistItem]
     let timeline: [ProgramTimelineItem]
+    let lyrics: [ProgramLyricItem]
 
     init(
         title: String,
@@ -17,7 +18,8 @@ struct ProgramDetailsItem: Identifiable {
         orchestra: String,
         coverImageURL: String,
         artists: [ProgramArtistItem],
-        timeline: [ProgramTimelineItem]
+        timeline: [ProgramTimelineItem],
+        lyrics: [ProgramLyricItem]
     ) {
         self.id = title
         self.title = title
@@ -27,6 +29,7 @@ struct ProgramDetailsItem: Identifiable {
         self.coverImageURL = coverImageURL
         self.artists = artists
         self.timeline = timeline
+        self.lyrics = lyrics
     }
 }
 
@@ -44,6 +47,11 @@ struct ProgramTimelineItem: Identifiable {
     let singer: String
     let musician: String
     let poet: String
+}
+
+struct ProgramLyricItem: Identifiable {
+    let id = UUID()
+    let text: String
 }
 
 enum ProgramDetailsFactory {
@@ -81,6 +89,17 @@ enum ProgramDetailsFactory {
                 .init(time: "۰۵:۳۰", segmentTitle: "بیات ترک (تکنوازی)", singer: "—", musician: "شهناز / کسایی", poet: "—"),
                 .init(time: "۱۵:۴۵", segmentTitle: "بیات ترک (آواز)", singer: "محمدرضا شجریان", musician: "جلیل شهناز", poet: "حافظ"),
                 .init(time: "۲۸:۲۰", segmentTitle: "بیات ترک (تصنیف)", singer: "محمدرضا شجریان", musician: "ارکستر گلها", poet: "رهی معیری")
+            ],
+            lyrics: [
+                .init(
+                    text: "الا یا ایها الساقی ادر کاسا و ناولها\nکه عشق آسان نمود اول ولی افتاد مشکل‌ها"
+                ),
+                .init(
+                    text: "شب تاریک و بیم موج و گردابی چنین هایل\nکجا دانند حال ما سبکباران ساحل‌ها"
+                ),
+                .init(
+                    text: "از غم عشق تو ای دلبر شیرین سخنم\nدل چو آیینه روشن شد و شد مست غمم"
+                )
             ]
         )
     }
