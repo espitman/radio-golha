@@ -115,4 +115,47 @@ enum HomeMockData {
             imageURL: "https://lh3.googleusercontent.com/aida-public/AB6AXuBGekEUXBcApNWh17_qhvE5zV19t7t5ysca3oZ9FEtdwVsgnWNzPE4paUYPvmlUTxB_uvpchE7NsLDop42Z2XcKwL3KuNH7xPuKmzxrW9WppCT6K3Ym293tsAh_vm9OS8Hzx6kAiAndqgLmOu222Rv2-SDcDfZmurPQhtjei3LmDPjmABFjBKvYHUWqvHv4YSbsYVrFKSdnEa6IlEZO0z3ZeNFnHgtk_e9PVNz6AVOaBCZJTcau2o2nG16iErn20SyVh-RV53NW5hsg"
         )
     ]
+
+    static let playersPageInstruments: [String] = [
+        "همه", "تار", "سه‌تار", "سنتور", "کمانچه", "ویلن", "نی", "تنبک"
+    ]
+
+    static let playersPageItems: [PlayerListItem] = [
+        .init(
+            name: "جلیل شهناز",
+            instrument: "تار",
+            programsCount: "۹۶ برنامه ثبت شده",
+            imageURL: "https://lh3.googleusercontent.com/aida-public/AB6AXuDpmECMtqxU9603efb-gprCyzSy0zv_Jb2bOlP-25OY9BKroEEJmvLMUbd11QHZuv4U1LbXVl-hRP4gEe17I-8-j1usqc5lWbE_Ywm3sGBpgcNTzwMAFtRGeEOi2mr5-OcaCt_u_NIAvJA35OKX4e1-oY1bgDrwQICxdEK26U-ec_oKxY4A5gQRVW5pxvQlP3M5bPCZMvMxmABAZbJHKKgWfcRjrICr2o5ZLdHczvQnhncxdDslWRnO5Xzi4wbySQXpux8rC_neZMSJ"
+        ),
+        .init(
+            name: "فرهنگ شریف",
+            instrument: "تار",
+            programsCount: "۱۱۲ برنامه ثبت شده",
+            imageURL: "https://lh3.googleusercontent.com/aida-public/AB6AXuAuJhidSr6FLd6UzCY8dVJvxLJL8b7K9DeTaa5wEoT_LyTJYxxl4beINxqu4g5Tfeh4SEEWmfkr09vFPbmxxGz47i8Fw1AWR8A-cKW3hjaStKWzCGzOW7sbg_KdPFp6J3wR02FVXrND9bkcIlk-_istTxmeadQclStqcbWeoZ1pRfevRBlmnAz9J-3OPEymq8ZQ-8ccnceMiMGHcwezZercttJJns56so948APCW4jKxr0FpCvIaqm1HuioJTBr1KaxC6ErckapJXHq"
+        ),
+        .init(
+            name: "محمدرضا لطفی",
+            instrument: "تار و سه تار",
+            programsCount: "۴۵ برنامه ثبت شده",
+            imageURL: "https://lh3.googleusercontent.com/aida-public/AB6AXuCxRzn7wWlNERIy2Jv9mKKDC0dmCOipXaXN-UNYvYjKO1n5_mCy1D4OgywBuB7gCN_F9wUkQSt0qk1sy-uRu5FdsQngSMOacrg3dp-qO1yy6BrFLpzouqYAsMmfQgFgnj4f7tA56I0tZ0dbcerZvw3-aDwrNC2e7ov9gcvNTslVQJfQBRMl9Ct-WRxIVTrVRpB3eDpyeNufQoz7lb7O96dh_LYgEXZExFZLTW8VitB2adWpfwIwOWetkmdxyoeTyw96342odLIrVF-_"
+        ),
+        .init(
+            name: "بیگجه‌خانی",
+            instrument: "تار",
+            programsCount: "۳۸ برنامه ثبت شده",
+            imageURL: "https://lh3.googleusercontent.com/aida-public/AB6AXuC0RRKQQz6esXbZFZL_s8XaEPC62wOsuxOu1GV7TGS-Ue_a0yrKv2lc2mY-ydmSaqGjfzelXpw1s2V8fatmaLKX3dIpTdI7Pj1RnwY1jvDYmTAriVBe8X8HR5Hg9UAJvAkaPr8SxPAuSmpcvinw3iFfZMgRxBUKmlNcPeDAA5dkYiOHHgGuXiEyijDF4QrQm7SvtVD1kMQoEIGygsDQmaqvBoie9NwTrlPhB5isNvJU44-v9eJTIO9XcPoqb9-mt3eS0Ytt7i-G0Tb"
+        ),
+        .init(
+            name: "فریدون حافظی",
+            instrument: "تار",
+            programsCount: "۵۲ برنامه ثبت شده",
+            imageURL: "https://lh3.googleusercontent.com/aida-public/AB6AXuD6py-_wC3zsPTTjQhvKRiJr2GIrfIXgeTa8aVPbDlqXhVd3f5A7P3DfflRvUBjA9nVIGoPkJdMlxfxUjESyj1BLwunFbQV3Wb8K8DG1oJJa0G0XVFbQshzKci_8VlwHD7z2DshxSFZyapXovd4jVx4OqQC4mwLiOTT_4f5SwE5j5pI9vsxsdgU1xCtbbBM1O6Zq_lk7-BZg9OcWgjstlokkXDLghrq16qpOPeMm3uUmcu6EbMUJYUIS5cIFRuX_NeNx6JcK2x7Bl2x"
+        ),
+        .init(
+            name: "لطف‌الله مجد",
+            instrument: "تار",
+            programsCount: "۸۴ برنامه ثبت شده",
+            imageURL: "https://lh3.googleusercontent.com/aida-public/AB6AXuDHFMfjabhNXj3wncSaY5MSF9BuFEl_4tHrE-vbyf8vXkYKuE8cL0yTrG8R1t1b4P__Ga05ZCYgxDhALxbWdpe3GH4ce8xhfEVMYz3PYzytjoaXQ5R1TJDWI2J-MJ0Wl752vvAUwrkGgx0MyUX90ZYuFCVCVFy8-qF5_wYh63ejryMt5FkP24Z4SlBjD9V3soIXFIG1XtHSPbb0Sjjm7SwoKUCj_wwi7jty2eZb-Ox9ypnhcYV82twvLgymhLGXZFtrO23aOXlnDUu7"
+        )
+    ]
 }

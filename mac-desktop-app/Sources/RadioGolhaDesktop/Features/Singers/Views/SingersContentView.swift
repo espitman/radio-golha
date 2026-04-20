@@ -10,7 +10,7 @@ struct SingersContentView: View {
                 VStack(spacing: 0) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("خوانندگان")
-                            .font(.vazir(37.5, .bold))
+                            .font(.vazir(27, .bold))
                             .foregroundStyle(Palette.primary)
                         Text("فهرست جامع اساتید، خوانندگان و نوازندگان تاریخ رادیو گلها به ترتیب حروف الفبا.")
                             .font(.vazir(10.5))
@@ -33,7 +33,7 @@ struct SingersContentView: View {
                                         .padding(.horizontal, 16)
                                         .padding(.vertical, 8)
                                         .background(
-                                            selectedLetter == letter ? Palette.primary : Palette.sidebar,
+                                            selectedLetter == letter ? Palette.secondary : Palette.sidebar,
                                             in: Capsule()
                                         )
                                 }

@@ -32,3 +32,11 @@ struct SingerListItem: Identifiable {
     let programsCount: String
     let imageURL: String
 }
+
+struct PlayerListItem: Identifiable {
+    let id = UUID()
+    let name: String
+    let instrument: String
+    let programsCount: String
+    let imageURL: String
+}

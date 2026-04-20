@@ -3,6 +3,7 @@ import SwiftUI
 private enum DesktopPage {
     case home
     case singers
+    case players
 }
 
 struct HomeRootView: View {
@@ -31,11 +32,13 @@ struct HomeRootView: View {
     private var mainCanvas: some View {
         VStack(spacing: 0) {
             DesktopTopNavigationBar(
-                selectedTab: currentPage == .home ? .programs : .artists
+                selectedTab: selectedTab
             ) { tab in
                 switch tab {
                 case .artists:
                     currentPage = .singers
+                case .instrumentalists:
+                    currentPage = .players
                 case .programs:
                     currentPage = .home
                 default:
@@ -49,9 +52,22 @@ struct HomeRootView: View {
                     MainContentSection()
                 case .singers:
                     SingersContentView()
+                case .players:
+                    PlayersContentView()
                 }
             }
             .frame(maxHeight: .infinity)
+        }
+    }
+
+    private var selectedTab: DesktopMainTab {
+        switch currentPage {
+        case .home:
+            return .programs
+        case .singers:
+            return .artists
+        case .players:
+            return .instrumentalists
         }
     }
 }

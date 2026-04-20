@@ -3,6 +3,7 @@ import SwiftUI
 enum DesktopMainTab {
     case programs
     case artists
+    case instrumentalists
     case modes
     case poets
 }
@@ -13,14 +14,16 @@ struct DesktopTopNavigationBar: View {
 
     var body: some View {
         HStack {
-            HStack(spacing: 40) {
+            HStack(spacing: 24) {
                 Text("رادیو گلها")
                     .font(.vazir(15, .bold))
                     .foregroundStyle(Palette.primaryMuted)
+                    .lineLimit(1)
 
-                HStack(spacing: 32) {
+                HStack(spacing: 20) {
                     navButton(title: "برنامه‌ها", tab: .programs)
                     navButton(title: "خواننده‌ها", tab: .artists)
+                    navButton(title: "نوازندگان", tab: .instrumentalists)
                     navButton(title: "دستگاه‌ها", tab: .modes)
                     navButton(title: "شاعران", tab: .poets)
                 }
@@ -39,7 +42,7 @@ struct DesktopTopNavigationBar: View {
                         .foregroundStyle(Palette.primary.opacity(0.45))
                 }
                 .padding(.horizontal, 12)
-                .frame(width: 256, height: 36)
+                .frame(width: 220, height: 36)
                 .background(Palette.surfaceLow, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
 
                 Image(systemName: "person.crop.circle")
@@ -61,11 +64,14 @@ struct DesktopTopNavigationBar: View {
                 Text(title)
                     .font(.vazir(10.5, selected ? .bold : .regular))
                     .foregroundStyle(selected ? Palette.primaryMuted : Palette.text.opacity(0.7))
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
                 Rectangle()
                     .fill(selected ? Palette.secondary : .clear)
                     .frame(width: 46, height: 2)
             }
         }
         .buttonStyle(.plain)
+        .layoutPriority(1)
     }
 }
