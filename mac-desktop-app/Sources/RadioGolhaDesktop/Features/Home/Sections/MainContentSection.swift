@@ -150,16 +150,18 @@ private struct MainHero: View {
 
 private struct ProgramsGridSection: View {
     let items: [ProgramItem]
-    private let columns = Array(repeating: GridItem(.fixed(214), spacing: 24), count: 4)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 32) {
             SectionHead(title: "برنامه‌ها", showAllAction: true)
 
-            LazyVGrid(columns: columns, spacing: 24) {
-                ForEach(items) { item in
-                    ProgramRowCard(item: item)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 24) {
+                    ForEach(items) { item in
+                        ProgramRowCard(item: item)
+                    }
                 }
+                .padding(.vertical, 4)
             }
         }
     }

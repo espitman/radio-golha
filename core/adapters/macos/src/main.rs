@@ -67,7 +67,15 @@ fn build_home_feed_json(db_path: &str) -> String {
                  FROM program_singers ps
                  JOIN singer s ON s.id = ps.singer_id
                  JOIN artist a ON a.id = s.artist_id
-                 GROUP BY s.id ORDER BY total DESC LIMIT 12",
+                 GROUP BY s.id, a.id, a.name, a.avatar
+                 ORDER BY
+                   CASE
+                     WHEN a.avatar IS NOT NULL AND TRIM(a.avatar) <> '' THEN 1
+                     ELSE 0
+                   END DESC,
+                   total DESC,
+                   a.name ASC
+                 LIMIT 8",
             ) {
                 Ok(stmt) => stmt,
                 Err(err) => return json!({ "error": err.to_string() }).to_string(),
@@ -87,23 +95,41 @@ fn build_home_feed_json(db_path: &str) -> String {
             let dastgahs = core.top_modes(10).unwrap_or_default();
 
             let mut musicians_stmt = match conn.prepare(
-                "SELECT a.id, a.name, a.avatar, COUNT(DISTINCT pp.program_id) AS total
+                "SELECT
+                   a.id,
+                   a.name,
+                   (
+                     SELECT i.name
+                     FROM program_performers pp2
+                     LEFT JOIN instrument i ON i.id = pp2.instrument_id
+                     WHERE pp2.performer_id = p.id AND i.name IS NOT NULL AND TRIM(i.name) <> ''
+                     GROUP BY i.id, i.name
+                     ORDER BY COUNT(*) DESC, i.name ASC
+                     LIMIT 1
+                   ) AS instrument_name,
+                   a.avatar,
+                   COUNT(DISTINCT pp.program_id) AS total
                  FROM program_performers pp
                  JOIN performer p ON p.id = pp.performer_id
                  JOIN artist a ON a.id = p.artist_id
-                 GROUP BY p.id ORDER BY total DESC LIMIT 12",
+                 GROUP BY p.id, a.id, a.name, a.avatar
+                 ORDER BY total DESC, a.name ASC
+                 LIMIT 8",
             ) {
                 Ok(stmt) => stmt,
                 Err(err) => return json!({ "error": err.to_string() }).to_string(),
             };
             let musicians: Vec<_> = musicians_stmt
                 .query_map([], |row| {
+                    let instrument: Option<String> = row.get(2)?;
                     Ok(json!({
                         "id": row.get::<_, i64>(0)?,
                         "name": row.get::<_, String>(1)?,
-                        "avatar": row.get::<_, Option<String>>(2)?,
-                        "instrument": "نوازنده",
-                        "programCount": row.get::<_, i64>(3)?
+                        "instrument": instrument
+                            .filter(|value| !value.trim().is_empty())
+                            .unwrap_or_else(|| "نوازنده".to_string()),
+                        "avatar": row.get::<_, Option<String>>(3)?,
+                        "programCount": row.get::<_, i64>(4)?
                     }))
                 })
                 .map(|rows| rows.filter_map(|item| item.ok()).collect())

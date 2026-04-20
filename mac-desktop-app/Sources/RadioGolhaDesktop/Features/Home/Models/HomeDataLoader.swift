@@ -51,9 +51,7 @@ enum HomeDataLoader {
     }
 
     private static func mapResponse(_ response: HomeFeedBridgeResponse) -> HomeContentData {
-        let topCategories = response.categories
-            .sorted { $0.episodeCount > $1.episodeCount }
-            .prefix(4)
+        let categories = response.categories
             .enumerated()
             .map { index, category in
                 ProgramItem(
@@ -96,7 +94,7 @@ enum HomeDataLoader {
         }()
 
         return HomeContentData(
-            programs: topCategories.isEmpty ? HomeMockData.programs : topCategories,
+            programs: categories.isEmpty ? HomeMockData.programs : categories,
             singers: singers.isEmpty ? HomeMockData.singers : singers,
             instrumentalists: musicians.isEmpty ? HomeMockData.instrumentalists : musicians,
             modes: modes.isEmpty ? HomeMockData.modes : modes,
