@@ -1,12 +1,16 @@
 import SwiftUI
 
 struct MainContentSection: View {
+    var onSelectTab: (DesktopMainTab) -> Void = { _ in }
     private let heroImage = URL(string: "https://lh3.googleusercontent.com/aida-public/AB6AXuBTRoCtbLy1Vpa3t_ez8WfRkhOFnnCGOnbhRCJ3Tw_GbsQa8OqeyyLL2ov1DPWrduyIkRYbX-OfQkwuqlVraQ8QJOLKS5xz0nnGbm6Xcew6EaIxSXymeWEKEzkuhnl0xcQXO5V7KIbFs1M5iwZVA0GNgsIljnkjQYe9AdbIOmQEm8ohOVd39E_qi-b-b39xQ0PVaqyEtPk83DXRnERRtsx7Xs_6iidmtYtqJkpETR82f97iPOnF3stP0rFiR0INpoCfMwIZfPGvTTV3")
 
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
-                MainTopNav()
+                DesktopTopNavigationBar(
+                    selectedTab: .programs,
+                    onSelectTab: onSelectTab
+                )
 
                 ZStack {
                     Palette.surface
@@ -60,66 +64,6 @@ struct MainContentSection: View {
         .background(Palette.surface)
         .environment(\.layoutDirection, .rightToLeft)
         .multilineTextAlignment(.leading)
-    }
-}
-
-private struct MainTopNav: View {
-    var body: some View {
-        HStack {
-            HStack(spacing: 40) {
-                Text("رادیو گلها")
-                    .font(.vazir(15, .bold))
-                    .foregroundStyle(Palette.primaryMuted)
-
-                HStack(spacing: 32) {
-                    NavItem(title: "برنامه‌ها", selected: true)
-                    NavItem(title: "هنرمندان")
-                    NavItem(title: "دستگاه‌ها")
-                    NavItem(title: "شاعران")
-                }
-            }
-
-            Spacer(minLength: 0)
-
-            HStack(spacing: 24) {
-                HStack(spacing: 10) {
-                    Spacer(minLength: 0)
-                    Text("جستجو در آرشیو...")
-                        .font(.vazir(9.75))
-                        .foregroundStyle(Palette.text.opacity(0.55))
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(Palette.primary.opacity(0.45))
-                }
-                .padding(.horizontal, 12)
-                .frame(width: 256, height: 36)
-                .background(Palette.surfaceLow, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-
-                Image(systemName: "person.crop.circle")
-                    .font(.system(size: 18, weight: .regular))
-                    .foregroundStyle(Palette.primary.opacity(0.6))
-            }
-        }
-        .frame(height: 80)
-        .padding(.horizontal, 48)
-        .background(Palette.surface.opacity(0.82))
-        .multilineTextAlignment(.leading)
-    }
-}
-
-private struct NavItem: View {
-    let title: String
-    var selected: Bool = false
-
-    var body: some View {
-        VStack(spacing: 6) {
-            Text(title)
-                .font(.vazir(10.5, selected ? .bold : .regular))
-                .foregroundStyle(selected ? Palette.primaryMuted : Palette.text.opacity(0.7))
-            Rectangle()
-                .fill(selected ? Palette.secondary : .clear)
-                .frame(width: 46, height: 2)
-        }
     }
 }
 

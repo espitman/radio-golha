@@ -1,0 +1,71 @@
+import SwiftUI
+
+enum DesktopMainTab {
+    case programs
+    case artists
+    case modes
+    case poets
+}
+
+struct DesktopTopNavigationBar: View {
+    let selectedTab: DesktopMainTab
+    var onSelectTab: (DesktopMainTab) -> Void
+
+    var body: some View {
+        HStack {
+            HStack(spacing: 40) {
+                Text("رادیو گلها")
+                    .font(.vazir(15, .bold))
+                    .foregroundStyle(Palette.primaryMuted)
+
+                HStack(spacing: 32) {
+                    navButton(title: "برنامه‌ها", tab: .programs)
+                    navButton(title: "خواننده‌ها", tab: .artists)
+                    navButton(title: "دستگاه‌ها", tab: .modes)
+                    navButton(title: "شاعران", tab: .poets)
+                }
+            }
+
+            Spacer(minLength: 0)
+
+            HStack(spacing: 24) {
+                HStack(spacing: 10) {
+                    Spacer(minLength: 0)
+                    Text("جستجو در آرشیو...")
+                        .font(.vazir(9.75))
+                        .foregroundStyle(Palette.text.opacity(0.55))
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Palette.primary.opacity(0.45))
+                }
+                .padding(.horizontal, 12)
+                .frame(width: 256, height: 36)
+                .background(Palette.surfaceLow, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+
+                Image(systemName: "person.crop.circle")
+                    .font(.system(size: 18, weight: .regular))
+                    .foregroundStyle(Palette.primary.opacity(0.6))
+            }
+        }
+        .frame(height: 80)
+        .padding(.horizontal, 48)
+        .background(Palette.surface.opacity(0.82))
+    }
+
+    private func navButton(title: String, tab: DesktopMainTab) -> some View {
+        let selected = (selectedTab == tab)
+        return Button {
+            onSelectTab(tab)
+        } label: {
+            VStack(spacing: 6) {
+                Text(title)
+                    .font(.vazir(10.5, selected ? .bold : .regular))
+                    .foregroundStyle(selected ? Palette.primaryMuted : Palette.text.opacity(0.7))
+                Rectangle()
+                    .fill(selected ? Palette.secondary : .clear)
+                    .frame(width: 46, height: 2)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}

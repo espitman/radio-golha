@@ -25,3 +25,10 @@ struct TrackRowItem: Identifiable {
     let subtitle: String
     let duration: String
 }
+
+struct SingerListItem: Identifiable {
+    let id = UUID()
+    let name: String
+    let programsCount: String
+    let imageURL: String
+}

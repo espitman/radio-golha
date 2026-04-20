@@ -1,6 +1,13 @@
 import SwiftUI
 
+private enum DesktopPage {
+    case home
+    case singers
+}
+
 struct HomeRootView: View {
+    @State private var currentPage: DesktopPage = .home
+
     var body: some View {
         ZStack(alignment: .bottom) {
             Palette.surface.ignoresSafeArea()
@@ -22,6 +29,21 @@ struct HomeRootView: View {
     }
 
     private var mainCanvas: some View {
-        MainContentSection()
+        Group {
+            switch currentPage {
+            case .home:
+                MainContentSection { tab in
+                    if tab == .artists {
+                        currentPage = .singers
+                    }
+                }
+            case .singers:
+                SingersContentView { tab in
+                    if tab == .programs {
+                        currentPage = .home
+                    }
+                }
+            }
+        }
     }
 }
