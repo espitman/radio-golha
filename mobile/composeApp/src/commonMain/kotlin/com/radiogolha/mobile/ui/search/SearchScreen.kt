@@ -171,6 +171,12 @@ fun SearchScreen(
                         onPlayTrack = onPlayTrack,
                         onTrackLongClick = onTrackLongClick,
                         onBackToFilters = { state.currentPage = SearchPage.Filters },
+                        onFiltersChanged = {
+                            state.activeFilters = it
+                            state.currentPage = SearchPage.Results
+                            state.isLoading = true
+                            state.allResults = emptyList()
+                        },
                         onSavePlaylist = onSavePlaylist,
                     )
                 }
@@ -449,6 +455,7 @@ private fun ResultsPage(
     onPlayTrack: (TrackUiModel) -> Unit,
     onTrackLongClick: (TrackUiModel) -> Unit = {},
     onBackToFilters: () -> Unit,
+    onFiltersChanged: (ActiveFilters) -> Unit = {},
     onSavePlaylist: (String, ActiveFilters) -> Unit = { _, _ -> },
 ) {
     var showSaveDialog by remember { mutableStateOf(false) }
@@ -558,8 +565,12 @@ private fun ResultsPage(
             }
         }
 
-        // Active filter chips (read-only in results)
-        ActiveFilterChips(activeFilters = activeFilters, searchOptions = searchOptions)
+        ActiveFilterChips(
+            activeFilters = activeFilters,
+            searchOptions = searchOptions,
+            onRemove = { type, id -> onFiltersChanged(activeFilters.withToggled(type, id)) },
+            onRemoveTranscript = { onFiltersChanged(activeFilters.copy(transcriptQuery = "")) },
+        )
         if (activeFilters.hasAnyFilter) Spacer(modifier = Modifier.height(4.dp))
 
         // Results

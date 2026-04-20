@@ -1,6 +1,7 @@
 package com.radiogolha.mobile.ui.home
 
 data class ProgramUiModel(
+    val id: Long = 0,
     val title: String,
     val episodeCount: Int,
 )
@@ -21,6 +22,7 @@ data class SingerUiModel(
     val id: Long,
     val name: String,
     val imageUrl: String? = null,
+    val programCount: Int = 0,
 )
 
 data class SingerListItemUiModel(
@@ -45,6 +47,7 @@ data class MusicianUiModel(
     val name: String,
     val instrument: String,
     val imageUrl: String? = null,
+    val programCount: Int = 0,
 )
 
 data class MusicianListItemUiModel(
@@ -100,6 +103,7 @@ data class HomeUiState(
     val dastgahs: List<DastgahUiModel>,
     val musicians: List<MusicianUiModel>,
     val topTracks: List<TrackUiModel>,
+    val duets: List<DuetPairUiModel>,
     val bottomNavItems: List<BottomNavItemUiModel>,
     val isRefreshing: Boolean = false,
     val isDatabaseSyncing: Boolean = false,
@@ -198,4 +202,5 @@ data class ArtistDetailUiModel(
     val instrument: String? = null,
     val trackCount: Int,
     val tracks: List<CategoryProgramUiModel>,
+    val isFavorite: Boolean = false,
 )

@@ -490,6 +490,7 @@ fun DuetsBanner(
     onDuetClick: (DuetPairUiModel) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    if (duets.isEmpty()) return
     val pagerState = rememberPagerState(pageCount = { duets.size })
 
     // Animated glow circles
@@ -1013,7 +1014,7 @@ private fun formatPlaybackTime(timeMs: Long): String {
     val totalSeconds = (timeMs / 1000L).coerceAtLeast(0L)
     val minutes = totalSeconds / 60L
     val seconds = totalSeconds % 60L
-    return "%02d:%02d".format(minutes, seconds)
+    return "${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}"
 }
 
 @Composable

@@ -384,55 +384,86 @@ fn artist_detail_json(db_path: &str, artist_id: i64) -> Result<String, String> {
     let core = RadioGolhaCore::open(db_path).map_err(|error| error.to_string())?;
     let conn = core.connection();
 
-    let payload = conn.query_row(
-        "
-        SELECT
-          a.id,
-          a.name,
-          a.avatar,
-          (
-            SELECT i.name
-            FROM program_performers pp
-            JOIN performer p ON p.id = pp.performer_id
-            LEFT JOIN instrument i ON i.id = pp.instrument_id
-            WHERE p.artist_id = a.id AND i.name IS NOT NULL AND TRIM(i.name) <> ''
-            GROUP BY i.id, i.name
-            ORDER BY COUNT(*) DESC, i.name ASC
-            LIMIT 1
-          ) AS instrument_name,
-          (
-            SELECT COUNT(DISTINCT p2.id)
-            FROM program p2
-            WHERE EXISTS (
-                SELECT 1
-                FROM program_singers ps
-                JOIN singer s ON s.id = ps.singer_id
-                WHERE ps.program_id = p2.id AND s.artist_id = a.id
-            )
-            OR EXISTS (
-                SELECT 1
+    let query_artist_payload = |id: i64| -> Result<(i64, String, Option<String>, Option<String>, i64), String> {
+        conn.query_row(
+            "
+            SELECT
+              a.id,
+              a.name,
+              a.avatar,
+              (
+                SELECT i.name
                 FROM program_performers pp
                 JOIN performer p ON p.id = pp.performer_id
-                WHERE pp.program_id = p2.id AND p.artist_id = a.id
-            )
-          ) AS track_count
-        FROM artist a
-        WHERE a.id = ?1
-        ",
-        [artist_id],
-        |row| {
-            Ok((
-                row.get::<_, i64>(0)?,
-                row.get::<_, String>(1)?,
-                row.get::<_, Option<String>>(2)?,
-                row.get::<_, Option<String>>(3)?,
-                row.get::<_, i64>(4)?,
-            ))
-        },
-    ).map_err(|error| error.to_string())?;
+                LEFT JOIN instrument i ON i.id = pp.instrument_id
+                WHERE p.artist_id = a.id AND i.name IS NOT NULL AND TRIM(i.name) <> ''
+                GROUP BY i.id, i.name
+                ORDER BY COUNT(*) DESC, i.name ASC
+                LIMIT 1
+              ) AS instrument_name,
+              (
+                SELECT COUNT(DISTINCT p2.id)
+                FROM program p2
+                WHERE EXISTS (
+                    SELECT 1
+                    FROM program_singers ps
+                    JOIN singer s ON s.id = ps.singer_id
+                    WHERE ps.program_id = p2.id AND s.artist_id = a.id
+                )
+                OR EXISTS (
+                    SELECT 1
+                    FROM program_performers pp
+                    JOIN performer p ON p.id = pp.performer_id
+                    WHERE pp.program_id = p2.id AND p.artist_id = a.id
+                )
+              ) AS track_count
+            FROM artist a
+            WHERE a.id = ?1
+            ",
+            [id],
+            |row| {
+                Ok((
+                    row.get::<_, i64>(0)?,
+                    row.get::<_, String>(1)?,
+                    row.get::<_, Option<String>>(2)?,
+                    row.get::<_, Option<String>>(3)?,
+                    row.get::<_, i64>(4)?,
+                ))
+            },
+        ).map_err(|error| error.to_string())
+    };
+
+    // Prefer direct artist id. If it is missing or has no related tracks, resolve through singer/performer ids.
+    let direct_payload = query_artist_payload(artist_id).ok();
+    let resolved_artist_id = if let Some(payload) = &direct_payload {
+        if payload.4 > 0 {
+            payload.0
+        } else {
+            conn.query_row("SELECT artist_id FROM singer WHERE id = ?1", [artist_id], |row| row.get::<_, i64>(0))
+                .or_else(|_| conn.query_row("SELECT artist_id FROM performer WHERE id = ?1", [artist_id], |row| row.get::<_, i64>(0)))
+                .unwrap_or(payload.0)
+        }
+    } else {
+        conn.query_row("SELECT artist_id FROM singer WHERE id = ?1", [artist_id], |row| row.get::<_, i64>(0))
+            .or_else(|_| conn.query_row("SELECT artist_id FROM performer WHERE id = ?1", [artist_id], |row| row.get::<_, i64>(0)))
+            .map_err(|error| error.to_string())?
+    };
+
+    let payload = query_artist_payload(resolved_artist_id)?;
 
     let mut stmt = conn.prepare(
         "
+        WITH artist_program_ids AS (
+            SELECT DISTINCT ps.program_id AS program_id
+            FROM program_singers ps
+            JOIN singer s ON s.id = ps.singer_id
+            WHERE s.artist_id = ?1
+            UNION
+            SELECT DISTINCT pp.program_id AS program_id
+            FROM program_performers pp
+            JOIN performer pf ON pf.id = pp.performer_id
+            WHERE pf.artist_id = ?1
+        )
         SELECT
             p.id,
             p.title,
@@ -459,24 +490,13 @@ fn artist_detail_json(db_path: &str, artist_id: i64) -> Result<String, String> {
             ) AS mode_names,
             (SELECT MAX(end_time) FROM program_timeline WHERE program_id = p.id) AS duration,
             p.audio_url
-        FROM program p
-        WHERE EXISTS (
-            SELECT 1
-            FROM program_singers ps
-            JOIN singer s ON s.id = ps.singer_id
-            WHERE ps.program_id = p.id AND s.artist_id = ?1
-        )
-        OR EXISTS (
-            SELECT 1
-            FROM program_performers pp
-            JOIN performer pf ON pf.id = pp.performer_id
-            WHERE pp.program_id = p.id AND pf.artist_id = ?1
-        )
+        FROM artist_program_ids ap
+        JOIN program p ON p.id = ap.program_id
         ORDER BY p.no ASC, p.id ASC
         "
     ).map_err(|error| error.to_string())?;
 
-    let rows = stmt.query_map([artist_id], |row| {
+    let rows = stmt.query_map([resolved_artist_id], |row| {
         Ok(AndroidCategoryProgramItem {
             id: row.get(0)?,
             title: row.get(1)?,

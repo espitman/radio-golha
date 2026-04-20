@@ -1,6 +1,7 @@
 use rusqlite::{OptionalExtension, params, params_from_iter, types::Value};
 use serde_json;
 use std::borrow::Cow;
+use std::collections::HashMap;
 
 use crate::{
     db::RadioGolhaCore,
@@ -770,12 +771,12 @@ impl RadioGolhaCore {
     pub fn search_programs(
         &self,
         filters: &ProgramSearchFilters,
-        page: i64,
+        _page: i64,
     ) -> CoreResult<ProgramSearchResponse> {
-        let limit = 24_i64;
-        let safe_page = page.max(1);
         let total = self.count_program_search(filters)?;
-        let total_pages = ((total + limit - 1) / limit).max(1);
+        let limit = total.max(1);
+        let safe_page = 1_i64;
+        let total_pages = 1_i64;
 
         Ok(ProgramSearchResponse {
             rows: self.list_program_search_rows(filters, safe_page, limit)?,
@@ -1489,6 +1490,156 @@ impl RadioGolhaCore {
             ))
         })?;
 
+        let mut singers_by_timeline: HashMap<i64, Vec<String>> = HashMap::new();
+        {
+            let mut stmt = self.connection().prepare(
+                "
+                SELECT pts.timeline_id, a.name
+                FROM program_timeline_singers pts
+                JOIN singer s ON s.id = pts.singer_id
+                JOIN artist a ON a.id = s.artist_id
+                JOIN program_timeline t ON t.id = pts.timeline_id
+                WHERE t.program_id = ?1
+                ORDER BY pts.timeline_id ASC, a.name ASC
+                ",
+            )?;
+            let rows = stmt.query_map([program_id], |row| {
+                Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?))
+            })?;
+            for row in rows {
+                let (timeline_id, name) = row?;
+                singers_by_timeline.entry(timeline_id).or_default().push(name);
+            }
+        }
+
+        let mut poets_by_timeline: HashMap<i64, Vec<String>> = HashMap::new();
+        {
+            let mut stmt = self.connection().prepare(
+                "
+                SELECT ptp.timeline_id, a.name
+                FROM program_timeline_poets ptp
+                JOIN poet p ON p.id = ptp.poet_id
+                JOIN artist a ON a.id = p.artist_id
+                JOIN program_timeline t ON t.id = ptp.timeline_id
+                WHERE t.program_id = ?1
+                ORDER BY ptp.timeline_id ASC, a.name ASC
+                ",
+            )?;
+            let rows = stmt.query_map([program_id], |row| {
+                Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?))
+            })?;
+            for row in rows {
+                let (timeline_id, name) = row?;
+                poets_by_timeline.entry(timeline_id).or_default().push(name);
+            }
+        }
+
+        let mut announcers_by_timeline: HashMap<i64, Vec<String>> = HashMap::new();
+        {
+            let mut stmt = self.connection().prepare(
+                "
+                SELECT pta.timeline_id, a.name
+                FROM program_timeline_announcers pta
+                JOIN announcer an ON an.id = pta.announcer_id
+                JOIN artist a ON a.id = an.artist_id
+                JOIN program_timeline t ON t.id = pta.timeline_id
+                WHERE t.program_id = ?1
+                ORDER BY pta.timeline_id ASC, a.name ASC
+                ",
+            )?;
+            let rows = stmt.query_map([program_id], |row| {
+                Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?))
+            })?;
+            for row in rows {
+                let (timeline_id, name) = row?;
+                announcers_by_timeline.entry(timeline_id).or_default().push(name);
+            }
+        }
+
+        let mut orchestras_by_timeline: HashMap<i64, Vec<String>> = HashMap::new();
+        {
+            let mut stmt = self.connection().prepare(
+                "
+                SELECT DISTINCT pto.timeline_id, o.name
+                FROM program_timeline_orchestras pto
+                JOIN orchestra o ON o.id = pto.orchestra_id
+                JOIN program_timeline t ON t.id = pto.timeline_id
+                WHERE t.program_id = ?1
+                ORDER BY pto.timeline_id ASC, o.name ASC
+                ",
+            )?;
+            let rows = stmt.query_map([program_id], |row| {
+                Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?))
+            })?;
+            for row in rows {
+                let (timeline_id, name) = row?;
+                orchestras_by_timeline.entry(timeline_id).or_default().push(name);
+            }
+        }
+
+        let mut leaders_by_timeline: HashMap<i64, Vec<OrchestraLeaderCredit>> = HashMap::new();
+        {
+            let mut stmt = self.connection().prepare(
+                "
+                SELECT DISTINCT ptol.timeline_id, a.id, o.name, a.name
+                FROM program_timeline_orchestra_leaders ptol
+                JOIN orchestra o ON o.id = ptol.orchestra_id
+                JOIN orchestra_leader ol ON ol.id = ptol.orchestra_leader_id
+                JOIN artist a ON a.id = ol.artist_id
+                JOIN program_timeline t ON t.id = ptol.timeline_id
+                WHERE t.program_id = ?1
+                ORDER BY ptol.timeline_id ASC, o.name ASC, a.name ASC
+                ",
+            )?;
+            let rows = stmt.query_map([program_id], |row| {
+                Ok((
+                    row.get::<_, i64>(0)?,
+                    OrchestraLeaderCredit {
+                        artist_id: row.get(1)?,
+                        orchestra: row.get(2)?,
+                        leader: row.get(3)?,
+                    },
+                ))
+            })?;
+            for row in rows {
+                let (timeline_id, credit) = row?;
+                leaders_by_timeline.entry(timeline_id).or_default().push(credit);
+            }
+        }
+
+        let mut performers_by_timeline: HashMap<i64, Vec<PerformerCredit>> = HashMap::new();
+        {
+            let mut stmt = self.connection().prepare(
+                "
+                SELECT ptp.timeline_id, a.id, a.name, a.avatar, i.name
+                FROM program_timeline_performers ptp
+                JOIN performer p ON p.id = ptp.performer_id
+                JOIN artist a ON a.id = p.artist_id
+                JOIN program_timeline t ON t.id = ptp.timeline_id
+                LEFT JOIN program_performers pp
+                  ON pp.program_id = ?1 AND pp.performer_id = ptp.performer_id
+                LEFT JOIN instrument i ON i.id = pp.instrument_id
+                WHERE t.program_id = ?1
+                ORDER BY ptp.timeline_id ASC, a.name ASC
+                ",
+            )?;
+            let rows = stmt.query_map([program_id], |row| {
+                Ok((
+                    row.get::<_, i64>(0)?,
+                    PerformerCredit {
+                        artist_id: row.get(1)?,
+                        name: row.get(2)?,
+                        avatar: row.get(3)?,
+                        instrument: row.get(4)?,
+                    },
+                ))
+            })?;
+            for row in rows {
+                let (timeline_id, credit) = row?;
+                performers_by_timeline.entry(timeline_id).or_default().push(credit);
+            }
+        }
+
         let mut segments = Vec::new();
         for segment in base_segments {
             let (timeline_id, start_time, end_time, mode_name) = segment?;
@@ -1497,112 +1648,16 @@ impl RadioGolhaCore {
                 start_time,
                 end_time,
                 mode_name,
-                singers: self.timeline_name_list(
-                    "
-                    SELECT a.name
-                    FROM program_timeline_singers pts
-                    JOIN singer s ON s.id = pts.singer_id
-                    JOIN artist a ON a.id = s.artist_id
-                    WHERE pts.timeline_id = ?1
-                    ORDER BY a.name ASC
-                    ",
-                    timeline_id,
-                )?,
-                poets: self.timeline_name_list(
-                    "
-                    SELECT a.name
-                    FROM program_timeline_poets ptp
-                    JOIN poet p ON p.id = ptp.poet_id
-                    JOIN artist a ON a.id = p.artist_id
-                    WHERE ptp.timeline_id = ?1
-                    ORDER BY a.name ASC
-                    ",
-                    timeline_id,
-                )?,
-                announcers: self.timeline_name_list(
-                    "
-                    SELECT a.name
-                    FROM program_timeline_announcers pta
-                    JOIN announcer an ON an.id = pta.announcer_id
-                    JOIN artist a ON a.id = an.artist_id
-                    WHERE pta.timeline_id = ?1
-                    ORDER BY a.name ASC
-                    ",
-                    timeline_id,
-                )?,
-                orchestras: self.timeline_name_list(
-                    "
-                    SELECT DISTINCT o.name
-                    FROM program_timeline_orchestras pto
-                    JOIN orchestra o ON o.id = pto.orchestra_id
-                    WHERE pto.timeline_id = ?1
-                    ORDER BY o.name ASC
-                    ",
-                    timeline_id,
-                )?,
-                orchestra_leaders: self.timeline_orchestra_leaders(timeline_id)?,
-                performers: self.timeline_performers(timeline_id, program_id)?,
+                singers: singers_by_timeline.remove(&timeline_id).unwrap_or_default(),
+                poets: poets_by_timeline.remove(&timeline_id).unwrap_or_default(),
+                announcers: announcers_by_timeline.remove(&timeline_id).unwrap_or_default(),
+                orchestras: orchestras_by_timeline.remove(&timeline_id).unwrap_or_default(),
+                orchestra_leaders: leaders_by_timeline.remove(&timeline_id).unwrap_or_default(),
+                performers: performers_by_timeline.remove(&timeline_id).unwrap_or_default(),
             });
         }
 
         Ok(segments)
-    }
-
-    fn timeline_name_list(&self, sql: &str, timeline_id: i64) -> CoreResult<Vec<String>> {
-        let mut stmt = self.connection().prepare(sql)?;
-        let rows = stmt.query_map([timeline_id], |row| row.get::<_, String>(0))?;
-        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
-    }
-
-    fn timeline_orchestra_leaders(&self, timeline_id: i64) -> CoreResult<Vec<OrchestraLeaderCredit>> {
-        let mut stmt = self.connection().prepare(
-            "
-            SELECT DISTINCT a.id, o.name, a.name
-            FROM program_timeline_orchestra_leaders ptol
-            JOIN orchestra o ON o.id = ptol.orchestra_id
-            JOIN orchestra_leader ol ON ol.id = ptol.orchestra_leader_id
-            JOIN artist a ON a.id = ol.artist_id
-            WHERE ptol.timeline_id = ?1
-            ORDER BY o.name ASC, a.name ASC
-            ",
-        )?;
-
-        let rows = stmt.query_map([timeline_id], |row| {
-            Ok(OrchestraLeaderCredit {
-                artist_id: row.get(0)?,
-                orchestra: row.get(1)?,
-                leader: row.get(2)?,
-            })
-        })?;
-
-        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
-    }
-
-    fn timeline_performers(&self, timeline_id: i64, program_id: i64) -> CoreResult<Vec<PerformerCredit>> {
-        let mut stmt = self.connection().prepare(
-            "
-            SELECT a.id, a.name, a.avatar, i.name
-            FROM program_timeline_performers ptp
-            JOIN performer p ON p.id = ptp.performer_id
-            JOIN artist a ON a.id = p.artist_id
-            LEFT JOIN program_performers pp
-              ON pp.program_id = ?2 AND pp.performer_id = ptp.performer_id
-            LEFT JOIN instrument i ON i.id = pp.instrument_id
-            WHERE ptp.timeline_id = ?1
-            ORDER BY a.name ASC
-            ",
-        )?;
-
-        let rows = stmt.query_map(params![timeline_id, program_id], |row| {
-            Ok(PerformerCredit {
-                artist_id: row.get(0)?,
-                name: row.get(1)?,
-                avatar: row.get(2)?,
-                instrument: row.get(3)?,
-            })
-        })?;
-
-        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 
     pub fn get_artist_detail(&self, id: i64) -> CoreResult<Option<ArtistDetail>> {

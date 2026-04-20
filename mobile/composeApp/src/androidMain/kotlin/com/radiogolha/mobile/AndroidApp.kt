@@ -1,6 +1,7 @@
 package com.radiogolha.mobile
 
 import androidx.activity.compose.BackHandler
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
@@ -251,8 +252,15 @@ fun AndroidApp() {
                 startDestination = AndroidRoute.Home.route,
             ) {
                 composable(AndroidRoute.Home.route) {
+                    val resolvedHomeState = homeUiState?.let { state ->
+                        if (state.programs.isEmpty() && libraryPrograms.isNotEmpty()) {
+                            state.copy(programs = libraryPrograms)
+                        } else {
+                            state
+                        }
+                    }
                     HomeScreen(
-                        state = if (isHomeLoading && homeUiState == null) null else homeUiState?.copy(bottomNavItems = bottomNavItems),
+                        state = if (isHomeLoading && resolvedHomeState == null) null else resolvedHomeState?.copy(bottomNavItems = bottomNavItems),
                         bottomNavItems = bottomNavItems,
                         duets = enrichedDuets,
                         savedPlaylists = savedPlaylists,
@@ -271,7 +279,7 @@ fun AndroidApp() {
                         onPlayTrack = { track -> playerManager.play(track) },
                         onTrackLongClick = { track -> trackForOptions = track },
                         onTrackClick = { track -> if (track.id == currentTrack?.id) showPlayerSheet = true else navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(track.id)) },
-                        onProgramClick = { program -> navController.navigate(AndroidRoute.CategoryPrograms.createRoute(program.title)) },
+                        onProgramClick = { program -> navController.navigate(AndroidRoute.CategoryPrograms.createRoute(program.id, program.title)) },
                         onSingerClick = { artistId -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(artistId)) },
                         onSingerLongPress = { singer ->
                             artistForQuickActions = ArtistQuickAction(
@@ -340,7 +348,7 @@ fun AndroidApp() {
                         bottomNavItems = bottomNavItems,
                         onExpandPlayer = { showPlayerSheet = true },
                         onBottomNavSelected = onTabSelected,
-                        onProgramClick = { program -> navController.navigate(AndroidRoute.CategoryPrograms.createRoute(program.title)) },
+                        onProgramClick = { program -> navController.navigate(AndroidRoute.CategoryPrograms.createRoute(program.id, program.title)) },
                         onSingerClick = { id -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(id)) },
                         onMusicianClick = { id -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(id)) },
                         onOrchestraClick = { id ->
@@ -359,10 +367,16 @@ fun AndroidApp() {
                     )
                 }
 
-                composable(route = AndroidRoute.CategoryPrograms.route, arguments = listOf(navArgument("title") { type = NavType.StringType })) { backStackEntry ->
+                composable(
+                    route = AndroidRoute.CategoryPrograms.route,
+                    arguments = listOf(
+                        navArgument("id") { type = NavType.LongType },
+                        navArgument("title") { type = NavType.StringType },
+                    )
+                ) { backStackEntry ->
+                    val categoryId = backStackEntry.arguments?.getLong("id") ?: 0L
                     val title = backStackEntry.arguments?.getString("title") ?: ""
-                    LaunchedEffect(title) { if (title != lastCategoryTitle) { categoryPrograms = emptyList(); isCategoryLoading = true; try { categoryPrograms = withContext(Dispatchers.Default) { loadCategoryPrograms(title) } } finally { isCategoryLoading = false; lastCategoryTitle = title } } }
-                    CategoryProgramsScreen(categoryTitle = title, programs = categoryPrograms, isLoading = isCategoryLoading, bottomNavItems = bottomNavItems, onExpandPlayer = { showPlayerSheet = true }, onBottomNavSelected = onTabSelected, onProgramClick = { program -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(program.id)) }, onPlayTrack = { track -> playerManager.play(track) },
+                    CategoryProgramsScreen(categoryId = categoryId, categoryTitle = title, bottomNavItems = bottomNavItems, onExpandPlayer = { showPlayerSheet = true }, onBottomNavSelected = onTabSelected, onProgramClick = { program -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(program.id)) }, onPlayTrack = { track -> playerManager.play(track) },
                         onTrackLongClick = { track -> trackForOptions = track }, onBackClick = { navController.popBackStack() }, currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading, currentPlaybackPositionMs = currentPlaybackPositionMs, currentPlaybackDurationMs = currentPlaybackDurationMs, onTogglePlayerPlayback = { playerManager.togglePlayback() }, onTrackClick = { trackId -> navController.navigate(AndroidRoute.ProgramEpisodeDetail.createRoute(trackId)) })
                 }
 
@@ -743,7 +757,9 @@ private sealed class AndroidRoute(val route: String) {
     data object Singers : AndroidRoute("singers")
     data object Musicians : AndroidRoute("musicians")
     data object ArtistDetail : AndroidRoute("artist_detail/{id}") { fun createRoute(id: Long) = "artist_detail/$id" }
-    data object CategoryPrograms : AndroidRoute("category_programs/{title}") { fun createRoute(title: String) = "category_programs/$title" }
+    data object CategoryPrograms : AndroidRoute("category_programs/{id}/{title}") {
+        fun createRoute(id: Long, title: String) = "category_programs/$id/${Uri.encode(title)}"
+    }
     data object ProgramEpisodeDetail : AndroidRoute("program_episode_detail/{id}") { fun createRoute(id: Long) = "program_episode_detail/$id" }
     data object OrchestraDetail : AndroidRoute("orchestra_detail/{id}/{name}") { fun createRoute(id: Long, name: String) = "orchestra_detail/$id/$name" }
     data object DuetDetail : AndroidRoute("duet_detail/{singer1}/{singer2}") { fun createRoute(s1: String, s2: String) = "duet_detail/$s1/$s2" }

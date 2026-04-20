@@ -18,6 +18,12 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.unit.dp
 import kotlin.math.min
+import kotlin.math.PI
+import kotlin.math.sin
+import kotlin.math.cos
+
+private fun toRadians(degrees: Double): Double = degrees * PI / 180.0
+private fun toRadians(degrees: Float): Double = degrees.toDouble() * PI / 180.0
 
 @Composable
 fun GolhaPatternBackground(
@@ -199,10 +205,10 @@ private fun DrawScope.drawTwelvePointStar(
 ) {
     val points = List(24) { index ->
         val currentRadius = if (index % 2 == 0) radius else radius * 0.54f
-        val angle = Math.toRadians((-90.0) + index * 15.0)
+        val angle = toRadians((-90.0) + index * 15.0)
         Offset(
-            x = center.x + (kotlin.math.cos(angle) * currentRadius).toFloat(),
-            y = center.y + (kotlin.math.sin(angle) * currentRadius).toFloat(),
+            x = center.x + (cos(angle) * currentRadius).toFloat(),
+            y = center.y + (sin(angle) * currentRadius).toFloat(),
         )
     }
     drawClosedPath(points, color, stroke)
@@ -216,10 +222,10 @@ private fun DrawScope.drawSixPointStar(
 ) {
     val points = List(12) { index ->
         val currentRadius = if (index % 2 == 0) radius else radius * 0.46f
-        val angle = Math.toRadians((-90.0) + index * 30.0)
+        val angle = toRadians((-90.0) + index * 30.0)
         Offset(
-            x = center.x + (kotlin.math.cos(angle) * currentRadius).toFloat(),
-            y = center.y + (kotlin.math.sin(angle) * currentRadius).toFloat(),
+            x = center.x + (cos(angle) * currentRadius).toFloat(),
+            y = center.y + (sin(angle) * currentRadius).toFloat(),
         )
     }
     drawClosedPath(points, color, stroke)
@@ -264,10 +270,10 @@ private fun polygonPoints(
     rotationDeg: Float = 0f,
 ): List<Offset> {
     return List(sides) { index ->
-        val angle = Math.toRadians((rotationDeg + index * (360f / sides)).toDouble())
+        val angle = toRadians((rotationDeg + index * (360f / sides)).toDouble())
         Offset(
-            x = center.x + (kotlin.math.cos(angle) * radius).toFloat(),
-            y = center.y + (kotlin.math.sin(angle) * radius).toFloat(),
+            x = center.x + (cos(angle) * radius).toFloat(),
+            y = center.y + (sin(angle) * radius).toFloat(),
         )
     }
 }

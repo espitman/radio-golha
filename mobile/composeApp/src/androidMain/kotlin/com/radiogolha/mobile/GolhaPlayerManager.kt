@@ -7,6 +7,10 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import java.io.ByteArrayOutputStream
 import androidx.media3.common.MediaItem
@@ -25,7 +29,17 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class GolhaPlayerManager(private val context: Context) {
+@Composable
+actual fun rememberGolhaPlayer(): GolhaPlayer {
+    val context = LocalContext.current
+    val player = remember(context) { GolhaPlayerManager(context) }
+    DisposableEffect(player) {
+        onDispose { player.release() }
+    }
+    return player
+}
+
+class GolhaPlayerManager(private val context: Context) : GolhaPlayer {
     private var controllerFuture: ListenableFuture<MediaController>? = null
     private val player: Player? get() = if (controllerFuture?.isDone == true) controllerFuture?.get() else null
     
@@ -33,19 +47,19 @@ class GolhaPlayerManager(private val context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("golha_playback_prefs", Context.MODE_PRIVATE)
 
     private val _currentTrack = MutableStateFlow<TrackUiModel?>(null)
-    val currentTrack: StateFlow<TrackUiModel?> = _currentTrack
+    override val currentTrack: StateFlow<TrackUiModel?> = _currentTrack
 
     private val _isPlaying = MutableStateFlow(false)
-    val isPlaying: StateFlow<Boolean> = _isPlaying
+    override val isPlaying: StateFlow<Boolean> = _isPlaying
 
     private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
+    override val isLoading: StateFlow<Boolean> = _isLoading
 
     private val _currentPositionMs = MutableStateFlow(0L)
-    val currentPositionMs: StateFlow<Long> = _currentPositionMs
+    override val currentPositionMs: StateFlow<Long> = _currentPositionMs
 
     private val _durationMs = MutableStateFlow(0L)
-    val durationMs: StateFlow<Long> = _durationMs
+    override val durationMs: StateFlow<Long> = _durationMs
 
     private var isRestoring = false
 
@@ -167,7 +181,7 @@ class GolhaPlayerManager(private val context: Context) {
         }
     }
 
-    fun play(track: TrackUiModel) {
+    override fun play(track: TrackUiModel) {
         val p = player ?: return
         val audioUrl = track.audioUrl?.trim().orEmpty()
         if (audioUrl.isBlank()) return
@@ -209,7 +223,7 @@ class GolhaPlayerManager(private val context: Context) {
             .build()
     }
 
-    fun togglePlayback() {
+    override fun togglePlayback() {
         val p = player ?: return
         val current = _currentTrack.value ?: return
         if (current.audioUrl.isNullOrBlank()) return
@@ -221,7 +235,7 @@ class GolhaPlayerManager(private val context: Context) {
         }
     }
 
-    fun seekTo(positionMs: Long) {
+    override fun seekTo(positionMs: Long) {
         player?.seekTo(positionMs)
         _currentPositionMs.value = positionMs
     }

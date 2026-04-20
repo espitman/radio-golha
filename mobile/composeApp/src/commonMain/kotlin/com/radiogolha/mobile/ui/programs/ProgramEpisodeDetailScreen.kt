@@ -69,7 +69,7 @@ fun ProgramEpisodeDetailScreen(
     onExpandPlayer: () -> Unit = {},
     onSeek: (Long) -> Unit = {},
 ) {
-    var detail by remember { mutableStateOf<ProgramEpisodeDetailUiModel?>(null) }
+    var detail by remember(programId) { mutableStateOf<ProgramEpisodeDetailUiModel?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var activeTab by remember { mutableStateOf(DetailTab.Timeline) }
 

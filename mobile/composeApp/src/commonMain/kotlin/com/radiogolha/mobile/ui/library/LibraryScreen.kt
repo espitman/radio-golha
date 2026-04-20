@@ -19,6 +19,7 @@ import com.radiogolha.mobile.ui.home.*
 import com.radiogolha.mobile.ui.programs.ProgramsScreen
 import com.radiogolha.mobile.ui.singers.SingersContent
 import com.radiogolha.mobile.ui.musicians.MusiciansContent
+import com.radiogolha.mobile.ui.musicians.InstrumentsContent
 import com.radiogolha.mobile.ui.orchestras.OrchestraContent
 import kotlinx.coroutines.launch
 

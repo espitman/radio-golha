@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kotlinSerialization)
 }
 
 val androidSdkRoot = providers
@@ -18,6 +19,7 @@ val androidSdkRoot = providers
 val ndkRoot = androidSdkRoot.map { "$it/ndk/27.1.12297006" }
 val ndkPrebuiltDir = ndkRoot.map { "$it/toolchains/llvm/prebuilt/darwin-x86_64" }
 val rustAdapterDir = rootProject.file("../core/adapters/android")
+val rustIosAdapterDir = rootProject.file("../core/adapters/ios")
 val rustTarget = "aarch64-linux-android"
 val rustApiLevel = "24"
 val rustLibName = "libradiogolha_android.so"
@@ -52,6 +54,24 @@ val buildRustAndroid by tasks.registering(Exec::class) {
     }
 }
 
+val buildRustIos by tasks.registering {
+    dependsOn(syncArchiveDb)
+
+    doLast {
+        val targets = listOf(
+            "aarch64-apple-ios",      // real iPhone devices
+            "aarch64-apple-ios-sim",  // Apple Silicon simulators
+            "x86_64-apple-ios"        // Intel simulators
+        )
+        targets.forEach { target ->
+            exec {
+                workingDir = rustIosAdapterDir
+                commandLine("cargo", "build", "--target", target)
+            }
+        }
+    }
+}
+
 kotlin {
     androidTarget {
         compilerOptions {
@@ -59,14 +79,34 @@ kotlin {
         }
     }
 
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach {
+        it.compilations.getByName("main") {
+            val radiogolha_ios by cinterops.creating {
+                definitionFile = project.file("src/nativeInterop/cinterop/radiogolha_ios.def")
+                packageName = "com.radiogolha.mobile.native"
+                includeDirs(rustIosAdapterDir)
+            }
+        }
+    }
 
     targets.withType<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget>().configureEach {
         binaries.framework {
             baseName = "RadioGolhaMobile"
-            isStatic = true
+            isStatic = false
+            
+            val target = when(konanTarget.name) {
+                "ios_x64" -> "x86_64-apple-ios"
+                "ios_arm64" -> "aarch64-apple-ios"
+                "ios_simulator_arm64" -> "aarch64-apple-ios-sim"
+                else -> null
+            }
+            if (target != null) {
+                linkerOpts("-L${rustIosAdapterDir}/target/${target}/debug", "-lradiogolha_ios")
+            }
         }
     }
 
@@ -86,6 +126,7 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
+            implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
@@ -153,3 +194,7 @@ tasks.matching {
         dependsOn(buildRustAndroid)
         dependsOn(syncArchiveDb)
     }
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile>().configureEach {
+    dependsOn(buildRustIos)
+}
