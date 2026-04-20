@@ -67,3 +67,7 @@ mobile/signing/
 *.jks
 *.keystore
 *.p12
+
+# Swift / macOS desktop (SwiftPM)
+mac-desktop-app/.build/
+mac-desktop-app/.swiftpm/
