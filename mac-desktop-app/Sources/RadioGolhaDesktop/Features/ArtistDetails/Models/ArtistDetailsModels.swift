@@ -78,7 +78,8 @@ enum ArtistDetailsFactory {
 
     private static func make(name: String, role: String, imageURL: String) -> ArtistDetailsItem {
         let stats = statsByArtist[name] ?? defaultStats
-        let programs = programsByArtist[name] ?? defaultPrograms
+        let programsBase = programsByArtist[name] ?? defaultPrograms
+        let programs = repeatedPrograms(programsBase, targetCount: 20)
         let collaborators = collaboratorsByArtist[name] ?? defaultCollaborators(excluding: name)
         let modes = modesByArtist[name] ?? defaultModes
 
@@ -141,6 +142,27 @@ enum ArtistDetailsFactory {
         .init(title: "یک شاخه گل، شماره ۲۶۴", subtitle: "برنامه یک شاخه گل • تکنوازی", duration: "۲۵:۴۰"),
         .init(title: "گلهای رنگارنگ، شماره ۴۲۲", subtitle: "برنامه گلهای رنگارنگ • آواز", duration: "۲۹:۳۵")
     ]
+
+    private static func repeatedPrograms(_ base: [ArtistProgramRow], targetCount: Int) -> [ArtistProgramRow] {
+        guard !base.isEmpty, targetCount > 0 else { return [] }
+        if base.count >= targetCount { return Array(base.prefix(targetCount)) }
+
+        var result: [ArtistProgramRow] = []
+        result.reserveCapacity(targetCount)
+
+        for index in 0..<targetCount {
+            let row = base[index % base.count]
+            result.append(
+                ArtistProgramRow(
+                    title: row.title,
+                    subtitle: row.subtitle,
+                    duration: row.duration
+                )
+            )
+        }
+
+        return result
+    }
 
     private static func defaultCollaborators(excluding currentName: String) -> [ArtistCollaboratorItem] {
         let pool: [ArtistCollaboratorItem] = [

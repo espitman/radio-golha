@@ -6,6 +6,7 @@ struct ArtistDetailsContentView: View {
     var onOpenArtist: (String) -> Void = { _ in }
 
     private let collaboratorsColumns = Array(repeating: GridItem(.flexible(minimum: 0), spacing: 12), count: 2)
+    private let bodyPanelsHeight: CGFloat = 436
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -93,10 +94,10 @@ struct ArtistDetailsContentView: View {
     private var bodySection: some View {
         HStack(alignment: .top, spacing: 24) {
             programsPanel
-                .frame(width: 670)
+                .frame(width: 670, height: bodyPanelsHeight, alignment: .top)
 
             sidePanel
-                .frame(width: 234)
+                .frame(width: 234, height: bodyPanelsHeight, alignment: .top)
         }
     }
 
@@ -104,11 +105,13 @@ struct ArtistDetailsContentView: View {
         VStack(alignment: .leading, spacing: 16) {
             panelHeader(title: "برنامه‌ها", fontSize: 18)
 
-            VStack(spacing: 0) {
-                ForEach(Array(artist.programs.enumerated()), id: \.element.id) { index, row in
-                    ProgramRow(row: row)
-                    if index < artist.programs.count - 1 {
-                        Divider().overlay(Color(hex: 0x1C1C17).opacity(0.06))
+            ScrollView(showsIndicators: true) {
+                VStack(spacing: 0) {
+                    ForEach(Array(artist.programs.enumerated()), id: \.element.id) { index, row in
+                        ProgramRow(row: row)
+                        if index < artist.programs.count - 1 {
+                            Divider().overlay(Color(hex: 0x1C1C17).opacity(0.06))
+                        }
                     }
                 }
             }
