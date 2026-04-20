@@ -14,6 +14,8 @@ struct HomeRootView: View {
     @State private var artistDetailsSourcePage: DesktopPage = .home
     @State private var selectedProgramDetails: ProgramDetailsItem? = nil
     @State private var programDetailsSourcePage: DesktopPage = .home
+    @State private var homeContent: HomeContentData = .mock
+    @State private var homeDataLoaded = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -33,6 +35,11 @@ struct HomeRootView: View {
             BottomPlayerSection()
         }
         .environment(\.layoutDirection, .rightToLeft)
+        .task {
+            guard !homeDataLoaded else { return }
+            homeDataLoaded = true
+            homeContent = await HomeDataLoader.load()
+        }
     }
 
     private var mainCanvas: some View {
@@ -55,7 +62,7 @@ struct HomeRootView: View {
             Group {
                 switch currentPage {
                 case .home:
-                    MainContentSection { artist in
+                    MainContentSection(content: homeContent) { artist in
                         openArtistDetails(
                             ArtistDetailsFactory.fromHomeArtist(artist),
                             sourcePage: .home

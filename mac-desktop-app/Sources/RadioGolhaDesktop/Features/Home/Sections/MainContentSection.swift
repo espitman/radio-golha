@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MainContentSection: View {
     private let heroImage = URL(string: "https://lh3.googleusercontent.com/aida-public/AB6AXuBTRoCtbLy1Vpa3t_ez8WfRkhOFnnCGOnbhRCJ3Tw_GbsQa8OqeyyLL2ov1DPWrduyIkRYbX-OfQkwuqlVraQ8QJOLKS5xz0nnGbm6Xcew6EaIxSXymeWEKEzkuhnl0xcQXO5V7KIbFs1M5iwZVA0GNgsIljnkjQYe9AdbIOmQEm8ohOVd39E_qi-b-b39xQ0PVaqyEtPk83DXRnERRtsx7Xs_6iidmtYtqJkpETR82f97iPOnF3stP0rFiR0INpoCfMwIZfPGvTTV3")
+    let content: HomeContentData
     var onArtistTap: (ArtistItem) -> Void = { _ in }
     var onProgramTap: (String) -> Void = { _ in }
 
@@ -19,33 +20,37 @@ struct MainContentSection: View {
                         .padding(.horizontal, 48)
                         .padding(.top, 32)
 
-                    ProgramsGridSection()
+                    ProgramsGridSection(items: content.programs)
                         .padding(.horizontal, 48)
                         .padding(.top, 48)
 
                     ArtistsGridSection(
                         title: "خوانندگان برجسته",
-                        items: HomeMockData.singers,
+                        items: content.singers,
                         showAllAction: true,
                         onArtistTap: onArtistTap
                     )
                     .padding(.horizontal, 48)
                     .padding(.top, 48)
 
-                    ModesPillsSection()
+                    ModesPillsSection(items: content.modes)
                         .padding(.horizontal, 48)
                         .padding(.top, 32)
 
                     ArtistsGridSection(
                         title: "نوازندگان برجسته",
-                        items: HomeMockData.instrumentalists,
+                        items: content.instrumentalists,
                         showAllAction: true,
                         onArtistTap: onArtistTap
                     )
                     .padding(.horizontal, 48)
                     .padding(.top, 48)
 
-                    TopListsSection(onProgramTap: onProgramTap)
+                    TopListsSection(
+                        topRows: content.topProgramsRows,
+                        latestRows: content.latestTracksRows,
+                        onProgramTap: onProgramTap
+                    )
                         .padding(.horizontal, 48)
                         .padding(.top, 48)
                         .padding(.bottom, 140)
@@ -145,6 +150,7 @@ private struct MainHero: View {
 }
 
 private struct ProgramsGridSection: View {
+    let items: [ProgramItem]
     private let columns = Array(repeating: GridItem(.fixed(214), spacing: 24), count: 4)
 
     var body: some View {
@@ -152,7 +158,7 @@ private struct ProgramsGridSection: View {
             SectionHead(title: "برنامه‌ها", showAllAction: true)
 
             LazyVGrid(columns: columns, spacing: 24) {
-                ForEach(HomeMockData.programs) { item in
+                ForEach(items) { item in
                     ProgramRowCard(item: item)
                 }
             }
@@ -220,6 +226,8 @@ private struct ArtistsGridSection: View {
 }
 
 private struct ModesPillsSection: View {
+    let items: [ModeItem]
+
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             Text("دستگاه‌ها و آوازها")
@@ -229,7 +237,7 @@ private struct ModesPillsSection: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 16) {
-                    ForEach(HomeMockData.modes) { mode in
+                    ForEach(items) { mode in
                         Text(mode.title)
                             .font(.vazir(10.5))
                             .foregroundStyle(Palette.text)
@@ -246,26 +254,22 @@ private struct ModesPillsSection: View {
 }
 
 private struct TopListsSection: View {
+    let topRows: [TrackRowItem]
+    let latestRows: [TrackRowItem]
     var onProgramTap: (String) -> Void = { _ in }
 
     var body: some View {
         HStack(spacing: 48) {
             ListBlock(
                 title: "برترین برنامه‌ها",
-                rows: [
-                    .init(title: "گلهای تازه شماره ۱۲۰", subtitle: "استاد شجریان - فرهنگ شریف", duration: "۱۵:۲۰"),
-                    .init(title: "تکنوازان شماره ۲۵", subtitle: "جلیل شهناز - ناصر فرهنگ‌فر", duration: "۱۲:۴۵")
-                ],
+                rows: topRows,
                 showRefresh: true,
                 onProgramTap: onProgramTap
             )
 
             ListBlock(
                 title: "شنیده شده‌های اخیر",
-                rows: [
-                    .init(title: "آستان جانان", subtitle: "آواز شور", duration: "۰۴:۱۵"),
-                    .init(title: "کاروان", subtitle: "غلامحسین بنان", duration: "۰۶:۳۰")
-                ],
+                rows: latestRows,
                 showRefresh: false,
                 onProgramTap: onProgramTap
             )
