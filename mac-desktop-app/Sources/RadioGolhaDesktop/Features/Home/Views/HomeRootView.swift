@@ -16,6 +16,7 @@ struct HomeRootView: View {
     @State private var programDetailsSourcePage: DesktopPage = .home
     @State private var homeContent: HomeContentData? = nil
     @State private var homeDataLoaded = false
+    @StateObject private var audioPlayer = DesktopAudioPlayer()
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -32,7 +33,7 @@ struct HomeRootView: View {
             .frame(width: 1280)
             .environment(\.layoutDirection, .leftToRight)
 
-            BottomPlayerSection()
+            BottomPlayerSection(player: audioPlayer)
         }
         .environment(\.layoutDirection, .rightToLeft)
         .task {
@@ -73,6 +74,9 @@ struct HomeRootView: View {
                                         latestTracksRows: current.latestTracksRows
                                     )
                                 }
+                            },
+                            onPlayTrack: { track in
+                                audioPlayer.play(track: track)
                             }
                         ) { artist in
                             openArtistDetails(

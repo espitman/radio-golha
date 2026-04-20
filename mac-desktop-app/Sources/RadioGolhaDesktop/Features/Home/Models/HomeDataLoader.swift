@@ -33,9 +33,12 @@ enum HomeDataLoader {
 
         let tracks = try JSONDecoder().decode([HomeTrackDTO].self, from: Data(payload.utf8)).map {
             TrackRowItem(
+                id: String($0.id),
+                trackId: $0.id,
                 title: $0.title,
                 subtitle: $0.artist,
-                duration: normalizedDuration($0.duration)
+                duration: normalizedDuration($0.duration),
+                audioURL: $0.audioUrl
             )
         }
 
@@ -81,9 +84,12 @@ enum HomeDataLoader {
 
         let tracks = response.topTracks.map {
             TrackRowItem(
+                id: String($0.id),
+                trackId: $0.id,
                 title: $0.title,
                 subtitle: $0.artist,
-                duration: normalizedDuration($0.duration)
+                duration: normalizedDuration($0.duration),
+                audioURL: $0.audioUrl
             )
         }
 

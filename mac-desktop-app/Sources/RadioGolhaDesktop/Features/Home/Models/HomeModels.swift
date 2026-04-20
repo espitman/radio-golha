@@ -20,10 +20,31 @@ struct ModeItem: Identifiable {
 }
 
 struct TrackRowItem: Identifiable {
-    let id = UUID()
+    let id: String
+    let trackId: Int64?
     let title: String
     let subtitle: String
     let duration: String
+    let audioURL: String?
+    let artworkURL: String?
+
+    init(
+        id: String = UUID().uuidString,
+        trackId: Int64? = nil,
+        title: String,
+        subtitle: String,
+        duration: String,
+        audioURL: String? = nil,
+        artworkURL: String? = nil
+    ) {
+        self.id = id
+        self.trackId = trackId
+        self.title = title
+        self.subtitle = subtitle
+        self.duration = duration
+        self.audioURL = audioURL
+        self.artworkURL = artworkURL
+    }
 }
 
 struct SingerListItem: Identifiable {

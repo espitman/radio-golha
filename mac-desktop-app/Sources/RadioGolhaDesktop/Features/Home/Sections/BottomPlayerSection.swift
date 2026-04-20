@@ -2,6 +2,7 @@ import SwiftUI
 
 struct BottomPlayerSection: View {
     private let albumImage = "https://www.figma.com/api/mcp/asset/15e24aa5-c875-43d0-80d4-c65acc0e489f"
+    @ObservedObject var player: DesktopAudioPlayer
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -37,13 +38,18 @@ struct BottomPlayerSection: View {
                 HStack(spacing: 24) {
                     playerSymbol("shuffle").frame(width: 18, height: 20)
                     playerSymbol("backward.end.fill").frame(width: 16.25, height: 15)
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(.white)
-                            .frame(width: 48, height: 48)
-                        playerSymbol("play.fill", tint: Palette.primary)
-                            .frame(width: 13.75, height: 17.5)
+                    Button {
+                        player.togglePlayPause()
+                    } label: {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(.white)
+                                .frame(width: 48, height: 48)
+                            playerSymbol(player.isPlaying ? "pause.fill" : "play.fill", tint: Palette.primary)
+                                .frame(width: 13.75, height: 17.5)
+                        }
                     }
+                    .buttonStyle(.plain)
                     playerSymbol("forward.end.fill").frame(width: 16.25, height: 15)
                     playerSymbol("repeat").frame(width: 16, height: 16)
                 }
@@ -56,10 +62,10 @@ struct BottomPlayerSection: View {
                             .font(.vazir(7.5))
                             .foregroundStyle(Palette.secondary)
                             .tracking(1)
-                        Text("آستان جانان - آواز شور")
+                        Text(player.currentTrack?.title ?? "—")
                             .font(.vazir(10.5))
                             .foregroundStyle(.white)
-                        Text("محمدرضا شجریان")
+                        Text(player.currentTrack?.subtitle ?? "—")
                             .font(.vazir(7.5))
                             .foregroundStyle(.white.opacity(0.6))
                     }

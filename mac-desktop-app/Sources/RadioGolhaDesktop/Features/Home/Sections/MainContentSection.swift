@@ -4,6 +4,7 @@ struct MainContentSection: View {
     private let heroImage = URL(string: "https://lh3.googleusercontent.com/aida-public/AB6AXuBTRoCtbLy1Vpa3t_ez8WfRkhOFnnCGOnbhRCJ3Tw_GbsQa8OqeyyLL2ov1DPWrduyIkRYbX-OfQkwuqlVraQ8QJOLKS5xz0nnGbm6Xcew6EaIxSXymeWEKEzkuhnl0xcQXO5V7KIbFs1M5iwZVA0GNgsIljnkjQYe9AdbIOmQEm8ohOVd39E_qi-b-b39xQ0PVaqyEtPk83DXRnERRtsx7Xs_6iidmtYtqJkpETR82f97iPOnF3stP0rFiR0INpoCfMwIZfPGvTTV3")
     let content: HomeContentData
     var onRefreshTopTracks: () async -> Void = {}
+    var onPlayTrack: (TrackRowItem) -> Void = { _ in }
     var onArtistTap: (ArtistItem) -> Void = { _ in }
     var onProgramTap: (String) -> Void = { _ in }
 
@@ -51,6 +52,7 @@ struct MainContentSection: View {
                         topRows: content.topProgramsRows,
                         latestRows: content.latestTracksRows,
                         onRefreshTopTracks: onRefreshTopTracks,
+                        onPlayTrack: onPlayTrack,
                         onProgramTap: onProgramTap
                     )
                         .padding(.horizontal, 48)
@@ -266,6 +268,7 @@ private struct TopListsSection: View {
     let topRows: [TrackRowItem]
     let latestRows: [TrackRowItem]
     var onRefreshTopTracks: () async -> Void = {}
+    var onPlayTrack: (TrackRowItem) -> Void = { _ in }
     var onProgramTap: (String) -> Void = { _ in }
 
     var body: some View {
@@ -275,6 +278,7 @@ private struct TopListsSection: View {
                 rows: topRows,
                 showRefresh: true,
                 onRefresh: onRefreshTopTracks,
+                onPlayTrack: onPlayTrack,
                 onProgramTap: onProgramTap
             )
 
@@ -282,6 +286,7 @@ private struct TopListsSection: View {
                 title: "شنیده شده‌های اخیر",
                 rows: latestRows,
                 showRefresh: false,
+                onPlayTrack: onPlayTrack,
                 onProgramTap: onProgramTap
             )
         }
@@ -293,6 +298,7 @@ private struct ListBlock: View {
     let rows: [TrackRowItem]
     let showRefresh: Bool
     var onRefresh: () async -> Void = {}
+    var onPlayTrack: (TrackRowItem) -> Void = { _ in }
     var onProgramTap: (String) -> Void = { _ in }
     @State private var isRefreshing = false
 
@@ -332,7 +338,7 @@ private struct ListBlock: View {
 
             VStack(spacing: 0) {
                 ForEach(Array(rows.enumerated()), id: \.offset) { index, row in
-                    ListRow(row: row, onProgramTap: onProgramTap)
+                    ListRow(row: row, onPlayTrack: onPlayTrack, onProgramTap: onProgramTap)
                     if index < rows.count - 1 {
                         Divider().overlay(Palette.text.opacity(0.06))
                     }
@@ -351,18 +357,24 @@ private struct ListBlock: View {
 
 private struct ListRow: View {
     let row: TrackRowItem
+    var onPlayTrack: (TrackRowItem) -> Void = { _ in }
     var onProgramTap: (String) -> Void = { _ in }
 
     var body: some View {
         HStack(spacing: 16) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(Palette.primary.opacity(0.05))
-                Image(systemName: "play.fill")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(Palette.primary)
+            Button {
+                onPlayTrack(row)
+            } label: {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(Palette.primary.opacity(0.05))
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(Palette.primary)
+                }
+                .frame(width: 40, height: 40)
             }
-            .frame(width: 40, height: 40)
+            .buttonStyle(.plain)
 
             VStack(alignment: .leading, spacing: 2) {
                 Button {
