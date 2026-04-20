@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MainContentSection: View {
     private let heroImage = URL(string: "https://lh3.googleusercontent.com/aida-public/AB6AXuBTRoCtbLy1Vpa3t_ez8WfRkhOFnnCGOnbhRCJ3Tw_GbsQa8OqeyyLL2ov1DPWrduyIkRYbX-OfQkwuqlVraQ8QJOLKS5xz0nnGbm6Xcew6EaIxSXymeWEKEzkuhnl0xcQXO5V7KIbFs1M5iwZVA0GNgsIljnkjQYe9AdbIOmQEm8ohOVd39E_qi-b-b39xQ0PVaqyEtPk83DXRnERRtsx7Xs_6iidmtYtqJkpETR82f97iPOnF3stP0rFiR0INpoCfMwIZfPGvTTV3")
+    var onArtistTap: (ArtistItem) -> Void = { _ in }
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -24,7 +25,8 @@ struct MainContentSection: View {
                     ArtistsGridSection(
                         title: "خوانندگان برجسته",
                         items: HomeMockData.singers,
-                        showAllAction: true
+                        showAllAction: true,
+                        onArtistTap: onArtistTap
                     )
                     .padding(.horizontal, 48)
                     .padding(.top, 48)
@@ -36,7 +38,8 @@ struct MainContentSection: View {
                     ArtistsGridSection(
                         title: "نوازندگان برجسته",
                         items: HomeMockData.instrumentalists,
-                        showAllAction: true
+                        showAllAction: true,
+                        onArtistTap: onArtistTap
                     )
                     .padding(.horizontal, 48)
                     .padding(.top, 48)
@@ -198,6 +201,7 @@ private struct ArtistsGridSection: View {
     let title: String
     let items: [ArtistItem]
     let showAllAction: Bool
+    let onArtistTap: (ArtistItem) -> Void
     private let columns = Array(repeating: GridItem(.fixed(208), spacing: 32), count: 4)
 
     var body: some View {
@@ -205,7 +209,9 @@ private struct ArtistsGridSection: View {
             SectionHead(title: title, showAllAction: showAllAction)
             LazyVGrid(columns: columns, spacing: 32) {
                 ForEach(items) { item in
-                    ArtistCard(item: item, dark: false)
+                    ArtistCard(item: item, dark: false) {
+                        onArtistTap(item)
+                    }
                 }
             }
         }

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct SingersContentView: View {
+    var onSingerTap: (SingerListItem) -> Void = { _ in }
     @State private var selectedLetter = "همه"
     private let columns = Array(repeating: GridItem(.fixed(208), spacing: 32), count: 4)
 
@@ -54,7 +55,9 @@ struct SingersContentView: View {
                                     imageURL: item.imageURL
                                 ),
                                 dark: false
-                            )
+                            ) {
+                                onSingerTap(item)
+                            }
                         }
                     }
                     .padding(.horizontal, 48)

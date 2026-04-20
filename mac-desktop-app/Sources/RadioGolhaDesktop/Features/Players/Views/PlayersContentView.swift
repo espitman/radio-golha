@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct PlayersContentView: View {
+    var onPlayerTap: (PlayerListItem) -> Void = { _ in }
     @State private var selectedInstrument = "همه"
     private let columns = Array(repeating: GridItem(.fixed(208), spacing: 32), count: 4)
 
@@ -47,7 +48,9 @@ struct PlayersContentView: View {
 
                     LazyVGrid(columns: columns, spacing: 32) {
                         ForEach(filteredItems) { item in
-                            PlayerCard(item: item)
+                            PlayerCard(item: item) {
+                                onPlayerTap(item)
+                            }
                         }
                     }
                     .padding(.horizontal, 48)
@@ -75,6 +78,7 @@ struct PlayersContentView: View {
 
 private struct PlayerCard: View {
     let item: PlayerListItem
+    var onTap: (() -> Void)? = nil
     @State private var isHovered = false
 
     var body: some View {
@@ -152,6 +156,10 @@ private struct PlayerCard: View {
         .animation(.easeOut(duration: 0.25), value: isHovered)
         .onHover { hovering in
             isHovered = hovering
+        }
+        .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .onTapGesture {
+            onTap?()
         }
     }
 }

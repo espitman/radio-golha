@@ -4,10 +4,13 @@ private enum DesktopPage {
     case home
     case singers
     case players
+    case artistDetails
 }
 
 struct HomeRootView: View {
     @State private var currentPage: DesktopPage = .home
+    @State private var selectedArtistDetails: ArtistDetailsItem? = nil
+    @State private var artistDetailsSourcePage: DesktopPage = .home
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -49,11 +52,41 @@ struct HomeRootView: View {
             Group {
                 switch currentPage {
                 case .home:
-                    MainContentSection()
+                    MainContentSection { artist in
+                        openArtistDetails(
+                            ArtistDetailsFactory.fromHomeArtist(artist),
+                            sourcePage: .home
+                        )
+                    }
                 case .singers:
-                    SingersContentView()
+                    SingersContentView { singer in
+                        openArtistDetails(
+                            ArtistDetailsFactory.fromSinger(singer),
+                            sourcePage: .singers
+                        )
+                    }
                 case .players:
-                    PlayersContentView()
+                    PlayersContentView { player in
+                        openArtistDetails(
+                            ArtistDetailsFactory.fromPlayer(player),
+                            sourcePage: .players
+                        )
+                    }
+                case .artistDetails:
+                    if let selectedArtistDetails {
+                        ArtistDetailsContentView(
+                            artist: selectedArtistDetails,
+                            onBack: {
+                                currentPage = artistDetailsSourcePage
+                            },
+                            onOpenArtist: { artistName in
+                                openArtistDetails(
+                                    ArtistDetailsFactory.fromArtistName(artistName),
+                                    sourcePage: artistDetailsSourcePage
+                                )
+                            }
+                        )
+                    }
                 }
             }
             .frame(maxHeight: .infinity)
@@ -68,6 +101,21 @@ struct HomeRootView: View {
             return .artists
         case .players:
             return .instrumentalists
+        case .artistDetails:
+            switch artistDetailsSourcePage {
+            case .singers:
+                return .artists
+            case .players:
+                return .instrumentalists
+            default:
+                return .programs
+            }
         }
+    }
+
+    private func openArtistDetails(_ details: ArtistDetailsItem, sourcePage: DesktopPage) {
+        selectedArtistDetails = details
+        artistDetailsSourcePage = sourcePage
+        currentPage = .artistDetails
     }
 }

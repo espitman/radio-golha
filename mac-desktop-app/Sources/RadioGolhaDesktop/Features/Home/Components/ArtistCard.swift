@@ -3,6 +3,7 @@ import SwiftUI
 struct ArtistCard: View {
     let item: ArtistItem
     var dark: Bool = false
+    var onTap: (() -> Void)? = nil
     @State private var isHovered = false
     private let cardWidth: CGFloat = 208
 
@@ -74,6 +75,10 @@ struct ArtistCard: View {
         .animation(.easeOut(duration: 0.25), value: isHovered)
         .onHover { hovering in
             isHovered = hovering
+        }
+        .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .onTapGesture {
+            onTap?()
         }
     }
 }
