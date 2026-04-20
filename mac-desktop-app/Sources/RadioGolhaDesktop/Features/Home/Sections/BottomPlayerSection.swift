@@ -84,14 +84,7 @@ struct BottomPlayerSection: View {
             .padding(.horizontal, 48)
             .environment(\.layoutDirection, .leftToRight)
 
-            Rectangle()
-                .fill(.white.opacity(0.1))
-                .frame(width: 1280, height: 4)
-
-            Rectangle()
-                .fill(Palette.secondary)
-                .frame(width: 426.66, height: 4)
-                .frame(maxWidth: .infinity, alignment: .trailing)
+            seekBar
         }
         .frame(width: 1280, height: 96)
     }
@@ -101,5 +94,35 @@ struct BottomPlayerSection: View {
             .resizable()
             .scaledToFit()
             .foregroundStyle(tint)
+    }
+
+    private var seekBar: some View {
+        GeometryReader { geo in
+            let barWidth = geo.size.width
+            let progress = CGFloat(player.progress)
+
+            ZStack(alignment: .trailing) {
+                Rectangle()
+                    .fill(.white.opacity(0.1))
+                    .frame(height: 4)
+
+                Rectangle()
+                    .fill(Palette.secondary)
+                    .frame(width: max(0, min(barWidth, barWidth * progress)), height: 4)
+            }
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { value in
+                        guard barWidth > 0 else { return }
+                        let x = min(max(value.location.x, 0), barWidth)
+                        // Current visual direction fills from right to left.
+                        let seekProgress = Double(1 - (x / barWidth))
+                        player.seek(toProgress: seekProgress)
+                    }
+            )
+        }
+        .frame(width: 1280, height: 8)
+        .frame(maxWidth: .infinity, alignment: .top)
     }
 }
