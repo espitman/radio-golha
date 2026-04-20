@@ -3,6 +3,7 @@ import SwiftUI
 struct ArtistCard: View {
     let item: ArtistItem
     var dark: Bool = false
+    @State private var isHovered = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -13,7 +14,8 @@ struct ArtistCard: View {
                         image
                             .resizable()
                             .scaledToFill()
-                            .grayscale(0.85)
+                            .grayscale(isHovered ? 0.0 : 0.85)
+                            .scaleEffect(isHovered ? 1.03 : 1.0)
                     default:
                         Rectangle().fill(dark ? Color(hex: 0x111111) : Color(hex: 0xE5E2DA))
                     }
@@ -27,7 +29,7 @@ struct ArtistCard: View {
                         startPoint: .bottom,
                         endPoint: .top
                     )
-                    .opacity(0.0)
+                    .opacity(isHovered ? 1.0 : 0.0)
                     .frame(width: 206, height: 206)
 
                     Text("مشاهده آثار")
@@ -37,6 +39,9 @@ struct ArtistCard: View {
                         .padding(.vertical, 8)
                         .background(Color(hex: 0xFED488), in: Capsule())
                         .padding(.bottom, 20)
+                        .opacity(isHovered ? 1.0 : 0.0)
+                        .offset(y: isHovered ? 0 : 8)
+                        .allowsHitTesting(isHovered)
                 }
             }
 
@@ -54,10 +59,20 @@ struct ArtistCard: View {
             .background(dark ? Color(hex: 0x181818) : .white)
         }
         .frame(width: 208, height: 300)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .stroke(Color(hex: 0xC4C6CF).opacity(dark ? 0.15 : 0.10), lineWidth: 1)
         )
+        .shadow(
+            color: isHovered ? Palette.primary.opacity(0.14) : .clear,
+            radius: isHovered ? 20 : 0,
+            x: 0,
+            y: isHovered ? 8 : 0
+        )
+        .animation(.easeOut(duration: 0.25), value: isHovered)
+        .onHover { hovering in
+            isHovered = hovering
+        }
     }
 }

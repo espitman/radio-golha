@@ -11,4 +11,15 @@ if [[ "${1:-}" == "--clean" ]]; then
 fi
 
 swift build
-swift run RadioGolhaDesktop
+
+BIN_PATH="$(swift build --show-bin-path)/RadioGolhaDesktop"
+LOG_PATH="/tmp/radio_golha_desktop.log"
+
+# If already running, restart to pick up latest build.
+pkill -f "/RadioGolhaDesktop$" 2>/dev/null || true
+
+nohup "$BIN_PATH" >"$LOG_PATH" 2>&1 &
+disown || true
+
+echo "RadioGolhaDesktop started."
+echo "Log: $LOG_PATH"
