@@ -63,3 +63,15 @@ Timeline data is highly granular, specifying artists active at specific timestam
 - **Segment Music Mapping**: Musician data in segments uses a `LEFT JOIN` on the overall `program_performers` table to safely map the instrument name to the performer ID for that specific programme context.
 - **Resource Management**: Database connections are established once per request and MUST be closed using the `close()` method in the Repository to prevent SQLite locking in a live Vite environment.
 
+---
+
+## 6. 🧾 Commit Message Convention (Project-Wide)
+Use the following commit types:
+
+- `feat:` new user-facing feature (not build-script feature work)
+- `fix:` user-facing bug fix (not build-script fix)
+- `docs:` documentation-only changes
+- `style:` formatting-only changes (no production code behavior change)
+- `refactor:` production code refactor (no new behavior)
+- `test:` test-only updates (add/refactor tests, no production code change)
+- `chore:` maintenance/tooling updates (no production code behavior change)
