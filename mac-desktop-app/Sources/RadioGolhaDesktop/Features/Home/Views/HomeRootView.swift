@@ -5,12 +5,15 @@ private enum DesktopPage {
     case singers
     case players
     case artistDetails
+    case programDetails
 }
 
 struct HomeRootView: View {
     @State private var currentPage: DesktopPage = .home
     @State private var selectedArtistDetails: ArtistDetailsItem? = nil
     @State private var artistDetailsSourcePage: DesktopPage = .home
+    @State private var selectedProgramDetails: ProgramDetailsItem? = nil
+    @State private var programDetailsSourcePage: DesktopPage = .home
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -57,6 +60,11 @@ struct HomeRootView: View {
                             ArtistDetailsFactory.fromHomeArtist(artist),
                             sourcePage: .home
                         )
+                    } onProgramTap: { trackTitle in
+                        openProgramDetails(
+                            ProgramDetailsFactory.fromTrackTitle(trackTitle),
+                            sourcePage: .home
+                        )
                     }
                 case .singers:
                     SingersContentView { singer in
@@ -84,6 +92,21 @@ struct HomeRootView: View {
                                     ArtistDetailsFactory.fromArtistName(artistName),
                                     sourcePage: artistDetailsSourcePage
                                 )
+                            },
+                            onOpenProgram: { trackTitle in
+                                openProgramDetails(
+                                    ProgramDetailsFactory.fromTrackTitle(trackTitle),
+                                    sourcePage: .artistDetails
+                                )
+                            }
+                        )
+                    }
+                case .programDetails:
+                    if let selectedProgramDetails {
+                        ProgramDetailsContentView(
+                            program: selectedProgramDetails,
+                            onBack: {
+                                currentPage = programDetailsSourcePage
                             }
                         )
                     }
@@ -110,6 +133,15 @@ struct HomeRootView: View {
             default:
                 return .programs
             }
+        case .programDetails:
+            switch programDetailsSourcePage {
+            case .singers:
+                return .artists
+            case .players:
+                return .instrumentalists
+            default:
+                return .programs
+            }
         }
     }
 
@@ -117,5 +149,11 @@ struct HomeRootView: View {
         selectedArtistDetails = details
         artistDetailsSourcePage = sourcePage
         currentPage = .artistDetails
+    }
+
+    private func openProgramDetails(_ details: ProgramDetailsItem, sourcePage: DesktopPage) {
+        selectedProgramDetails = details
+        programDetailsSourcePage = sourcePage
+        currentPage = .programDetails
     }
 }

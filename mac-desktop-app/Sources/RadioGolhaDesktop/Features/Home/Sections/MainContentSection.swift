@@ -3,6 +3,7 @@ import SwiftUI
 struct MainContentSection: View {
     private let heroImage = URL(string: "https://lh3.googleusercontent.com/aida-public/AB6AXuBTRoCtbLy1Vpa3t_ez8WfRkhOFnnCGOnbhRCJ3Tw_GbsQa8OqeyyLL2ov1DPWrduyIkRYbX-OfQkwuqlVraQ8QJOLKS5xz0nnGbm6Xcew6EaIxSXymeWEKEzkuhnl0xcQXO5V7KIbFs1M5iwZVA0GNgsIljnkjQYe9AdbIOmQEm8ohOVd39E_qi-b-b39xQ0PVaqyEtPk83DXRnERRtsx7Xs_6iidmtYtqJkpETR82f97iPOnF3stP0rFiR0INpoCfMwIZfPGvTTV3")
     var onArtistTap: (ArtistItem) -> Void = { _ in }
+    var onProgramTap: (String) -> Void = { _ in }
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -44,7 +45,7 @@ struct MainContentSection: View {
                     .padding(.horizontal, 48)
                     .padding(.top, 48)
 
-                    TopListsSection()
+                    TopListsSection(onProgramTap: onProgramTap)
                         .padding(.horizontal, 48)
                         .padding(.top, 48)
                         .padding(.bottom, 140)
@@ -245,6 +246,8 @@ private struct ModesPillsSection: View {
 }
 
 private struct TopListsSection: View {
+    var onProgramTap: (String) -> Void = { _ in }
+
     var body: some View {
         HStack(spacing: 48) {
             ListBlock(
@@ -253,7 +256,8 @@ private struct TopListsSection: View {
                     .init(title: "گلهای تازه شماره ۱۲۰", subtitle: "استاد شجریان - فرهنگ شریف", duration: "۱۵:۲۰"),
                     .init(title: "تکنوازان شماره ۲۵", subtitle: "جلیل شهناز - ناصر فرهنگ‌فر", duration: "۱۲:۴۵")
                 ],
-                showRefresh: true
+                showRefresh: true,
+                onProgramTap: onProgramTap
             )
 
             ListBlock(
@@ -262,7 +266,8 @@ private struct TopListsSection: View {
                     .init(title: "آستان جانان", subtitle: "آواز شور", duration: "۰۴:۱۵"),
                     .init(title: "کاروان", subtitle: "غلامحسین بنان", duration: "۰۶:۳۰")
                 ],
-                showRefresh: false
+                showRefresh: false,
+                onProgramTap: onProgramTap
             )
         }
     }
@@ -272,6 +277,7 @@ private struct ListBlock: View {
     let title: String
     let rows: [TrackRowItem]
     let showRefresh: Bool
+    var onProgramTap: (String) -> Void = { _ in }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
@@ -291,7 +297,7 @@ private struct ListBlock: View {
 
             VStack(spacing: 0) {
                 ForEach(Array(rows.enumerated()), id: \.offset) { index, row in
-                    ListRow(row: row)
+                    ListRow(row: row, onProgramTap: onProgramTap)
                     if index < rows.count - 1 {
                         Divider().overlay(Palette.text.opacity(0.06))
                     }
@@ -310,6 +316,7 @@ private struct ListBlock: View {
 
 private struct ListRow: View {
     let row: TrackRowItem
+    var onProgramTap: (String) -> Void = { _ in }
 
     var body: some View {
         HStack(spacing: 16) {
@@ -323,10 +330,15 @@ private struct ListRow: View {
             .frame(width: 40, height: 40)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(row.title)
-                    .font(.vazir(10.5, .bold))
-                    .foregroundStyle(Palette.primary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                Button {
+                    onProgramTap(row.title)
+                } label: {
+                    Text(row.title)
+                        .font(.vazir(10.5, .bold))
+                        .foregroundStyle(Palette.primary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.plain)
                 Text(row.subtitle)
                     .font(.vazir(9))
                     .foregroundStyle(Palette.textMuted)

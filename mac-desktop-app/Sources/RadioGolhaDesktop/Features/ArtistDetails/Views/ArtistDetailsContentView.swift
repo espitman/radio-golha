@@ -4,6 +4,7 @@ struct ArtistDetailsContentView: View {
     let artist: ArtistDetailsItem
     var onBack: () -> Void = {}
     var onOpenArtist: (String) -> Void = { _ in }
+    var onOpenProgram: (String) -> Void = { _ in }
 
     private let collaboratorsColumns = Array(repeating: GridItem(.flexible(minimum: 0), spacing: 12), count: 2)
 
@@ -109,7 +110,9 @@ struct ArtistDetailsContentView: View {
 
             VStack(spacing: 0) {
                 ForEach(Array(artist.programs.enumerated()), id: \.element.id) { index, row in
-                    ProgramRow(row: row)
+                    ProgramRow(row: row) {
+                        onOpenProgram(row.title)
+                    }
                     if index < artist.programs.count - 1 {
                         Divider().overlay(Color(hex: 0x1C1C17).opacity(0.06))
                     }
@@ -192,6 +195,7 @@ private struct StickySidePanel<Content: View>: View {
 
 private struct ProgramRow: View {
     let row: ArtistProgramRow
+    var onOpenProgram: () -> Void = {}
 
     var body: some View {
         HStack(spacing: 12) {
@@ -205,10 +209,15 @@ private struct ProgramRow: View {
             .frame(width: 30, height: 30)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(row.title)
-                    .font(.vazir(10.5, .bold))
-                    .foregroundStyle(Palette.primary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                Button {
+                    onOpenProgram()
+                } label: {
+                    Text(row.title)
+                        .font(.vazir(10.5, .bold))
+                        .foregroundStyle(Palette.primary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.plain)
                 Text(row.subtitle)
                     .font(.vazir(9))
                     .foregroundStyle(Color(hex: 0x78716C))
