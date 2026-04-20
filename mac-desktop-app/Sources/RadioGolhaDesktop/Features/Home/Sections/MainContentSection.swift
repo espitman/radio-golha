@@ -3,6 +3,7 @@ import SwiftUI
 struct MainContentSection: View {
     private let heroImage = URL(string: "https://lh3.googleusercontent.com/aida-public/AB6AXuBTRoCtbLy1Vpa3t_ez8WfRkhOFnnCGOnbhRCJ3Tw_GbsQa8OqeyyLL2ov1DPWrduyIkRYbX-OfQkwuqlVraQ8QJOLKS5xz0nnGbm6Xcew6EaIxSXymeWEKEzkuhnl0xcQXO5V7KIbFs1M5iwZVA0GNgsIljnkjQYe9AdbIOmQEm8ohOVd39E_qi-b-b39xQ0PVaqyEtPk83DXRnERRtsx7Xs_6iidmtYtqJkpETR82f97iPOnF3stP0rFiR0INpoCfMwIZfPGvTTV3")
     let content: HomeContentData
+    var onRefreshTopTracks: () async -> Void = {}
     var onArtistTap: (ArtistItem) -> Void = { _ in }
     var onProgramTap: (String) -> Void = { _ in }
 
@@ -49,6 +50,7 @@ struct MainContentSection: View {
                     TopListsSection(
                         topRows: content.topProgramsRows,
                         latestRows: content.latestTracksRows,
+                        onRefreshTopTracks: onRefreshTopTracks,
                         onProgramTap: onProgramTap
                     )
                         .padding(.horizontal, 48)
@@ -261,6 +263,7 @@ private struct ModesPillsSection: View {
 private struct TopListsSection: View {
     let topRows: [TrackRowItem]
     let latestRows: [TrackRowItem]
+    var onRefreshTopTracks: () async -> Void = {}
     var onProgramTap: (String) -> Void = { _ in }
 
     var body: some View {
@@ -269,6 +272,7 @@ private struct TopListsSection: View {
                 title: "برترین برنامه‌ها",
                 rows: topRows,
                 showRefresh: true,
+                onRefresh: onRefreshTopTracks,
                 onProgramTap: onProgramTap
             )
 
@@ -286,7 +290,9 @@ private struct ListBlock: View {
     let title: String
     let rows: [TrackRowItem]
     let showRefresh: Bool
+    var onRefresh: () async -> Void = {}
     var onProgramTap: (String) -> Void = { _ in }
+    @State private var isRefreshing = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
@@ -298,9 +304,27 @@ private struct ListBlock: View {
                 Spacer(minLength: 0)
 
                 if showRefresh {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 18, weight: .regular))
-                        .foregroundStyle(Palette.secondary)
+                    Button {
+                        guard !isRefreshing else { return }
+                        Task {
+                            isRefreshing = true
+                            await onRefresh()
+                            isRefreshing = false
+                        }
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 18, weight: .regular))
+                            .foregroundStyle(Palette.secondary)
+                            .rotationEffect(.degrees(isRefreshing ? 360 : 0))
+                            .animation(
+                                isRefreshing
+                                ? .linear(duration: 0.8).repeatForever(autoreverses: false)
+                                : .default,
+                                value: isRefreshing
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isRefreshing)
                 }
             }
 

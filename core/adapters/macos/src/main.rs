@@ -16,6 +16,10 @@ enum Command {
         #[arg(long)]
         db: String,
     },
+    TopTracksJson {
+        #[arg(long)]
+        db: String,
+    },
 }
 
 fn main() -> Result<()> {
@@ -25,9 +29,29 @@ fn main() -> Result<()> {
         Command::HomeFeedJson { db } => {
             println!("{}", build_home_feed_json(&db));
         }
+        Command::TopTracksJson { db } => {
+            println!("{}", build_top_tracks_json(&db));
+        }
     }
 
     Ok(())
+}
+
+fn build_top_tracks_json(db_path: &str) -> String {
+    match RadioGolhaCore::open(db_path) {
+        Ok(core) => {
+            let top_tracks = core.random_vocal_track_summaries(10).unwrap_or_default();
+            json!(top_tracks.iter().map(|t| json!({
+                "id": t.id,
+                "title": t.title,
+                "artist": t.artist,
+                "duration": t.duration.clone().unwrap_or_else(|| "00:00".to_string()),
+                "audioUrl": t.audio_url
+            })).collect::<Vec<_>>())
+            .to_string()
+        }
+        Err(err) => json!({ "error": err.to_string() }).to_string(),
+    }
 }
 
 fn build_home_feed_json(db_path: &str) -> String {

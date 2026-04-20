@@ -63,7 +63,18 @@ struct HomeRootView: View {
                 switch currentPage {
                 case .home:
                     if let homeContent {
-                        MainContentSection(content: homeContent) { artist in
+                        MainContentSection(
+                            content: homeContent,
+                            onRefreshTopTracks: {
+                                guard let current = self.homeContent else { return }
+                                if let rows = await HomeDataLoader.loadTopTracksRows() {
+                                    self.homeContent = current.withTopTracks(
+                                        topProgramsRows: rows.top,
+                                        latestTracksRows: current.latestTracksRows
+                                    )
+                                }
+                            }
+                        ) { artist in
                             openArtistDetails(
                                 ArtistDetailsFactory.fromHomeArtist(artist),
                                 sourcePage: .home

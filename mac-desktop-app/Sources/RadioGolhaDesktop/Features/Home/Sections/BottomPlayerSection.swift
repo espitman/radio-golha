@@ -2,13 +2,6 @@ import SwiftUI
 
 struct BottomPlayerSection: View {
     private let albumImage = "https://www.figma.com/api/mcp/asset/15e24aa5-c875-43d0-80d4-c65acc0e489f"
-    private let iconVolume = "https://www.figma.com/api/mcp/asset/0e7e3e85-8034-4f0f-a3ef-b136c52551aa"
-    private let iconPlaylist = "https://www.figma.com/api/mcp/asset/6352d5ca-99ec-4d76-9081-b36838719850"
-    private let iconShuffle = "https://www.figma.com/api/mcp/asset/03fbbe64-2f84-4033-b718-4819ae5301b9"
-    private let iconPrev = "https://www.figma.com/api/mcp/asset/c98503f5-be98-4ccf-a766-959862e40b24"
-    private let iconPlay = "https://www.figma.com/api/mcp/asset/e485bc14-97cb-4d9f-839a-cc326860ecb4"
-    private let iconNext = "https://www.figma.com/api/mcp/asset/84dfe2c7-4882-4467-8150-e6a89ae5ea9b"
-    private let iconRepeat = "https://www.figma.com/api/mcp/asset/0e1233c7-9f43-48f7-84d9-bd1bb8212898"
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -28,9 +21,9 @@ struct BottomPlayerSection: View {
                     .opacity(0.4)
 
                     HStack(spacing: 8) {
-                        FigmaAssetImage(url: iconPlaylist, fallbackSymbol: "music.note.list")
+                        playerSymbol("music.note.list")
                             .frame(width: 14.25, height: 11.25)
-                        FigmaAssetImage(url: iconVolume, fallbackSymbol: "speaker.wave.2.fill")
+                        playerSymbol("speaker.wave.2.fill")
                             .frame(width: 13.5, height: 13.125)
                     }
                     .padding(.leading, 25)
@@ -42,17 +35,17 @@ struct BottomPlayerSection: View {
                 .padding(.trailing, 265.66)
 
                 HStack(spacing: 24) {
-                    FigmaAssetImage(url: iconShuffle, fallbackSymbol: "shuffle").frame(width: 18, height: 20)
-                    FigmaAssetImage(url: iconPrev, fallbackSymbol: "backward.end.fill").frame(width: 16.25, height: 15)
+                    playerSymbol("shuffle").frame(width: 18, height: 20)
+                    playerSymbol("backward.end.fill").frame(width: 16.25, height: 15)
                     ZStack {
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
                             .fill(.white)
                             .frame(width: 48, height: 48)
-                        FigmaAssetImage(url: iconPlay, fallbackSymbol: "play.fill", fallbackTint: Palette.primary)
+                        playerSymbol("play.fill", tint: Palette.primary)
                             .frame(width: 13.75, height: 17.5)
                     }
-                    FigmaAssetImage(url: iconNext, fallbackSymbol: "forward.end.fill").frame(width: 16.25, height: 15)
-                    FigmaAssetImage(url: iconRepeat, fallbackSymbol: "repeat").frame(width: 16, height: 16)
+                    playerSymbol("forward.end.fill").frame(width: 16.25, height: 15)
+                    playerSymbol("repeat").frame(width: 16, height: 16)
                 }
                 .frame(width: 394.6667, alignment: .center)
                 .offset(x: -31.03)
@@ -95,5 +88,12 @@ struct BottomPlayerSection: View {
                 .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .frame(width: 1280, height: 96)
+    }
+
+    private func playerSymbol(_ name: String, tint: Color = .white) -> some View {
+        Image(systemName: name)
+            .resizable()
+            .scaledToFit()
+            .foregroundStyle(tint)
     }
 }

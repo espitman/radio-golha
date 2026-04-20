@@ -7,6 +7,12 @@ enum HomeDataLoader {
         }.value
     }
 
+    static func loadTopTracksRows() async -> (top: [TrackRowItem], latest: [TrackRowItem])? {
+        await Task.detached(priority: .userInitiated) {
+            try? loadTopTracksRowsSync()
+        }.value
+    }
+
     private static func loadSync() throws -> HomeContentData {
         let root = try resolveRepoRoot()
         let dbPath = try resolveArchiveDbPath(root: root)
@@ -15,6 +21,33 @@ enum HomeDataLoader {
 
         let response = try JSONDecoder().decode(HomeFeedBridgeResponse.self, from: Data(payload.utf8))
         return mapResponse(response)
+    }
+
+    private static func loadTopTracksRowsSync() throws -> (top: [TrackRowItem], latest: [TrackRowItem]) {
+        let root = try resolveRepoRoot()
+        let dbPath = try resolveArchiveDbPath(root: root)
+        let payload = try runBridgeTopTracks(root: root, dbPath: dbPath)
+        if payload.isEmpty {
+            return (HomeMockData.topProgramsRows, HomeMockData.latestTracksRows)
+        }
+
+        let tracks = try JSONDecoder().decode([HomeTrackDTO].self, from: Data(payload.utf8)).map {
+            TrackRowItem(
+                title: $0.title,
+                subtitle: $0.artist,
+                duration: normalizedDuration($0.duration)
+            )
+        }
+
+        let top = Array(tracks.prefix(5))
+        let latest: [TrackRowItem] = {
+            let next = Array(tracks.dropFirst(5).prefix(5))
+            return next.isEmpty ? top : next
+        }()
+        return (
+            top.isEmpty ? HomeMockData.topProgramsRows : top,
+            latest.isEmpty ? HomeMockData.latestTracksRows : latest
+        )
     }
 
     private static func mapResponse(_ response: HomeFeedBridgeResponse) -> HomeContentData {
@@ -56,9 +89,9 @@ enum HomeDataLoader {
             )
         }
 
-        let topProgramsRows = Array(tracks.prefix(2))
+        let topProgramsRows = Array(tracks.prefix(5))
         let latestTracksRows: [TrackRowItem] = {
-            let next = Array(tracks.dropFirst(2).prefix(2))
+            let next = Array(tracks.dropFirst(5).prefix(5))
             return next.isEmpty ? topProgramsRows : next
         }()
 
@@ -143,6 +176,25 @@ enum HomeDataLoader {
         return try runProcess(
             launchPath: binary,
             arguments: ["home-feed-json", "--db", dbPath],
+            currentDirectory: root
+        )
+    }
+
+    private static func runBridgeTopTracks(root: String, dbPath: String) throws -> String {
+        let manifest = URL(fileURLWithPath: root).appendingPathComponent("core/adapters/macos/Cargo.toml").path
+        let binary = URL(fileURLWithPath: root).appendingPathComponent("core/adapters/macos/target/debug/radiogolha-macos-bridge-cli").path
+
+        if !FileManager.default.isExecutableFile(atPath: binary) {
+            _ = try runProcess(
+                launchPath: "/usr/bin/env",
+                arguments: ["cargo", "build", "--manifest-path", manifest, "--bin", "radiogolha-macos-bridge-cli"],
+                currentDirectory: root
+            )
+        }
+
+        return try runProcess(
+            launchPath: binary,
+            arguments: ["top-tracks-json", "--db", dbPath],
             currentDirectory: root
         )
     }

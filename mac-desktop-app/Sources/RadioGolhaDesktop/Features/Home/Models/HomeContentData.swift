@@ -16,5 +16,15 @@ struct HomeContentData {
         topProgramsRows: HomeMockData.topProgramsRows,
         latestTracksRows: HomeMockData.latestTracksRows
     )
-}
 
+    func withTopTracks(topProgramsRows: [TrackRowItem], latestTracksRows: [TrackRowItem]) -> HomeContentData {
+        HomeContentData(
+            programs: programs,
+            singers: singers,
+            instrumentalists: instrumentalists,
+            modes: modes,
+            topProgramsRows: topProgramsRows,
+            latestTracksRows: latestTracksRows
+        )
+    }
+}
