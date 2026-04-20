@@ -10,17 +10,14 @@ struct ArtistCard: View {
     var body: some View {
         VStack(spacing: 0) {
             ZStack(alignment: .bottom) {
-                AsyncImage(url: URL(string: item.imageURL)) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                            .grayscale(isHovered ? 0.0 : 0.85)
-                            .scaleEffect(isHovered ? 1.03 : 1.0)
-                    default:
-                        Rectangle().fill(dark ? Color(hex: 0x111111) : Color(hex: 0xE5E2DA))
-                    }
+                CachedRemoteImage(url: URL(string: item.imageURL)) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                        .grayscale(isHovered ? 0.0 : 0.85)
+                        .scaleEffect(isHovered ? 1.03 : 1.0)
+                } placeholder: {
+                    Rectangle().fill(dark ? Color(hex: 0x111111) : Color(hex: 0xE5E2DA))
                 }
                 .frame(width: cardWidth, height: cardWidth)
                 .clipped()

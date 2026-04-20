@@ -75,17 +75,14 @@ private struct MainHero: View {
 
     var body: some View {
         ZStack {
-            AsyncImage(url: imageURL) { phase in
-                switch phase {
-                case .success(let image):
-                    image.resizable().scaledToFill()
-                default:
-                    LinearGradient(
-                        colors: [Color(hex: 0x001A2F), Color(hex: 0x003A67)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                }
+            CachedRemoteImage(url: imageURL) { image in
+                image.resizable().scaledToFill()
+            } placeholder: {
+                LinearGradient(
+                    colors: [Color(hex: 0x001A2F), Color(hex: 0x003A67)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
             }
 
             LinearGradient(

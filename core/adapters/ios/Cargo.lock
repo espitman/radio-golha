@@ -249,8 +249,6 @@ dependencies = [
 name = "radiogolha-ios"
 version = "0.1.0"
 dependencies = [
- "anyhow",
- "clap",
  "libc",
  "radiogolha-core",
  "serde",

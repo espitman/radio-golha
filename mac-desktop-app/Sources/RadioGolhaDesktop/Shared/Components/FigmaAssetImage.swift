@@ -6,15 +6,10 @@ struct FigmaAssetImage: View {
     var fallbackTint: Color = .white
 
     var body: some View {
-        AsyncImage(url: URL(string: url)) { phase in
-            switch phase {
-            case .success(let image):
-                image.resizable().scaledToFill()
-            case .failure, .empty:
-                fallback
-            @unknown default:
-                fallback
-            }
+        CachedRemoteImage(url: URL(string: url)) { image in
+            image.resizable().scaledToFill()
+        } placeholder: {
+            fallback
         }
         .clipped()
     }
