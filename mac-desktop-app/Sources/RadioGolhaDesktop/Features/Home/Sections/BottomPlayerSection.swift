@@ -55,6 +55,7 @@ struct BottomPlayerSection: View {
                     FigmaAssetImage(url: iconRepeat, fallbackSymbol: "repeat").frame(width: 16, height: 16)
                 }
                 .frame(width: 394.6667, alignment: .center)
+                .offset(x: -31.03)
 
                 HStack(spacing: 16) {
                     VStack(alignment: .trailing, spacing: 0) {
