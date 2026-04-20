@@ -26,39 +26,34 @@ struct ArtistDetailsContentView: View {
                 }
             )
         }
+        .id(artist.id)
         .frame(width: 1024)
         .background(Palette.surface)
         .environment(\.layoutDirection, .rightToLeft)
     }
 
     private var topSection: some View {
-        HStack(alignment: .bottom, spacing: 36) {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    Button {
-                        onBack()
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "arrow.right")
-                                .font(.system(size: 11, weight: .semibold))
-                            Text("بازگشت")
-                                .font(.vazir(10.5, .bold))
-                        }
-                        .foregroundStyle(Palette.secondary)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(Palette.sidebar, in: Capsule())
-                    }
-                    .buttonStyle(.plain)
+        HStack(alignment: .center, spacing: 44) {
+            ZStack(alignment: .bottom) {
+                FigmaAssetImage(url: artist.imageURL)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .grayscale(1.0)
 
-                    Spacer(minLength: 0)
-                }
+                LinearGradient(
+                    colors: [Palette.primary.opacity(0.8), .clear],
+                    startPoint: .bottom,
+                    endPoint: .top
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .frame(width: 280, height: 280)
+            .clipped()
 
-                Spacer().frame(height: 34)
-
+            VStack(alignment: .leading, spacing: 14) {
                 Text(artist.name)
                     .font(.vazir(45, .bold))
                     .foregroundStyle(Palette.secondary)
+                    .tracking(-0.3)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 Button {
@@ -70,16 +65,16 @@ struct ArtistDetailsContentView: View {
                             .font(.vazir(10.5, .bold))
                     }
                     .foregroundStyle(.white)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 9)
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 8)
                     .background(Palette.secondary, in: Capsule())
                 }
                 .buttonStyle(.plain)
-                .padding(.top, 12)
+                .padding(.vertical, 4)
 
-                HStack(spacing: 44) {
+                HStack(spacing: 42) {
                     ForEach(artist.stats) { stat in
-                        VStack(spacing: 3) {
+                        VStack(spacing: 2) {
                             Text(stat.value)
                                 .font(.vazir(18, .bold))
                                 .foregroundStyle(Palette.primary)
@@ -87,24 +82,11 @@ struct ArtistDetailsContentView: View {
                                 .font(.vazir(7.5))
                                 .foregroundStyle(Color(hex: 0x6D706F))
                         }
+                        .frame(minWidth: 50)
                     }
                 }
-                .padding(.top, 26)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            ZStack(alignment: .bottom) {
-                FigmaAssetImage(url: artist.imageURL)
-                    .frame(width: 264, height: 264)
-                    .grayscale(0.95)
-
-                LinearGradient(
-                    colors: [Palette.primary.opacity(0.75), .clear],
-                    startPoint: .bottom,
-                    endPoint: .top
-                )
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .frame(maxWidth: .infinity, minHeight: 280, maxHeight: 280, alignment: .center)
         }
     }
 
@@ -155,16 +137,20 @@ struct ArtistDetailsContentView: View {
             VStack(alignment: .leading, spacing: 14) {
                 panelHeader(title: "دستگاه‌های شاخص", fontSize: 15)
 
-                FlowLayout(spacing: 8, lineSpacing: 8, items: artist.featuredModes) { mode in
-                    Text(mode)
-                        .font(.vazir(7.5, .bold))
-                        .foregroundStyle(Palette.primary)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(Palette.sidebar, in: Capsule())
-                        .overlay(
-                            Capsule().stroke(Palette.primary.opacity(0.08), lineWidth: 1)
-                        )
+                HStack(spacing: 6) {
+                    ForEach(Array(artist.featuredModes.prefix(4)), id: \.self) { mode in
+                        Text(mode)
+                            .font(.vazir(7.5, .bold))
+                            .lineLimit(1)
+                            .foregroundStyle(Palette.primary)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(Palette.sidebar, in: Capsule())
+                            .overlay(
+                                Capsule().stroke(Palette.primary.opacity(0.08), lineWidth: 1)
+                            )
+                    }
+                    Spacer(minLength: 0)
                 }
             }
         }
