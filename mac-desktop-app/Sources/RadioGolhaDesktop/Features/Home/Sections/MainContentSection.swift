@@ -1,17 +1,11 @@
 import SwiftUI
 
 struct MainContentSection: View {
-    var onSelectTab: (DesktopMainTab) -> Void = { _ in }
     private let heroImage = URL(string: "https://lh3.googleusercontent.com/aida-public/AB6AXuBTRoCtbLy1Vpa3t_ez8WfRkhOFnnCGOnbhRCJ3Tw_GbsQa8OqeyyLL2ov1DPWrduyIkRYbX-OfQkwuqlVraQ8QJOLKS5xz0nnGbm6Xcew6EaIxSXymeWEKEzkuhnl0xcQXO5V7KIbFs1M5iwZVA0GNgsIljnkjQYe9AdbIOmQEm8ohOVd39E_qi-b-b39xQ0PVaqyEtPk83DXRnERRtsx7Xs_6iidmtYtqJkpETR82f97iPOnF3stP0rFiR0INpoCfMwIZfPGvTTV3")
 
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
-                DesktopTopNavigationBar(
-                    selectedTab: .programs,
-                    onSelectTab: onSelectTab
-                )
-
                 ZStack {
                     Palette.surface
                     MainPatternOverlay()

@@ -4,6 +4,7 @@ struct ArtistCard: View {
     let item: ArtistItem
     var dark: Bool = false
     @State private var isHovered = false
+    private let cardWidth: CGFloat = 208
 
     var body: some View {
         VStack(spacing: 0) {
@@ -20,7 +21,7 @@ struct ArtistCard: View {
                         Rectangle().fill(dark ? Color(hex: 0x111111) : Color(hex: 0xE5E2DA))
                     }
                 }
-                .frame(width: 206, height: 206)
+                .frame(width: cardWidth, height: cardWidth)
                 .clipped()
 
                 if !dark {
@@ -30,7 +31,7 @@ struct ArtistCard: View {
                         endPoint: .top
                     )
                     .opacity(isHovered ? 1.0 : 0.0)
-                    .frame(width: 206, height: 206)
+                    .frame(width: cardWidth, height: cardWidth)
 
                     Text("مشاهده آثار")
                         .font(.vazir(9, .bold))
@@ -58,7 +59,7 @@ struct ArtistCard: View {
             .padding(20)
             .background(dark ? Color(hex: 0x181818) : .white)
         }
-        .frame(width: 208, height: 300)
+        .frame(width: cardWidth, height: 300, alignment: .top)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)

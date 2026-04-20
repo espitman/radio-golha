@@ -29,21 +29,29 @@ struct HomeRootView: View {
     }
 
     private var mainCanvas: some View {
-        Group {
-            switch currentPage {
-            case .home:
-                MainContentSection { tab in
-                    if tab == .artists {
-                        currentPage = .singers
-                    }
-                }
-            case .singers:
-                SingersContentView { tab in
-                    if tab == .programs {
-                        currentPage = .home
-                    }
+        VStack(spacing: 0) {
+            DesktopTopNavigationBar(
+                selectedTab: currentPage == .home ? .programs : .artists
+            ) { tab in
+                switch tab {
+                case .artists:
+                    currentPage = .singers
+                case .programs:
+                    currentPage = .home
+                default:
+                    break
                 }
             }
+
+            Group {
+                switch currentPage {
+                case .home:
+                    MainContentSection()
+                case .singers:
+                    SingersContentView()
+                }
+            }
+            .frame(maxHeight: .infinity)
         }
     }
 }
