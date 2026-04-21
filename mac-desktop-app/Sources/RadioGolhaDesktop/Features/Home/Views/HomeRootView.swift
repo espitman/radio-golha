@@ -8,6 +8,15 @@ private enum DesktopPage {
     case programDetails
 }
 
+private struct NavigationSnapshot {
+    let page: DesktopPage
+    let selectedArtistDetails: ArtistDetailsItem?
+    let artistDetailsSourcePage: DesktopPage
+    let selectedProgramDetails: ProgramDetailsItem?
+    let programDetailsSourcePage: DesktopPage
+    let isArtistDetailsLoading: Bool
+}
+
 struct HomeRootView: View {
     @State private var currentPage: DesktopPage = .home
     @State private var selectedArtistDetails: ArtistDetailsItem? = nil
@@ -25,6 +34,7 @@ struct HomeRootView: View {
     @State private var homeDataLoaded = false
     @State private var singersDataLoaded = false
     @State private var playersDataLoaded = false
+    @State private var backStack: [NavigationSnapshot] = []
     @StateObject private var audioPlayer = DesktopAudioPlayer()
 
     var body: some View {
@@ -64,17 +74,19 @@ struct HomeRootView: View {
     private var mainCanvas: some View {
         VStack(spacing: 0) {
             DesktopTopNavigationBar(
-                selectedTab: selectedTab
+                selectedTab: selectedTab,
+                canGoBack: canGoBack,
+                onBack: handleBack
             ) { tab in
                 switch tab {
                 case .artists:
-                    currentPage = .singers
+                    navigateTo(.singers)
                     ensureSingersLoaded()
                 case .instrumentalists:
-                    currentPage = .players
+                    navigateTo(.players)
                     ensurePlayersLoaded()
                 case .programs:
-                    currentPage = .home
+                    navigateTo(.home)
                 default:
                     break
                 }
@@ -118,11 +130,11 @@ struct HomeRootView: View {
                                 )
                             },
                             onShowAllSingers: {
-                                currentPage = .singers
+                                navigateTo(.singers)
                                 ensureSingersLoaded()
                             },
                             onShowAllInstrumentalists: {
-                                currentPage = .players
+                                navigateTo(.players)
                                 ensurePlayersLoaded()
                             }
                         )
@@ -165,7 +177,7 @@ struct HomeRootView: View {
                         ArtistDetailsContentView(
                             artist: selectedArtistDetails,
                             onBack: {
-                                currentPage = artistDetailsSourcePage
+                                handleBack()
                             },
                             onOpenArtist: { collaborator in
                                 let targetDetails: ArtistDetailsItem = {
@@ -195,7 +207,7 @@ struct HomeRootView: View {
                         ProgramDetailsContentView(
                             program: selectedProgramDetails,
                             onBack: {
-                                currentPage = programDetailsSourcePage
+                                handleBack()
                             }
                         )
                     }
@@ -232,6 +244,42 @@ struct HomeRootView: View {
                 return .programs
             }
         }
+    }
+
+    private var canGoBack: Bool {
+        !backStack.isEmpty
+    }
+
+    private func makeSnapshot() -> NavigationSnapshot {
+        NavigationSnapshot(
+            page: currentPage,
+            selectedArtistDetails: selectedArtistDetails,
+            artistDetailsSourcePage: artistDetailsSourcePage,
+            selectedProgramDetails: selectedProgramDetails,
+            programDetailsSourcePage: programDetailsSourcePage,
+            isArtistDetailsLoading: isArtistDetailsLoading
+        )
+    }
+
+    private func restore(from snapshot: NavigationSnapshot) {
+        currentPage = snapshot.page
+        selectedArtistDetails = snapshot.selectedArtistDetails
+        artistDetailsSourcePage = snapshot.artistDetailsSourcePage
+        selectedProgramDetails = snapshot.selectedProgramDetails
+        programDetailsSourcePage = snapshot.programDetailsSourcePage
+        isArtistDetailsLoading = snapshot.isArtistDetailsLoading
+    }
+
+    private func navigateTo(_ page: DesktopPage) {
+        guard currentPage != page else { return }
+        backStack.append(makeSnapshot())
+        currentPage = page
+    }
+
+    private func handleBack() {
+        guard let snapshot = backStack.popLast() else { return }
+        artistDetailsLoadRequestId = UUID().uuidString
+        restore(from: snapshot)
     }
 
     private func ensureSingersLoaded() {
@@ -273,6 +321,7 @@ struct HomeRootView: View {
     }
 
     private func openArtistDetails(_ details: ArtistDetailsItem, sourcePage: DesktopPage) {
+        backStack.append(makeSnapshot())
         artistDetailsSourcePage = sourcePage
         currentPage = .artistDetails
         selectedArtistDetails = nil
@@ -306,6 +355,7 @@ struct HomeRootView: View {
     }
 
     private func openProgramDetails(_ details: ProgramDetailsItem, sourcePage: DesktopPage) {
+        backStack.append(makeSnapshot())
         selectedProgramDetails = details
         programDetailsSourcePage = sourcePage
         currentPage = .programDetails

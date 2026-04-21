@@ -11,6 +11,8 @@ enum DesktopMainTab {
 
 struct DesktopTopNavigationBar: View {
     let selectedTab: DesktopMainTab
+    var canGoBack: Bool = false
+    var onBack: () -> Void = {}
     var onSelectTab: (DesktopMainTab) -> Void
 
     var body: some View {
@@ -49,6 +51,18 @@ struct DesktopTopNavigationBar: View {
                 Image(systemName: "person.crop.circle")
                     .font(.system(size: 18, weight: .regular))
                     .foregroundStyle(Palette.primary.opacity(0.6))
+
+                Button {
+                    onBack()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Palette.primary.opacity(canGoBack ? 0.7 : 0.3))
+                        .frame(width: 30, height: 30)
+                        .background(Palette.surfaceLow, in: Circle())
+                }
+                .buttonStyle(.plain)
+                .disabled(!canGoBack)
             }
         }
         .frame(height: 80)
