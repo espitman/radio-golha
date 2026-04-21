@@ -140,8 +140,14 @@ struct HomeRootView: View {
                                 currentPage = artistDetailsSourcePage
                             },
                             onOpenArtist: { collaborator in
+                                let targetDetails: ArtistDetailsItem = {
+                                    if collaborator.sourceArtistId == nil {
+                                        return ArtistDetailsFactory.fromArtistName(collaborator.name)
+                                    }
+                                    return ArtistDetailsFactory.fromCollaborator(collaborator)
+                                }()
                                 openArtistDetails(
-                                    ArtistDetailsFactory.fromCollaborator(collaborator),
+                                    targetDetails,
                                     sourcePage: artistDetailsSourcePage
                                 )
                             },

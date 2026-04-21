@@ -147,15 +147,32 @@ enum ArtistDetailsDataLoader {
         process.standardOutput = stdout
         process.standardError = stderr
 
+        let group = DispatchGroup()
+        var outData = Data()
+        var errData = Data()
+
+        group.enter()
+        DispatchQueue.global(qos: .userInitiated).async {
+            outData = stdout.fileHandleForReading.readDataToEndOfFile()
+            group.leave()
+        }
+
+        group.enter()
+        DispatchQueue.global(qos: .userInitiated).async {
+            errData = stderr.fileHandleForReading.readDataToEndOfFile()
+            group.leave()
+        }
+
         try process.run()
         process.waitUntilExit()
+        group.wait()
 
-        let out = String(data: stdout.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        let out = String(data: outData, encoding: .utf8) ?? ""
         if process.terminationStatus == 0 {
             return out.trimmingCharacters(in: .whitespacesAndNewlines)
         }
 
-        let err = String(data: stderr.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? "Unknown process error"
+        let err = String(data: errData, encoding: .utf8) ?? "Unknown process error"
         throw NSError(domain: "ArtistDetailsDataLoader", code: Int(process.terminationStatus), userInfo: [NSLocalizedDescriptionKey: err])
     }
 }
