@@ -9,6 +9,7 @@ struct MainContentSection: View {
     var isPlayerPlaying: Bool = false
     var isPlayerLoading: Bool = false
     var onArtistTap: (ArtistItem) -> Void = { _ in }
+    var onProgramCategoryTap: (ProgramItem) -> Void = { _ in }
     var onProgramTap: (String) -> Void = { _ in }
     var onShowAllSingers: () -> Void = {}
     var onShowAllInstrumentalists: () -> Void = {}
@@ -27,7 +28,10 @@ struct MainContentSection: View {
                         .padding(.horizontal, 48)
                         .padding(.top, 32)
 
-                    ProgramsGridSection(items: content.programs)
+                    ProgramsGridSection(
+                        items: content.programs,
+                        onProgramTap: onProgramCategoryTap
+                    )
                         .padding(.horizontal, 48)
                         .padding(.top, 48)
 
@@ -162,6 +166,7 @@ private struct MainHero: View {
 
 private struct ProgramsGridSection: View {
     let items: [ProgramItem]
+    var onProgramTap: (ProgramItem) -> Void = { _ in }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 32) {
@@ -170,7 +175,9 @@ private struct ProgramsGridSection: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 24) {
                     ForEach(items) { item in
-                        ProgramRowCard(item: item)
+                        ProgramRowCard(item: item) {
+                            onProgramTap(item)
+                        }
                     }
                 }
                 .padding(.vertical, 4)
@@ -181,6 +188,7 @@ private struct ProgramsGridSection: View {
 
 private struct ProgramRowCard: View {
     let item: ProgramItem
+    var onTap: () -> Void = {}
 
     var body: some View {
         HStack(spacing: 16) {
@@ -214,6 +222,10 @@ private struct ProgramRowCard: View {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .stroke(Palette.border, lineWidth: 1)
         )
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onTap()
+        }
     }
 }
 

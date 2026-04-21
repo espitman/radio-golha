@@ -61,6 +61,7 @@ enum HomeDataLoader {
             .enumerated()
             .map { index, category in
                 ProgramItem(
+                    sourceCategoryId: category.id,
                     title: category.title,
                     count: "\(category.episodeCount) برنامه",
                     symbol: symbol(for: category.title, fallbackIndex: index)

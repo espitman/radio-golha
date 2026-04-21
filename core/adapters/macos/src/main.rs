@@ -34,6 +34,12 @@ enum Command {
         #[arg(long)]
         db: String,
     },
+    ProgramsByCategoryJson {
+        #[arg(long)]
+        db: String,
+        #[arg(long)]
+        category_id: i64,
+    },
 }
 
 fn main() -> Result<()> {
@@ -55,9 +61,71 @@ fn main() -> Result<()> {
         Command::MusiciansJson { db } => {
             println!("{}", build_musicians_json(&db));
         }
+        Command::ProgramsByCategoryJson { db, category_id } => {
+            println!("{}", build_programs_by_category_json(&db, category_id));
+        }
     }
 
     Ok(())
+}
+
+fn build_programs_by_category_json(db_path: &str, category_id: i64) -> String {
+    match RadioGolhaCore::open(db_path) {
+        Ok(core) => {
+            let conn = core.connection();
+            let mut stmt = match conn.prepare(
+                "
+                SELECT
+                    p.id,
+                    p.title,
+                    p.no,
+                    COALESCE(
+                        (
+                            SELECT GROUP_CONCAT(a.name, ' و ')
+                            FROM program_singers ps
+                            JOIN singer s ON s.id = ps.singer_id
+                            JOIN artist a ON a.id = s.artist_id
+                            WHERE ps.program_id = p.id
+                        ),
+                        'ناشناس'
+                    ) AS artist_names,
+                    (
+                        SELECT GROUP_CONCAT(m.name, ' و ')
+                        FROM program_modes pm
+                        JOIN mode m ON m.id = pm.mode_id
+                        WHERE pm.program_id = p.id
+                    ) AS mode_names,
+                    (SELECT MAX(end_time) FROM program_timeline WHERE program_id = p.id) AS duration,
+                    p.audio_url
+                FROM program p
+                WHERE p.category_id = ?1
+                ORDER BY p.no ASC, p.id ASC
+                ",
+            ) {
+                Ok(stmt) => stmt,
+                Err(error) => return json!({ "error": error.to_string() }).to_string(),
+            };
+
+            let rows = match stmt.query_map([category_id], |row| {
+                Ok(json!({
+                    "id": row.get::<_, i64>(0)?,
+                    "title": row.get::<_, Option<String>>(1)?,
+                    "no": row.get::<_, i64>(2)?,
+                    "artist": row.get::<_, String>(3)?,
+                    "mode": row.get::<_, Option<String>>(4)?,
+                    "duration": row.get::<_, Option<String>>(5)?,
+                    "audioUrl": row.get::<_, Option<String>>(6)?
+                }))
+            }) {
+                Ok(rows) => rows,
+                Err(error) => return json!({ "error": error.to_string() }).to_string(),
+            };
+
+            let programs: Vec<_> = rows.filter_map(|r| r.ok()).collect();
+            json!(programs).to_string()
+        }
+        Err(error) => json!({ "error": error.to_string() }).to_string(),
+    }
 }
 
 fn build_musicians_json(db_path: &str) -> String {

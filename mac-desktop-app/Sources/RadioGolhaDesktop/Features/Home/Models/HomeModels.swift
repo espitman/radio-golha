@@ -1,10 +1,24 @@
 import Foundation
 
 struct ProgramItem: Identifiable {
-    let id = UUID()
+    let id: String
+    let sourceCategoryId: Int64?
     let title: String
     let count: String
     let symbol: String
+
+    init(
+        sourceCategoryId: Int64? = nil,
+        title: String,
+        count: String,
+        symbol: String
+    ) {
+        self.sourceCategoryId = sourceCategoryId
+        self.id = sourceCategoryId.map { "category-\($0)" } ?? UUID().uuidString
+        self.title = title
+        self.count = count
+        self.symbol = symbol
+    }
 }
 
 struct ArtistItem: Identifiable {

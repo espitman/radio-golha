@@ -4,6 +4,7 @@ private enum DesktopPage {
     case home
     case singers
     case players
+    case programTracks
     case artistDetails
     case programDetails
 }
@@ -14,6 +15,9 @@ private struct NavigationSnapshot {
     let artistDetailsSourcePage: DesktopPage
     let selectedProgramDetails: ProgramDetailsItem?
     let programDetailsSourcePage: DesktopPage
+    let selectedProgramCategory: ProgramItem?
+    let selectedProgramTracks: [TrackRowItem]?
+    let isProgramTracksLoading: Bool
     let isArtistDetailsLoading: Bool
 }
 
@@ -23,6 +27,8 @@ struct HomeRootView: View {
     @State private var artistDetailsSourcePage: DesktopPage = .home
     @State private var selectedProgramDetails: ProgramDetailsItem? = nil
     @State private var programDetailsSourcePage: DesktopPage = .home
+    @State private var selectedProgramCategory: ProgramItem? = nil
+    @State private var selectedProgramTracks: [TrackRowItem]? = nil
     @State private var artistDetailsLoadRequestId: String = ""
     @State private var homeContent: HomeContentData? = nil
     @State private var singersContent: [SingerListItem]? = nil
@@ -30,6 +36,7 @@ struct HomeRootView: View {
     @State private var isHomeLoading = false
     @State private var isSingersLoading = false
     @State private var isPlayersLoading = false
+    @State private var isProgramTracksLoading = false
     @State private var isArtistDetailsLoading = false
     @State private var homeDataLoaded = false
     @State private var singersDataLoaded = false
@@ -131,6 +138,9 @@ struct HomeRootView: View {
                                     sourcePage: .home
                                 )
                             },
+                            onProgramCategoryTap: { category in
+                                openProgramTracks(category)
+                            },
                             onProgramTap: { trackTitle in
                                 openProgramDetails(
                                     ProgramDetailsFactory.fromTrackTitle(trackTitle),
@@ -181,6 +191,40 @@ struct HomeRootView: View {
                         .transition(pageTransition)
                     } else {
                         DesktopLoadingView(message: "در حال بارگذاری نوازندگان...")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .transition(pageTransition)
+                    }
+                case .programTracks:
+                    if let category = selectedProgramCategory {
+                        if let selectedProgramTracks {
+                            ProgramTracksContentView(
+                                category: category,
+                                tracks: selectedProgramTracks,
+                                onPlayTrack: { track in
+                                    if audioPlayer.currentTrack?.id == track.id {
+                                        audioPlayer.togglePlayPause()
+                                    } else {
+                                        audioPlayer.play(track: track)
+                                    }
+                                },
+                                onOpenProgram: { track in
+                                    openProgramDetails(
+                                        ProgramDetailsFactory.fromTrackTitle(track.title),
+                                        sourcePage: .programTracks
+                                    )
+                                },
+                                currentPlayingTrackId: audioPlayer.currentTrack?.id,
+                                isPlayerPlaying: audioPlayer.isPlaying,
+                                isPlayerLoading: audioPlayer.isLoading
+                            )
+                            .transition(pageTransition)
+                        } else {
+                            DesktopLoadingView(message: isProgramTracksLoading ? "در حال بارگذاری قطعات برنامه..." : "قطعه‌ای برای این برنامه پیدا نشد")
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .transition(pageTransition)
+                        }
+                    } else {
+                        DesktopLoadingView(message: "در حال بارگذاری برنامه...")
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .transition(pageTransition)
                     }
@@ -270,6 +314,8 @@ struct HomeRootView: View {
             return .artists
         case .players:
             return .instrumentalists
+        case .programTracks:
+            return .programs
         case .artistDetails:
             switch artistDetailsSourcePage {
             case .singers:
@@ -302,6 +348,9 @@ struct HomeRootView: View {
             artistDetailsSourcePage: artistDetailsSourcePage,
             selectedProgramDetails: selectedProgramDetails,
             programDetailsSourcePage: programDetailsSourcePage,
+            selectedProgramCategory: selectedProgramCategory,
+            selectedProgramTracks: selectedProgramTracks,
+            isProgramTracksLoading: isProgramTracksLoading,
             isArtistDetailsLoading: isArtistDetailsLoading
         )
     }
@@ -313,6 +362,9 @@ struct HomeRootView: View {
             artistDetailsSourcePage = snapshot.artistDetailsSourcePage
             selectedProgramDetails = snapshot.selectedProgramDetails
             programDetailsSourcePage = snapshot.programDetailsSourcePage
+            selectedProgramCategory = snapshot.selectedProgramCategory
+            selectedProgramTracks = snapshot.selectedProgramTracks
+            isProgramTracksLoading = snapshot.isProgramTracksLoading
             isArtistDetailsLoading = snapshot.isArtistDetailsLoading
         }
     }
@@ -419,6 +471,39 @@ struct HomeRootView: View {
         programDetailsSourcePage = sourcePage
         withAnimation(pageAnimation) {
             currentPage = .programDetails
+        }
+    }
+
+    private func openProgramTracks(_ category: ProgramItem) {
+        backStack.append(makeSnapshot())
+        selectedProgramCategory = category
+        selectedProgramTracks = nil
+        isProgramTracksLoading = true
+        withAnimation(pageAnimation) {
+            currentPage = .programTracks
+        }
+
+        guard let categoryId = category.sourceCategoryId else {
+            isProgramTracksLoading = false
+            selectedProgramTracks = []
+            return
+        }
+
+        Task {
+            let start = Date()
+            let loaded = await ProgramTracksDataLoader.load(categoryId: categoryId) ?? []
+            let elapsed = Date().timeIntervalSince(start)
+            let minVisible = 0.3
+            if elapsed < minVisible {
+                let remainingNs = UInt64((minVisible - elapsed) * 1_000_000_000)
+                try? await Task.sleep(nanoseconds: remainingNs)
+            }
+
+            guard selectedProgramCategory?.id == category.id, currentPage == .programTracks else { return }
+            withAnimation(pageAnimation) {
+                selectedProgramTracks = loaded
+                isProgramTracksLoading = false
+            }
         }
     }
 }
