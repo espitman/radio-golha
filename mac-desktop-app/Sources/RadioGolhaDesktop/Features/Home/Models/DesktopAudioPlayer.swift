@@ -39,6 +39,10 @@ final class DesktopAudioPlayer: ObservableObject {
         startPlayback(track: track, startAtSeconds: nil, autoPlay: true, shouldRecordPlayback: true)
     }
 
+    func play(track: TrackRowItem, startAtSeconds: Double) {
+        startPlayback(track: track, startAtSeconds: max(0, startAtSeconds), autoPlay: true, shouldRecordPlayback: true)
+    }
+
     private func startPlayback(track: TrackRowItem, startAtSeconds: Double?, autoPlay: Bool, shouldRecordPlayback: Bool) {
         guard let urlString = track.audioURL, let url = URL(string: urlString) else {
             return

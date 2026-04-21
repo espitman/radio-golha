@@ -41,7 +41,10 @@ struct ProgramDetailsContentView: View {
 
     private var heroSection: some View {
         HStack(alignment: .top, spacing: 36) {
-            FigmaAssetImage(url: program.coverImageURL)
+            ProgramHeaderArtworkView(
+                coverURL: program.coverImageURL,
+                singerImageURLs: singerImageURLs
+            )
                 .frame(width: 240, height: 240)
 
             VStack(alignment: .leading, spacing: 0) {
@@ -215,7 +218,13 @@ struct ProgramDetailsContentView: View {
                 case .timeline:
                     VStack(spacing: 14) {
                         ForEach(Array(program.timeline.enumerated()), id: \.element.id) { index, item in
-                            ProgramTimelineRow(item: item, isActive: activeSegmentIndex == index)
+                            ProgramTimelineRow(
+                                item: item,
+                                isActive: activeSegmentIndex == index,
+                                onTap: {
+                                    seekToTimelineSegment(at: index)
+                                }
+                            )
                         }
                     }
                 case .lyrics:
@@ -259,6 +268,14 @@ struct ProgramDetailsContentView: View {
             audioURL: program.audioURL,
             artworkURLs: program.artists.map { $0.imageURL }.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
         )
+    }
+
+    private var singerImageURLs: [String] {
+        let urls = program.artists
+            .filter { $0.role.contains("خواننده") }
+            .map { $0.imageURL.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        return Array(Set(urls))
     }
 
     private var isProgramActive: Bool {
@@ -343,11 +360,52 @@ struct ProgramDetailsContentView: View {
         }
         return 0
     }
+
+    private func seekToTimelineSegment(at index: Int) {
+        guard program.audioURL?.isEmpty == false else { return }
+        guard index >= 0, index < program.timeline.count else { return }
+        let start = parseTimeToSeconds(program.timeline[index].time)
+        player.play(track: playbackTrack, startAtSeconds: start)
+    }
+}
+
+private struct ProgramHeaderArtworkView: View {
+    let coverURL: String
+    let singerImageURLs: [String]
+    @State private var imageIndex = 0
+
+    private let timer = Timer.publish(every: 3.2, on: .main, in: .common).autoconnect()
+
+    var body: some View {
+        ZStack {
+            if singerImageURLs.count > 1 {
+                ForEach(Array(singerImageURLs.enumerated()), id: \.offset) { idx, url in
+                    FigmaAssetImage(url: url)
+                        .opacity((imageIndex % singerImageURLs.count) == idx ? 1 : 0)
+                        .scaleEffect((imageIndex % singerImageURLs.count) == idx ? 1 : 1.015)
+                }
+            } else if let singleSinger = singerImageURLs.first {
+                FigmaAssetImage(url: singleSinger)
+            } else {
+                FigmaAssetImage(url: coverURL)
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .animation(.easeInOut(duration: 0.55), value: imageIndex)
+        .onReceive(timer) { _ in
+            guard singerImageURLs.count > 1 else { return }
+            imageIndex = (imageIndex + 1) % singerImageURLs.count
+        }
+        .onChange(of: singerImageURLs) { _ in
+            imageIndex = 0
+        }
+    }
 }
 
 private struct ProgramTimelineRow: View {
     let item: ProgramTimelineItem
     let isActive: Bool
+    var onTap: () -> Void = {}
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -408,6 +466,10 @@ private struct ProgramTimelineRow: View {
                     .frame(width: 6)
                     .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
             }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onTap()
         }
     }
 

@@ -67,7 +67,16 @@ struct HomeRootView: View {
             .frame(width: 1280)
             .environment(\.layoutDirection, .leftToRight)
 
-            BottomPlayerSection(player: audioPlayer)
+            BottomPlayerSection(
+                player: audioPlayer,
+                onOpenCurrentTrack: { track in
+                    openProgramDetails(
+                        programId: track.trackId,
+                        fallbackTitle: track.title,
+                        sourcePage: currentPage
+                    )
+                }
+            )
         }
         .environment(\.layoutDirection, .rightToLeft)
         .task {

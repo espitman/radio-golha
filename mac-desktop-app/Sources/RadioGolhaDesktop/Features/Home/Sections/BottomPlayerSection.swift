@@ -3,6 +3,7 @@ import Combine
 
 struct BottomPlayerSection: View {
     @ObservedObject var player: DesktopAudioPlayer
+    var onOpenCurrentTrack: (TrackRowItem) -> Void = { _ in }
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -29,11 +30,19 @@ struct BottomPlayerSection: View {
 
                     HStack(spacing: 16) {
                         VStack(alignment: .trailing, spacing: 0) {
-                            Text(player.currentTrack?.title ?? "—")
-                                .font(.vazir(12))
-                                .foregroundStyle(.white)
-                                .lineLimit(1)
-                                .truncationMode(.tail)
+                            Button {
+                                if let track = player.currentTrack {
+                                    onOpenCurrentTrack(track)
+                                }
+                            } label: {
+                                Text(player.currentTrack?.title ?? "—")
+                                    .font(.vazir(12))
+                                    .foregroundStyle(.white)
+                                    .lineLimit(1)
+                                    .truncationMode(.tail)
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(player.currentTrack == nil)
                             Text(player.currentTrack?.subtitle ?? "—")
                                 .font(.vazir(9))
                                 .foregroundStyle(.white.opacity(0.6))
