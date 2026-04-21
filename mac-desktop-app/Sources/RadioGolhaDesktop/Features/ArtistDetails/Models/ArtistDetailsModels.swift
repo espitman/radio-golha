@@ -1,28 +1,34 @@
 import Foundation
 
 struct ArtistDetailsItem: Identifiable {
+    let artistId: Int64?
     let id: String
     let name: String
     let role: String
     let imageURL: String
+    let totalProgramsText: String
     let stats: [ArtistStatItem]
     let programs: [ArtistProgramRow]
     let collaborators: [ArtistCollaboratorItem]
     let featuredModes: [String]
 
     init(
+        artistId: Int64? = nil,
         name: String,
         role: String,
         imageURL: String,
+        totalProgramsText: String,
         stats: [ArtistStatItem],
         programs: [ArtistProgramRow],
         collaborators: [ArtistCollaboratorItem],
         featuredModes: [String]
     ) {
-        self.id = name
+        self.artistId = artistId
+        self.id = artistId.map { "artist-\($0)" } ?? name
         self.name = name
         self.role = role
         self.imageURL = imageURL
+        self.totalProgramsText = totalProgramsText
         self.stats = stats
         self.programs = programs
         self.collaborators = collaborators
@@ -44,10 +50,19 @@ struct ArtistProgramRow: Identifiable {
 }
 
 struct ArtistCollaboratorItem: Identifiable {
-    let id = UUID()
+    let sourceArtistId: Int64?
+    let id: String
     let name: String
     let role: String
     let imageURL: String
+
+    init(sourceArtistId: Int64? = nil, name: String, role: String, imageURL: String) {
+        self.sourceArtistId = sourceArtistId
+        self.id = sourceArtistId.map { "artist-\($0)" } ?? UUID().uuidString
+        self.name = name
+        self.role = role
+        self.imageURL = imageURL
+    }
 }
 
 enum ArtistDetailsFactory {
@@ -65,18 +80,42 @@ enum ArtistDetailsFactory {
     }
 
     static func fromHomeArtist(_ artist: ArtistItem) -> ArtistDetailsItem {
-        make(name: artist.name, role: artist.role, imageURL: artist.imageURL)
+        make(
+            artistId: artist.sourceArtistId,
+            name: artist.name,
+            role: artist.role,
+            imageURL: artist.imageURL
+        )
     }
 
     static func fromSinger(_ singer: SingerListItem) -> ArtistDetailsItem {
-        make(name: singer.name, role: "خواننده", imageURL: singer.imageURL)
+        make(
+            artistId: singer.sourceArtistId,
+            name: singer.name,
+            role: "خواننده",
+            imageURL: singer.imageURL
+        )
     }
 
     static func fromPlayer(_ player: PlayerListItem) -> ArtistDetailsItem {
-        make(name: player.name, role: "نوازنده \(player.instrument)", imageURL: player.imageURL)
+        make(
+            artistId: player.sourceArtistId,
+            name: player.name,
+            role: "نوازنده \(player.instrument)",
+            imageURL: player.imageURL
+        )
     }
 
-    private static func make(name: String, role: String, imageURL: String) -> ArtistDetailsItem {
+    static func fromCollaborator(_ collaborator: ArtistCollaboratorItem) -> ArtistDetailsItem {
+        make(
+            artistId: collaborator.sourceArtistId,
+            name: collaborator.name,
+            role: collaborator.role,
+            imageURL: collaborator.imageURL
+        )
+    }
+
+    private static func make(artistId: Int64? = nil, name: String, role: String, imageURL: String) -> ArtistDetailsItem {
         let stats = statsByArtist[name] ?? defaultStats
         let programsBase = programsByArtist[name] ?? defaultPrograms
         let programs = repeatedPrograms(programsBase, targetCount: 20)
@@ -84,9 +123,11 @@ enum ArtistDetailsFactory {
         let modes = modesByArtist[name] ?? defaultModes
 
         return ArtistDetailsItem(
+            artistId: artistId,
             name: name,
             role: role,
             imageURL: imageURL,
+            totalProgramsText: toPersianDigits("\(programs.count)"),
             stats: stats,
             programs: programs,
             collaborators: collaborators,
@@ -109,11 +150,11 @@ enum ArtistDetailsFactory {
 
     private static let programsByArtist: [String: [ArtistProgramRow]] = [
         "محمدرضا شجریان": [
-            .init(title: "گلهای تازه، شماره ۲۵ - آواز شور", subtitle: "برنامه گلهای تازه • فرامرز پایور", duration: "۴۲:۱۵"),
-            .init(title: "یک شاخه گل، شماره ۴۰۲", subtitle: "برنامه یک شاخه گل • اسدالله ملک", duration: "۲۸:۴۰"),
-            .init(title: "گلهای رنگارنگ، شماره ۵۸۰", subtitle: "برنامه گلهای رنگارنگ • جلیل شهناز", duration: "۳۵:۱۰"),
-            .init(title: "گلهای تازه، شماره ۱۰ - ماهور", subtitle: "برنامه گلهای تازه • پرویز یاحقی", duration: "۳۸:۲۰"),
-            .init(title: "یک شاخه گل، شماره ۴۱۲", subtitle: "برنامه یک شاخه گل • فرهنگ شریف", duration: "۲۵:۱۵")
+            .init(title: "گلهای تازه، شماره ۲۵ - آواز شور", subtitle: "محمدرضا شجریان", duration: "۴۲:۱۵"),
+            .init(title: "یک شاخه گل، شماره ۴۰۲", subtitle: "محمدرضا شجریان", duration: "۲۸:۴۰"),
+            .init(title: "گلهای رنگارنگ، شماره ۵۸۰", subtitle: "محمدرضا شجریان", duration: "۳۵:۱۰"),
+            .init(title: "گلهای تازه، شماره ۱۰ - ماهور", subtitle: "محمدرضا شجریان", duration: "۳۸:۲۰"),
+            .init(title: "یک شاخه گل، شماره ۴۱۲", subtitle: "محمدرضا شجریان", duration: "۲۵:۱۵")
         ]
     ]
 
@@ -138,9 +179,9 @@ enum ArtistDetailsFactory {
     ]
 
     private static let defaultPrograms: [ArtistProgramRow] = [
-        .init(title: "گلهای تازه، شماره ۱۴", subtitle: "برنامه گلهای تازه • ارکستر گلها", duration: "۳۲:۱۰"),
-        .init(title: "یک شاخه گل، شماره ۲۶۴", subtitle: "برنامه یک شاخه گل • تکنوازی", duration: "۲۵:۴۰"),
-        .init(title: "گلهای رنگارنگ، شماره ۴۲۲", subtitle: "برنامه گلهای رنگارنگ • آواز", duration: "۲۹:۳۵")
+        .init(title: "گلهای تازه، شماره ۱۴", subtitle: "غلامحسین بنان", duration: "۳۲:۱۰"),
+        .init(title: "یک شاخه گل، شماره ۲۶۴", subtitle: "الهه", duration: "۲۵:۴۰"),
+        .init(title: "گلهای رنگارنگ، شماره ۴۲۲", subtitle: "محمدرضا شجریان", duration: "۲۹:۳۵")
     ]
 
     private static func repeatedPrograms(_ base: [ArtistProgramRow], targetCount: Int) -> [ArtistProgramRow] {
@@ -176,4 +217,18 @@ enum ArtistDetailsFactory {
     }
 
     private static let defaultModes = ["شور", "همایون", "سه‌گاه", "افشاری"]
+
+    private static func toPersianDigits(_ value: String) -> String {
+        value
+            .replacingOccurrences(of: "0", with: "۰")
+            .replacingOccurrences(of: "1", with: "۱")
+            .replacingOccurrences(of: "2", with: "۲")
+            .replacingOccurrences(of: "3", with: "۳")
+            .replacingOccurrences(of: "4", with: "۴")
+            .replacingOccurrences(of: "5", with: "۵")
+            .replacingOccurrences(of: "6", with: "۶")
+            .replacingOccurrences(of: "7", with: "۷")
+            .replacingOccurrences(of: "8", with: "۸")
+            .replacingOccurrences(of: "9", with: "۹")
+    }
 }

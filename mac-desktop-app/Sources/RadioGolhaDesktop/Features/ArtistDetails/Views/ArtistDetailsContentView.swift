@@ -3,10 +3,9 @@ import SwiftUI
 struct ArtistDetailsContentView: View {
     let artist: ArtistDetailsItem
     var onBack: () -> Void = {}
-    var onOpenArtist: (String) -> Void = { _ in }
+    var onOpenArtist: (ArtistCollaboratorItem) -> Void = { _ in }
     var onOpenProgram: (String) -> Void = { _ in }
-
-    private let collaboratorsColumns = Array(repeating: GridItem(.flexible(minimum: 0), spacing: 12), count: 2)
+    private let collaboratorsColumns = Array(repeating: GridItem(.fixed(104), spacing: 12), count: 2)
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -75,6 +74,16 @@ struct ArtistDetailsContentView: View {
                 .padding(.vertical, 4)
 
                 HStack(spacing: 42) {
+                    VStack(spacing: 2) {
+                        Text(artist.totalProgramsText)
+                            .font(.vazir(18, .bold))
+                            .foregroundStyle(Palette.primary)
+                        Text("کل برنامه‌ها")
+                            .font(.vazir(7.5))
+                            .foregroundStyle(Color(hex: 0x6D706F))
+                    }
+                    .frame(minWidth: 50)
+
                     ForEach(artist.stats) { stat in
                         VStack(spacing: 2) {
                             Text(stat.value)
@@ -133,9 +142,19 @@ struct ArtistDetailsContentView: View {
 
                 LazyVGrid(columns: collaboratorsColumns, spacing: 12) {
                     ForEach(artist.collaborators) { collaborator in
-                        CollaboratorCard(item: collaborator) {
-                            onOpenArtist(collaborator.name)
+                        ArtistCard(
+                            item: ArtistItem(
+                                sourceArtistId: nil,
+                                name: collaborator.name,
+                                role: collaborator.role,
+                                imageURL: collaborator.imageURL
+                            ),
+                            dark: false
+                        ) {
+                            onOpenArtist(collaborator)
                         }
+                        .scaleEffect(0.5, anchor: .topLeading)
+                        .frame(width: 104, height: 150, alignment: .topLeading)
                     }
                 }
             }
@@ -231,39 +250,6 @@ private struct ProgramRow: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 13)
         .contentShape(Rectangle())
-    }
-}
-
-private struct CollaboratorCard: View {
-    let item: ArtistCollaboratorItem
-    var onTap: () -> Void
-
-    var body: some View {
-        VStack(spacing: 0) {
-            FigmaAssetImage(url: item.imageURL)
-                .frame(height: 98)
-
-            VStack(alignment: .leading, spacing: 1) {
-                Text(item.name)
-                    .font(.vazir(9, .bold))
-                    .foregroundStyle(Palette.primary)
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                Text(item.role)
-                    .font(.vazir(6.75))
-                    .foregroundStyle(Color(hex: 0x6D706F))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 8)
-            .background(.white)
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(Palette.border, lineWidth: 1)
-        )
-        .onTapGesture { onTap() }
     }
 }
 

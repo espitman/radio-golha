@@ -5,12 +5,14 @@ import AVFoundation
 final class DesktopAudioPlayer: ObservableObject {
     @Published private(set) var currentTrack: TrackRowItem?
     @Published private(set) var isPlaying = false
+    @Published private(set) var isLoading = false
     @Published private(set) var currentTime: Double = 0
     @Published private(set) var duration: Double = 0
 
     private var player: AVPlayer?
     private var timeObserverToken: Any?
     private var itemStatusObserver: NSKeyValueObservation?
+    private var timeControlObserver: NSKeyValueObservation?
 
     func play(track: TrackRowItem) {
         guard let urlString = track.audioURL, let url = URL(string: urlString) else {
@@ -20,20 +22,30 @@ final class DesktopAudioPlayer: ObservableObject {
         if currentTrack?.id == track.id {
             player?.play()
             isPlaying = true
+            isLoading = false
             return
         }
 
         teardownObservers()
         currentTrack = track
-        let item = AVPlayerItem(url: url)
-        player = AVPlayer(playerItem: item)
+        isLoading = true
+        isPlaying = false
+
+        let headers = [
+            "Referer": "https://www.golha.co.uk/",
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X)"
+        ]
+        let asset = AVURLAsset(url: url, options: ["AVURLAssetHTTPHeaderFieldsKey": headers])
+        let item = AVPlayerItem(asset: asset)
+        let player = AVPlayer(playerItem: item)
+        self.player = player
         bindObservers(to: item)
-        player?.play()
-        isPlaying = true
+        player.play()
     }
 
     func togglePlayPause() {
         guard player != nil else { return }
+        guard !isLoading else { return }
         if isPlaying {
             player?.pause()
             isPlaying = false
@@ -64,11 +76,35 @@ final class DesktopAudioPlayer: ObservableObject {
                 if item.status == .readyToPlay {
                     let sec = item.duration.seconds
                     self.duration = sec.isFinite && sec > 0 ? sec : 0
+                } else if item.status == .failed {
+                    self.isLoading = false
+                    self.isPlaying = false
                 }
             }
         }
 
         if let player {
+            timeControlObserver = player.observe(\.timeControlStatus, options: [.new, .initial]) { [weak self] player, _ in
+                Task { @MainActor in
+                    guard let self else { return }
+                    switch player.timeControlStatus {
+                    case .playing:
+                        self.isLoading = false
+                        self.isPlaying = true
+                    case .waitingToPlayAtSpecifiedRate:
+                        self.isLoading = true
+                    case .paused:
+                        if self.isLoading {
+                            // Keep loading if item is still buffering.
+                        } else {
+                            self.isPlaying = false
+                        }
+                    @unknown default:
+                        break
+                    }
+                }
+            }
+
             let interval = CMTime(seconds: 0.25, preferredTimescale: 600)
             timeObserverToken = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
                 guard self != nil else { return }
@@ -79,6 +115,9 @@ final class DesktopAudioPlayer: ObservableObject {
                     self.currentTime = current
                     if sec.isFinite && sec > 0 {
                         self.duration = sec
+                    }
+                    if current > 0, self.isLoading {
+                        self.isLoading = false
                     }
                 }
             }
@@ -91,6 +130,9 @@ final class DesktopAudioPlayer: ObservableObject {
             timeObserverToken = nil
         }
         itemStatusObserver = nil
+        timeControlObserver = nil
+        isLoading = false
+        isPlaying = false
         currentTime = 0
         duration = 0
     }

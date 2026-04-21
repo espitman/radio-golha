@@ -5,6 +5,9 @@ struct MainContentSection: View {
     let content: HomeContentData
     var onRefreshTopTracks: () async -> Void = {}
     var onPlayTrack: (TrackRowItem) -> Void = { _ in }
+    var currentPlayingTrackId: String? = nil
+    var isPlayerPlaying: Bool = false
+    var isPlayerLoading: Bool = false
     var onArtistTap: (ArtistItem) -> Void = { _ in }
     var onProgramTap: (String) -> Void = { _ in }
 
@@ -53,6 +56,9 @@ struct MainContentSection: View {
                         latestRows: content.latestTracksRows,
                         onRefreshTopTracks: onRefreshTopTracks,
                         onPlayTrack: onPlayTrack,
+                        currentPlayingTrackId: currentPlayingTrackId,
+                        isPlayerPlaying: isPlayerPlaying,
+                        isPlayerLoading: isPlayerLoading,
                         onProgramTap: onProgramTap
                     )
                         .padding(.horizontal, 48)
@@ -269,6 +275,9 @@ private struct TopListsSection: View {
     let latestRows: [TrackRowItem]
     var onRefreshTopTracks: () async -> Void = {}
     var onPlayTrack: (TrackRowItem) -> Void = { _ in }
+    var currentPlayingTrackId: String? = nil
+    var isPlayerPlaying: Bool = false
+    var isPlayerLoading: Bool = false
     var onProgramTap: (String) -> Void = { _ in }
 
     var body: some View {
@@ -279,6 +288,9 @@ private struct TopListsSection: View {
                 showRefresh: true,
                 onRefresh: onRefreshTopTracks,
                 onPlayTrack: onPlayTrack,
+                currentPlayingTrackId: currentPlayingTrackId,
+                isPlayerPlaying: isPlayerPlaying,
+                isPlayerLoading: isPlayerLoading,
                 onProgramTap: onProgramTap
             )
 
@@ -287,6 +299,9 @@ private struct TopListsSection: View {
                 rows: latestRows,
                 showRefresh: false,
                 onPlayTrack: onPlayTrack,
+                currentPlayingTrackId: currentPlayingTrackId,
+                isPlayerPlaying: isPlayerPlaying,
+                isPlayerLoading: isPlayerLoading,
                 onProgramTap: onProgramTap
             )
         }
@@ -299,6 +314,9 @@ private struct ListBlock: View {
     let showRefresh: Bool
     var onRefresh: () async -> Void = {}
     var onPlayTrack: (TrackRowItem) -> Void = { _ in }
+    var currentPlayingTrackId: String? = nil
+    var isPlayerPlaying: Bool = false
+    var isPlayerLoading: Bool = false
     var onProgramTap: (String) -> Void = { _ in }
     @State private var isRefreshing = false
 
@@ -338,7 +356,14 @@ private struct ListBlock: View {
 
             VStack(spacing: 0) {
                 ForEach(Array(rows.enumerated()), id: \.offset) { index, row in
-                    ListRow(row: row, onPlayTrack: onPlayTrack, onProgramTap: onProgramTap)
+                    ListRow(
+                        row: row,
+                        isActive: currentPlayingTrackId == row.id,
+                        isPlayerPlaying: isPlayerPlaying,
+                        isPlayerLoading: isPlayerLoading,
+                        onPlayTrack: onPlayTrack,
+                        onProgramTap: onProgramTap
+                    )
                     if index < rows.count - 1 {
                         Divider().overlay(Palette.text.opacity(0.06))
                     }
@@ -357,6 +382,9 @@ private struct ListBlock: View {
 
 private struct ListRow: View {
     let row: TrackRowItem
+    let isActive: Bool
+    let isPlayerPlaying: Bool
+    let isPlayerLoading: Bool
     var onPlayTrack: (TrackRowItem) -> Void = { _ in }
     var onProgramTap: (String) -> Void = { _ in }
 
@@ -368,9 +396,13 @@ private struct ListRow: View {
                 ZStack {
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
                         .fill(Palette.primary.opacity(0.05))
-                    Image(systemName: "play.fill")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(Palette.primary)
+                    if isActive && isPlayerLoading {
+                        LoadingSpinner(color: Palette.primary, size: 13, lineWidth: 2.1)
+                    } else {
+                        Image(systemName: isActive && isPlayerPlaying ? "pause.fill" : "play.fill")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(Palette.primary)
+                    }
                 }
                 .frame(width: 40, height: 40)
             }

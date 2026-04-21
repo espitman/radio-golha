@@ -14,7 +14,10 @@ struct HomeRootView: View {
     @State private var artistDetailsSourcePage: DesktopPage = .home
     @State private var selectedProgramDetails: ProgramDetailsItem? = nil
     @State private var programDetailsSourcePage: DesktopPage = .home
+    @State private var artistDetailsLoadRequestId: String = ""
     @State private var homeContent: HomeContentData? = nil
+    @State private var isHomeLoading = false
+    @State private var isArtistDetailsLoading = false
     @State private var homeDataLoaded = false
     @StateObject private var audioPlayer = DesktopAudioPlayer()
 
@@ -39,7 +42,16 @@ struct HomeRootView: View {
         .task {
             guard !homeDataLoaded else { return }
             homeDataLoaded = true
+            isHomeLoading = true
+            let start = Date()
             homeContent = await HomeDataLoader.load()
+            let elapsed = Date().timeIntervalSince(start)
+            let minVisible = 0.45
+            if elapsed < minVisible {
+                let remainingNs = UInt64((minVisible - elapsed) * 1_000_000_000)
+                try? await Task.sleep(nanoseconds: remainingNs)
+            }
+            isHomeLoading = false
         }
     }
 
@@ -76,8 +88,15 @@ struct HomeRootView: View {
                                 }
                             },
                             onPlayTrack: { track in
-                                audioPlayer.play(track: track)
-                            }
+                                if audioPlayer.currentTrack?.id == track.id {
+                                    audioPlayer.togglePlayPause()
+                                } else {
+                                    audioPlayer.play(track: track)
+                                }
+                            },
+                            currentPlayingTrackId: audioPlayer.currentTrack?.id,
+                            isPlayerPlaying: audioPlayer.isPlaying,
+                            isPlayerLoading: audioPlayer.isLoading
                         ) { artist in
                             openArtistDetails(
                                 ArtistDetailsFactory.fromHomeArtist(artist),
@@ -89,10 +108,12 @@ struct HomeRootView: View {
                                 sourcePage: .home
                             )
                         }
-                    } else {
-                        ProgressView()
-                            .tint(Palette.secondary)
+                    } else if isHomeLoading {
+                        DesktopLoadingView(message: "در حال بارگذاری صفحه اصلی...")
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        DesktopLoadingView(message: "در حال بارگذاری صفحه اصلی...")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 case .singers:
                     SingersContentView { singer in
@@ -109,15 +130,18 @@ struct HomeRootView: View {
                         )
                     }
                 case .artistDetails:
-                    if let selectedArtistDetails {
+                    if isArtistDetailsLoading {
+                        DesktopLoadingView(message: "در حال بارگذاری هنرمند...")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else if let selectedArtistDetails {
                         ArtistDetailsContentView(
                             artist: selectedArtistDetails,
                             onBack: {
                                 currentPage = artistDetailsSourcePage
                             },
-                            onOpenArtist: { artistName in
+                            onOpenArtist: { collaborator in
                                 openArtistDetails(
-                                    ArtistDetailsFactory.fromArtistName(artistName),
+                                    ArtistDetailsFactory.fromCollaborator(collaborator),
                                     sourcePage: artistDetailsSourcePage
                                 )
                             },
@@ -128,6 +152,9 @@ struct HomeRootView: View {
                                 )
                             }
                         )
+                    } else {
+                        DesktopLoadingView(message: "در حال بارگذاری هنرمند...")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 case .programDetails:
                     if let selectedProgramDetails {
@@ -174,14 +201,64 @@ struct HomeRootView: View {
     }
 
     private func openArtistDetails(_ details: ArtistDetailsItem, sourcePage: DesktopPage) {
-        selectedArtistDetails = details
         artistDetailsSourcePage = sourcePage
         currentPage = .artistDetails
+        selectedArtistDetails = nil
+        isArtistDetailsLoading = true
+        guard let artistId = details.artistId else {
+            selectedArtistDetails = details
+            isArtistDetailsLoading = false
+            return
+        }
+        let requestId = UUID().uuidString
+        artistDetailsLoadRequestId = requestId
+
+        Task {
+            let start = Date()
+            guard let loaded = await ArtistDetailsDataLoader.load(artistId: artistId, fallback: details) else {
+                if artistDetailsLoadRequestId == requestId {
+                    isArtistDetailsLoading = false
+                }
+                return
+            }
+            let elapsed = Date().timeIntervalSince(start)
+            let minVisible = 0.35
+            if elapsed < minVisible {
+                let remainingNs = UInt64((minVisible - elapsed) * 1_000_000_000)
+                try? await Task.sleep(nanoseconds: remainingNs)
+            }
+            guard artistDetailsLoadRequestId == requestId else { return }
+            selectedArtistDetails = loaded
+            isArtistDetailsLoading = false
+        }
     }
 
     private func openProgramDetails(_ details: ProgramDetailsItem, sourcePage: DesktopPage) {
         selectedProgramDetails = details
         programDetailsSourcePage = sourcePage
         currentPage = .programDetails
+    }
+}
+
+private struct DesktopLoadingView: View {
+    let message: String
+
+    var body: some View {
+        ZStack {
+            Palette.surface
+            VStack(spacing: 12) {
+                LoadingSpinner(color: Palette.secondary, size: 28, lineWidth: 3)
+                Text(message)
+                    .font(.vazir(11, .bold))
+                    .foregroundStyle(Palette.primary)
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 16)
+            .background(.white.opacity(0.92), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(Palette.border, lineWidth: 1)
+            )
+        }
     }
 }

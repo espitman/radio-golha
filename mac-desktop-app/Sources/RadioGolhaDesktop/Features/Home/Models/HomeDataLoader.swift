@@ -1,9 +1,9 @@
 import Foundation
 
 enum HomeDataLoader {
-    static func load() async -> HomeContentData {
+    static func load() async -> HomeContentData? {
         await Task.detached(priority: .userInitiated) {
-            (try? loadSync()) ?? .mock
+            try? loadSync()
         }.value
     }
 
@@ -17,7 +17,9 @@ enum HomeDataLoader {
         let root = try resolveRepoRoot()
         let dbPath = try resolveArchiveDbPath(root: root)
         let payload = try runBridgeHomeFeed(root: root, dbPath: dbPath)
-        guard !payload.isEmpty else { return .mock }
+        guard !payload.isEmpty else {
+            throw NSError(domain: "HomeDataLoader", code: 3, userInfo: [NSLocalizedDescriptionKey: "Empty home payload"])
+        }
 
         let response = try JSONDecoder().decode(HomeFeedBridgeResponse.self, from: Data(payload.utf8))
         return mapResponse(response)
@@ -38,7 +40,8 @@ enum HomeDataLoader {
                 title: $0.title,
                 subtitle: $0.artist,
                 duration: normalizedDuration($0.duration),
-                audioURL: $0.audioUrl
+                audioURL: $0.audioUrl,
+                artworkURLs: $0.artistImages ?? []
             )
         }
 
@@ -66,6 +69,7 @@ enum HomeDataLoader {
 
         let singers = response.singers.map {
             ArtistItem(
+                sourceArtistId: $0.id,
                 name: $0.name,
                 role: "خواننده",
                 imageURL: $0.avatar ?? ""
@@ -74,6 +78,7 @@ enum HomeDataLoader {
 
         let musicians = response.musicians.map {
             ArtistItem(
+                sourceArtistId: $0.id,
                 name: $0.name,
                 role: $0.instrument?.isEmpty == false ? ($0.instrument ?? "نوازنده") : "نوازنده",
                 imageURL: $0.avatar ?? ""
@@ -89,7 +94,8 @@ enum HomeDataLoader {
                 title: $0.title,
                 subtitle: $0.artist,
                 duration: normalizedDuration($0.duration),
-                audioURL: $0.audioUrl
+                audioURL: $0.audioUrl,
+                artworkURLs: $0.artistImages ?? []
             )
         }
 
@@ -100,12 +106,12 @@ enum HomeDataLoader {
         }()
 
         return HomeContentData(
-            programs: categories.isEmpty ? HomeMockData.programs : categories,
-            singers: singers.isEmpty ? HomeMockData.singers : singers,
-            instrumentalists: musicians.isEmpty ? HomeMockData.instrumentalists : musicians,
-            modes: modes.isEmpty ? HomeMockData.modes : modes,
-            topProgramsRows: topProgramsRows.isEmpty ? HomeMockData.topProgramsRows : topProgramsRows,
-            latestTracksRows: latestTracksRows.isEmpty ? HomeMockData.latestTracksRows : latestTracksRows
+            programs: categories,
+            singers: singers,
+            instrumentalists: musicians,
+            modes: modes,
+            topProgramsRows: topProgramsRows,
+            latestTracksRows: latestTracksRows
         )
     }
 
@@ -266,4 +272,5 @@ private struct HomeTrackDTO: Decodable {
     let artist: String
     let duration: String?
     let audioUrl: String?
+    let artistImages: [String]?
 }

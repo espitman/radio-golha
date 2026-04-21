@@ -20,6 +20,12 @@ enum Command {
         #[arg(long)]
         db: String,
     },
+    ArtistDetailJson {
+        #[arg(long)]
+        db: String,
+        #[arg(long)]
+        artist_id: i64,
+    },
 }
 
 fn main() -> Result<()> {
@@ -32,21 +38,565 @@ fn main() -> Result<()> {
         Command::TopTracksJson { db } => {
             println!("{}", build_top_tracks_json(&db));
         }
+        Command::ArtistDetailJson { db, artist_id } => {
+            println!("{}", build_artist_detail_json(&db, artist_id));
+        }
     }
 
     Ok(())
 }
 
+fn build_artist_detail_json(db_path: &str, artist_id: i64) -> String {
+    match RadioGolhaCore::open(db_path) {
+        Ok(core) => {
+            let conn = core.connection();
+
+            let query_artist_payload = |id: i64| -> Result<(i64, String, Option<String>, Option<String>, i64), String> {
+                conn.query_row(
+                    "
+                    SELECT
+                      a.id,
+                      a.name,
+                      a.avatar,
+                      (
+                        SELECT i.name
+                        FROM program_performers pp
+                        JOIN performer p ON p.id = pp.performer_id
+                        LEFT JOIN instrument i ON i.id = pp.instrument_id
+                        WHERE p.artist_id = a.id AND i.name IS NOT NULL AND TRIM(i.name) <> ''
+                        GROUP BY i.id, i.name
+                        ORDER BY COUNT(*) DESC, i.name ASC
+                        LIMIT 1
+                      ) AS instrument_name,
+                      (
+                        SELECT COUNT(DISTINCT p2.id)
+                        FROM program p2
+                        WHERE EXISTS (
+                            SELECT 1
+                            FROM program_singers ps
+                            JOIN singer s ON s.id = ps.singer_id
+                            WHERE ps.program_id = p2.id AND s.artist_id = a.id
+                        )
+                        OR EXISTS (
+                            SELECT 1
+                            FROM program_performers pp
+                            JOIN performer p ON p.id = pp.performer_id
+                            WHERE pp.program_id = p2.id AND p.artist_id = a.id
+                        )
+                      ) AS track_count
+                    FROM artist a
+                    WHERE a.id = ?1
+                    ",
+                    [id],
+                    |row| {
+                        Ok((
+                            row.get::<_, i64>(0)?,
+                            row.get::<_, String>(1)?,
+                            row.get::<_, Option<String>>(2)?,
+                            row.get::<_, Option<String>>(3)?,
+                            row.get::<_, i64>(4)?,
+                        ))
+                    },
+                )
+                .map_err(|error| error.to_string())
+            };
+
+            // Prefer direct artist id. If it has no related tracks, resolve through singer/performer ids.
+            let direct_payload = query_artist_payload(artist_id).ok();
+            let resolved_artist_id = if let Some(payload) = &direct_payload {
+                if payload.4 > 0 {
+                    payload.0
+                } else {
+                    conn.query_row("SELECT artist_id FROM singer WHERE id = ?1", [artist_id], |row| row.get::<_, i64>(0))
+                        .or_else(|_| conn.query_row("SELECT artist_id FROM performer WHERE id = ?1", [artist_id], |row| row.get::<_, i64>(0)))
+                        .unwrap_or(payload.0)
+                }
+            } else {
+                match conn
+                    .query_row("SELECT artist_id FROM singer WHERE id = ?1", [artist_id], |row| row.get::<_, i64>(0))
+                    .or_else(|_| conn.query_row("SELECT artist_id FROM performer WHERE id = ?1", [artist_id], |row| row.get::<_, i64>(0)))
+                {
+                    Ok(id) => id,
+                    Err(error) => return json!({ "error": error.to_string() }).to_string(),
+                }
+            };
+
+            let payload = match query_artist_payload(resolved_artist_id) {
+                Ok(value) => value,
+                Err(error) => return json!({ "error": error }).to_string(),
+            };
+
+            let mut stmt = match conn.prepare(
+                "
+                WITH artist_program_ids AS (
+                    SELECT DISTINCT ps.program_id AS program_id
+                    FROM program_singers ps
+                    JOIN singer s ON s.id = ps.singer_id
+                    WHERE s.artist_id = ?1
+                    UNION
+                    SELECT DISTINCT pp.program_id AS program_id
+                    FROM program_performers pp
+                    JOIN performer pf ON pf.id = pp.performer_id
+                    WHERE pf.artist_id = ?1
+                )
+                SELECT
+                    p.id,
+                    p.title,
+                    p.no,
+                    COALESCE(
+                        (
+                            SELECT GROUP_CONCAT(name, ' و ')
+                            FROM (
+                                SELECT DISTINCT a2.name AS name
+                                FROM program_singers ps
+                                JOIN singer s ON s.id = ps.singer_id
+                                JOIN artist a2 ON a2.id = s.artist_id
+                                WHERE ps.program_id = p.id
+                                ORDER BY a2.name ASC
+                            )
+                        ),
+                        'ناشناس'
+                    ) AS artist_names,
+                    (
+                        SELECT GROUP_CONCAT(m.name, ' و ')
+                        FROM program_modes pm
+                        JOIN mode m ON m.id = pm.mode_id
+                        WHERE pm.program_id = p.id
+                    ) AS mode_names,
+                    (SELECT MAX(end_time) FROM program_timeline WHERE program_id = p.id) AS duration,
+                    p.audio_url
+                FROM artist_program_ids ap
+                JOIN program p ON p.id = ap.program_id
+                ORDER BY p.no ASC, p.id ASC
+                ",
+            ) {
+                Ok(stmt) => stmt,
+                Err(error) => return json!({ "error": error.to_string() }).to_string(),
+            };
+
+            let rows = match stmt.query_map([resolved_artist_id], |row| {
+                Ok(json!({
+                    "id": row.get::<_, i64>(0)?,
+                    "title": row.get::<_, String>(1)?,
+                    "no": row.get::<_, i64>(2)?,
+                    "artist": row.get::<_, String>(3)?,
+                    "mode": row.get::<_, Option<String>>(4)?,
+                    "duration": row.get::<_, Option<String>>(5)?,
+                    "audioUrl": row.get::<_, Option<String>>(6)?
+                }))
+            }) {
+                Ok(rows) => rows,
+                Err(error) => return json!({ "error": error.to_string() }).to_string(),
+            };
+
+            let tracks: Vec<_> = rows.filter_map(|item| item.ok()).collect();
+
+            let mut category_counts_stmt = match conn.prepare(
+                "
+                WITH artist_program_ids AS (
+                    SELECT DISTINCT ps.program_id AS program_id
+                    FROM program_singers ps
+                    JOIN singer s ON s.id = ps.singer_id
+                    WHERE s.artist_id = ?1
+                    UNION
+                    SELECT DISTINCT pp.program_id AS program_id
+                    FROM program_performers pp
+                    JOIN performer pf ON pf.id = pp.performer_id
+                    WHERE pf.artist_id = ?1
+                )
+                SELECT c.id, c.title_fa, COUNT(DISTINCT p.id) AS total
+                FROM artist_program_ids ap
+                JOIN program p ON p.id = ap.program_id
+                JOIN category c ON c.id = p.category_id
+                GROUP BY c.id, c.title_fa
+                ORDER BY total DESC, c.id ASC
+                ",
+            ) {
+                Ok(stmt) => stmt,
+                Err(error) => return json!({ "error": error.to_string() }).to_string(),
+            };
+            let category_counts_rows = match category_counts_stmt.query_map([resolved_artist_id], |row| {
+                Ok(json!({
+                    "categoryId": row.get::<_, i64>(0)?,
+                    "title": row.get::<_, String>(1)?,
+                    "count": row.get::<_, i64>(2)?
+                }))
+            }) {
+                Ok(rows) => rows,
+                Err(error) => return json!({ "error": error.to_string() }).to_string(),
+            };
+            let category_counts: Vec<_> = category_counts_rows.filter_map(|item| item.ok()).collect();
+
+            let mut top_modes_stmt = match conn.prepare(
+                "
+                WITH artist_program_ids AS (
+                    SELECT DISTINCT ps.program_id AS program_id
+                    FROM program_singers ps
+                    JOIN singer s ON s.id = ps.singer_id
+                    WHERE s.artist_id = ?1
+                    UNION
+                    SELECT DISTINCT pp.program_id AS program_id
+                    FROM program_performers pp
+                    JOIN performer pf ON pf.id = pp.performer_id
+                    WHERE pf.artist_id = ?1
+                )
+                SELECT m.name, COUNT(*) AS total
+                FROM artist_program_ids ap
+                JOIN program_modes pm ON pm.program_id = ap.program_id
+                JOIN mode m ON m.id = pm.mode_id
+                WHERE m.name IS NOT NULL AND TRIM(m.name) <> ''
+                GROUP BY m.id, m.name
+                ORDER BY total DESC, m.name ASC
+                LIMIT 4
+                ",
+            ) {
+                Ok(stmt) => stmt,
+                Err(error) => return json!({ "error": error.to_string() }).to_string(),
+            };
+            let top_modes_rows = match top_modes_stmt.query_map([resolved_artist_id], |row| {
+                Ok(row.get::<_, String>(0)?)
+            }) {
+                Ok(rows) => rows,
+                Err(error) => return json!({ "error": error.to_string() }).to_string(),
+            };
+            let top_modes: Vec<_> = top_modes_rows.filter_map(|item| item.ok()).collect();
+
+            let mut singer_collab_stmt = match conn.prepare(
+                "
+                WITH artist_program_ids AS (
+                    SELECT DISTINCT ps.program_id AS program_id
+                    FROM program_singers ps
+                    JOIN singer s ON s.id = ps.singer_id
+                    WHERE s.artist_id = ?1
+                    UNION
+                    SELECT DISTINCT pp.program_id AS program_id
+                    FROM program_performers pp
+                    JOIN performer pf ON pf.id = pp.performer_id
+                    WHERE pf.artist_id = ?1
+                )
+                SELECT a.id, a.name, a.avatar, COUNT(DISTINCT ps.program_id) AS shared_count
+                FROM artist_program_ids ap
+                JOIN program_singers ps ON ps.program_id = ap.program_id
+                JOIN singer s ON s.id = ps.singer_id
+                JOIN artist a ON a.id = s.artist_id
+                WHERE a.id <> ?1
+                GROUP BY a.id, a.name, a.avatar
+                ORDER BY shared_count DESC, a.name ASC
+                LIMIT 2
+                ",
+            ) {
+                Ok(stmt) => stmt,
+                Err(error) => return json!({ "error": error.to_string() }).to_string(),
+            };
+
+            let mut collaborators: Vec<serde_json::Value> = Vec::new();
+            let mut collaborator_ids = std::collections::HashSet::new();
+
+            let singer_rows = match singer_collab_stmt.query_map([resolved_artist_id], |row| {
+                Ok((
+                    row.get::<_, i64>(0)?,
+                    row.get::<_, String>(1)?,
+                    row.get::<_, Option<String>>(2)?,
+                    row.get::<_, i64>(3)?,
+                ))
+            }) {
+                Ok(rows) => rows,
+                Err(error) => return json!({ "error": error.to_string() }).to_string(),
+            };
+
+            for (id, name, avatar, shared_count) in singer_rows.filter_map(|r| r.ok()) {
+                collaborator_ids.insert(id);
+                collaborators.push(json!({
+                    "id": id,
+                    "name": name,
+                    "avatar": avatar,
+                    "kind": "singer",
+                    "role": "خواننده",
+                    "sharedCount": shared_count
+                }));
+            }
+
+            if collaborators.iter().filter(|item| item["kind"] == "singer").count() < 2 {
+                let needed = 2 - collaborators.iter().filter(|item| item["kind"] == "singer").count();
+                let mut fallback_singers_stmt = match conn.prepare(
+                    "
+                    SELECT a.id, a.name, a.avatar, COUNT(DISTINCT ps.program_id) AS total
+                    FROM program_singers ps
+                    JOIN singer s ON s.id = ps.singer_id
+                    JOIN artist a ON a.id = s.artist_id
+                    WHERE a.id <> ?1
+                    GROUP BY a.id, a.name, a.avatar
+                    ORDER BY total DESC, a.name ASC
+                    LIMIT 20
+                    ",
+                ) {
+                    Ok(stmt) => stmt,
+                    Err(error) => return json!({ "error": error.to_string() }).to_string(),
+                };
+
+                let fallback_rows = match fallback_singers_stmt.query_map([resolved_artist_id], |row| {
+                    Ok((
+                        row.get::<_, i64>(0)?,
+                        row.get::<_, String>(1)?,
+                        row.get::<_, Option<String>>(2)?,
+                        row.get::<_, i64>(3)?,
+                    ))
+                }) {
+                    Ok(rows) => rows,
+                    Err(error) => return json!({ "error": error.to_string() }).to_string(),
+                };
+
+                for (id, name, avatar, total) in fallback_rows.filter_map(|r| r.ok()) {
+                    if collaborator_ids.contains(&id) {
+                        continue;
+                    }
+                    collaborator_ids.insert(id);
+                    collaborators.push(json!({
+                        "id": id,
+                        "name": name,
+                        "avatar": avatar,
+                        "kind": "singer",
+                        "role": "خواننده",
+                        "sharedCount": total
+                    }));
+                    if collaborators.iter().filter(|item| item["kind"] == "singer").count() >= 2 || needed == 0 {
+                        break;
+                    }
+                }
+            }
+
+            let mut musician_collab_stmt = match conn.prepare(
+                "
+                WITH artist_program_ids AS (
+                    SELECT DISTINCT ps.program_id AS program_id
+                    FROM program_singers ps
+                    JOIN singer s ON s.id = ps.singer_id
+                    WHERE s.artist_id = ?1
+                    UNION
+                    SELECT DISTINCT pp.program_id AS program_id
+                    FROM program_performers pp
+                    JOIN performer pf ON pf.id = pp.performer_id
+                    WHERE pf.artist_id = ?1
+                )
+                SELECT
+                    a.id,
+                    a.name,
+                    a.avatar,
+                    COALESCE(
+                      (
+                        SELECT i.name
+                        FROM program_performers pp2
+                        LEFT JOIN instrument i ON i.id = pp2.instrument_id
+                        WHERE pp2.performer_id = p.id AND i.name IS NOT NULL AND TRIM(i.name) <> ''
+                        GROUP BY i.id, i.name
+                        ORDER BY COUNT(*) DESC, i.name ASC
+                        LIMIT 1
+                      ),
+                      'نوازنده'
+                    ) AS instrument_name,
+                    COUNT(DISTINCT pp.program_id) AS shared_count
+                FROM artist_program_ids ap
+                JOIN program_performers pp ON pp.program_id = ap.program_id
+                JOIN performer p ON p.id = pp.performer_id
+                JOIN artist a ON a.id = p.artist_id
+                WHERE a.id <> ?1
+                GROUP BY p.id, a.id, a.name, a.avatar
+                ORDER BY shared_count DESC, a.name ASC
+                LIMIT 2
+                ",
+            ) {
+                Ok(stmt) => stmt,
+                Err(error) => return json!({ "error": error.to_string() }).to_string(),
+            };
+
+            let musician_rows = match musician_collab_stmt.query_map([resolved_artist_id], |row| {
+                Ok((
+                    row.get::<_, i64>(0)?,
+                    row.get::<_, String>(1)?,
+                    row.get::<_, Option<String>>(2)?,
+                    row.get::<_, String>(3)?,
+                    row.get::<_, i64>(4)?,
+                ))
+            }) {
+                Ok(rows) => rows,
+                Err(error) => return json!({ "error": error.to_string() }).to_string(),
+            };
+
+            for (id, name, avatar, instrument, shared_count) in musician_rows.filter_map(|r| r.ok()) {
+                if collaborator_ids.contains(&id) {
+                    continue;
+                }
+                collaborator_ids.insert(id);
+                collaborators.push(json!({
+                    "id": id,
+                    "name": name,
+                    "avatar": avatar,
+                    "kind": "musician",
+                    "role": instrument,
+                    "sharedCount": shared_count
+                }));
+            }
+
+            if collaborators.iter().filter(|item| item["kind"] == "musician").count() < 2 {
+                let mut fallback_musicians_stmt = match conn.prepare(
+                    "
+                    SELECT
+                        a.id,
+                        a.name,
+                        a.avatar,
+                        COALESCE(
+                          (
+                            SELECT i.name
+                            FROM program_performers pp2
+                            LEFT JOIN instrument i ON i.id = pp2.instrument_id
+                            WHERE pp2.performer_id = p.id AND i.name IS NOT NULL AND TRIM(i.name) <> ''
+                            GROUP BY i.id, i.name
+                            ORDER BY COUNT(*) DESC, i.name ASC
+                            LIMIT 1
+                          ),
+                          'نوازنده'
+                        ) AS instrument_name,
+                        COUNT(DISTINCT pp.program_id) AS total
+                    FROM program_performers pp
+                    JOIN performer p ON p.id = pp.performer_id
+                    JOIN artist a ON a.id = p.artist_id
+                    WHERE a.id <> ?1
+                    GROUP BY p.id, a.id, a.name, a.avatar
+                    ORDER BY total DESC, a.name ASC
+                    LIMIT 20
+                    ",
+                ) {
+                    Ok(stmt) => stmt,
+                    Err(error) => return json!({ "error": error.to_string() }).to_string(),
+                };
+
+                let fallback_rows = match fallback_musicians_stmt.query_map([resolved_artist_id], |row| {
+                    Ok((
+                        row.get::<_, i64>(0)?,
+                        row.get::<_, String>(1)?,
+                        row.get::<_, Option<String>>(2)?,
+                        row.get::<_, String>(3)?,
+                        row.get::<_, i64>(4)?,
+                    ))
+                }) {
+                    Ok(rows) => rows,
+                    Err(error) => return json!({ "error": error.to_string() }).to_string(),
+                };
+
+                for (id, name, avatar, instrument, total) in fallback_rows.filter_map(|r| r.ok()) {
+                    if collaborator_ids.contains(&id) {
+                        continue;
+                    }
+                    collaborator_ids.insert(id);
+                    collaborators.push(json!({
+                        "id": id,
+                        "name": name,
+                        "avatar": avatar,
+                        "kind": "musician",
+                        "role": instrument,
+                        "sharedCount": total
+                    }));
+                    if collaborators.iter().filter(|item| item["kind"] == "musician").count() >= 2 {
+                        break;
+                    }
+                }
+            }
+
+            if collaborators.len() < 4 {
+                let mut any_artist_stmt = match conn.prepare(
+                    "
+                    SELECT a.id, a.name, a.avatar
+                    FROM artist a
+                    WHERE a.id <> ?1
+                    ORDER BY a.name ASC
+                    LIMIT 200
+                    ",
+                ) {
+                    Ok(stmt) => stmt,
+                    Err(error) => return json!({ "error": error.to_string() }).to_string(),
+                };
+
+                let any_rows = match any_artist_stmt.query_map([resolved_artist_id], |row| {
+                    Ok((
+                        row.get::<_, i64>(0)?,
+                        row.get::<_, String>(1)?,
+                        row.get::<_, Option<String>>(2)?,
+                    ))
+                }) {
+                    Ok(rows) => rows,
+                    Err(error) => return json!({ "error": error.to_string() }).to_string(),
+                };
+
+                for (id, name, avatar) in any_rows.filter_map(|r| r.ok()) {
+                    if collaborator_ids.contains(&id) {
+                        continue;
+                    }
+                    collaborator_ids.insert(id);
+                    collaborators.push(json!({
+                        "id": id,
+                        "name": name,
+                        "avatar": avatar,
+                        "kind": "singer",
+                        "role": "خواننده",
+                        "sharedCount": 0
+                    }));
+                    if collaborators.len() >= 4 {
+                        break;
+                    }
+                }
+            }
+
+            let collaborators: Vec<_> = collaborators.into_iter().take(4).collect();
+
+            json!({
+                "id": payload.0,
+                "name": payload.1,
+                "avatar": payload.2,
+                "instrument": payload.3,
+                "trackCount": payload.4,
+                "tracks": tracks,
+                "categoryCounts": category_counts,
+                "collaborators": collaborators,
+                "topModes": top_modes
+            })
+            .to_string()
+        }
+        Err(error) => json!({ "error": error.to_string() }).to_string(),
+    }
+}
+
 fn build_top_tracks_json(db_path: &str) -> String {
     match RadioGolhaCore::open(db_path) {
         Ok(core) => {
+            let conn = core.connection();
+            let artist_images_for_program = |program_id: i64| -> Vec<String> {
+                let mut stmt = match conn.prepare(
+                    "SELECT DISTINCT a.avatar
+                     FROM program_singers ps
+                     JOIN singer s ON s.id = ps.singer_id
+                     JOIN artist a ON a.id = s.artist_id
+                     WHERE ps.program_id = ?1
+                       AND a.avatar IS NOT NULL
+                       AND TRIM(a.avatar) <> ''
+                     ORDER BY a.name ASC
+                     LIMIT 5",
+                ) {
+                    Ok(stmt) => stmt,
+                    Err(_) => return vec![],
+                };
+                stmt.query_map([program_id], |row| row.get::<_, String>(0))
+                    .map(|rows| rows.filter_map(|r| r.ok()).collect())
+                    .unwrap_or_default()
+            };
+
             let top_tracks = core.random_vocal_track_summaries(10).unwrap_or_default();
             json!(top_tracks.iter().map(|t| json!({
                 "id": t.id,
                 "title": t.title,
                 "artist": t.artist,
                 "duration": t.duration.clone().unwrap_or_else(|| "00:00".to_string()),
-                "audioUrl": t.audio_url
+                "audioUrl": t.audio_url,
+                "artistImages": artist_images_for_program(t.id)
             })).collect::<Vec<_>>())
             .to_string()
         }
@@ -136,6 +686,25 @@ fn build_home_feed_json(db_path: &str) -> String {
                 .unwrap_or_default();
 
             let top_tracks = core.random_vocal_track_summaries(10).unwrap_or_default();
+            let artist_images_for_program = |program_id: i64| -> Vec<String> {
+                let mut stmt = match conn.prepare(
+                    "SELECT DISTINCT a.avatar
+                     FROM program_singers ps
+                     JOIN singer s ON s.id = ps.singer_id
+                     JOIN artist a ON a.id = s.artist_id
+                     WHERE ps.program_id = ?1
+                       AND a.avatar IS NOT NULL
+                       AND TRIM(a.avatar) <> ''
+                     ORDER BY a.name ASC
+                     LIMIT 5",
+                ) {
+                    Ok(stmt) => stmt,
+                    Err(_) => return vec![],
+                };
+                stmt.query_map([program_id], |row| row.get::<_, String>(0))
+                    .map(|rows| rows.filter_map(|r| r.ok()).collect())
+                    .unwrap_or_default()
+            };
             let duets_json = core.get_duet_pairs_raw().unwrap_or_else(|_| "[]".to_string());
             let duets: serde_json::Value = serde_json::from_str(&duets_json).unwrap_or(json!([]));
 
@@ -158,7 +727,8 @@ fn build_home_feed_json(db_path: &str) -> String {
                     "title": t.title,
                     "artist": t.artist,
                     "duration": t.duration.clone().unwrap_or_else(|| "00:00".to_string()),
-                    "audioUrl": t.audio_url
+                    "audioUrl": t.audio_url,
+                    "artistImages": artist_images_for_program(t.id)
                 })).collect::<Vec<_>>(),
                 "duets": duets
             })

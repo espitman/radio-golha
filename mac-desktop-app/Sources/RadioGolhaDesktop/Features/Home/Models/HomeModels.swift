@@ -9,9 +9,22 @@ struct ProgramItem: Identifiable {
 
 struct ArtistItem: Identifiable {
     let id = UUID()
+    let sourceArtistId: Int64?
     let name: String
     let role: String
     let imageURL: String
+
+    init(
+        sourceArtistId: Int64? = nil,
+        name: String,
+        role: String,
+        imageURL: String
+    ) {
+        self.sourceArtistId = sourceArtistId
+        self.name = name
+        self.role = role
+        self.imageURL = imageURL
+    }
 }
 
 struct ModeItem: Identifiable {
@@ -26,7 +39,7 @@ struct TrackRowItem: Identifiable {
     let subtitle: String
     let duration: String
     let audioURL: String?
-    let artworkURL: String?
+    let artworkURLs: [String]
 
     init(
         id: String = UUID().uuidString,
@@ -35,7 +48,7 @@ struct TrackRowItem: Identifiable {
         subtitle: String,
         duration: String,
         audioURL: String? = nil,
-        artworkURL: String? = nil
+        artworkURLs: [String] = []
     ) {
         self.id = id
         self.trackId = trackId
@@ -43,21 +56,49 @@ struct TrackRowItem: Identifiable {
         self.subtitle = subtitle
         self.duration = duration
         self.audioURL = audioURL
-        self.artworkURL = artworkURL
+        self.artworkURLs = artworkURLs
     }
 }
 
 struct SingerListItem: Identifiable {
     let id = UUID()
+    let sourceArtistId: Int64?
     let name: String
     let programsCount: String
     let imageURL: String
+
+    init(
+        sourceArtistId: Int64? = nil,
+        name: String,
+        programsCount: String,
+        imageURL: String
+    ) {
+        self.sourceArtistId = sourceArtistId
+        self.name = name
+        self.programsCount = programsCount
+        self.imageURL = imageURL
+    }
 }
 
 struct PlayerListItem: Identifiable {
     let id = UUID()
+    let sourceArtistId: Int64?
     let name: String
     let instrument: String
     let programsCount: String
     let imageURL: String
+
+    init(
+        sourceArtistId: Int64? = nil,
+        name: String,
+        instrument: String,
+        programsCount: String,
+        imageURL: String
+    ) {
+        self.sourceArtistId = sourceArtistId
+        self.name = name
+        self.instrument = instrument
+        self.programsCount = programsCount
+        self.imageURL = imageURL
+    }
 }

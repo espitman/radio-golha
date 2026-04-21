@@ -233,6 +233,13 @@ private struct ProgramTimelineRow: View {
                     .font(.vazir(13.5, .bold))
                     .foregroundStyle(Palette.secondary)
 
+                Text(item.segmentTitle)
+                    .font(.vazir(9.5, .medium))
+                    .foregroundStyle(Palette.primary.opacity(0.8))
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+
                 if isActive {
                     HStack(spacing: 3) {
                         Rectangle().fill(Palette.secondary).frame(width: 2, height: 10)
@@ -245,7 +252,7 @@ private struct ProgramTimelineRow: View {
                         .foregroundStyle(Color(hex: 0xC0BDB4))
                 }
             }
-            .frame(width: 82)
+            .frame(width: 120)
 
             HStack(spacing: 18) {
                 VStack(alignment: .trailing, spacing: 2) {
