@@ -45,14 +45,21 @@ enum ProgramDetailsDataLoader {
         let orchestra = response.orchestraLeaders.first?.orchestra
             ?? response.orchestras.first?.name
             ?? "—"
+        let subtitle = response.singers
+            .map(\.name)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: " / ")
 
         return ProgramDetailsItem(
             programId: response.id,
             title: title.isEmpty ? fallbackTitle : title,
+            subtitle: subtitle.isEmpty ? "—" : subtitle,
             modeTitle: response.modes.first?.nilIfBlank ?? "—",
             totalDuration: normalizeTime(response.duration),
             orchestra: orchestra,
             coverImageURL: cover,
+            audioURL: response.audioUrl,
             artists: artists,
             timeline: timeline,
             lyrics: lyrics
@@ -200,6 +207,7 @@ private struct ProgramDetailBridgeResponse: Decodable {
     let id: Int64
     let title: String
     let duration: String?
+    let audioUrl: String?
     let singers: [ProgramDetailArtistCreditDTO]
     let poets: [ProgramDetailArtistCreditDTO]
     let announcers: [ProgramDetailArtistCreditDTO]

@@ -291,6 +291,7 @@ struct HomeRootView: View {
                     } else if let selectedProgramDetails {
                         ProgramDetailsContentView(
                             program: selectedProgramDetails,
+                            player: audioPlayer,
                             onBack: {
                                 handleBack()
                             }

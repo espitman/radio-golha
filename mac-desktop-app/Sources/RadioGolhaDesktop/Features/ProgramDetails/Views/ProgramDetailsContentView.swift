@@ -7,6 +7,7 @@ struct ProgramDetailsContentView: View {
     }
 
     let program: ProgramDetailsItem
+    @ObservedObject var player: DesktopAudioPlayer
     var onBack: () -> Void = {}
     @State private var selectedTab: ContentTab = .timeline
 
@@ -67,8 +68,8 @@ struct ProgramDetailsContentView: View {
                         Spacer()
                         Rectangle().fill(Color(hex: 0xE5E2DA)).frame(height: 1)
                     }
-                    )
-                    .padding(.top, 22)
+                )
+                .padding(.top, 22)
 
                 Spacer(minLength: 0)
 
@@ -100,28 +101,55 @@ struct ProgramDetailsContentView: View {
 
     private var compactPlayback: some View {
         HStack(spacing: 14) {
-            Button {} label: {
+            Button {
+                if isProgramActive {
+                    player.togglePlayPause()
+                } else {
+                    player.play(track: playbackTrack)
+                }
+            } label: {
                 ZStack {
                     Circle()
                         .fill(Palette.primaryMuted)
                         .frame(width: 36, height: 36)
-                    Image(systemName: "play.fill")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(.white)
+                    if isProgramActive && player.isLoading {
+                        LoadingSpinner(color: .black, size: 12, lineWidth: 2.2)
+                    } else {
+                        Image(systemName: isProgramActive && player.isPlaying ? "pause.fill" : "play.fill")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(.white)
+                    }
                 }
             }
             .buttonStyle(.plain)
+            .disabled(program.audioURL?.isEmpty != false)
+            .opacity(program.audioURL?.isEmpty == false ? 1 : 0.4)
 
             VStack(spacing: 4) {
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Color(hex: 0xDAD8D0)).frame(height: 6)
-                    Capsule().fill(Palette.primary).frame(width: 62, height: 6)
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(Color(hex: 0xDAD8D0)).frame(height: 6)
+                        Capsule()
+                            .fill(Palette.primary)
+                            .frame(width: max(0, min(geo.size.width, geo.size.width * currentProgress)), height: 6)
+                    }
+                    .contentShape(Rectangle())
+                    .gesture(
+                        DragGesture(minimumDistance: 0)
+                            .onChanged { value in
+                                guard isProgramActive, player.duration > 0 else { return }
+                                let x = min(max(value.location.x, 0), geo.size.width)
+                                let progress = geo.size.width > 0 ? Double(x / geo.size.width) : 0
+                                player.seek(toProgress: progress)
+                            }
+                    )
                 }
+                .frame(height: 6)
 
                 HStack {
-                    Text("05:12")
+                    Text(currentTimeLabel)
                     Spacer(minLength: 0)
-                    Text(program.totalDuration)
+                    Text(totalTimeLabel)
                 }
                 .font(.vazir(7.5, .bold))
                 .foregroundStyle(Palette.primary.opacity(0.6))
@@ -187,7 +215,7 @@ struct ProgramDetailsContentView: View {
                 case .timeline:
                     VStack(spacing: 14) {
                         ForEach(Array(program.timeline.enumerated()), id: \.element.id) { index, item in
-                            ProgramTimelineRow(item: item, isActive: index == 1)
+                            ProgramTimelineRow(item: item, isActive: activeSegmentIndex == index)
                         }
                     }
                 case .lyrics:
@@ -219,6 +247,101 @@ struct ProgramDetailsContentView: View {
                 }
         }
         .buttonStyle(.plain)
+    }
+
+    private var playbackTrack: TrackRowItem {
+        TrackRowItem(
+            id: program.programId.map { "program-\($0)" } ?? "program-\(program.id)",
+            trackId: program.programId,
+            title: program.title,
+            subtitle: program.subtitle,
+            duration: program.totalDuration,
+            audioURL: program.audioURL,
+            artworkURLs: program.artists.map { $0.imageURL }.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        )
+    }
+
+    private var isProgramActive: Bool {
+        guard let current = player.currentTrack else { return false }
+        if let currentId = current.trackId, let programId = program.programId {
+            return currentId == programId
+        }
+        return current.id == playbackTrack.id
+    }
+
+    private var currentProgress: CGFloat {
+        guard isProgramActive else { return 0 }
+        return CGFloat(player.progress)
+    }
+
+    private var currentTimeLabel: String {
+        if isProgramActive {
+            return formatTime(player.currentTime)
+        }
+        return "00:00"
+    }
+
+    private var totalTimeLabel: String {
+        if isProgramActive, player.duration > 0 {
+            return formatTime(player.duration)
+        }
+        return normalizedDurationText(program.totalDuration)
+    }
+
+    private var activeSegmentIndex: Int? {
+        guard isProgramActive, !program.timeline.isEmpty else { return nil }
+        let starts = program.timeline.map { parseTimeToSeconds($0.time) }
+        var best: Int? = nil
+        for (index, start) in starts.enumerated() where player.currentTime >= start {
+            best = index
+        }
+        return best
+    }
+
+    private func formatTime(_ seconds: Double) -> String {
+        let safe = max(0, Int(seconds.rounded()))
+        let mins = safe / 60
+        let secs = safe % 60
+        return String(format: "%02d:%02d", mins, secs)
+    }
+
+    private func normalizedDurationText(_ value: String) -> String {
+        value
+            .replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: "۰", with: "0")
+            .replacingOccurrences(of: "۱", with: "1")
+            .replacingOccurrences(of: "۲", with: "2")
+            .replacingOccurrences(of: "۳", with: "3")
+            .replacingOccurrences(of: "۴", with: "4")
+            .replacingOccurrences(of: "۵", with: "5")
+            .replacingOccurrences(of: "۶", with: "6")
+            .replacingOccurrences(of: "۷", with: "7")
+            .replacingOccurrences(of: "۸", with: "8")
+            .replacingOccurrences(of: "۹", with: "9")
+    }
+
+    private func parseTimeToSeconds(_ value: String) -> Double {
+        let normalized = value
+            .replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: "۰", with: "0")
+            .replacingOccurrences(of: "۱", with: "1")
+            .replacingOccurrences(of: "۲", with: "2")
+            .replacingOccurrences(of: "۳", with: "3")
+            .replacingOccurrences(of: "۴", with: "4")
+            .replacingOccurrences(of: "۵", with: "5")
+            .replacingOccurrences(of: "۶", with: "6")
+            .replacingOccurrences(of: "۷", with: "7")
+            .replacingOccurrences(of: "۸", with: "8")
+            .replacingOccurrences(of: "۹", with: "9")
+
+        let parts = normalized.split(separator: ":").compactMap { Double($0) }
+        if parts.count == 2 {
+            return parts[0] * 60 + parts[1]
+        }
+        if parts.count == 3 {
+            return parts[0] * 3600 + parts[1] * 60 + parts[2]
+        }
+        return 0
     }
 }
 
@@ -280,7 +403,9 @@ private struct ProgramTimelineRow: View {
         )
         .overlay(alignment: .trailing) {
             if isActive {
-                Rectangle().fill(Palette.secondary).frame(width: 6)
+                Rectangle()
+                    .fill(Palette.secondary)
+                    .frame(width: 6)
                     .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
             }
         }

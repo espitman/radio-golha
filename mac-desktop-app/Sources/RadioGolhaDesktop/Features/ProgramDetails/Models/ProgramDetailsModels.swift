@@ -4,10 +4,12 @@ struct ProgramDetailsItem: Identifiable {
     let programId: Int64?
     let id: String
     let title: String
+    let subtitle: String
     let modeTitle: String
     let totalDuration: String
     let orchestra: String
     let coverImageURL: String
+    let audioURL: String?
     let artists: [ProgramArtistItem]
     let timeline: [ProgramTimelineItem]
     let lyrics: [ProgramLyricItem]
@@ -15,10 +17,12 @@ struct ProgramDetailsItem: Identifiable {
     init(
         programId: Int64? = nil,
         title: String,
+        subtitle: String,
         modeTitle: String,
         totalDuration: String,
         orchestra: String,
         coverImageURL: String,
+        audioURL: String? = nil,
         artists: [ProgramArtistItem],
         timeline: [ProgramTimelineItem],
         lyrics: [ProgramLyricItem]
@@ -26,10 +30,12 @@ struct ProgramDetailsItem: Identifiable {
         self.programId = programId
         self.id = programId.map { "program-\($0)" } ?? title
         self.title = title
+        self.subtitle = subtitle
         self.modeTitle = modeTitle
         self.totalDuration = totalDuration
         self.orchestra = orchestra
         self.coverImageURL = coverImageURL
+        self.audioURL = audioURL
         self.artists = artists
         self.timeline = timeline
         self.lyrics = lyrics
@@ -78,6 +84,7 @@ enum ProgramDetailsFactory {
         ProgramDetailsItem(
             programId: nil,
             title: title,
+            subtitle: "الهه و گیلدا",
             modeTitle: "بیات ترک",
             totalDuration: "۳۵:۱۰",
             orchestra: "مرتضی حنانه",
