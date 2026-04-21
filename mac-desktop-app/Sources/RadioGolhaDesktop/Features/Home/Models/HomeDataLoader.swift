@@ -22,7 +22,8 @@ enum HomeDataLoader {
         }
 
         let response = try JSONDecoder().decode(HomeFeedBridgeResponse.self, from: Data(payload.utf8))
-        return mapResponse(response)
+        let recentTracks = try? loadRecentTracks(root: root, dbPath: dbPath, limit: 5)
+        return mapResponse(response, recentTracks: recentTracks ?? [])
     }
 
     private static func loadTopTracksRowsSync() throws -> (top: [TrackRowItem], latest: [TrackRowItem]) {
@@ -46,17 +47,14 @@ enum HomeDataLoader {
         }
 
         let top = Array(tracks.prefix(5))
-        let latest: [TrackRowItem] = {
-            let next = Array(tracks.dropFirst(5).prefix(5))
-            return next.isEmpty ? top : next
-        }()
+        let latest = (try? loadRecentTracks(root: root, dbPath: dbPath, limit: 5)) ?? []
         return (
             top.isEmpty ? HomeMockData.topProgramsRows : top,
-            latest.isEmpty ? HomeMockData.latestTracksRows : latest
+            latest
         )
     }
 
-    private static func mapResponse(_ response: HomeFeedBridgeResponse) -> HomeContentData {
+    private static func mapResponse(_ response: HomeFeedBridgeResponse, recentTracks: [TrackRowItem]) -> HomeContentData {
         let categories = response.categories
             .enumerated()
             .map { index, category in
@@ -101,19 +99,47 @@ enum HomeDataLoader {
         }
 
         let topProgramsRows = Array(tracks.prefix(5))
-        let latestTracksRows: [TrackRowItem] = {
-            let next = Array(tracks.dropFirst(5).prefix(5))
-            return next.isEmpty ? topProgramsRows : next
-        }()
-
         return HomeContentData(
             programs: categories,
             singers: singers,
             instrumentalists: musicians,
             modes: modes,
             topProgramsRows: topProgramsRows,
-            latestTracksRows: latestTracksRows
+            latestTracksRows: recentTracks
         )
+    }
+
+    private static func loadRecentTracks(root: String, dbPath: String, limit: Int) throws -> [TrackRowItem] {
+        let userDbPath = try resolveUserDbPath()
+        let idsPayload = try runBridgeRecentlyPlayedIds(root: root, userDbPath: userDbPath, limit: limit)
+        guard !idsPayload.isEmpty else { return [] }
+
+        let ids = try JSONDecoder().decode([Int64].self, from: Data(idsPayload.utf8))
+        if ids.isEmpty { return [] }
+
+        let idsJson = try String(data: JSONEncoder().encode(ids), encoding: .utf8) ?? "[]"
+        let tracksPayload = try runBridgeProgramsByIds(root: root, dbPath: dbPath, idsJson: idsJson)
+        guard !tracksPayload.isEmpty else { return [] }
+
+        let mapped: [TrackRowItem] = try JSONDecoder().decode([ProgramByIdTrackDTO].self, from: Data(tracksPayload.utf8)).map { item in
+            let trimmedTitle = item.title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return TrackRowItem(
+                id: String(item.id),
+                trackId: item.id,
+                title: trimmedTitle.isEmpty ? "برنامه \(item.no)" : trimmedTitle,
+                subtitle: item.artist,
+                duration: normalizedDuration(item.duration),
+                audioURL: item.audioUrl,
+                artworkURLs: []
+            )
+        }
+
+        let order = Dictionary(uniqueKeysWithValues: ids.enumerated().map { ($1, $0) })
+        return mapped.sorted { lhs, rhs in
+            let li = order[lhs.trackId ?? -1] ?? Int.max
+            let ri = order[rhs.trackId ?? -1] ?? Int.max
+            return li < ri
+        }
     }
 
     private static func normalizedDuration(_ value: String?) -> String {
@@ -172,6 +198,20 @@ enum HomeDataLoader {
         throw NSError(domain: "HomeDataLoader", code: 2, userInfo: [NSLocalizedDescriptionKey: "Archive DB not found"])
     }
 
+    private static func resolveUserDbPath() throws -> String {
+        if let env = ProcessInfo.processInfo.environment["RADIOGOLHA_USER_DB"], !env.isEmpty {
+            return env
+        }
+
+        let fm = FileManager.default
+        let appSupport = try fm.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+        let dir = appSupport.appendingPathComponent("RadioGolhaDesktop", isDirectory: true)
+        if !fm.fileExists(atPath: dir.path) {
+            try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        }
+        return dir.appendingPathComponent("user_data.db").path
+    }
+
     private static func runBridgeHomeFeed(root: String, dbPath: String) throws -> String {
         let manifest = URL(fileURLWithPath: root).appendingPathComponent("core/adapters/macos/Cargo.toml").path
         let binary = URL(fileURLWithPath: root).appendingPathComponent("core/adapters/macos/target/debug/radiogolha-macos-bridge-cli").path
@@ -206,6 +246,44 @@ enum HomeDataLoader {
         return try runProcess(
             launchPath: binary,
             arguments: ["top-tracks-json", "--db", dbPath],
+            currentDirectory: root
+        )
+    }
+
+    private static func runBridgeRecentlyPlayedIds(root: String, userDbPath: String, limit: Int) throws -> String {
+        let manifest = URL(fileURLWithPath: root).appendingPathComponent("core/adapters/macos/Cargo.toml").path
+        let binary = URL(fileURLWithPath: root).appendingPathComponent("core/adapters/macos/target/debug/radiogolha-macos-bridge-cli").path
+
+        if !FileManager.default.isExecutableFile(atPath: binary) {
+            _ = try runProcess(
+                launchPath: "/usr/bin/env",
+                arguments: ["cargo", "build", "--manifest-path", manifest, "--bin", "radiogolha-macos-bridge-cli"],
+                currentDirectory: root
+            )
+        }
+
+        return try runProcess(
+            launchPath: binary,
+            arguments: ["recently-played-ids-json", "--user-db", userDbPath, "--limit", String(limit)],
+            currentDirectory: root
+        )
+    }
+
+    private static func runBridgeProgramsByIds(root: String, dbPath: String, idsJson: String) throws -> String {
+        let manifest = URL(fileURLWithPath: root).appendingPathComponent("core/adapters/macos/Cargo.toml").path
+        let binary = URL(fileURLWithPath: root).appendingPathComponent("core/adapters/macos/target/debug/radiogolha-macos-bridge-cli").path
+
+        if !FileManager.default.isExecutableFile(atPath: binary) {
+            _ = try runProcess(
+                launchPath: "/usr/bin/env",
+                arguments: ["cargo", "build", "--manifest-path", manifest, "--bin", "radiogolha-macos-bridge-cli"],
+                currentDirectory: root
+            )
+        }
+
+        return try runProcess(
+            launchPath: binary,
+            arguments: ["programs-by-ids-json", "--db", dbPath, "--ids-json", idsJson],
             currentDirectory: root
         )
     }
@@ -291,4 +369,13 @@ private struct HomeTrackDTO: Decodable {
     let duration: String?
     let audioUrl: String?
     let artistImages: [String]?
+}
+
+private struct ProgramByIdTrackDTO: Decodable {
+    let id: Int64
+    let title: String?
+    let no: Int64
+    let artist: String
+    let duration: String?
+    let audioUrl: String?
 }

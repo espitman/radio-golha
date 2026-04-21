@@ -2,6 +2,7 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use radiogolha_core::RadioGolhaCore;
 use serde_json::json;
+use radiogolha_core::user_data::UserDataStore;
 
 #[derive(Debug, Parser)]
 #[command(name = "radiogolha-macos-bridge-cli")]
@@ -40,6 +41,30 @@ enum Command {
         #[arg(long)]
         category_id: i64,
     },
+    ProgramsByIdsJson {
+        #[arg(long)]
+        db: String,
+        #[arg(long)]
+        ids_json: String,
+    },
+    RecordPlayback {
+        #[arg(long)]
+        user_db: String,
+        #[arg(long)]
+        track_id: i64,
+    },
+    RecentlyPlayedIdsJson {
+        #[arg(long)]
+        user_db: String,
+        #[arg(long, default_value_t = 20)]
+        limit: i64,
+    },
+    MostPlayedIdsJson {
+        #[arg(long)]
+        user_db: String,
+        #[arg(long, default_value_t = 20)]
+        limit: i64,
+    },
 }
 
 fn main() -> Result<()> {
@@ -64,9 +89,120 @@ fn main() -> Result<()> {
         Command::ProgramsByCategoryJson { db, category_id } => {
             println!("{}", build_programs_by_category_json(&db, category_id));
         }
+        Command::ProgramsByIdsJson { db, ids_json } => {
+            println!("{}", build_programs_by_ids_json(&db, &ids_json));
+        }
+        Command::RecordPlayback { user_db, track_id } => {
+            println!("{}", record_playback(&user_db, track_id));
+        }
+        Command::RecentlyPlayedIdsJson { user_db, limit } => {
+            println!("{}", get_recently_played_ids_json(&user_db, limit));
+        }
+        Command::MostPlayedIdsJson { user_db, limit } => {
+            println!("{}", get_most_played_ids_json(&user_db, limit));
+        }
     }
 
     Ok(())
+}
+
+fn build_programs_by_ids_json(db_path: &str, ids_json: &str) -> String {
+    let ids: Vec<i64> = match serde_json::from_str(ids_json) {
+        Ok(ids) => ids,
+        Err(error) => return json!({ "error": error.to_string() }).to_string(),
+    };
+    if ids.is_empty() {
+        return "[]".to_string();
+    }
+
+    match RadioGolhaCore::open(db_path) {
+        Ok(core) => {
+            let conn = core.connection();
+            let id_list = ids.iter().map(|id| id.to_string()).collect::<Vec<_>>().join(",");
+            let sql = format!(
+                "SELECT
+                    p.id,
+                    p.title,
+                    p.no,
+                    COALESCE(
+                        (
+                            SELECT GROUP_CONCAT(a.name, ' و ')
+                            FROM program_singers ps
+                            JOIN singer s ON s.id = ps.singer_id
+                            JOIN artist a ON a.id = s.artist_id
+                            WHERE ps.program_id = p.id
+                        ),
+                        'ناشناس'
+                    ) AS artist_names,
+                    (
+                        SELECT GROUP_CONCAT(m.name, ' و ')
+                        FROM program_modes pm
+                        JOIN mode m ON m.id = pm.mode_id
+                        WHERE pm.program_id = p.id
+                    ) AS mode_names,
+                    (SELECT MAX(end_time) FROM program_timeline WHERE program_id = p.id) AS duration,
+                    p.audio_url
+                 FROM program p
+                 WHERE p.id IN ({})
+                 ORDER BY p.no ASC, p.id ASC",
+                id_list
+            );
+
+            let mut stmt = match conn.prepare(&sql) {
+                Ok(stmt) => stmt,
+                Err(error) => return json!({ "error": error.to_string() }).to_string(),
+            };
+
+            let rows = match stmt.query_map([], |row| {
+                Ok(json!({
+                    "id": row.get::<_, i64>(0)?,
+                    "title": row.get::<_, Option<String>>(1)?,
+                    "no": row.get::<_, i64>(2)?,
+                    "artist": row.get::<_, String>(3)?,
+                    "mode": row.get::<_, Option<String>>(4)?,
+                    "duration": row.get::<_, Option<String>>(5)?,
+                    "audioUrl": row.get::<_, Option<String>>(6)?
+                }))
+            }) {
+                Ok(rows) => rows,
+                Err(error) => return json!({ "error": error.to_string() }).to_string(),
+            };
+
+            let programs: Vec<_> = rows.filter_map(|r| r.ok()).collect();
+            json!(programs).to_string()
+        }
+        Err(error) => json!({ "error": error.to_string() }).to_string(),
+    }
+}
+
+fn record_playback(user_db_path: &str, track_id: i64) -> String {
+    match UserDataStore::open(user_db_path) {
+        Ok(store) => match store.record_playback(track_id) {
+            Ok(_) => "ok".to_string(),
+            Err(error) => json!({ "error": error.to_string() }).to_string(),
+        },
+        Err(error) => json!({ "error": error.to_string() }).to_string(),
+    }
+}
+
+fn get_recently_played_ids_json(user_db_path: &str, limit: i64) -> String {
+    match UserDataStore::open(user_db_path) {
+        Ok(store) => match store.get_recent_tracks(limit) {
+            Ok(ids) => json!(ids).to_string(),
+            Err(error) => json!({ "error": error.to_string() }).to_string(),
+        },
+        Err(error) => json!({ "error": error.to_string() }).to_string(),
+    }
+}
+
+fn get_most_played_ids_json(user_db_path: &str, limit: i64) -> String {
+    match UserDataStore::open(user_db_path) {
+        Ok(store) => match store.get_most_played_tracks(limit) {
+            Ok(ids) => json!(ids).to_string(),
+            Err(error) => json!({ "error": error.to_string() }).to_string(),
+        },
+        Err(error) => json!({ "error": error.to_string() }).to_string(),
+    }
 }
 
 fn build_programs_by_category_json(db_path: &str, category_id: i64) -> String {

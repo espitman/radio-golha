@@ -36,10 +36,10 @@ final class DesktopAudioPlayer: ObservableObject {
     }
 
     func play(track: TrackRowItem) {
-        startPlayback(track: track, startAtSeconds: nil, autoPlay: true)
+        startPlayback(track: track, startAtSeconds: nil, autoPlay: true, shouldRecordPlayback: true)
     }
 
-    private func startPlayback(track: TrackRowItem, startAtSeconds: Double?, autoPlay: Bool) {
+    private func startPlayback(track: TrackRowItem, startAtSeconds: Double?, autoPlay: Bool, shouldRecordPlayback: Bool) {
         guard let urlString = track.audioURL, let url = URL(string: urlString) else {
             return
         }
@@ -83,6 +83,9 @@ final class DesktopAudioPlayer: ObservableObject {
         if autoPlay {
             player.play()
             isPlaying = true
+        }
+        if shouldRecordPlayback, autoPlay, let trackId = track.trackId {
+            recordPlayback(trackId: trackId)
         }
         persistState(force: true)
     }
@@ -286,8 +289,118 @@ final class DesktopAudioPlayer: ObservableObject {
         startPlayback(
             track: track,
             startAtSeconds: max(0, state.currentTime),
-            autoPlay: state.wasPlaying
+            autoPlay: state.wasPlaying,
+            shouldRecordPlayback: false
         )
+    }
+
+    private func recordPlayback(trackId: Int64) {
+        Task.detached(priority: .utility) {
+            do {
+                let root = try Self.resolveRepoRoot()
+                let userDbPath = try Self.resolveUserDbPath()
+                _ = try Self.runRecordPlaybackBridge(root: root, userDbPath: userDbPath, trackId: trackId)
+            } catch {
+                // Intentionally ignore telemetry persistence errors to avoid disrupting playback.
+            }
+        }
+    }
+
+    nonisolated private static func resolveRepoRoot() throws -> String {
+        let fileManager = FileManager.default
+        let seeds = [
+            fileManager.currentDirectoryPath,
+            URL(fileURLWithPath: #filePath).deletingLastPathComponent().path
+        ]
+
+        for seed in seeds {
+            var current = URL(fileURLWithPath: seed)
+            while true {
+                let marker = current.appendingPathComponent("core").path
+                if fileManager.fileExists(atPath: marker) {
+                    return current.path
+                }
+
+                let parent = current.deletingLastPathComponent()
+                if parent.path == current.path { break }
+                current = parent
+            }
+        }
+
+        throw NSError(domain: "DesktopAudioPlayer", code: 1, userInfo: [NSLocalizedDescriptionKey: "Could not resolve repository root"])
+    }
+
+    nonisolated private static func resolveUserDbPath() throws -> String {
+        if let env = ProcessInfo.processInfo.environment["RADIOGOLHA_USER_DB"], !env.isEmpty {
+            return env
+        }
+
+        let fm = FileManager.default
+        let appSupport = try fm.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+        let dir = appSupport.appendingPathComponent("RadioGolhaDesktop", isDirectory: true)
+        if !fm.fileExists(atPath: dir.path) {
+            try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        }
+        return dir.appendingPathComponent("user_data.db").path
+    }
+
+    nonisolated private static func runRecordPlaybackBridge(root: String, userDbPath: String, trackId: Int64) throws -> String {
+        let manifest = URL(fileURLWithPath: root).appendingPathComponent("core/adapters/macos/Cargo.toml").path
+        let binary = URL(fileURLWithPath: root).appendingPathComponent("core/adapters/macos/target/debug/radiogolha-macos-bridge-cli").path
+
+        if !FileManager.default.isExecutableFile(atPath: binary) {
+            _ = try runProcess(
+                launchPath: "/usr/bin/env",
+                arguments: ["cargo", "build", "--manifest-path", manifest, "--bin", "radiogolha-macos-bridge-cli"],
+                currentDirectory: root
+            )
+        }
+
+        return try runProcess(
+            launchPath: binary,
+            arguments: ["record-playback", "--user-db", userDbPath, "--track-id", String(trackId)],
+            currentDirectory: root
+        )
+    }
+
+    nonisolated private static func runProcess(launchPath: String, arguments: [String], currentDirectory: String) throws -> String {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: launchPath)
+        process.arguments = arguments
+        process.currentDirectoryURL = URL(fileURLWithPath: currentDirectory)
+
+        let stdout = Pipe()
+        let stderr = Pipe()
+        process.standardOutput = stdout
+        process.standardError = stderr
+
+        let group = DispatchGroup()
+        var outData = Data()
+        var errData = Data()
+
+        group.enter()
+        DispatchQueue.global(qos: .userInitiated).async {
+            outData = stdout.fileHandleForReading.readDataToEndOfFile()
+            group.leave()
+        }
+
+        group.enter()
+        DispatchQueue.global(qos: .userInitiated).async {
+            errData = stderr.fileHandleForReading.readDataToEndOfFile()
+            group.leave()
+        }
+
+        try process.run()
+        process.waitUntilExit()
+        group.wait()
+
+        let out = String(data: outData, encoding: .utf8) ?? ""
+        if process.terminationStatus == 0 {
+            return out.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+
+        let err = String(data: errData, encoding: .utf8) ?? "Unknown process error"
+        throw NSError(domain: "DesktopAudioPlayer", code: Int(process.terminationStatus), userInfo: [NSLocalizedDescriptionKey: err])
     }
 }
 

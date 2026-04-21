@@ -123,11 +123,7 @@ struct HomeRootView: View {
                                 }
                             },
                             onPlayTrack: { track in
-                                if audioPlayer.currentTrack?.id == track.id {
-                                    audioPlayer.togglePlayPause()
-                                } else {
-                                    audioPlayer.play(track: track)
-                                }
+                                handleTrackPlayIntent(track)
                             },
                             currentPlayingTrackId: audioPlayer.currentTrack?.id,
                             isPlayerPlaying: audioPlayer.isPlaying,
@@ -201,11 +197,7 @@ struct HomeRootView: View {
                                 category: category,
                                 tracks: selectedProgramTracks,
                                 onPlayTrack: { track in
-                                    if audioPlayer.currentTrack?.id == track.id {
-                                        audioPlayer.togglePlayPause()
-                                    } else {
-                                        audioPlayer.play(track: track)
-                                    }
+                                    handleTrackPlayIntent(track)
                                 },
                                 onOpenProgram: { track in
                                     openProgramDetails(
@@ -273,11 +265,7 @@ struct HomeRootView: View {
                                     audioURL: row.audioURL,
                                     artworkURLs: [selectedArtistDetails.imageURL]
                                 )
-                                if audioPlayer.currentTrack?.id == track.id {
-                                    audioPlayer.togglePlayPause()
-                                } else {
-                                    audioPlayer.play(track: track)
-                                }
+                                handleTrackPlayIntent(track)
                             },
                             currentPlayingTrackId: audioPlayer.currentTrack?.id,
                             isPlayerPlaying: audioPlayer.isPlaying,
@@ -472,6 +460,37 @@ struct HomeRootView: View {
         withAnimation(pageAnimation) {
             currentPage = .programDetails
         }
+    }
+
+    private func handleTrackPlayIntent(_ track: TrackRowItem) {
+        if audioPlayer.currentTrack?.id == track.id {
+            if audioPlayer.isPlaying {
+                audioPlayer.togglePlayPause()
+            } else {
+                audioPlayer.togglePlayPause()
+                pushRecentTrackToTop(track)
+            }
+            return
+        }
+
+        audioPlayer.play(track: track)
+        pushRecentTrackToTop(track)
+    }
+
+    private func pushRecentTrackToTop(_ track: TrackRowItem) {
+        guard var content = homeContent else { return }
+
+        let deduped = content.latestTracksRows.filter { existing in
+            if existing.id == track.id { return false }
+            if let lhs = existing.trackId, let rhs = track.trackId { return lhs != rhs }
+            return true
+        }
+
+        content = content.withTopTracks(
+            topProgramsRows: content.topProgramsRows,
+            latestTracksRows: Array(([track] + deduped).prefix(5))
+        )
+        homeContent = content
     }
 
     private func openProgramTracks(_ category: ProgramItem) {

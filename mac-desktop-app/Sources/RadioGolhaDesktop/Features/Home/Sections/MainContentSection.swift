@@ -302,7 +302,7 @@ private struct TopListsSection: View {
     var onProgramTap: (String) -> Void = { _ in }
 
     var body: some View {
-        HStack(spacing: 48) {
+        HStack(alignment: .top, spacing: 48) {
             ListBlock(
                 title: "برترین برنامه‌ها",
                 rows: topRows,
@@ -376,17 +376,21 @@ private struct ListBlock: View {
             }
 
             VStack(spacing: 0) {
-                ForEach(Array(rows.enumerated()), id: \.offset) { index, row in
-                    ListRow(
-                        row: row,
-                        isActive: currentPlayingTrackId == row.id,
-                        isPlayerPlaying: isPlayerPlaying,
-                        isPlayerLoading: isPlayerLoading,
-                        onPlayTrack: onPlayTrack,
-                        onProgramTap: onProgramTap
-                    )
-                    if index < rows.count - 1 {
-                        Divider().overlay(Palette.text.opacity(0.06))
+                if rows.isEmpty && title == "شنیده شده‌های اخیر" {
+                    EmptyRecentRow()
+                } else {
+                    ForEach(Array(rows.enumerated()), id: \.offset) { index, row in
+                        ListRow(
+                            row: row,
+                            isActive: currentPlayingTrackId == row.id,
+                            isPlayerPlaying: isPlayerPlaying,
+                            isPlayerLoading: isPlayerLoading,
+                            onPlayTrack: onPlayTrack,
+                            onProgramTap: onProgramTap
+                        )
+                        if index < rows.count - 1 {
+                            Divider().overlay(Palette.text.opacity(0.06))
+                        }
                     }
                 }
             }
@@ -398,6 +402,21 @@ private struct ListBlock: View {
         }
         .frame(width: 440)
         .multilineTextAlignment(.leading)
+    }
+}
+
+private struct EmptyRecentRow: View {
+    var body: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "music.note.list")
+                .font(.system(size: 20, weight: .regular))
+                .foregroundStyle(Palette.secondary.opacity(0.75))
+            Text("ترکی وجود ندارد")
+                .font(.vazir(10.5, .bold))
+                .foregroundStyle(Palette.textMuted)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 360)
     }
 }
 
