@@ -44,9 +44,11 @@ struct ArtistStatItem: Identifiable {
 
 struct ArtistProgramRow: Identifiable {
     let id = UUID()
+    let trackId: Int64?
     let title: String
     let subtitle: String
     let duration: String
+    let audioURL: String?
 }
 
 struct ArtistCollaboratorItem: Identifiable {
@@ -150,11 +152,11 @@ enum ArtistDetailsFactory {
 
     private static let programsByArtist: [String: [ArtistProgramRow]] = [
         "محمدرضا شجریان": [
-            .init(title: "گلهای تازه، شماره ۲۵ - آواز شور", subtitle: "محمدرضا شجریان", duration: "۴۲:۱۵"),
-            .init(title: "یک شاخه گل، شماره ۴۰۲", subtitle: "محمدرضا شجریان", duration: "۲۸:۴۰"),
-            .init(title: "گلهای رنگارنگ، شماره ۵۸۰", subtitle: "محمدرضا شجریان", duration: "۳۵:۱۰"),
-            .init(title: "گلهای تازه، شماره ۱۰ - ماهور", subtitle: "محمدرضا شجریان", duration: "۳۸:۲۰"),
-            .init(title: "یک شاخه گل، شماره ۴۱۲", subtitle: "محمدرضا شجریان", duration: "۲۵:۱۵")
+            .init(trackId: nil, title: "گلهای تازه، شماره ۲۵ - آواز شور", subtitle: "محمدرضا شجریان", duration: "۴۲:۱۵", audioURL: nil),
+            .init(trackId: nil, title: "یک شاخه گل، شماره ۴۰۲", subtitle: "محمدرضا شجریان", duration: "۲۸:۴۰", audioURL: nil),
+            .init(trackId: nil, title: "گلهای رنگارنگ، شماره ۵۸۰", subtitle: "محمدرضا شجریان", duration: "۳۵:۱۰", audioURL: nil),
+            .init(trackId: nil, title: "گلهای تازه، شماره ۱۰ - ماهور", subtitle: "محمدرضا شجریان", duration: "۳۸:۲۰", audioURL: nil),
+            .init(trackId: nil, title: "یک شاخه گل، شماره ۴۱۲", subtitle: "محمدرضا شجریان", duration: "۲۵:۱۵", audioURL: nil)
         ]
     ]
 
@@ -179,9 +181,9 @@ enum ArtistDetailsFactory {
     ]
 
     private static let defaultPrograms: [ArtistProgramRow] = [
-        .init(title: "گلهای تازه، شماره ۱۴", subtitle: "غلامحسین بنان", duration: "۳۲:۱۰"),
-        .init(title: "یک شاخه گل، شماره ۲۶۴", subtitle: "الهه", duration: "۲۵:۴۰"),
-        .init(title: "گلهای رنگارنگ، شماره ۴۲۲", subtitle: "محمدرضا شجریان", duration: "۲۹:۳۵")
+        .init(trackId: nil, title: "گلهای تازه، شماره ۱۴", subtitle: "غلامحسین بنان", duration: "۳۲:۱۰", audioURL: nil),
+        .init(trackId: nil, title: "یک شاخه گل، شماره ۲۶۴", subtitle: "الهه", duration: "۲۵:۴۰", audioURL: nil),
+        .init(trackId: nil, title: "گلهای رنگارنگ، شماره ۴۲۲", subtitle: "محمدرضا شجریان", duration: "۲۹:۳۵", audioURL: nil)
     ]
 
     private static func repeatedPrograms(_ base: [ArtistProgramRow], targetCount: Int) -> [ArtistProgramRow] {
@@ -195,9 +197,11 @@ enum ArtistDetailsFactory {
             let row = base[index % base.count]
             result.append(
                 ArtistProgramRow(
+                    trackId: row.trackId,
                     title: row.title,
                     subtitle: row.subtitle,
-                    duration: row.duration
+                    duration: row.duration,
+                    audioURL: row.audioURL
                 )
             )
         }

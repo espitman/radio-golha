@@ -29,9 +29,11 @@ enum ArtistDetailsDataLoader {
         let programs = response.tracks.map { item in
             let singers = item.artist.trimmingCharacters(in: .whitespacesAndNewlines)
             return ArtistProgramRow(
+                trackId: item.id,
                 title: item.title,
                 subtitle: singers.isEmpty ? "—" : singers,
-                duration: normalizedDuration(item.duration)
+                duration: normalizedDuration(item.duration),
+                audioURL: item.audioUrl
             )
         }
 

@@ -5,6 +5,10 @@ struct ArtistDetailsContentView: View {
     var onBack: () -> Void = {}
     var onOpenArtist: (ArtistCollaboratorItem) -> Void = { _ in }
     var onOpenProgram: (String) -> Void = { _ in }
+    var onPlayTrack: (ArtistProgramRow) -> Void = { _ in }
+    var currentPlayingTrackId: String? = nil
+    var isPlayerPlaying: Bool = false
+    var isPlayerLoading: Bool = false
     private let collaboratorsColumns = Array(repeating: GridItem(.fixed(104), spacing: 12), count: 2)
 
     var body: some View {
@@ -119,7 +123,15 @@ struct ArtistDetailsContentView: View {
 
             VStack(spacing: 0) {
                 ForEach(Array(artist.programs.enumerated()), id: \.element.id) { index, row in
-                    ProgramRow(row: row) {
+                    ProgramRow(
+                        row: row,
+                        isActive: currentPlayingTrackId == playbackId(for: row),
+                        isPlayerPlaying: isPlayerPlaying,
+                        isPlayerLoading: isPlayerLoading,
+                        onPlayTrack: {
+                            onPlayTrack(row)
+                        }
+                    ) {
                         onOpenProgram(row.title)
                     }
                     if index < artist.programs.count - 1 {
@@ -194,6 +206,13 @@ struct ArtistDetailsContentView: View {
                 .frame(height: 1)
         }
     }
+
+    private func playbackId(for row: ArtistProgramRow) -> String {
+        if let trackId = row.trackId {
+            return "track-\(trackId)"
+        }
+        return "artist-\(artist.id)-\(row.title)-\(row.subtitle)-\(row.duration)"
+    }
 }
 
 private struct StickySidePanel<Content: View>: View {
@@ -214,18 +233,31 @@ private struct StickySidePanel<Content: View>: View {
 
 private struct ProgramRow: View {
     let row: ArtistProgramRow
+    let isActive: Bool
+    let isPlayerPlaying: Bool
+    let isPlayerLoading: Bool
+    var onPlayTrack: () -> Void = {}
     var onOpenProgram: () -> Void = {}
 
     var body: some View {
         HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(Palette.primary.opacity(0.05))
-                Image(systemName: "play.fill")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(Palette.primary)
+            Button {
+                onPlayTrack()
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(Palette.primary.opacity(0.05))
+                    if isActive && isPlayerLoading {
+                        LoadingSpinner(color: Palette.primary, size: 11, lineWidth: 2)
+                    } else {
+                        Image(systemName: isActive && isPlayerPlaying ? "pause.fill" : "play.fill")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(Palette.primary)
+                    }
+                }
+                .frame(width: 30, height: 30)
             }
-            .frame(width: 30, height: 30)
+            .buttonStyle(.plain)
 
             VStack(alignment: .leading, spacing: 2) {
                 Button {

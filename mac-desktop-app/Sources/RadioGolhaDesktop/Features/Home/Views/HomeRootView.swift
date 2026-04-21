@@ -36,6 +36,11 @@ struct HomeRootView: View {
     @State private var playersDataLoaded = false
     @State private var backStack: [NavigationSnapshot] = []
     @StateObject private var audioPlayer = DesktopAudioPlayer()
+    private let pageTransition = AnyTransition.asymmetric(
+        insertion: .offset(y: -10).combined(with: .opacity),
+        removal: .offset(y: -8).combined(with: .opacity)
+    )
+    private let pageAnimation = Animation.easeInOut(duration: 0.22)
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -60,14 +65,17 @@ struct HomeRootView: View {
             homeDataLoaded = true
             isHomeLoading = true
             let start = Date()
-            homeContent = await HomeDataLoader.load()
+            let loaded = await HomeDataLoader.load()
             let elapsed = Date().timeIntervalSince(start)
             let minVisible = 0.45
             if elapsed < minVisible {
                 let remainingNs = UInt64((minVisible - elapsed) * 1_000_000_000)
                 try? await Task.sleep(nanoseconds: remainingNs)
             }
-            isHomeLoading = false
+            withAnimation(pageAnimation) {
+                homeContent = loaded
+                isHomeLoading = false
+            }
         }
     }
 
@@ -92,7 +100,7 @@ struct HomeRootView: View {
                 }
             }
 
-            Group {
+            ZStack {
                 switch currentPage {
                 case .home:
                     if let homeContent {
@@ -138,12 +146,15 @@ struct HomeRootView: View {
                                 ensurePlayersLoaded()
                             }
                         )
+                        .transition(pageTransition)
                     } else if isHomeLoading {
                         DesktopLoadingView(message: "در حال بارگذاری صفحه اصلی...")
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .transition(pageTransition)
                     } else {
                         DesktopLoadingView(message: "در حال بارگذاری صفحه اصلی...")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .transition(pageTransition)
                     }
                 case .singers:
                     if let singersContent {
@@ -153,9 +164,11 @@ struct HomeRootView: View {
                                 sourcePage: .singers
                             )
                         }
+                        .transition(pageTransition)
                     } else {
                         DesktopLoadingView(message: "در حال بارگذاری خواننده‌ها...")
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .transition(pageTransition)
                     }
                 case .players:
                     if let playersContent {
@@ -165,14 +178,17 @@ struct HomeRootView: View {
                                 sourcePage: .players
                             )
                         }
+                        .transition(pageTransition)
                     } else {
                         DesktopLoadingView(message: "در حال بارگذاری نوازندگان...")
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .transition(pageTransition)
                     }
                 case .artistDetails:
                     if isArtistDetailsLoading {
                         DesktopLoadingView(message: "در حال بارگذاری هنرمند...")
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .transition(pageTransition)
                     } else if let selectedArtistDetails {
                         ArtistDetailsContentView(
                             artist: selectedArtistDetails,
@@ -196,11 +212,38 @@ struct HomeRootView: View {
                                     ProgramDetailsFactory.fromTrackTitle(trackTitle),
                                     sourcePage: .artistDetails
                                 )
-                            }
+                            },
+                            onPlayTrack: { row in
+                                let id: String = {
+                                    if let trackId = row.trackId {
+                                        return "track-\(trackId)"
+                                    }
+                                    return "artist-\(selectedArtistDetails.id)-\(row.title)-\(row.subtitle)-\(row.duration)"
+                                }()
+                                let track = TrackRowItem(
+                                    id: id,
+                                    trackId: row.trackId,
+                                    title: row.title,
+                                    subtitle: row.subtitle,
+                                    duration: row.duration,
+                                    audioURL: row.audioURL,
+                                    artworkURLs: [selectedArtistDetails.imageURL]
+                                )
+                                if audioPlayer.currentTrack?.id == track.id {
+                                    audioPlayer.togglePlayPause()
+                                } else {
+                                    audioPlayer.play(track: track)
+                                }
+                            },
+                            currentPlayingTrackId: audioPlayer.currentTrack?.id,
+                            isPlayerPlaying: audioPlayer.isPlaying,
+                            isPlayerLoading: audioPlayer.isLoading
                         )
+                        .transition(pageTransition)
                     } else {
                         DesktopLoadingView(message: "در حال بارگذاری هنرمند...")
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .transition(pageTransition)
                     }
                 case .programDetails:
                     if let selectedProgramDetails {
@@ -210,10 +253,12 @@ struct HomeRootView: View {
                                 handleBack()
                             }
                         )
+                        .transition(pageTransition)
                     }
                 }
             }
             .frame(maxHeight: .infinity)
+            .animation(pageAnimation, value: currentPage)
         }
     }
 
@@ -262,18 +307,22 @@ struct HomeRootView: View {
     }
 
     private func restore(from snapshot: NavigationSnapshot) {
-        currentPage = snapshot.page
-        selectedArtistDetails = snapshot.selectedArtistDetails
-        artistDetailsSourcePage = snapshot.artistDetailsSourcePage
-        selectedProgramDetails = snapshot.selectedProgramDetails
-        programDetailsSourcePage = snapshot.programDetailsSourcePage
-        isArtistDetailsLoading = snapshot.isArtistDetailsLoading
+        withAnimation(pageAnimation) {
+            currentPage = snapshot.page
+            selectedArtistDetails = snapshot.selectedArtistDetails
+            artistDetailsSourcePage = snapshot.artistDetailsSourcePage
+            selectedProgramDetails = snapshot.selectedProgramDetails
+            programDetailsSourcePage = snapshot.programDetailsSourcePage
+            isArtistDetailsLoading = snapshot.isArtistDetailsLoading
+        }
     }
 
     private func navigateTo(_ page: DesktopPage) {
         guard currentPage != page else { return }
         backStack.append(makeSnapshot())
-        currentPage = page
+        withAnimation(pageAnimation) {
+            currentPage = page
+        }
     }
 
     private func handleBack() {
@@ -296,8 +345,10 @@ struct HomeRootView: View {
                 let remainingNs = UInt64((minVisible - elapsed) * 1_000_000_000)
                 try? await Task.sleep(nanoseconds: remainingNs)
             }
-            singersContent = loaded
-            isSingersLoading = false
+            withAnimation(pageAnimation) {
+                singersContent = loaded
+                isSingersLoading = false
+            }
         }
     }
 
@@ -315,15 +366,19 @@ struct HomeRootView: View {
                 let remainingNs = UInt64((minVisible - elapsed) * 1_000_000_000)
                 try? await Task.sleep(nanoseconds: remainingNs)
             }
-            playersContent = loaded
-            isPlayersLoading = false
+            withAnimation(pageAnimation) {
+                playersContent = loaded
+                isPlayersLoading = false
+            }
         }
     }
 
     private func openArtistDetails(_ details: ArtistDetailsItem, sourcePage: DesktopPage) {
         backStack.append(makeSnapshot())
         artistDetailsSourcePage = sourcePage
-        currentPage = .artistDetails
+        withAnimation(pageAnimation) {
+            currentPage = .artistDetails
+        }
         selectedArtistDetails = nil
         isArtistDetailsLoading = true
         guard let artistId = details.artistId else {
@@ -338,7 +393,9 @@ struct HomeRootView: View {
             let start = Date()
             guard let loaded = await ArtistDetailsDataLoader.load(artistId: artistId, fallback: details) else {
                 if artistDetailsLoadRequestId == requestId {
-                    isArtistDetailsLoading = false
+                    withAnimation(pageAnimation) {
+                        isArtistDetailsLoading = false
+                    }
                 }
                 return
             }
@@ -349,8 +406,10 @@ struct HomeRootView: View {
                 try? await Task.sleep(nanoseconds: remainingNs)
             }
             guard artistDetailsLoadRequestId == requestId else { return }
-            selectedArtistDetails = loaded
-            isArtistDetailsLoading = false
+            withAnimation(pageAnimation) {
+                selectedArtistDetails = loaded
+                isArtistDetailsLoading = false
+            }
         }
     }
 
@@ -358,7 +417,9 @@ struct HomeRootView: View {
         backStack.append(makeSnapshot())
         selectedProgramDetails = details
         programDetailsSourcePage = sourcePage
-        currentPage = .programDetails
+        withAnimation(pageAnimation) {
+            currentPage = .programDetails
+        }
     }
 }
 
