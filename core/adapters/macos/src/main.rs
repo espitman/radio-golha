@@ -35,6 +35,10 @@ enum Command {
         #[arg(long)]
         db: String,
     },
+    SearchOptionsJson {
+        #[arg(long)]
+        db: String,
+    },
     ProgramsByCategoryJson {
         #[arg(long)]
         db: String,
@@ -91,6 +95,9 @@ fn main() -> Result<()> {
         }
         Command::MusiciansJson { db } => {
             println!("{}", build_musicians_json(&db));
+        }
+        Command::SearchOptionsJson { db } => {
+            println!("{}", build_search_options_json(&db));
         }
         Command::ProgramsByCategoryJson { db, category_id } => {
             println!("{}", build_programs_by_category_json(&db, category_id));
@@ -188,6 +195,16 @@ fn build_program_detail_json(db_path: &str, program_id: i64) -> String {
     match RadioGolhaCore::open(db_path) {
         Ok(core) => match core.get_program_detail(program_id) {
             Ok(detail) => json!(detail).to_string(),
+            Err(error) => json!({ "error": error.to_string() }).to_string(),
+        },
+        Err(error) => json!({ "error": error.to_string() }).to_string(),
+    }
+}
+
+fn build_search_options_json(db_path: &str) -> String {
+    match RadioGolhaCore::open(db_path) {
+        Ok(core) => match core.program_search_options() {
+            Ok(options) => json!(options).to_string(),
             Err(error) => json!({ "error": error.to_string() }).to_string(),
         },
         Err(error) => json!({ "error": error.to_string() }).to_string(),

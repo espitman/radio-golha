@@ -2,6 +2,7 @@ import SwiftUI
 
 private enum DesktopPage {
     case home
+    case search
     case singers
     case players
     case programTracks
@@ -109,6 +110,8 @@ struct HomeRootView: View {
                 case .artists:
                     navigateTo(.singers)
                     ensureSingersLoaded()
+                case .search:
+                    navigateTo(.search)
                 case .instrumentalists:
                     navigateTo(.players)
                     ensurePlayersLoaded()
@@ -189,6 +192,9 @@ struct HomeRootView: View {
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .transition(pageTransition)
                     }
+                case .search:
+                    SearchContentView()
+                        .transition(pageTransition)
                 case .players:
                     if let playersContent {
                         PlayersContentView(players: playersContent) { player in
@@ -324,6 +330,8 @@ struct HomeRootView: View {
             return .programs
         case .singers:
             return .artists
+        case .search:
+            return .search
         case .players:
             return .instrumentalists
         case .programTracks:
@@ -334,6 +342,8 @@ struct HomeRootView: View {
                 return .artists
             case .players:
                 return .instrumentalists
+            case .search:
+                return .search
             default:
                 return .programs
             }
@@ -343,6 +353,8 @@ struct HomeRootView: View {
                 return .artists
             case .players:
                 return .instrumentalists
+            case .search:
+                return .search
             default:
                 return .programs
             }

@@ -3,6 +3,7 @@ import AppKit
 
 enum DesktopMainTab {
     case programs
+    case search
     case artists
     case instrumentalists
     case modes
@@ -25,6 +26,7 @@ struct DesktopTopNavigationBar: View {
 
                 HStack(spacing: 20) {
                     navButton(title: "برنامه‌ها", tab: .programs)
+                    navButton(title: "جستجو", tab: .search)
                     navButton(title: "خواننده‌ها", tab: .artists)
                     navButton(title: "نوازندگان", tab: .instrumentalists)
                     navButton(title: "دستگاه‌ها", tab: .modes)
