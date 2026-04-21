@@ -1,5 +1,6 @@
 import Foundation
 import AVFoundation
+import AppKit
 
 @MainActor
 final class DesktopAudioPlayer: ObservableObject {
@@ -13,23 +14,61 @@ final class DesktopAudioPlayer: ObservableObject {
     private var timeObserverToken: Any?
     private var itemStatusObserver: NSKeyValueObservation?
     private var timeControlObserver: NSKeyValueObservation?
+    private var lifecycleObservers: [NSObjectProtocol] = []
+    private var pendingStartSeconds: Double?
+    private var pendingAutoPlay = true
+    private var lastPersistedAt = Date.distantPast
+
+    private static let persistedStateKey = "radioGolha.desktop.audio.playbackState.v1"
+
+    init() {
+        registerLifecycleObservers()
+        restorePersistedStateIfAvailable()
+    }
+
+    deinit {
+        if let token = timeObserverToken {
+            player?.removeTimeObserver(token)
+            timeObserverToken = nil
+        }
+        lifecycleObservers.forEach(NotificationCenter.default.removeObserver)
+        lifecycleObservers.removeAll()
+    }
 
     func play(track: TrackRowItem) {
+        startPlayback(track: track, startAtSeconds: nil, autoPlay: true)
+    }
+
+    private func startPlayback(track: TrackRowItem, startAtSeconds: Double?, autoPlay: Bool) {
         guard let urlString = track.audioURL, let url = URL(string: urlString) else {
             return
         }
 
         if currentTrack?.id == track.id {
-            player?.play()
-            isPlaying = true
-            isLoading = false
+            if let startAtSeconds {
+                seekTo(seconds: startAtSeconds)
+            }
+            if autoPlay {
+                player?.play()
+                isPlaying = true
+                isLoading = false
+            } else {
+                player?.pause()
+                isPlaying = false
+                isLoading = false
+            }
+            persistState(force: true)
             return
         }
 
-        teardownObservers()
+        teardownObservers(resetTrack: false)
         currentTrack = track
+        currentTime = 0
+        duration = 0
         isLoading = true
         isPlaying = false
+        pendingStartSeconds = startAtSeconds
+        pendingAutoPlay = autoPlay
 
         let headers = [
             "Referer": "https://www.golha.co.uk/",
@@ -40,7 +79,12 @@ final class DesktopAudioPlayer: ObservableObject {
         let player = AVPlayer(playerItem: item)
         self.player = player
         bindObservers(to: item)
-        player.play()
+
+        if autoPlay {
+            player.play()
+            isPlaying = true
+        }
+        persistState(force: true)
     }
 
     func togglePlayPause() {
@@ -53,6 +97,7 @@ final class DesktopAudioPlayer: ObservableObject {
             player?.play()
             isPlaying = true
         }
+        persistState(force: true)
     }
 
     var progress: Double {
@@ -64,9 +109,8 @@ final class DesktopAudioPlayer: ObservableObject {
         guard duration > 0 else { return }
         let clamped = min(max(progress, 0), 1)
         let seconds = duration * clamped
-        let target = CMTime(seconds: seconds, preferredTimescale: 600)
-        player?.seek(to: target, toleranceBefore: .zero, toleranceAfter: .zero)
-        currentTime = seconds
+        seekTo(seconds: seconds)
+        persistState(force: true)
     }
 
     private func bindObservers(to item: AVPlayerItem) {
@@ -76,9 +120,25 @@ final class DesktopAudioPlayer: ObservableObject {
                 if item.status == .readyToPlay {
                     let sec = item.duration.seconds
                     self.duration = sec.isFinite && sec > 0 ? sec : 0
+
+                    if let startSeconds = self.pendingStartSeconds {
+                        self.seekTo(seconds: startSeconds)
+                    }
+                    self.pendingStartSeconds = nil
+
+                    if self.pendingAutoPlay {
+                        self.player?.play()
+                        self.isPlaying = true
+                    } else {
+                        self.player?.pause()
+                        self.isPlaying = false
+                        self.isLoading = false
+                    }
+                    self.persistState(force: true)
                 } else if item.status == .failed {
                     self.isLoading = false
                     self.isPlaying = false
+                    self.persistState(force: true)
                 }
             }
         }
@@ -119,21 +179,126 @@ final class DesktopAudioPlayer: ObservableObject {
                     if current > 0, self.isLoading {
                         self.isLoading = false
                     }
+                    self.persistState(force: false)
                 }
             }
         }
     }
 
-    private func teardownObservers() {
+    private func teardownObservers(resetTrack: Bool = true) {
         if let token = timeObserverToken {
             player?.removeTimeObserver(token)
             timeObserverToken = nil
         }
         itemStatusObserver = nil
         timeControlObserver = nil
+        pendingStartSeconds = nil
+        pendingAutoPlay = true
         isLoading = false
         isPlaying = false
         currentTime = 0
         duration = 0
+        if resetTrack {
+            currentTrack = nil
+            persistState(force: true)
+        }
     }
+
+    private func seekTo(seconds: Double) {
+        let clamped = max(0, seconds)
+        let target = CMTime(seconds: clamped, preferredTimescale: 600)
+        player?.seek(to: target, toleranceBefore: .zero, toleranceAfter: .zero)
+        currentTime = clamped
+    }
+
+    private func registerLifecycleObservers() {
+        let center = NotificationCenter.default
+        lifecycleObservers.append(
+            center.addObserver(
+                forName: NSApplication.willResignActiveNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                Task { @MainActor in
+                    self?.persistState(force: true)
+                }
+            }
+        )
+        lifecycleObservers.append(
+            center.addObserver(
+                forName: NSApplication.willTerminateNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                Task { @MainActor in
+                    self?.persistState(force: true)
+                }
+            }
+        )
+    }
+
+    private func persistState(force: Bool) {
+        guard let track = currentTrack else {
+            UserDefaults.standard.removeObject(forKey: Self.persistedStateKey)
+            return
+        }
+
+        let now = Date()
+        if !force, now.timeIntervalSince(lastPersistedAt) < 1.0 {
+            return
+        }
+        lastPersistedAt = now
+
+        let state = PersistedPlaybackState(
+            id: track.id,
+            trackId: track.trackId,
+            title: track.title,
+            subtitle: track.subtitle,
+            duration: track.duration,
+            audioURL: track.audioURL,
+            artworkURLs: track.artworkURLs,
+            currentTime: currentTime,
+            wasPlaying: isPlaying
+        )
+
+        guard let encoded = try? JSONEncoder().encode(state) else { return }
+        UserDefaults.standard.set(encoded, forKey: Self.persistedStateKey)
+    }
+
+    private func restorePersistedStateIfAvailable() {
+        guard let encoded = UserDefaults.standard.data(forKey: Self.persistedStateKey),
+              let state = try? JSONDecoder().decode(PersistedPlaybackState.self, from: encoded),
+              let audioURL = state.audioURL,
+              !audioURL.isEmpty else {
+            return
+        }
+
+        let track = TrackRowItem(
+            id: state.id,
+            trackId: state.trackId,
+            title: state.title,
+            subtitle: state.subtitle,
+            duration: state.duration,
+            audioURL: state.audioURL,
+            artworkURLs: state.artworkURLs
+        )
+
+        startPlayback(
+            track: track,
+            startAtSeconds: max(0, state.currentTime),
+            autoPlay: state.wasPlaying
+        )
+    }
+}
+
+private struct PersistedPlaybackState: Codable {
+    let id: String
+    let trackId: Int64?
+    let title: String
+    let subtitle: String
+    let duration: String
+    let audioURL: String?
+    let artworkURLs: [String]
+    let currentTime: Double
+    let wasPlaying: Bool
 }
