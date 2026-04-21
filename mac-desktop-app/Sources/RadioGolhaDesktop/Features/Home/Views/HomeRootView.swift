@@ -19,6 +19,7 @@ private struct NavigationSnapshot {
     let selectedProgramTracks: [TrackRowItem]?
     let isProgramTracksLoading: Bool
     let isArtistDetailsLoading: Bool
+    let isProgramDetailsLoading: Bool
 }
 
 struct HomeRootView: View {
@@ -38,10 +39,12 @@ struct HomeRootView: View {
     @State private var isPlayersLoading = false
     @State private var isProgramTracksLoading = false
     @State private var isArtistDetailsLoading = false
+    @State private var isProgramDetailsLoading = false
     @State private var homeDataLoaded = false
     @State private var singersDataLoaded = false
     @State private var playersDataLoaded = false
     @State private var backStack: [NavigationSnapshot] = []
+    @State private var programDetailsLoadRequestId: String = ""
     @StateObject private var audioPlayer = DesktopAudioPlayer()
     private let pageTransition = AnyTransition.asymmetric(
         insertion: .offset(y: -10).combined(with: .opacity),
@@ -137,9 +140,10 @@ struct HomeRootView: View {
                             onProgramCategoryTap: { category in
                                 openProgramTracks(category)
                             },
-                            onProgramTap: { trackTitle in
+                            onProgramTap: { row in
                                 openProgramDetails(
-                                    ProgramDetailsFactory.fromTrackTitle(trackTitle),
+                                    programId: row.trackId,
+                                    fallbackTitle: row.title,
                                     sourcePage: .home
                                 )
                             },
@@ -201,7 +205,8 @@ struct HomeRootView: View {
                                 },
                                 onOpenProgram: { track in
                                     openProgramDetails(
-                                        ProgramDetailsFactory.fromTrackTitle(track.title),
+                                        programId: track.trackId,
+                                        fallbackTitle: track.title,
                                         sourcePage: .programTracks
                                     )
                                 },
@@ -243,9 +248,10 @@ struct HomeRootView: View {
                                     sourcePage: artistDetailsSourcePage
                                 )
                             },
-                            onOpenProgram: { trackTitle in
+                            onOpenProgram: { row in
                                 openProgramDetails(
-                                    ProgramDetailsFactory.fromTrackTitle(trackTitle),
+                                    programId: row.programId ?? row.trackId,
+                                    fallbackTitle: row.title,
                                     sourcePage: .artistDetails
                                 )
                             },
@@ -278,7 +284,11 @@ struct HomeRootView: View {
                             .transition(pageTransition)
                     }
                 case .programDetails:
-                    if let selectedProgramDetails {
+                    if isProgramDetailsLoading {
+                        DesktopLoadingView(message: "در حال بارگذاری برنامه...")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .transition(pageTransition)
+                    } else if let selectedProgramDetails {
                         ProgramDetailsContentView(
                             program: selectedProgramDetails,
                             onBack: {
@@ -286,6 +296,10 @@ struct HomeRootView: View {
                             }
                         )
                         .transition(pageTransition)
+                    } else {
+                        DesktopLoadingView(message: "در حال بارگذاری برنامه...")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .transition(pageTransition)
                     }
                 }
             }
@@ -339,7 +353,8 @@ struct HomeRootView: View {
             selectedProgramCategory: selectedProgramCategory,
             selectedProgramTracks: selectedProgramTracks,
             isProgramTracksLoading: isProgramTracksLoading,
-            isArtistDetailsLoading: isArtistDetailsLoading
+            isArtistDetailsLoading: isArtistDetailsLoading,
+            isProgramDetailsLoading: isProgramDetailsLoading
         )
     }
 
@@ -354,6 +369,7 @@ struct HomeRootView: View {
             selectedProgramTracks = snapshot.selectedProgramTracks
             isProgramTracksLoading = snapshot.isProgramTracksLoading
             isArtistDetailsLoading = snapshot.isArtistDetailsLoading
+            isProgramDetailsLoading = snapshot.isProgramDetailsLoading
         }
     }
 
@@ -368,6 +384,7 @@ struct HomeRootView: View {
     private func handleBack() {
         guard let snapshot = backStack.popLast() else { return }
         artistDetailsLoadRequestId = UUID().uuidString
+        programDetailsLoadRequestId = UUID().uuidString
         restore(from: snapshot)
     }
 
@@ -453,12 +470,42 @@ struct HomeRootView: View {
         }
     }
 
-    private func openProgramDetails(_ details: ProgramDetailsItem, sourcePage: DesktopPage) {
+    private func openProgramDetails(programId: Int64?, fallbackTitle: String, sourcePage: DesktopPage) {
         backStack.append(makeSnapshot())
-        selectedProgramDetails = details
         programDetailsSourcePage = sourcePage
         withAnimation(pageAnimation) {
             currentPage = .programDetails
+        }
+
+        selectedProgramDetails = nil
+        isProgramDetailsLoading = true
+
+        guard let programId else {
+            withAnimation(pageAnimation) {
+                selectedProgramDetails = ProgramDetailsFactory.fromTrackTitle(fallbackTitle)
+                isProgramDetailsLoading = false
+            }
+            return
+        }
+
+        let requestId = UUID().uuidString
+        programDetailsLoadRequestId = requestId
+
+        Task {
+            let start = Date()
+            let loaded = await ProgramDetailsDataLoader.load(programId: programId, fallbackTitle: fallbackTitle)
+                ?? ProgramDetailsFactory.fromTrackTitle(fallbackTitle)
+            let elapsed = Date().timeIntervalSince(start)
+            let minVisible = 0.3
+            if elapsed < minVisible {
+                let remainingNs = UInt64((minVisible - elapsed) * 1_000_000_000)
+                try? await Task.sleep(nanoseconds: remainingNs)
+            }
+            guard programDetailsLoadRequestId == requestId else { return }
+            withAnimation(pageAnimation) {
+                selectedProgramDetails = loaded
+                isProgramDetailsLoading = false
+            }
         }
     }
 

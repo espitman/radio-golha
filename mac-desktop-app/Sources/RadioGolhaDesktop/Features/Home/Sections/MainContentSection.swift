@@ -10,7 +10,7 @@ struct MainContentSection: View {
     var isPlayerLoading: Bool = false
     var onArtistTap: (ArtistItem) -> Void = { _ in }
     var onProgramCategoryTap: (ProgramItem) -> Void = { _ in }
-    var onProgramTap: (String) -> Void = { _ in }
+    var onProgramTap: (TrackRowItem) -> Void = { _ in }
     var onShowAllSingers: () -> Void = {}
     var onShowAllInstrumentalists: () -> Void = {}
 
@@ -299,7 +299,7 @@ private struct TopListsSection: View {
     var currentPlayingTrackId: String? = nil
     var isPlayerPlaying: Bool = false
     var isPlayerLoading: Bool = false
-    var onProgramTap: (String) -> Void = { _ in }
+    var onProgramTap: (TrackRowItem) -> Void = { _ in }
 
     var body: some View {
         HStack(alignment: .top, spacing: 48) {
@@ -338,7 +338,7 @@ private struct ListBlock: View {
     var currentPlayingTrackId: String? = nil
     var isPlayerPlaying: Bool = false
     var isPlayerLoading: Bool = false
-    var onProgramTap: (String) -> Void = { _ in }
+    var onProgramTap: (TrackRowItem) -> Void = { _ in }
     @State private var isRefreshing = false
 
     var body: some View {
@@ -426,7 +426,7 @@ private struct ListRow: View {
     let isPlayerPlaying: Bool
     let isPlayerLoading: Bool
     var onPlayTrack: (TrackRowItem) -> Void = { _ in }
-    var onProgramTap: (String) -> Void = { _ in }
+    var onProgramTap: (TrackRowItem) -> Void = { _ in }
 
     var body: some View {
         HStack(spacing: 16) {
@@ -450,7 +450,7 @@ private struct ListRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Button {
-                    onProgramTap(row.title)
+                    onProgramTap(row)
                 } label: {
                     Text(row.title)
                         .font(.vazir(10.5, .bold))

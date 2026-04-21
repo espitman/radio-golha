@@ -1,6 +1,7 @@
 import Foundation
 
 struct ProgramDetailsItem: Identifiable {
+    let programId: Int64?
     let id: String
     let title: String
     let modeTitle: String
@@ -12,6 +13,7 @@ struct ProgramDetailsItem: Identifiable {
     let lyrics: [ProgramLyricItem]
 
     init(
+        programId: Int64? = nil,
         title: String,
         modeTitle: String,
         totalDuration: String,
@@ -21,7 +23,8 @@ struct ProgramDetailsItem: Identifiable {
         timeline: [ProgramTimelineItem],
         lyrics: [ProgramLyricItem]
     ) {
-        self.id = title
+        self.programId = programId
+        self.id = programId.map { "program-\($0)" } ?? title
         self.title = title
         self.modeTitle = modeTitle
         self.totalDuration = totalDuration
@@ -73,6 +76,7 @@ enum ProgramDetailsFactory {
 
     private static func baseProgram(title: String) -> ProgramDetailsItem {
         ProgramDetailsItem(
+            programId: nil,
             title: title,
             modeTitle: "بیات ترک",
             totalDuration: "۳۵:۱۰",

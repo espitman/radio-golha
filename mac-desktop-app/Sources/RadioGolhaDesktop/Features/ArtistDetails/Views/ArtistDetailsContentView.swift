@@ -4,7 +4,7 @@ struct ArtistDetailsContentView: View {
     let artist: ArtistDetailsItem
     var onBack: () -> Void = {}
     var onOpenArtist: (ArtistCollaboratorItem) -> Void = { _ in }
-    var onOpenProgram: (String) -> Void = { _ in }
+    var onOpenProgram: (ArtistProgramRow) -> Void = { _ in }
     var onPlayTrack: (ArtistProgramRow) -> Void = { _ in }
     var currentPlayingTrackId: String? = nil
     var isPlayerPlaying: Bool = false
@@ -132,7 +132,7 @@ struct ArtistDetailsContentView: View {
                             onPlayTrack(row)
                         }
                     ) {
-                        onOpenProgram(row.title)
+                        onOpenProgram(row)
                     }
                     if index < artist.programs.count - 1 {
                         Divider().overlay(Color(hex: 0x1C1C17).opacity(0.06))

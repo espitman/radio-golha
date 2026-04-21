@@ -45,10 +45,27 @@ struct ArtistStatItem: Identifiable {
 struct ArtistProgramRow: Identifiable {
     let id = UUID()
     let trackId: Int64?
+    let programId: Int64?
     let title: String
     let subtitle: String
     let duration: String
     let audioURL: String?
+
+    init(
+        trackId: Int64? = nil,
+        programId: Int64? = nil,
+        title: String,
+        subtitle: String,
+        duration: String,
+        audioURL: String? = nil
+    ) {
+        self.trackId = trackId
+        self.programId = programId
+        self.title = title
+        self.subtitle = subtitle
+        self.duration = duration
+        self.audioURL = audioURL
+    }
 }
 
 struct ArtistCollaboratorItem: Identifiable {

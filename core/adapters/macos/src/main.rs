@@ -47,6 +47,12 @@ enum Command {
         #[arg(long)]
         ids_json: String,
     },
+    ProgramDetailJson {
+        #[arg(long)]
+        db: String,
+        #[arg(long)]
+        program_id: i64,
+    },
     RecordPlayback {
         #[arg(long)]
         user_db: String,
@@ -91,6 +97,9 @@ fn main() -> Result<()> {
         }
         Command::ProgramsByIdsJson { db, ids_json } => {
             println!("{}", build_programs_by_ids_json(&db, &ids_json));
+        }
+        Command::ProgramDetailJson { db, program_id } => {
+            println!("{}", build_program_detail_json(&db, program_id));
         }
         Command::RecordPlayback { user_db, track_id } => {
             println!("{}", record_playback(&user_db, track_id));
@@ -171,6 +180,16 @@ fn build_programs_by_ids_json(db_path: &str, ids_json: &str) -> String {
             let programs: Vec<_> = rows.filter_map(|r| r.ok()).collect();
             json!(programs).to_string()
         }
+        Err(error) => json!({ "error": error.to_string() }).to_string(),
+    }
+}
+
+fn build_program_detail_json(db_path: &str, program_id: i64) -> String {
+    match RadioGolhaCore::open(db_path) {
+        Ok(core) => match core.get_program_detail(program_id) {
+            Ok(detail) => json!(detail).to_string(),
+            Err(error) => json!({ "error": error.to_string() }).to_string(),
+        },
         Err(error) => json!({ "error": error.to_string() }).to_string(),
     }
 }

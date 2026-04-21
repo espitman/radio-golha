@@ -30,6 +30,7 @@ enum ArtistDetailsDataLoader {
             let singers = item.artist.trimmingCharacters(in: .whitespacesAndNewlines)
             return ArtistProgramRow(
                 trackId: item.id,
+                programId: item.id,
                 title: item.title,
                 subtitle: singers.isEmpty ? "—" : singers,
                 duration: normalizedDuration(item.duration),
