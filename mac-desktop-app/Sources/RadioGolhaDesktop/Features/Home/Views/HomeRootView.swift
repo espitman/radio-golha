@@ -16,9 +16,15 @@ struct HomeRootView: View {
     @State private var programDetailsSourcePage: DesktopPage = .home
     @State private var artistDetailsLoadRequestId: String = ""
     @State private var homeContent: HomeContentData? = nil
+    @State private var singersContent: [SingerListItem]? = nil
+    @State private var playersContent: [PlayerListItem]? = nil
     @State private var isHomeLoading = false
+    @State private var isSingersLoading = false
+    @State private var isPlayersLoading = false
     @State private var isArtistDetailsLoading = false
     @State private var homeDataLoaded = false
+    @State private var singersDataLoaded = false
+    @State private var playersDataLoaded = false
     @StateObject private var audioPlayer = DesktopAudioPlayer()
 
     var body: some View {
@@ -63,8 +69,10 @@ struct HomeRootView: View {
                 switch tab {
                 case .artists:
                     currentPage = .singers
+                    ensureSingersLoaded()
                 case .instrumentalists:
                     currentPage = .players
+                    ensurePlayersLoaded()
                 case .programs:
                     currentPage = .home
                 default:
@@ -96,18 +104,28 @@ struct HomeRootView: View {
                             },
                             currentPlayingTrackId: audioPlayer.currentTrack?.id,
                             isPlayerPlaying: audioPlayer.isPlaying,
-                            isPlayerLoading: audioPlayer.isLoading
-                        ) { artist in
-                            openArtistDetails(
-                                ArtistDetailsFactory.fromHomeArtist(artist),
-                                sourcePage: .home
-                            )
-                        } onProgramTap: { trackTitle in
-                            openProgramDetails(
-                                ProgramDetailsFactory.fromTrackTitle(trackTitle),
-                                sourcePage: .home
-                            )
-                        }
+                            isPlayerLoading: audioPlayer.isLoading,
+                            onArtistTap: { artist in
+                                openArtistDetails(
+                                    ArtistDetailsFactory.fromHomeArtist(artist),
+                                    sourcePage: .home
+                                )
+                            },
+                            onProgramTap: { trackTitle in
+                                openProgramDetails(
+                                    ProgramDetailsFactory.fromTrackTitle(trackTitle),
+                                    sourcePage: .home
+                                )
+                            },
+                            onShowAllSingers: {
+                                currentPage = .singers
+                                ensureSingersLoaded()
+                            },
+                            onShowAllInstrumentalists: {
+                                currentPage = .players
+                                ensurePlayersLoaded()
+                            }
+                        )
                     } else if isHomeLoading {
                         DesktopLoadingView(message: "در حال بارگذاری صفحه اصلی...")
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -116,18 +134,28 @@ struct HomeRootView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 case .singers:
-                    SingersContentView { singer in
-                        openArtistDetails(
-                            ArtistDetailsFactory.fromSinger(singer),
-                            sourcePage: .singers
-                        )
+                    if let singersContent {
+                        SingersContentView(singers: singersContent) { singer in
+                            openArtistDetails(
+                                ArtistDetailsFactory.fromSinger(singer),
+                                sourcePage: .singers
+                            )
+                        }
+                    } else {
+                        DesktopLoadingView(message: "در حال بارگذاری خواننده‌ها...")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 case .players:
-                    PlayersContentView { player in
-                        openArtistDetails(
-                            ArtistDetailsFactory.fromPlayer(player),
-                            sourcePage: .players
-                        )
+                    if let playersContent {
+                        PlayersContentView(players: playersContent) { player in
+                            openArtistDetails(
+                                ArtistDetailsFactory.fromPlayer(player),
+                                sourcePage: .players
+                            )
+                        }
+                    } else {
+                        DesktopLoadingView(message: "در حال بارگذاری نوازندگان...")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 case .artistDetails:
                     if isArtistDetailsLoading {
@@ -203,6 +231,44 @@ struct HomeRootView: View {
             default:
                 return .programs
             }
+        }
+    }
+
+    private func ensureSingersLoaded() {
+        guard !singersDataLoaded && !isSingersLoading else { return }
+        singersDataLoaded = true
+        isSingersLoading = true
+
+        Task {
+            let start = Date()
+            let loaded = await SingersDataLoader.load()
+            let elapsed = Date().timeIntervalSince(start)
+            let minVisible = 0.35
+            if elapsed < minVisible {
+                let remainingNs = UInt64((minVisible - elapsed) * 1_000_000_000)
+                try? await Task.sleep(nanoseconds: remainingNs)
+            }
+            singersContent = loaded
+            isSingersLoading = false
+        }
+    }
+
+    private func ensurePlayersLoaded() {
+        guard !playersDataLoaded && !isPlayersLoading else { return }
+        playersDataLoaded = true
+        isPlayersLoading = true
+
+        Task {
+            let start = Date()
+            let loaded = await PlayersDataLoader.load()
+            let elapsed = Date().timeIntervalSince(start)
+            let minVisible = 0.35
+            if elapsed < minVisible {
+                let remainingNs = UInt64((minVisible - elapsed) * 1_000_000_000)
+                try? await Task.sleep(nanoseconds: remainingNs)
+            }
+            playersContent = loaded
+            isPlayersLoading = false
         }
     }
 

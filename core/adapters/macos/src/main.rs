@@ -26,6 +26,14 @@ enum Command {
         #[arg(long)]
         artist_id: i64,
     },
+    SingersJson {
+        #[arg(long)]
+        db: String,
+    },
+    MusiciansJson {
+        #[arg(long)]
+        db: String,
+    },
 }
 
 fn main() -> Result<()> {
@@ -41,9 +49,106 @@ fn main() -> Result<()> {
         Command::ArtistDetailJson { db, artist_id } => {
             println!("{}", build_artist_detail_json(&db, artist_id));
         }
+        Command::SingersJson { db } => {
+            println!("{}", build_singers_json(&db));
+        }
+        Command::MusiciansJson { db } => {
+            println!("{}", build_musicians_json(&db));
+        }
     }
 
     Ok(())
+}
+
+fn build_musicians_json(db_path: &str) -> String {
+    match RadioGolhaCore::open(db_path) {
+        Ok(core) => {
+            let conn = core.connection();
+            let mut stmt = match conn.prepare(
+                "
+                SELECT
+                  a.id,
+                  a.name,
+                  (
+                    SELECT i.name
+                    FROM program_performers pp2
+                    LEFT JOIN instrument i ON i.id = pp2.instrument_id
+                    WHERE pp2.performer_id = p.id AND i.name IS NOT NULL AND TRIM(i.name) <> ''
+                    GROUP BY i.id, i.name
+                    ORDER BY COUNT(*) DESC, i.name ASC
+                    LIMIT 1
+                  ) AS instrument_name,
+                  a.avatar,
+                  COUNT(DISTINCT pp.program_id) AS total
+                FROM program_performers pp
+                JOIN performer p ON p.id = pp.performer_id
+                JOIN artist a ON a.id = p.artist_id
+                GROUP BY p.id, a.id, a.name, a.avatar
+                ORDER BY total DESC, a.name ASC
+                ",
+            ) {
+                Ok(stmt) => stmt,
+                Err(error) => return json!({ "error": error.to_string() }).to_string(),
+            };
+
+            let rows = match stmt.query_map([], |row| {
+                let instrument: Option<String> = row.get(2)?;
+                Ok(json!({
+                    "id": row.get::<_, i64>(0)?,
+                    "name": row.get::<_, String>(1)?,
+                    "instrument": instrument
+                        .filter(|v| !v.trim().is_empty())
+                        .unwrap_or_else(|| "نوازنده".to_string()),
+                    "avatar": row.get::<_, Option<String>>(3)?,
+                    "programCount": row.get::<_, i64>(4)?
+                }))
+            }) {
+                Ok(rows) => rows,
+                Err(error) => return json!({ "error": error.to_string() }).to_string(),
+            };
+
+            let musicians: Vec<_> = rows.filter_map(|r| r.ok()).collect();
+            json!(musicians).to_string()
+        }
+        Err(error) => json!({ "error": error.to_string() }).to_string(),
+    }
+}
+
+fn build_singers_json(db_path: &str) -> String {
+    match RadioGolhaCore::open(db_path) {
+        Ok(core) => {
+            let conn = core.connection();
+            let mut stmt = match conn.prepare(
+                "
+                SELECT a.id, a.name, a.avatar, COUNT(DISTINCT ps.program_id) AS total
+                FROM program_singers ps
+                JOIN singer s ON s.id = ps.singer_id
+                JOIN artist a ON a.id = s.artist_id
+                GROUP BY s.id, a.id, a.name, a.avatar
+                ORDER BY total DESC, a.name ASC
+                ",
+            ) {
+                Ok(stmt) => stmt,
+                Err(error) => return json!({ "error": error.to_string() }).to_string(),
+            };
+
+            let rows = match stmt.query_map([], |row| {
+                Ok(json!({
+                    "id": row.get::<_, i64>(0)?,
+                    "name": row.get::<_, String>(1)?,
+                    "avatar": row.get::<_, Option<String>>(2)?,
+                    "programCount": row.get::<_, i64>(3)?
+                }))
+            }) {
+                Ok(rows) => rows,
+                Err(error) => return json!({ "error": error.to_string() }).to_string(),
+            };
+
+            let singers: Vec<_> = rows.filter_map(|r| r.ok()).collect();
+            json!(singers).to_string()
+        }
+        Err(error) => json!({ "error": error.to_string() }).to_string(),
+    }
 }
 
 fn build_artist_detail_json(db_path: &str, artist_id: i64) -> String {

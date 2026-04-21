@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct PlayersContentView: View {
+    let players: [PlayerListItem]
     var onPlayerTap: (PlayerListItem) -> Void = { _ in }
     @State private var selectedInstrument = "همه"
     private let columns = Array(repeating: GridItem(.fixed(208), spacing: 32), count: 4)
@@ -24,7 +25,7 @@ struct PlayersContentView: View {
 
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
-                            ForEach(HomeMockData.playersPageInstruments, id: \.self) { instrument in
+                            ForEach(playersPageInstruments, id: \.self) { instrument in
                                 Button {
                                     selectedInstrument = instrument
                                 } label: {
@@ -48,7 +49,17 @@ struct PlayersContentView: View {
 
                     LazyVGrid(columns: columns, spacing: 32) {
                         ForEach(filteredItems) { item in
-                            PlayerCard(item: item) {
+                            ArtistCard(
+                                item: ArtistItem(
+                                    sourceArtistId: item.sourceArtistId,
+                                    name: item.name,
+                                    role: selectedInstrument == "همه"
+                                        ? "\(item.instrument) • \(item.programsCount)"
+                                        : item.programsCount,
+                                    imageURL: item.imageURL
+                                ),
+                                dark: false
+                            ) {
                                 onPlayerTap(item)
                             }
                         }
@@ -68,95 +79,28 @@ struct PlayersContentView: View {
         .frame(width: 1024)
         .background(Palette.surface)
         .environment(\.layoutDirection, .rightToLeft)
+        .onAppear {
+            if !playersPageInstruments.contains(selectedInstrument) {
+                selectedInstrument = "همه"
+            }
+        }
+        .onChange(of: playersPageInstruments) { _ in
+            if !playersPageInstruments.contains(selectedInstrument) {
+                selectedInstrument = "همه"
+            }
+        }
     }
 
     private var filteredItems: [PlayerListItem] {
-        guard selectedInstrument != "همه" else { return HomeMockData.playersPageItems }
-        return HomeMockData.playersPageItems.filter { $0.instrument.contains(selectedInstrument) }
+        guard selectedInstrument != "همه" else { return players }
+        return players.filter { $0.instrument.contains(selectedInstrument) }
     }
-}
 
-private struct PlayerCard: View {
-    let item: PlayerListItem
-    var onTap: (() -> Void)? = nil
-    @State private var isHovered = false
-
-    var body: some View {
-        VStack(spacing: 0) {
-            ZStack(alignment: .bottom) {
-                CachedRemoteImage(url: URL(string: item.imageURL)) { image in
-                    image
-                        .resizable()
-                        .scaledToFill()
-                        .grayscale(isHovered ? 0.0 : 0.85)
-                        .scaleEffect(isHovered ? 1.03 : 1.0)
-                } placeholder: {
-                    Rectangle().fill(Color(hex: 0xE5E2DA))
-                }
-                .frame(width: 208, height: 208)
-                .clipped()
-
-                LinearGradient(
-                    colors: [Palette.primary.opacity(0.62), .clear],
-                    startPoint: .bottom,
-                    endPoint: .top
-                )
-                .opacity(isHovered ? 1.0 : 0.0)
-                .frame(width: 208, height: 208)
-
-                Text("مشاهده آثار")
-                    .font(.vazir(9, .bold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 4)
-                    .overlay(
-                        Capsule().stroke(Color.white.opacity(0.4), lineWidth: 1)
-                    )
-                    .opacity(isHovered ? 1.0 : 0.0)
-                    .padding(.bottom, 20)
-            }
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text(item.name)
-                    .font(.vazir(15, .bold))
-                    .foregroundStyle(Palette.primary)
-
-                Text(item.instrument)
-                    .font(.vazir(10.5, .bold))
-                    .foregroundStyle(Palette.secondary)
-
-                HStack(spacing: 6) {
-                    Image(systemName: "music.note.list")
-                        .font(.system(size: 12, weight: .regular))
-                    Text(item.programsCount)
-                        .font(.vazir(9))
-                }
-                .foregroundStyle(Color(hex: 0x43474E))
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(20)
-            .background(.white)
-        }
-        .frame(width: 208, height: 300, alignment: .top)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(Palette.border.opacity(0.5), lineWidth: 1)
-        )
-        .shadow(
-            color: isHovered ? Palette.primary.opacity(0.14) : .clear,
-            radius: isHovered ? 20 : 0,
-            x: 0,
-            y: isHovered ? 8 : 0
-        )
-        .offset(y: isHovered ? -1 : 0)
-        .animation(.easeOut(duration: 0.25), value: isHovered)
-        .onHover { hovering in
-            isHovered = hovering
-        }
-        .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .onTapGesture {
-            onTap?()
-        }
+    private var playersPageInstruments: [String] {
+        let instruments = players
+            .map { $0.instrument.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        let unique = Array(Set(instruments)).sorted()
+        return ["همه"] + unique
     }
 }

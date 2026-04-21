@@ -10,6 +10,8 @@ struct MainContentSection: View {
     var isPlayerLoading: Bool = false
     var onArtistTap: (ArtistItem) -> Void = { _ in }
     var onProgramTap: (String) -> Void = { _ in }
+    var onShowAllSingers: () -> Void = {}
+    var onShowAllInstrumentalists: () -> Void = {}
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -33,6 +35,7 @@ struct MainContentSection: View {
                         title: "خوانندگان برجسته",
                         items: content.singers,
                         showAllAction: true,
+                        onShowAllAction: onShowAllSingers,
                         onArtistTap: onArtistTap
                     )
                     .padding(.horizontal, 48)
@@ -46,6 +49,7 @@ struct MainContentSection: View {
                         title: "نوازندگان برجسته",
                         items: content.instrumentalists,
                         showAllAction: true,
+                        onShowAllAction: onShowAllInstrumentalists,
                         onArtistTap: onArtistTap
                     )
                     .padding(.horizontal, 48)
@@ -161,7 +165,7 @@ private struct ProgramsGridSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 32) {
-            SectionHead(title: "برنامه‌ها", showAllAction: true)
+            SectionHead(title: "برنامه‌ها", showAllAction: false)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 24) {
@@ -217,11 +221,16 @@ private struct ArtistsGridSection: View {
     let title: String
     let items: [ArtistItem]
     let showAllAction: Bool
+    let onShowAllAction: () -> Void
     let onArtistTap: (ArtistItem) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 32) {
-            SectionHead(title: title, showAllAction: showAllAction)
+            SectionHead(
+                title: title,
+                showAllAction: showAllAction,
+                onShowAllAction: onShowAllAction
+            )
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 24) {
                     ForEach(items) { item in
@@ -437,6 +446,7 @@ private struct ListRow: View {
 private struct SectionHead: View {
     let title: String
     let showAllAction: Bool
+    var onShowAllAction: (() -> Void)? = nil
 
     var body: some View {
         HStack {
@@ -448,14 +458,19 @@ private struct SectionHead: View {
             Spacer(minLength: 0)
 
             if showAllAction {
-                HStack(spacing: 4) {
-                    Image(systemName: "arrow.left")
-                        .font(.system(size: 10, weight: .semibold))
-                    Text("مشاهده همه")
-                        .font(.vazir(10.5, .semibold))
+                Button {
+                    onShowAllAction?()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.left")
+                            .font(.system(size: 10, weight: .semibold))
+                        Text("نمایش همه")
+                            .font(.vazir(10.5, .semibold))
+                    }
+                    .foregroundStyle(Palette.secondary)
+                    .environment(\.layoutDirection, .leftToRight)
                 }
-                .foregroundStyle(Palette.secondary)
-                .environment(\.layoutDirection, .leftToRight)
+                .buttonStyle(.plain)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

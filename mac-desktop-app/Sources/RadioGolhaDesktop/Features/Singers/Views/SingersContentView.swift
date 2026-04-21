@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct SingersContentView: View {
+    let singers: [SingerListItem]
     var onSingerTap: (SingerListItem) -> Void = { _ in }
     @State private var selectedLetter = "همه"
     private let columns = Array(repeating: GridItem(.fixed(208), spacing: 32), count: 4)
@@ -24,7 +25,7 @@ struct SingersContentView: View {
 
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
-                            ForEach(HomeMockData.singersPageAlphabet, id: \.self) { letter in
+                            ForEach(singersPageAlphabet, id: \.self) { letter in
                                 Button {
                                     selectedLetter = letter
                                 } label: {
@@ -75,10 +76,53 @@ struct SingersContentView: View {
         .frame(width: 1024)
         .background(Palette.surface)
         .environment(\.layoutDirection, .rightToLeft)
+        .onChange(of: singersPageAlphabet) { _ in
+            if !singersPageAlphabet.contains(selectedLetter) {
+                selectedLetter = "همه"
+            }
+        }
     }
 
     private var filteredItems: [SingerListItem] {
-        guard selectedLetter != "همه" else { return HomeMockData.singersPageItems }
-        return HomeMockData.singersPageItems.filter { $0.name.hasPrefix(selectedLetter) }
+        guard selectedLetter != "همه" else { return singers }
+        return singers.filter { matchesLetter(name: $0.name, letterGroup: selectedLetter) }
+    }
+
+    private var singersPageAlphabet: [String] {
+        let allGroups = ["الف", "ب", "پ", "ت", "ج", "چ", "ح", "خ", "د", "ر", "ز", "س", "ش", "ع", "ق", "م", "ن", "و", "ه", "ی"]
+        let available = allGroups.filter { group in
+            singers.contains { matchesLetter(name: $0.name, letterGroup: group) }
+        }
+        return ["همه"] + available
+    }
+
+    private func matchesLetter(name: String, letterGroup: String) -> Bool {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let first = trimmed.first else { return false }
+        let head = String(first)
+
+        switch letterGroup {
+        case "الف": return ["ا", "آ", "أ", "إ"].contains(head)
+        case "ب": return head == "ب"
+        case "پ": return head == "پ"
+        case "ت": return head == "ت"
+        case "ج": return head == "ج"
+        case "چ": return head == "چ"
+        case "ح": return head == "ح"
+        case "خ": return head == "خ"
+        case "د": return head == "د"
+        case "ر": return head == "ر"
+        case "ز": return head == "ز"
+        case "س": return head == "س"
+        case "ش": return head == "ش"
+        case "ع": return head == "ع"
+        case "ق": return head == "ق"
+        case "م": return head == "م"
+        case "ن": return head == "ن"
+        case "و": return head == "و"
+        case "ه": return head == "ه"
+        case "ی": return ["ی", "ي"].contains(head)
+        default: return true
+        }
     }
 }
