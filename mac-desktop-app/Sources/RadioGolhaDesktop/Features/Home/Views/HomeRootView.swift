@@ -23,6 +23,7 @@ private struct NavigationSnapshot {
     let programDetailsSourcePage: DesktopPage
     let selectedProgramCategory: ProgramItem?
     let selectedProgramTracksBadge: String
+    let selectedProgramTracksDuet: DuetBannerItem?
     let selectedProgramTracksSidebarItem: SidebarMenuItem?
     let selectedProgramTracks: [TrackRowItem]?
     let selectedSearchTracks: [TrackRowItem]?
@@ -43,6 +44,7 @@ struct HomeRootView: View {
     @State private var programDetailsSourcePage: DesktopPage = .home
     @State private var selectedProgramCategory: ProgramItem? = nil
     @State private var selectedProgramTracksBadge: String = ""
+    @State private var selectedProgramTracksDuet: DuetBannerItem? = nil
     @State private var selectedProgramTracksSidebarItem: SidebarMenuItem? = nil
     @State private var selectedProgramTracks: [TrackRowItem]? = nil
     @State private var selectedSearchTracks: [TrackRowItem]? = nil
@@ -244,6 +246,9 @@ struct HomeRootView: View {
                                     fallbackTitle: row.title,
                                     sourcePage: .home
                                 )
+                            },
+                            onDuetTap: { duet in
+                                openDuetTracksCollection(duet)
                             },
                             manualPlaylists: manualPlaylists,
                             onAddTrackToPlaylist: { playlistId, trackId in
@@ -479,6 +484,7 @@ struct HomeRootView: View {
                                 title: category.title,
                                 badge: selectedProgramTracksBadge.isEmpty ? "مجموعه \(category.title)" : selectedProgramTracksBadge,
                                 countText: category.count,
+                                duetBanner: selectedProgramTracksDuet,
                                 tracks: programTracksRows,
                                 onPlayTrack: { track in
                                     handleTrackPlayIntent(track)
@@ -718,6 +724,7 @@ struct HomeRootView: View {
             programDetailsSourcePage: programDetailsSourcePage,
             selectedProgramCategory: selectedProgramCategory,
             selectedProgramTracksBadge: selectedProgramTracksBadge,
+            selectedProgramTracksDuet: selectedProgramTracksDuet,
             selectedProgramTracksSidebarItem: selectedProgramTracksSidebarItem,
             selectedProgramTracks: selectedProgramTracks,
             selectedSearchTracks: selectedSearchTracks,
@@ -739,6 +746,7 @@ struct HomeRootView: View {
             programDetailsSourcePage = snapshot.programDetailsSourcePage
             selectedProgramCategory = snapshot.selectedProgramCategory
             selectedProgramTracksBadge = snapshot.selectedProgramTracksBadge
+            selectedProgramTracksDuet = snapshot.selectedProgramTracksDuet
             selectedProgramTracksSidebarItem = snapshot.selectedProgramTracksSidebarItem
             selectedProgramTracks = snapshot.selectedProgramTracks
             selectedSearchTracks = snapshot.selectedSearchTracks
@@ -1119,6 +1127,7 @@ struct HomeRootView: View {
         backStack.append(makeSnapshot())
         selectedProgramCategory = category
         selectedProgramTracksBadge = "مجموعه \(category.title)"
+        selectedProgramTracksDuet = nil
         selectedProgramTracksSidebarItem = nil
         selectedProgramTracks = nil
         isProgramTracksLoading = true
@@ -1194,21 +1203,44 @@ struct HomeRootView: View {
         openProgramTracksCollection(
             category: category,
             badge: "لیست پخش",
+            duetBanner: nil,
             sidebarItem: .myPlaylists
         ) {
             await TrackCollectionsDataLoader.loadByTrackIds(ids)
         }
     }
 
+    private func openDuetTracksCollection(_ duet: DuetBannerItem) {
+        let title = "\(duet.singer1) و \(duet.singer2)"
+        let category = ProgramItem(
+            title: title,
+            count: "\(duet.trackCount) برنامه",
+            symbol: "music.note.list"
+        )
+        openProgramTracksCollection(
+            category: category,
+            badge: "دوئت ماندگار",
+            duetBanner: duet,
+            sidebarItem: nil
+        ) {
+            await TrackCollectionsDataLoader.loadDuetPrograms(
+                singer1: duet.singer1,
+                singer2: duet.singer2
+            )
+        }
+    }
+
     private func openProgramTracksCollection(
         category: ProgramItem,
         badge: String,
+        duetBanner: DuetBannerItem? = nil,
         sidebarItem: SidebarMenuItem?,
         loader: @escaping () async -> [TrackRowItem]
     ) {
         backStack.append(makeSnapshot())
         selectedProgramCategory = category
         selectedProgramTracksBadge = badge
+        selectedProgramTracksDuet = duetBanner
         selectedProgramTracksSidebarItem = sidebarItem
         selectedProgramTracks = nil
         isProgramTracksLoading = true

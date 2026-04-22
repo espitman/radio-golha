@@ -46,6 +46,15 @@ struct ModeItem: Identifiable {
     let title: String
 }
 
+struct DuetBannerItem: Identifiable {
+    var id: String { "\(singer1)|\(singer2)" }
+    let singer1: String
+    let singer2: String
+    let singer1Avatar: String?
+    let singer2Avatar: String?
+    let trackCount: Int
+}
+
 struct TrackRowItem: Identifiable {
     let id: String
     let trackId: Int64?

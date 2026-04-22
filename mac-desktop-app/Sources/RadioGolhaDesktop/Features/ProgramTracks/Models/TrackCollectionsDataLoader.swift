@@ -19,6 +19,12 @@ enum TrackCollectionsDataLoader {
         }.value
     }
 
+    static func loadDuetPrograms(singer1: String, singer2: String) async -> [TrackRowItem] {
+        await Task.detached(priority: .userInitiated) {
+            (try? loadDuetProgramsSync(singer1: singer1, singer2: singer2)) ?? []
+        }.value
+    }
+
     private static func loadMostPlayedSync(limit: Int) throws -> [TrackRowItem] {
         let root = try resolveRepoRoot()
         let userDbPath = try resolveUserDbPath()
@@ -43,6 +49,27 @@ enum TrackCollectionsDataLoader {
         let root = try resolveRepoRoot()
         let archiveDbPath = try resolveArchiveDbPath(root: root)
         return try loadTracks(root: root, archiveDbPath: archiveDbPath, ids: ids)
+    }
+
+    private static func loadDuetProgramsSync(singer1: String, singer2: String) throws -> [TrackRowItem] {
+        let root = try resolveRepoRoot()
+        let archiveDbPath = try resolveArchiveDbPath(root: root)
+        let payload = try runBridgeDuetPrograms(root: root, dbPath: archiveDbPath, singer1: singer1, singer2: singer2)
+        guard !payload.isEmpty else { return [] }
+
+        let response = try JSONDecoder().decode([ProgramByIdTrackDTO].self, from: Data(payload.utf8))
+        return response.map { item in
+            let trimmedTitle = item.title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return TrackRowItem(
+                id: "track-\(item.id)",
+                trackId: item.id,
+                title: trimmedTitle.isEmpty ? "برنامه \(item.no)" : trimmedTitle,
+                subtitle: item.artist,
+                duration: normalizedDuration(item.duration),
+                audioURL: item.audioUrl,
+                artworkURLs: []
+            )
+        }
     }
 
     private static func loadTracks(root: String, archiveDbPath: String, ids: [Int64]) throws -> [TrackRowItem] {
@@ -153,6 +180,15 @@ enum TrackCollectionsDataLoader {
         return try runProcess(
             launchPath: binary,
             arguments: ["programs-by-ids-json", "--db", dbPath, "--ids-json", idsJson],
+            currentDirectory: root
+        )
+    }
+
+    private static func runBridgeDuetPrograms(root: String, dbPath: String, singer1: String, singer2: String) throws -> String {
+        let binary = try ensureBridgeBinary(root: root)
+        return try runProcess(
+            launchPath: binary,
+            arguments: ["duet-programs-json", "--db", dbPath, "--singer1", singer1, "--singer2", singer2],
             currentDirectory: root
         )
     }

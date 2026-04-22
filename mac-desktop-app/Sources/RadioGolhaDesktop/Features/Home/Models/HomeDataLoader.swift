@@ -85,6 +85,15 @@ enum HomeDataLoader {
         }
 
         let modes = response.dastgahs.map { ModeItem(title: $0.name) }
+        let duets = (response.duets ?? []).map {
+            DuetBannerItem(
+                singer1: $0.singer1,
+                singer2: $0.singer2,
+                singer1Avatar: $0.singer1Avatar,
+                singer2Avatar: $0.singer2Avatar,
+                trackCount: $0.trackCount
+            )
+        }
 
         let tracks = response.topTracks.map {
             TrackRowItem(
@@ -104,6 +113,7 @@ enum HomeDataLoader {
             singers: singers,
             instrumentalists: musicians,
             modes: modes,
+            duets: duets,
             topProgramsRows: topProgramsRows,
             latestTracksRows: recentTracks
         )
@@ -335,6 +345,7 @@ private struct HomeFeedBridgeResponse: Decodable {
     let musicians: [HomeMusicianDTO]
     let dastgahs: [HomeModeDTO]
     let topTracks: [HomeTrackDTO]
+    let duets: [HomeDuetDTO]?
 }
 
 private struct HomeCategoryDTO: Decodable {
@@ -369,6 +380,14 @@ private struct HomeTrackDTO: Decodable {
     let duration: String?
     let audioUrl: String?
     let artistImages: [String]?
+}
+
+private struct HomeDuetDTO: Decodable {
+    let singer1: String
+    let singer2: String
+    let singer1Avatar: String?
+    let singer2Avatar: String?
+    let trackCount: Int
 }
 
 private struct ProgramByIdTrackDTO: Decodable {

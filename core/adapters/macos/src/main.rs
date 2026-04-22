@@ -67,6 +67,14 @@ enum Command {
         #[arg(long)]
         ids_json: String,
     },
+    DuetProgramsJson {
+        #[arg(long)]
+        db: String,
+        #[arg(long)]
+        singer1: String,
+        #[arg(long)]
+        singer2: String,
+    },
     ProgramDetailJson {
         #[arg(long)]
         db: String,
@@ -186,6 +194,9 @@ fn main() -> Result<()> {
         }
         Command::ProgramsByIdsJson { db, ids_json } => {
             println!("{}", build_programs_by_ids_json(&db, &ids_json));
+        }
+        Command::DuetProgramsJson { db, singer1, singer2 } => {
+            println!("{}", build_duet_programs_json(&db, &singer1, &singer2));
         }
         Command::ProgramDetailJson { db, program_id } => {
             println!("{}", build_program_detail_json(&db, program_id));
@@ -702,6 +713,79 @@ fn build_programs_by_category_json(db_path: &str, category_id: i64) -> String {
             };
 
             let rows = match stmt.query_map([category_id], |row| {
+                Ok(json!({
+                    "id": row.get::<_, i64>(0)?,
+                    "title": row.get::<_, Option<String>>(1)?,
+                    "no": row.get::<_, i64>(2)?,
+                    "artist": row.get::<_, String>(3)?,
+                    "mode": row.get::<_, Option<String>>(4)?,
+                    "duration": row.get::<_, Option<String>>(5)?,
+                    "audioUrl": row.get::<_, Option<String>>(6)?
+                }))
+            }) {
+                Ok(rows) => rows,
+                Err(error) => return json!({ "error": error.to_string() }).to_string(),
+            };
+
+            let programs: Vec<_> = rows.filter_map(|r| r.ok()).collect();
+            json!(programs).to_string()
+        }
+        Err(error) => json!({ "error": error.to_string() }).to_string(),
+    }
+}
+
+fn build_duet_programs_json(db_path: &str, singer1: &str, singer2: &str) -> String {
+    match RadioGolhaCore::open(db_path) {
+        Ok(core) => {
+            let conn = core.connection();
+            let mut stmt = match conn.prepare(
+                "
+                SELECT
+                    p.id,
+                    p.title,
+                    p.no,
+                    COALESCE(
+                        (
+                            SELECT GROUP_CONCAT(a.name, ' و ')
+                            FROM program_singers ps2
+                            JOIN singer s2 ON s2.id = ps2.singer_id
+                            JOIN artist a ON a.id = s2.artist_id
+                            WHERE ps2.program_id = p.id
+                        ),
+                        'ناشناس'
+                    ) AS artist_names,
+                    (
+                        SELECT GROUP_CONCAT(m.name, ' و ')
+                        FROM program_modes pm
+                        JOIN mode m ON m.id = pm.mode_id
+                        WHERE pm.program_id = p.id
+                    ) AS mode_names,
+                    (SELECT MAX(end_time) FROM program_timeline WHERE program_id = p.id) AS duration,
+                    p.audio_url
+                FROM program p
+                WHERE (SELECT COUNT(*) FROM program_singers ps WHERE ps.program_id = p.id) = 2
+                  AND EXISTS (
+                    SELECT 1
+                    FROM program_singers ps
+                    JOIN singer s ON s.id = ps.singer_id
+                    JOIN artist a ON a.id = s.artist_id
+                    WHERE ps.program_id = p.id AND a.name = ?1
+                  )
+                  AND EXISTS (
+                    SELECT 1
+                    FROM program_singers ps
+                    JOIN singer s ON s.id = ps.singer_id
+                    JOIN artist a ON a.id = s.artist_id
+                    WHERE ps.program_id = p.id AND a.name = ?2
+                  )
+                ORDER BY p.no ASC, p.id ASC
+                ",
+            ) {
+                Ok(stmt) => stmt,
+                Err(error) => return json!({ "error": error.to_string() }).to_string(),
+            };
+
+            let rows = match stmt.query_map((singer1, singer2), |row| {
                 Ok(json!({
                     "id": row.get::<_, i64>(0)?,
                     "title": row.get::<_, Option<String>>(1)?,

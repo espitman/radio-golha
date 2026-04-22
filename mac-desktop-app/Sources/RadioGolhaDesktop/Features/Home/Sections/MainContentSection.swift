@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct MainContentSection: View {
-    private let heroImage = URL(string: "https://lh3.googleusercontent.com/aida-public/AB6AXuBTRoCtbLy1Vpa3t_ez8WfRkhOFnnCGOnbhRCJ3Tw_GbsQa8OqeyyLL2ov1DPWrduyIkRYbX-OfQkwuqlVraQ8QJOLKS5xz0nnGbm6Xcew6EaIxSXymeWEKEzkuhnl0xcQXO5V7KIbFs1M5iwZVA0GNgsIljnkjQYe9AdbIOmQEm8ohOVd39E_qi-b-b39xQ0PVaqyEtPk83DXRnERRtsx7Xs_6iidmtYtqJkpETR82f97iPOnF3stP0rFiR0INpoCfMwIZfPGvTTV3")
     let content: HomeContentData
     var onRefreshTopTracks: () async -> Void = {}
     var onPlayTrack: (TrackRowItem) -> Void = { _ in }
@@ -11,6 +10,7 @@ struct MainContentSection: View {
     var onArtistTap: (ArtistItem) -> Void = { _ in }
     var onProgramCategoryTap: (ProgramItem) -> Void = { _ in }
     var onProgramTap: (TrackRowItem) -> Void = { _ in }
+    var onDuetTap: (DuetBannerItem) -> Void = { _ in }
     var manualPlaylists: [DesktopManualPlaylist] = []
     var onAddTrackToPlaylist: (Int64, Int64) -> Void = { _, _ in }
     var onRemoveTrackFromPlaylist: (Int64, Int64) -> Void = { _, _ in }
@@ -30,7 +30,10 @@ struct MainContentSection: View {
                 .frame(height: 0)
 
                 VStack(spacing: 0) {
-                    MainHero(imageURL: heroImage)
+                    MainDuetsHeroSlider(
+                        items: content.duets,
+                        onTap: onDuetTap
+                    )
                         .padding(.horizontal, 48)
                         .padding(.top, 32)
 
@@ -102,79 +105,191 @@ struct MainContentSection: View {
     }
 }
 
-private struct MainHero: View {
-    let imageURL: URL?
+private struct MainDuetsHeroSlider: View {
+    let items: [DuetBannerItem]
+    var onTap: (DuetBannerItem) -> Void = { _ in }
+    @State private var currentIndex = 0
+    private let timer = Timer.publish(every: 4, on: .main, in: .common).autoconnect()
+
+    private var safeItems: [DuetBannerItem] {
+        items.isEmpty ? HomeMockData.duets : items
+    }
+
+    var body: some View {
+        let slides = safeItems
+        let safeIndex = max(0, min(currentIndex, max(0, slides.count - 1)))
+        ZStack(alignment: .bottom) {
+            if !slides.isEmpty {
+                MainDuetCard(item: slides[safeIndex], onTap: onTap)
+                    .id(slides[safeIndex].id)
+                    .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity), removal: .move(edge: .leading).combined(with: .opacity)))
+            }
+
+            HStack(spacing: 8) {
+                ForEach(Array(slides.enumerated()), id: \.offset) { index, _ in
+                    Circle()
+                        .fill(index == safeIndex ? Palette.secondary : Color.white.opacity(0.35))
+                        .frame(width: index == safeIndex ? 8 : 6, height: index == safeIndex ? 8 : 6)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.bottom, 10)
+        }
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture(minimumDistance: 20)
+                .onEnded { value in
+                    guard slides.count > 1 else { return }
+                    guard abs(value.translation.width) > abs(value.translation.height) else { return }
+
+                    if value.translation.width < -40 {
+                        withAnimation(.easeInOut(duration: 0.35)) {
+                            currentIndex = (safeIndex + 1) % slides.count
+                        }
+                    } else if value.translation.width > 40 {
+                        withAnimation(.easeInOut(duration: 0.35)) {
+                            currentIndex = (safeIndex - 1 + slides.count) % slides.count
+                        }
+                    }
+                }
+        )
+        .onReceive(timer) { _ in
+            guard slides.count > 1 else { return }
+            withAnimation(.easeInOut(duration: 0.35)) {
+                currentIndex = (currentIndex + 1) % slides.count
+            }
+        }
+        .onChange(of: items.count) { newValue in
+            if newValue == 0 {
+                currentIndex = 0
+            } else if currentIndex >= newValue {
+                currentIndex = 0
+            }
+        }
+    }
+}
+
+private struct MainDuetCard: View {
+    let item: DuetBannerItem
+    var onTap: (DuetBannerItem) -> Void = { _ in }
+    @State private var pulse = false
+    @State private var ringRotation: Double = 0
 
     var body: some View {
         ZStack {
-            CachedRemoteImage(url: imageURL) { image in
-                image.resizable().scaledToFill()
-            } placeholder: {
-                LinearGradient(
-                    colors: [Color(hex: 0x001A2F), Color(hex: 0x003A67)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            }
-
             LinearGradient(
-                colors: [Palette.primary.opacity(0.92), Palette.primary.opacity(0.45), .clear],
-                startPoint: .leading,
-                endPoint: .leading
+                colors: [Color(hex: 0x041334), Color(hex: 0x08255B), Color(hex: 0x031234)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
             )
 
-            VStack(alignment: .leading, spacing: 16) {
-                Text("برنامه ویژه")
-                    .font(.vazir(9, .bold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 4)
-                    .background(Palette.secondary.opacity(0.8), in: RoundedRectangle(cornerRadius: 4, style: .continuous))
+            Circle()
+                .fill(Palette.secondary.opacity(pulse ? 0.10 : 0.06))
+                .frame(width: 360, height: 360)
+                .offset(x: 260, y: -10)
+                .blur(radius: 18)
 
-                Text("گلهای رنگارنگ")
-                    .font(.vazir(27, .bold))
-                    .foregroundStyle(.white)
+            Circle()
+                .fill(Palette.secondary.opacity(pulse ? 0.08 : 0.05))
+                .frame(width: 260, height: 260)
+                .offset(x: -220, y: 80)
+                .blur(radius: 16)
 
-                Text("بشنوید آثاری جاودانه از استاد محمدرضا شجریان و غلامحسین بنان در مجموعه‌ای بی‌نظیر که روح هر شنونده‌ای را جلا می‌دهد.")
-                    .font(.vazir(13.5))
-                    .foregroundStyle(.white.opacity(0.82))
-                    .lineSpacing(4)
-                    .multilineTextAlignment(.leading)
+            HStack(spacing: 20) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("دوئت ماندگار")
+                        .font(.vazir(11, .medium))
+                        .foregroundStyle(Color.white.opacity(0.45))
 
-                HStack(spacing: 16) {
-                    Button {} label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "play.fill")
-                                .font(.system(size: 12, weight: .bold))
-                            Text("پخش آخرین قسمت")
-                                .font(.vazir(12, .bold))
-                        }
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 32)
-                        .padding(.vertical, 12)
-                        .background(Palette.secondary, in: Capsule())
+                    Text("\(item.singer1) و \(item.singer2)")
+                        .font(.vazir(30, .bold))
+                        .foregroundStyle(Palette.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+
+                    if item.trackCount > 0 {
+                        Text("\(item.trackCount) ترک")
+                            .font(.vazir(12, .medium))
+                            .foregroundStyle(Color.white.opacity(0.5))
                     }
-                    .buttonStyle(.plain)
-
-                    Button {} label: {
-                        Text("مشاهده لیست پخش")
-                            .font(.vazir(12, .bold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 33)
-                            .padding(.vertical, 13)
-                            .background(Color.white.opacity(0.10), in: Capsule())
-                            .overlay(Capsule().stroke(Color.white.opacity(0.2), lineWidth: 1))
-                    }
-                    .buttonStyle(.plain)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                ZStack {
+                    RotatingAvatarRing(rotation: ringRotation)
+                        .frame(width: 106, height: 106)
+                        .offset(x: -34, y: 0)
+                    DuetAvatar(name: item.singer1, imageURL: item.singer1Avatar)
+                        .frame(width: 100, height: 100)
+                        .offset(x: -34, y: 0)
+
+                    RotatingAvatarRing(rotation: -ringRotation)
+                        .frame(width: 106, height: 106)
+                        .offset(x: 34, y: 0)
+                    DuetAvatar(name: item.singer2, imageURL: item.singer2Avatar)
+                        .frame(width: 100, height: 100)
+                        .offset(x: 34, y: 0)
+                }
+                .frame(width: 220, height: 120)
             }
-            .frame(width: 564, alignment: .leading)
-            .padding(.leading, 64)
+            .padding(.horizontal, 30)
+            .padding(.vertical, 24)
         }
-        .frame(height: 320)
+        .frame(height: 190)
         .frame(maxWidth: .infinity)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .multilineTextAlignment(.leading)
+        .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .onTapGesture {
+            onTap(item)
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
+                pulse.toggle()
+            }
+            withAnimation(.linear(duration: 8).repeatForever(autoreverses: false)) {
+                ringRotation = 360
+            }
+        }
+    }
+}
+
+private struct RotatingAvatarRing: View {
+    let rotation: Double
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(Palette.secondary.opacity(0.3), lineWidth: 2.5)
+            Circle()
+                .trim(from: 0, to: 0.24)
+                .stroke(Palette.secondary.opacity(0.95), style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                .rotationEffect(.degrees(rotation))
+        }
+    }
+}
+
+private struct DuetAvatar: View {
+    let name: String
+    let imageURL: String?
+
+    var body: some View {
+        ZStack {
+            Circle().fill(Color.white.opacity(0.12))
+            if let imageURL, let url = URL(string: imageURL), !imageURL.isEmpty {
+                CachedRemoteImage(url: url) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                } placeholder: {
+                    Circle().fill(Color.white.opacity(0.18))
+                }
+            } else {
+                Image(systemName: "person.fill")
+                    .font(.system(size: 30, weight: .regular))
+                    .foregroundStyle(Palette.secondary.opacity(0.75))
+            }
+        }
+        .clipShape(Circle())
     }
 }
 

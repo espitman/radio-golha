@@ -5,6 +5,7 @@ struct HomeContentData {
     let singers: [ArtistItem]
     let instrumentalists: [ArtistItem]
     let modes: [ModeItem]
+    let duets: [DuetBannerItem]
     let topProgramsRows: [TrackRowItem]
     let latestTracksRows: [TrackRowItem]
 
@@ -13,6 +14,7 @@ struct HomeContentData {
         singers: HomeMockData.singers,
         instrumentalists: HomeMockData.instrumentalists,
         modes: HomeMockData.modes,
+        duets: HomeMockData.duets,
         topProgramsRows: HomeMockData.topProgramsRows,
         latestTracksRows: HomeMockData.latestTracksRows
     )
@@ -23,6 +25,7 @@ struct HomeContentData {
             singers: singers,
             instrumentalists: instrumentalists,
             modes: modes,
+            duets: duets,
             topProgramsRows: topProgramsRows,
             latestTracksRows: latestTracksRows
         )

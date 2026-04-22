@@ -4,6 +4,7 @@ struct ProgramTracksContentView: View {
     let title: String
     let badge: String
     let countText: String
+    var duetBanner: DuetBannerItem? = nil
     let tracks: [TrackRowItem]
     var onPlayTrack: (TrackRowItem) -> Void = { _ in }
     var onOpenProgram: (TrackRowItem) -> Void = { _ in }
@@ -40,50 +41,56 @@ struct ProgramTracksContentView: View {
     }
 
     private var heroSection: some View {
-        ZStack(alignment: .bottom) {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [Color(hex: 0x001A2F), Color(hex: 0x002E56), Color(hex: 0x001A2F)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .overlay {
-                    Rectangle()
+        Group {
+            if let duetBanner {
+                ProgramTracksDuetHero(duet: duetBanner)
+            } else {
+                ZStack(alignment: .bottom) {
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
                         .fill(
                             LinearGradient(
-                                colors: [Color.white.opacity(0.08), Color.clear],
-                                startPoint: .top,
-                                endPoint: .bottom
+                                colors: [Color(hex: 0x001A2F), Color(hex: 0x002E56), Color(hex: 0x001A2F)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
                             )
                         )
+                        .overlay {
+                            Rectangle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.white.opacity(0.08), Color.clear],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                        }
+                        .overlay {
+                            HeroPatternOverlay()
+                                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                        }
+
+                    VStack(spacing: 8) {
+                        Text(badge)
+                            .font(.vazir(9, .bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 4)
+                            .background(Palette.secondary.opacity(0.8), in: Capsule())
+
+                        Text(title)
+                            .font(.vazir(40.5, .bold))
+                            .foregroundStyle(.white)
+
+                        Text(countText)
+                            .font(.vazir(12, .medium))
+                            .foregroundStyle(.white.opacity(0.8))
+                    }
+                    .padding(.bottom, 54)
                 }
-                .overlay {
-                    HeroPatternOverlay()
-                        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-                }
-
-            VStack(spacing: 8) {
-                Text(badge)
-                    .font(.vazir(9, .bold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 4)
-                    .background(Palette.secondary.opacity(0.8), in: Capsule())
-
-                Text(title)
-                    .font(.vazir(40.5, .bold))
-                    .foregroundStyle(.white)
-
-                Text(countText)
-                    .font(.vazir(12, .medium))
-                    .foregroundStyle(.white.opacity(0.8))
+                .frame(height: 232)
+                .frame(maxWidth: .infinity)
             }
-            .padding(.bottom, 54)
         }
-        .frame(height: 232)
-        .frame(maxWidth: .infinity)
     }
 
     private var tracksSection: some View {
@@ -124,6 +131,124 @@ struct ProgramTracksContentView: View {
                     .stroke(Palette.border, lineWidth: 1)
             )
         }
+    }
+}
+
+private struct ProgramTracksDuetHero: View {
+    let duet: DuetBannerItem
+    @State private var pulse = false
+    @State private var ringRotation: Double = 0
+
+    var body: some View {
+        ZStack {
+            LinearGradient(
+                colors: [Color(hex: 0x041334), Color(hex: 0x08255B), Color(hex: 0x031234)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+
+            Circle()
+                .fill(Palette.secondary.opacity(pulse ? 0.10 : 0.06))
+                .frame(width: 360, height: 360)
+                .offset(x: 260, y: -10)
+                .blur(radius: 18)
+
+            Circle()
+                .fill(Palette.secondary.opacity(pulse ? 0.08 : 0.05))
+                .frame(width: 260, height: 260)
+                .offset(x: -220, y: 80)
+                .blur(radius: 16)
+
+            HStack(spacing: 20) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("دوئت ماندگار")
+                        .font(.vazir(11, .medium))
+                        .foregroundStyle(Color.white.opacity(0.45))
+
+                    Text("\(duet.singer1) و \(duet.singer2)")
+                        .font(.vazir(30, .bold))
+                        .foregroundStyle(Palette.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+
+                    if duet.trackCount > 0 {
+                        Text("\(duet.trackCount) ترک")
+                            .font(.vazir(12, .medium))
+                            .foregroundStyle(Color.white.opacity(0.5))
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                ZStack {
+                    Circle()
+                        .stroke(Palette.secondary.opacity(0.3), lineWidth: 2.5)
+                        .overlay(
+                            Circle()
+                                .trim(from: 0, to: 0.24)
+                                .stroke(Palette.secondary.opacity(0.95), style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                                .rotationEffect(.degrees(ringRotation))
+                        )
+                        .frame(width: 106, height: 106)
+                        .offset(x: -34, y: 0)
+                    DuetHeroAvatar(name: duet.singer1, imageURL: duet.singer1Avatar)
+                        .frame(width: 100, height: 100)
+                        .offset(x: -34, y: 0)
+
+                    Circle()
+                        .stroke(Palette.secondary.opacity(0.3), lineWidth: 2.5)
+                        .overlay(
+                            Circle()
+                                .trim(from: 0, to: 0.24)
+                                .stroke(Palette.secondary.opacity(0.95), style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                                .rotationEffect(.degrees(-ringRotation))
+                        )
+                        .frame(width: 106, height: 106)
+                        .offset(x: 34, y: 0)
+                    DuetHeroAvatar(name: duet.singer2, imageURL: duet.singer2Avatar)
+                        .frame(width: 100, height: 100)
+                        .offset(x: 34, y: 0)
+                }
+                .frame(width: 220, height: 120)
+            }
+            .padding(.horizontal, 30)
+            .padding(.vertical, 24)
+        }
+        .frame(height: 190)
+        .frame(maxWidth: .infinity)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .onAppear {
+            withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
+                pulse.toggle()
+            }
+            withAnimation(.linear(duration: 8).repeatForever(autoreverses: false)) {
+                ringRotation = 360
+            }
+        }
+    }
+}
+
+private struct DuetHeroAvatar: View {
+    let name: String
+    let imageURL: String?
+
+    var body: some View {
+        ZStack {
+            Circle().fill(Color.white.opacity(0.12))
+            if let imageURL, let url = URL(string: imageURL), !imageURL.isEmpty {
+                CachedRemoteImage(url: url) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                } placeholder: {
+                    Circle().fill(Color.white.opacity(0.18))
+                }
+            } else {
+                Image(systemName: "person.fill")
+                    .font(.system(size: 30, weight: .regular))
+                    .foregroundStyle(Palette.secondary.opacity(0.75))
+            }
+        }
+        .clipShape(Circle())
     }
 }
 

@@ -59,6 +59,23 @@ enum HomeMockData {
         .init(title: "سه‌گاه"), .init(title: "چهارگاه"), .init(title: "راست‌پنجگاه")
     ]
 
+    static let duets: [DuetBannerItem] = [
+        .init(
+            singer1: "محمدرضا شجریان",
+            singer2: "غلامحسین بنان",
+            singer1Avatar: singers.first?.imageURL,
+            singer2Avatar: singers.dropFirst().first?.imageURL,
+            trackCount: 27
+        ),
+        .init(
+            singer1: "بانو دلکش",
+            singer2: "بانو مرضیه",
+            singer1Avatar: singers.dropFirst(2).first?.imageURL,
+            singer2Avatar: singers.dropFirst(3).first?.imageURL,
+            trackCount: 19
+        )
+    ]
+
     static let topProgramsRows: [TrackRowItem] = [
         .init(title: "گلهای تازه شماره ۱۴", subtitle: "الهه، خالقی، بدیعی", duration: "۱۰:۱۵"),
         .init(title: "جاویدان شماره ۲۵", subtitle: "بنان، معروفی، فرهنگ", duration: "۰۶:۳۰")
