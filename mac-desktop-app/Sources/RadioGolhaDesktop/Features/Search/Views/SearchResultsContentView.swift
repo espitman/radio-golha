@@ -86,6 +86,11 @@ struct SearchResultsContentView: View {
             HStack(spacing: 8) {
                 ForEach(activeChips) { chip in
                     HStack(spacing: 6) {
+                        Text(chip.label)
+                            .font(.vazir(10, .medium))
+                            .foregroundStyle(.white)
+                            .lineLimit(1)
+
                         Button {
                             onRemoveChip(chip)
                         } label: {
@@ -94,20 +99,16 @@ struct SearchResultsContentView: View {
                                 .foregroundStyle(.white)
                         }
                         .buttonStyle(.plain)
-
-                        Text(chip.label)
-                            .font(.vazir(10, .medium))
-                            .foregroundStyle(.white)
-                            .lineLimit(1)
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(Color.white.opacity(0.18), in: Capsule())
-                    .overlay(Capsule().stroke(Color.white.opacity(0.24), lineWidth: 1))
+                    .background(Palette.secondary, in: Capsule())
+                    .overlay(Capsule().stroke(Palette.secondary.opacity(0.95), lineWidth: 1))
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .environment(\.layoutDirection, .leftToRight)
+        .environment(\.layoutDirection, .rightToLeft)
     }
 
     private var tracksSection: some View {
