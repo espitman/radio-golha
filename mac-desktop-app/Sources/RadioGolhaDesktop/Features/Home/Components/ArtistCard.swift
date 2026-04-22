@@ -79,14 +79,7 @@ struct ArtistCard: View {
         .onTapGesture {
             onTap?()
         }
-        .contextMenu {
-            if let sourceArtistId = item.sourceArtistId, let onToggleFavorite {
-                let isFavorite = favoriteArtistIds.contains(sourceArtistId)
-                Button(isFavorite ? "حذف از لیست مورد علاقه" : "افزودن به لیست مورد علاقه") {
-                    onToggleFavorite(sourceArtistId, artistTypeForFavorite())
-                }
-            }
-        }
+        .desktopCustomContextMenu(actions: artistMenuActions)
     }
 
     private func artistTypeForFavorite() -> String {
@@ -96,5 +89,19 @@ struct ArtistCard: View {
         if item.role.contains("آهنگساز") { return "composer" }
         if item.role.contains("تنظیم") { return "arranger" }
         return "singer"
+    }
+
+    private var artistMenuActions: [DesktopContextMenuAction] {
+        guard let sourceArtistId = item.sourceArtistId, let onToggleFavorite else { return [] }
+        let isFavorite = favoriteArtistIds.contains(sourceArtistId)
+        return [
+            DesktopContextMenuAction(
+                title: isFavorite ? "حذف از لیست مورد علاقه" : "افزودن به لیست مورد علاقه",
+                systemImage: isFavorite ? "heart.slash" : "heart",
+                role: isFavorite ? .destructive : .normal
+            ) {
+                onToggleFavorite(sourceArtistId, artistTypeForFavorite())
+            }
+        ]
     }
 }

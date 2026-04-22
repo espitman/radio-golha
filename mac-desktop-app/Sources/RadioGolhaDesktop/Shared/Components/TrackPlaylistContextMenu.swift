@@ -5,29 +5,35 @@ extension View {
         trackId: Int64?,
         playlists: [DesktopManualPlaylist],
         onAddToPlaylist: @escaping (Int64, Int64) -> Void,
+        onRemoveFromPlaylist: @escaping (Int64, Int64) -> Void,
         onCreatePlaylistAndAdd: @escaping (Int64) -> Void
     ) -> some View {
-        contextMenu {
-            if let trackId {
-                if playlists.isEmpty {
-                    Button("ایجاد لیست جدید و افزودن") {
-                        onCreatePlaylistAndAdd(trackId)
-                    }
-                } else {
-                    Menu("افزودن به پلی‌لیست") {
-                        ForEach(playlists) { playlist in
-                            Button(playlist.name) {
-                                onAddToPlaylist(playlist.id, trackId)
-                            }
-                        }
-                    }
-                    Button("ایجاد لیست جدید و افزودن") {
-                        onCreatePlaylistAndAdd(trackId)
+        desktopCustomContextMenu(actions: {
+            guard let trackId else { return [] }
+            var actions: [DesktopContextMenuAction] = playlists.map { playlist in
+                let containsTrack = playlist.trackIds.contains(trackId)
+                return DesktopContextMenuAction(
+                    title: containsTrack ? "حذف از \(playlist.name)" : "افزودن به \(playlist.name)",
+                    systemImage: containsTrack ? "minus.circle" : "music.note.list",
+                    isChecked: containsTrack,
+                    role: containsTrack ? .destructive : .normal
+                ) {
+                    if containsTrack {
+                        onRemoveFromPlaylist(playlist.id, trackId)
+                    } else {
+                        onAddToPlaylist(playlist.id, trackId)
                     }
                 }
-            } else {
-                Text("شناسه ترک موجود نیست")
             }
-        }
+            actions.append(
+                DesktopContextMenuAction(
+                    title: "ساخت پلی‌لیست جدید…",
+                    systemImage: "plus.circle"
+                ) {
+                    onCreatePlaylistAndAdd(trackId)
+                }
+            )
+            return actions
+        }())
     }
 }

@@ -13,6 +13,7 @@ struct MainContentSection: View {
     var onProgramTap: (TrackRowItem) -> Void = { _ in }
     var manualPlaylists: [DesktopManualPlaylist] = []
     var onAddTrackToPlaylist: (Int64, Int64) -> Void = { _, _ in }
+    var onRemoveTrackFromPlaylist: (Int64, Int64) -> Void = { _, _ in }
     var onCreatePlaylistAndAddTrack: (Int64) -> Void = { _ in }
     var onShowAllSingers: () -> Void = {}
     var onShowAllInstrumentalists: () -> Void = {}
@@ -79,6 +80,7 @@ struct MainContentSection: View {
                         onProgramTap: onProgramTap,
                         manualPlaylists: manualPlaylists,
                         onAddTrackToPlaylist: onAddTrackToPlaylist,
+                        onRemoveTrackFromPlaylist: onRemoveTrackFromPlaylist,
                         onCreatePlaylistAndAddTrack: onCreatePlaylistAndAddTrack
                     )
                         .padding(.horizontal, 48)
@@ -322,6 +324,7 @@ private struct TopListsSection: View {
     var onProgramTap: (TrackRowItem) -> Void = { _ in }
     var manualPlaylists: [DesktopManualPlaylist] = []
     var onAddTrackToPlaylist: (Int64, Int64) -> Void = { _, _ in }
+    var onRemoveTrackFromPlaylist: (Int64, Int64) -> Void = { _, _ in }
     var onCreatePlaylistAndAddTrack: (Int64) -> Void = { _ in }
 
     var body: some View {
@@ -338,6 +341,7 @@ private struct TopListsSection: View {
                 onProgramTap: onProgramTap,
                 manualPlaylists: manualPlaylists,
                 onAddTrackToPlaylist: onAddTrackToPlaylist,
+                onRemoveTrackFromPlaylist: onRemoveTrackFromPlaylist,
                 onCreatePlaylistAndAddTrack: onCreatePlaylistAndAddTrack
             )
 
@@ -352,6 +356,7 @@ private struct TopListsSection: View {
                 onProgramTap: onProgramTap,
                 manualPlaylists: manualPlaylists,
                 onAddTrackToPlaylist: onAddTrackToPlaylist,
+                onRemoveTrackFromPlaylist: onRemoveTrackFromPlaylist,
                 onCreatePlaylistAndAddTrack: onCreatePlaylistAndAddTrack
             )
         }
@@ -370,6 +375,7 @@ private struct ListBlock: View {
     var onProgramTap: (TrackRowItem) -> Void = { _ in }
     var manualPlaylists: [DesktopManualPlaylist] = []
     var onAddTrackToPlaylist: (Int64, Int64) -> Void = { _, _ in }
+    var onRemoveTrackFromPlaylist: (Int64, Int64) -> Void = { _, _ in }
     var onCreatePlaylistAndAddTrack: (Int64) -> Void = { _ in }
     @State private var isRefreshing = false
 
@@ -421,6 +427,7 @@ private struct ListBlock: View {
                             onProgramTap: onProgramTap,
                             manualPlaylists: manualPlaylists,
                             onAddTrackToPlaylist: onAddTrackToPlaylist,
+                            onRemoveTrackFromPlaylist: onRemoveTrackFromPlaylist,
                             onCreatePlaylistAndAddTrack: onCreatePlaylistAndAddTrack
                         )
                         if index < rows.count - 1 {
@@ -464,6 +471,7 @@ private struct ListRow: View {
     var onProgramTap: (TrackRowItem) -> Void = { _ in }
     var manualPlaylists: [DesktopManualPlaylist] = []
     var onAddTrackToPlaylist: (Int64, Int64) -> Void = { _, _ in }
+    var onRemoveTrackFromPlaylist: (Int64, Int64) -> Void = { _, _ in }
     var onCreatePlaylistAndAddTrack: (Int64) -> Void = { _ in }
 
     var body: some View {
@@ -513,6 +521,7 @@ private struct ListRow: View {
             trackId: row.trackId,
             playlists: manualPlaylists,
             onAddToPlaylist: onAddTrackToPlaylist,
+            onRemoveFromPlaylist: onRemoveTrackFromPlaylist,
             onCreatePlaylistAndAdd: onCreatePlaylistAndAddTrack
         )
     }

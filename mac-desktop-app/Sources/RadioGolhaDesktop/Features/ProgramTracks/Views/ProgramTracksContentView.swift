@@ -7,6 +7,7 @@ struct ProgramTracksContentView: View {
     var onOpenProgram: (TrackRowItem) -> Void = { _ in }
     var manualPlaylists: [DesktopManualPlaylist] = []
     var onAddTrackToPlaylist: (Int64, Int64) -> Void = { _, _ in }
+    var onRemoveTrackFromPlaylist: (Int64, Int64) -> Void = { _, _ in }
     var onCreatePlaylistAndAddTrack: (Int64) -> Void = { _ in }
     var currentPlayingTrackId: String? = nil
     var isPlayerPlaying: Bool = false
@@ -107,6 +108,7 @@ struct ProgramTracksContentView: View {
                         onOpen: { onOpenProgram(row) },
                         manualPlaylists: manualPlaylists,
                         onAddTrackToPlaylist: onAddTrackToPlaylist,
+                        onRemoveTrackFromPlaylist: onRemoveTrackFromPlaylist,
                         onCreatePlaylistAndAddTrack: onCreatePlaylistAndAddTrack
                     )
                     if index < tracks.count - 1 {
@@ -152,6 +154,7 @@ private struct ProgramTrackRow: View {
     var onOpen: () -> Void = {}
     var manualPlaylists: [DesktopManualPlaylist] = []
     var onAddTrackToPlaylist: (Int64, Int64) -> Void = { _, _ in }
+    var onRemoveTrackFromPlaylist: (Int64, Int64) -> Void = { _, _ in }
     var onCreatePlaylistAndAddTrack: (Int64) -> Void = { _ in }
 
     var body: some View {
@@ -202,6 +205,7 @@ private struct ProgramTrackRow: View {
             trackId: row.trackId,
             playlists: manualPlaylists,
             onAddToPlaylist: onAddTrackToPlaylist,
+            onRemoveFromPlaylist: onRemoveTrackFromPlaylist,
             onCreatePlaylistAndAdd: onCreatePlaylistAndAddTrack
         )
     }

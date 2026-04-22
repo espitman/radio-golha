@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 private enum DesktopPage {
     case home
@@ -59,6 +60,10 @@ struct HomeRootView: View {
     @State private var programDetailsLoadRequestId: String = ""
     @State private var manualPlaylists: [DesktopManualPlaylist] = []
     @State private var favoriteArtistIds: Set<Int64> = []
+    @State private var pendingPlaylistTrackId: Int64? = nil
+    @State private var pendingPlaylistName: String = ""
+    @State private var canDismissPlaylistDialogByBackdrop: Bool = false
+    @State private var isPlaylistNameFieldFocused: Bool = false
     @StateObject private var audioPlayer = DesktopAudioPlayer()
     private let pageTransition = AnyTransition.asymmetric(
         insertion: .offset(y: -10).combined(with: .opacity),
@@ -81,6 +86,22 @@ struct HomeRootView: View {
             .frame(width: 1280)
             .environment(\.layoutDirection, .leftToRight)
 
+            if pendingPlaylistTrackId != nil {
+                Color.black.opacity(0.22)
+                    .ignoresSafeArea()
+                    .zIndex(2_000)
+                    .transition(.opacity)
+                    .onTapGesture {
+                        guard canDismissPlaylistDialogByBackdrop else { return }
+                        dismissPlaylistDialog()
+                    }
+
+                playlistCreateDialog
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
+                    .zIndex(2_001)
+            }
+
             BottomPlayerSection(
                 player: audioPlayer,
                 onOpenCurrentTrack: { track in
@@ -93,6 +114,7 @@ struct HomeRootView: View {
             )
         }
         .environment(\.layoutDirection, .rightToLeft)
+        .animation(.easeInOut(duration: 0.2), value: pendingPlaylistTrackId != nil)
         .task {
             guard !homeDataLoaded else { return }
             homeDataLoaded = true
@@ -202,13 +224,14 @@ struct HomeRootView: View {
                                     await refreshManualPlaylists()
                                 }
                             },
-                            onCreatePlaylistAndAddTrack: { trackId in
+                            onRemoveTrackFromPlaylist: { playlistId, trackId in
                                 Task {
-                                    let name = "لیست من"
-                                    guard let newPlaylistId = await DesktopPlaylistDataLoader.createManualPlaylist(name: name) else { return }
-                                    let _ = await DesktopPlaylistDataLoader.addTrack(playlistId: newPlaylistId, trackId: trackId)
+                                    let _ = await DesktopPlaylistDataLoader.removeTrack(playlistId: playlistId, trackId: trackId)
                                     await refreshManualPlaylists()
                                 }
+                            },
+                            onCreatePlaylistAndAddTrack: { trackId in
+                                createPlaylistAndAddTrack(trackId)
                             },
                             onShowAllSingers: {
                                 navigateTo(.singers)
@@ -289,13 +312,14 @@ struct HomeRootView: View {
                                     await refreshManualPlaylists()
                                 }
                             },
-                            onCreatePlaylistAndAddTrack: { trackId in
+                            onRemoveTrackFromPlaylist: { playlistId, trackId in
                                 Task {
-                                    let name = "لیست من"
-                                    guard let newPlaylistId = await DesktopPlaylistDataLoader.createManualPlaylist(name: name) else { return }
-                                    let _ = await DesktopPlaylistDataLoader.addTrack(playlistId: newPlaylistId, trackId: trackId)
+                                    let _ = await DesktopPlaylistDataLoader.removeTrack(playlistId: playlistId, trackId: trackId)
                                     await refreshManualPlaylists()
                                 }
+                            },
+                            onCreatePlaylistAndAddTrack: { trackId in
+                                createPlaylistAndAddTrack(trackId)
                             },
                             currentPlayingTrackId: audioPlayer.currentTrack?.id,
                             isPlayerPlaying: audioPlayer.isPlaying,
@@ -349,13 +373,14 @@ struct HomeRootView: View {
                                         await refreshManualPlaylists()
                                     }
                                 },
-                                onCreatePlaylistAndAddTrack: { trackId in
+                                onRemoveTrackFromPlaylist: { playlistId, trackId in
                                     Task {
-                                        let name = "لیست من"
-                                        guard let newPlaylistId = await DesktopPlaylistDataLoader.createManualPlaylist(name: name) else { return }
-                                        let _ = await DesktopPlaylistDataLoader.addTrack(playlistId: newPlaylistId, trackId: trackId)
+                                        let _ = await DesktopPlaylistDataLoader.removeTrack(playlistId: playlistId, trackId: trackId)
                                         await refreshManualPlaylists()
                                     }
+                                },
+                                onCreatePlaylistAndAddTrack: { trackId in
+                                    createPlaylistAndAddTrack(trackId)
                                 },
                                 currentPlayingTrackId: audioPlayer.currentTrack?.id,
                                 isPlayerPlaying: audioPlayer.isPlaying,
@@ -427,13 +452,14 @@ struct HomeRootView: View {
                                     await refreshManualPlaylists()
                                 }
                             },
-                            onCreatePlaylistAndAddTrack: { trackId in
+                            onRemoveTrackFromPlaylist: { playlistId, trackId in
                                 Task {
-                                    let name = "لیست من"
-                                    guard let newPlaylistId = await DesktopPlaylistDataLoader.createManualPlaylist(name: name) else { return }
-                                    let _ = await DesktopPlaylistDataLoader.addTrack(playlistId: newPlaylistId, trackId: trackId)
+                                    let _ = await DesktopPlaylistDataLoader.removeTrack(playlistId: playlistId, trackId: trackId)
                                     await refreshManualPlaylists()
                                 }
+                            },
+                            onCreatePlaylistAndAddTrack: { trackId in
+                                createPlaylistAndAddTrack(trackId)
                             },
                             currentPlayingTrackId: audioPlayer.currentTrack?.id,
                             isPlayerPlaying: audioPlayer.isPlaying,
@@ -635,6 +661,125 @@ struct HomeRootView: View {
             }
             guard success else { return }
             await refreshFavoriteArtistIds()
+        }
+    }
+
+    private func createPlaylistAndAddTrack(_ trackId: Int64) {
+        canDismissPlaylistDialogByBackdrop = false
+        withAnimation(.easeInOut(duration: 0.2)) {
+            pendingPlaylistTrackId = trackId
+            pendingPlaylistName = ""
+        }
+        DispatchQueue.main.async {
+            isPlaylistNameFieldFocused = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            canDismissPlaylistDialogByBackdrop = true
+        }
+    }
+
+    private func dismissPlaylistDialog() {
+        canDismissPlaylistDialogByBackdrop = false
+        withAnimation(.easeInOut(duration: 0.18)) {
+            pendingPlaylistTrackId = nil
+            pendingPlaylistName = ""
+        }
+        isPlaylistNameFieldFocused = false
+    }
+
+    private func confirmCreatePlaylistAndAdd() {
+        guard let trackId = pendingPlaylistTrackId else { return }
+        let name = pendingPlaylistName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+
+        Task {
+            guard let newPlaylistId = await DesktopPlaylistDataLoader.createManualPlaylist(name: name) else { return }
+            let _ = await DesktopPlaylistDataLoader.addTrack(playlistId: newPlaylistId, trackId: trackId)
+            await refreshManualPlaylists()
+            await MainActor.run {
+                dismissPlaylistDialog()
+            }
+        }
+    }
+
+    private var playlistCreateDialog: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("ساخت پلی‌لیست جدید")
+                .font(.vazir(15, .bold))
+                .foregroundStyle(Palette.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Text("اسم پلی‌لیست را وارد کنید.")
+                .font(.vazir(10))
+                .foregroundStyle(Palette.textMuted)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            DesktopRTLTextField(
+                text: $pendingPlaylistName,
+                placeholder: "مثلاً: گلهای دلخواه من",
+                placeholderColor: NSColor(calibratedWhite: 0.72, alpha: 1.0),
+                textColor: NSColor.black,
+                isFirstResponder: isPlaylistNameFieldFocused,
+                onSubmit: {
+                    confirmCreatePlaylistAndAdd()
+                }
+            )
+                .padding(.horizontal, 12)
+                .frame(height: 36)
+                .background(Palette.surfaceLow, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(Palette.border, lineWidth: 1)
+                )
+
+            HStack(spacing: 10) {
+                Button {
+                    dismissPlaylistDialog()
+                } label: {
+                    Text("انصراف")
+                        .font(.vazir(10.5, .bold))
+                        .foregroundStyle(Palette.primary)
+                        .frame(width: 92, height: 34)
+                        .background(Palette.surfaceLow, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 9, style: .continuous)
+                                .stroke(Palette.border, lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    confirmCreatePlaylistAndAdd()
+                } label: {
+                    Text("ساخت و افزودن")
+                        .font(.vazir(10.5, .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 124, height: 34)
+                        .background(
+                            pendingPlaylistName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                ? Palette.primary.opacity(0.35)
+                                : Palette.primary,
+                            in: RoundedRectangle(cornerRadius: 9, style: .continuous)
+                        )
+                }
+                .buttonStyle(.plain)
+                .disabled(pendingPlaylistName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .padding(18)
+        .frame(width: 380)
+        .background(Palette.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(Palette.border, lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.16), radius: 28, x: 0, y: 14)
+        .environment(\.layoutDirection, .rightToLeft)
+        .onAppear {
+            DispatchQueue.main.async {
+                isPlaylistNameFieldFocused = true
+            }
         }
     }
 

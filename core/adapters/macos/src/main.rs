@@ -103,6 +103,14 @@ enum Command {
         #[arg(long)]
         track_id: i64,
     },
+    RemoveTrackFromPlaylist {
+        #[arg(long)]
+        user_db: String,
+        #[arg(long)]
+        playlist_id: i64,
+        #[arg(long)]
+        track_id: i64,
+    },
     CreateManualPlaylist {
         #[arg(long)]
         user_db: String,
@@ -186,6 +194,13 @@ fn main() -> Result<()> {
             track_id,
         } => {
             println!("{}", add_track_to_playlist(&user_db, playlist_id, track_id));
+        }
+        Command::RemoveTrackFromPlaylist {
+            user_db,
+            playlist_id,
+            track_id,
+        } => {
+            println!("{}", remove_track_from_playlist(&user_db, playlist_id, track_id));
         }
         Command::CreateManualPlaylist { user_db, name } => {
             println!("{}", create_manual_playlist(&user_db, &name));
@@ -534,6 +549,16 @@ fn get_manual_playlists_json(user_db_path: &str) -> String {
 fn add_track_to_playlist(user_db_path: &str, playlist_id: i64, track_id: i64) -> String {
     match UserDataStore::open(user_db_path) {
         Ok(store) => match store.add_track(playlist_id, track_id) {
+            Ok(_) => "ok".to_string(),
+            Err(error) => json!({ "error": error.to_string() }).to_string(),
+        },
+        Err(error) => json!({ "error": error.to_string() }).to_string(),
+    }
+}
+
+fn remove_track_from_playlist(user_db_path: &str, playlist_id: i64, track_id: i64) -> String {
+    match UserDataStore::open(user_db_path) {
+        Ok(store) => match store.remove_track(playlist_id, track_id) {
             Ok(_) => "ok".to_string(),
             Err(error) => json!({ "error": error.to_string() }).to_string(),
         },

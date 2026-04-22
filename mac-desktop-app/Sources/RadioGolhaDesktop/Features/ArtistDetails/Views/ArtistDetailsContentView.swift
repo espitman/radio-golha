@@ -8,6 +8,7 @@ struct ArtistDetailsContentView: View {
     var onPlayTrack: (ArtistProgramRow) -> Void = { _ in }
     var manualPlaylists: [DesktopManualPlaylist] = []
     var onAddTrackToPlaylist: (Int64, Int64) -> Void = { _, _ in }
+    var onRemoveTrackFromPlaylist: (Int64, Int64) -> Void = { _, _ in }
     var onCreatePlaylistAndAddTrack: (Int64) -> Void = { _ in }
     var currentPlayingTrackId: String? = nil
     var isPlayerPlaying: Bool = false
@@ -141,6 +142,7 @@ struct ArtistDetailsContentView: View {
                         trackId: row.trackId,
                         playlists: manualPlaylists,
                         onAddToPlaylist: onAddTrackToPlaylist,
+                        onRemoveFromPlaylist: onRemoveTrackFromPlaylist,
                         onCreatePlaylistAndAdd: onCreatePlaylistAndAddTrack
                     )
                     if index < artist.programs.count - 1 {

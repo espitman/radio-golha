@@ -3,6 +3,7 @@ import Foundation
 struct DesktopManualPlaylist: Identifiable, Hashable {
     let id: Int64
     let name: String
+    let trackIds: Set<Int64>
 }
 
 enum DesktopPlaylistDataLoader {
@@ -24,6 +25,12 @@ enum DesktopPlaylistDataLoader {
         }.value
     }
 
+    static func removeTrack(playlistId: Int64, trackId: Int64) async -> Bool {
+        await Task.detached(priority: .userInitiated) {
+            (try? removeTrackSync(playlistId: playlistId, trackId: trackId)) ?? false
+        }.value
+    }
+
     private static func loadManualPlaylistsSync() throws -> [DesktopManualPlaylist] {
         let root = try resolveRepoRoot()
         let userDbPath = try resolveUserDbPath()
@@ -33,7 +40,13 @@ enum DesktopPlaylistDataLoader {
         )
         guard !payload.isEmpty, !payload.contains("\"error\"") else { return [] }
         let decoded = try JSONDecoder().decode([ManualPlaylistDTO].self, from: Data(payload.utf8))
-        return decoded.map { DesktopManualPlaylist(id: $0.id, name: $0.name) }
+        return decoded.map {
+            DesktopManualPlaylist(
+                id: $0.id,
+                name: $0.name,
+                trackIds: Set($0.trackIds ?? [])
+            )
+        }
     }
 
     private static func addTrackSync(playlistId: Int64, trackId: Int64) throws -> Bool {
@@ -63,6 +76,21 @@ enum DesktopPlaylistDataLoader {
         guard !payload.isEmpty, !payload.contains("\"error\"") else { return nil }
         let decoded = try JSONDecoder().decode(CreatePlaylistResponseDTO.self, from: Data(payload.utf8))
         return decoded.id
+    }
+
+    private static func removeTrackSync(playlistId: Int64, trackId: Int64) throws -> Bool {
+        let root = try resolveRepoRoot()
+        let userDbPath = try resolveUserDbPath()
+        let payload = try runBridge(
+            root: root,
+            arguments: [
+                "remove-track-from-playlist",
+                "--user-db", userDbPath,
+                "--playlist-id", String(playlistId),
+                "--track-id", String(trackId)
+            ]
+        )
+        return payload == "ok"
     }
 
     private static func resolveRepoRoot() throws -> String {
@@ -144,6 +172,7 @@ enum DesktopPlaylistDataLoader {
 private struct ManualPlaylistDTO: Decodable {
     let id: Int64
     let name: String
+    let trackIds: [Int64]?
 }
 
 private struct CreatePlaylistResponseDTO: Decodable {
