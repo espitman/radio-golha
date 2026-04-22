@@ -25,12 +25,10 @@ struct DesktopTopNavigationBar: View {
                     .lineLimit(1)
 
                 HStack(spacing: 20) {
-                    navButton(title: "برنامه‌ها", tab: .programs)
-                    navButton(title: "جستجو", tab: .search)
+                    navButton(title: "صفحه اصلی", tab: .programs)
                     navButton(title: "خواننده‌ها", tab: .artists)
                     navButton(title: "نوازندگان", tab: .instrumentalists)
-                    navButton(title: "دستگاه‌ها", tab: .modes)
-                    navButton(title: "شاعران", tab: .poets)
+                    navButton(title: "جستجو", tab: .search)
                 }
             }
 
