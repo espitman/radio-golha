@@ -43,6 +43,7 @@ private struct DesktopCustomContextMenuModifier: ViewModifier {
     let alignment: Alignment
 
     @State private var isPresented = false
+    @State private var clickLocation: CGPoint = .zero
     @State private var eventMonitor: Any?
 
     private let openAnimation = Animation.easeOut(duration: 0.18)
@@ -50,24 +51,39 @@ private struct DesktopCustomContextMenuModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .background(
-                SecondaryClickCaptureView {
+            .overlay(
+                SecondaryClickCaptureView { point in
                     guard !actions.isEmpty else { return }
+                    clickLocation = point
                     withAnimation(openAnimation) {
                         isPresented = true
                     }
                 }
             )
-            .overlay(alignment: alignment) {
-                if isPresented, !actions.isEmpty {
-                    DesktopCustomContextMenuCard(actions: actions) {
-                        withAnimation(closeAnimation) {
-                            isPresented = false
+            .overlay {
+                GeometryReader { geo in
+                    if isPresented, !actions.isEmpty {
+                        let menuWidth: CGFloat = 212
+                        let menuHeight: CGFloat = menuHeightForActions(actions.count)
+                        let x = min(
+                            max(clickLocation.x, 8),
+                            max(8, geo.size.width - menuWidth - 8)
+                        )
+                        let y = min(
+                            max(clickLocation.y + 6, 8),
+                            max(8, geo.size.height - menuHeight - 8)
+                        )
+
+                        DesktopCustomContextMenuCard(actions: actions) {
+                            withAnimation(closeAnimation) {
+                                isPresented = false
+                            }
                         }
+                        .frame(width: menuWidth)
+                        .offset(x: x, y: y)
+                        .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .topTrailing)))
+                        .zIndex(20_000)
                     }
-                    .padding(.top, 8)
-                    .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .topTrailing)))
-                    .zIndex(20_000)
                 }
             }
             .onChange(of: isPresented) { presented in
@@ -81,6 +97,12 @@ private struct DesktopCustomContextMenuModifier: ViewModifier {
                 removeEventMonitor()
             }
             .zIndex(isPresented ? 30_000 : 0)
+    }
+
+    private func menuHeightForActions(_ count: Int) -> CGFloat {
+        guard count > 0 else { return 44 }
+        let rows = CGFloat(count)
+        return (rows * 30) + (CGFloat(max(0, count - 1)) * 4) + 12
     }
 
     private func installEventMonitor() {
@@ -149,7 +171,7 @@ private struct DesktopCustomContextMenuCard: View {
         }
         .padding(6)
         .frame(width: 212)
-        .background(Palette.surface, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .background(Color.white, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .stroke(Palette.border, lineWidth: 1)
@@ -159,59 +181,48 @@ private struct DesktopCustomContextMenuCard: View {
 }
 
 private struct SecondaryClickCaptureView: NSViewRepresentable {
-    let onSecondaryClick: () -> Void
+    let onSecondaryClick: (CGPoint) -> Void
 
-    func makeCoordinator() -> Coordinator {
-        Coordinator(onSecondaryClick: onSecondaryClick)
-    }
-
-    func makeNSView(context: Context) -> NSView {
-        let view = NSView(frame: .zero)
+    func makeNSView(context: Context) -> SecondaryClickPassthroughNSView {
+        let view = SecondaryClickPassthroughNSView(frame: .zero)
+        view.onSecondaryClick = onSecondaryClick
         return view
     }
 
-    func updateNSView(_ nsView: NSView, context: Context) {
-        context.coordinator.onSecondaryClick = onSecondaryClick
-        context.coordinator.bind(to: nsView.superview)
+    func updateNSView(_ nsView: SecondaryClickPassthroughNSView, context: Context) {
+        nsView.onSecondaryClick = onSecondaryClick
+    }
+}
+
+private final class SecondaryClickPassthroughNSView: NSView {
+    var onSecondaryClick: ((CGPoint) -> Void)?
+
+    override var isFlipped: Bool { true }
+
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        guard let event = NSApp.currentEvent else { return nil }
+        switch event.type {
+        case .rightMouseDown, .rightMouseUp, .otherMouseDown, .otherMouseUp:
+            return self
+        default:
+            return nil
+        }
     }
 
-    static func dismantleNSView(_ nsView: NSView, coordinator: Coordinator) {
-        coordinator.unbind()
+    override func rightMouseDown(with event: NSEvent) {
+        onSecondaryClick?(convert(event.locationInWindow, from: nil))
     }
 
-    final class Coordinator: NSObject {
-        var onSecondaryClick: () -> Void
-        private weak var hostView: NSView?
-        private var recognizer: NSClickGestureRecognizer?
+    override func otherMouseDown(with event: NSEvent) {
+        onSecondaryClick?(convert(event.locationInWindow, from: nil))
+    }
 
-        init(onSecondaryClick: @escaping () -> Void) {
-            self.onSecondaryClick = onSecondaryClick
-        }
-
-        func bind(to view: NSView?) {
-            guard let view else { return }
-            if hostView === view, recognizer != nil { return }
-            unbind()
-            hostView = view
-
-            let recognizer = NSClickGestureRecognizer(target: self, action: #selector(handleSecondaryClick(_:)))
-            recognizer.buttonMask = 0x2
-            recognizer.numberOfClicksRequired = 1
-            recognizer.delaysPrimaryMouseButtonEvents = false
-            view.addGestureRecognizer(recognizer)
-            self.recognizer = recognizer
-        }
-
-        func unbind() {
-            if let recognizer, let hostView {
-                hostView.removeGestureRecognizer(recognizer)
-            }
-            recognizer = nil
-        }
-
-        @objc private func handleSecondaryClick(_ sender: NSClickGestureRecognizer) {
-            guard sender.state == .ended else { return }
-            onSecondaryClick()
+    override func mouseDown(with event: NSEvent) {
+        // Support Control+Click as secondary click on macOS.
+        if event.modifierFlags.contains(.control) {
+            onSecondaryClick?(convert(event.locationInWindow, from: nil))
+        } else {
+            super.mouseDown(with: event)
         }
     }
 }
