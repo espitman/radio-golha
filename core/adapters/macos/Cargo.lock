@@ -246,6 +246,7 @@ dependencies = [
  "anyhow",
  "clap",
  "radiogolha-core",
+ "serde",
  "serde_json",
 ]
 

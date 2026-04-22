@@ -13,6 +13,20 @@ private enum SearchMatchModeUI {
         case .any: return "هرکدام"
         }
     }
+
+    var value: SearchMatchMode {
+        switch self {
+        case .all: return .all
+        case .any: return .any
+        }
+    }
+
+    init(_ value: SearchMatchMode) {
+        switch value {
+        case .all: self = .all
+        case .any: self = .any
+        }
+    }
 }
 
 private struct SearchOption: Identifiable, Hashable {
@@ -74,6 +88,22 @@ private enum SearchFieldKey: String, CaseIterable, Hashable {
             return false
         }
     }
+
+    var filterKind: SearchFilterKind {
+        switch self {
+        case .category: return .category
+        case .singer: return .singer
+        case .mode: return .mode
+        case .orchestra: return .orchestra
+        case .instrument: return .instrument
+        case .performer: return .performer
+        case .poet: return .poet
+        case .announcer: return .announcer
+        case .composer: return .composer
+        case .arranger: return .arranger
+        case .orchestraLeader: return .orchestraLeader
+        }
+    }
 }
 
 private struct SearchFieldConfig: Identifiable {
@@ -111,6 +141,8 @@ private struct SearchFieldConfig: Identifiable {
 }
 
 struct SearchContentView: View {
+    let onSearch: (SearchProgramFilters, [SearchActiveChip]) -> Void
+    let initialFilters: SearchProgramFilters
     @State private var fieldConfigs: [SearchFieldConfig]
 
     @State private var modeByField: [SearchFieldKey: SearchMatchModeUI]
@@ -119,13 +151,92 @@ struct SearchContentView: View {
     @State private var expandedField: SearchFieldKey?
     @State private var transcriptText: String
 
-    init() {
-        _fieldConfigs = State(initialValue: SearchFieldConfig.empty)
-        _modeByField = State(initialValue: Dictionary(uniqueKeysWithValues: SearchFieldKey.allCases.map { ($0, .all) }))
+    private var fieldConfigsRender: [SearchFieldConfig] {
+        fieldConfigs.isEmpty ? SearchFieldConfig.empty : fieldConfigs
+    }
+
+    private var fieldConfigsSignature: String {
+        fieldConfigsRender
+            .map { "\($0.key.rawValue):\($0.options.count)" }
+            .joined(separator: "|")
+    }
+
+    private var currentFilters: SearchProgramFilters {
+        func ids(_ key: SearchFieldKey) -> [Int64] {
+            selectedByField[key, default: []].compactMap { Int64($0.id) }
+        }
+        return SearchProgramFilters(
+            transcriptQuery: transcriptText.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty,
+            categoryIds: ids(.category),
+            singerIds: ids(.singer),
+            singerMatch: (modeByField[.singer] ?? .any).value,
+            modeIds: ids(.mode),
+            modeMatch: (modeByField[.mode] ?? .any).value,
+            orchestraIds: ids(.orchestra),
+            orchestraMatch: (modeByField[.orchestra] ?? .any).value,
+            instrumentIds: ids(.instrument),
+            instrumentMatch: (modeByField[.instrument] ?? .any).value,
+            performerIds: ids(.performer),
+            performerMatch: (modeByField[.performer] ?? .any).value,
+            poetIds: ids(.poet),
+            poetMatch: (modeByField[.poet] ?? .any).value,
+            announcerIds: ids(.announcer),
+            announcerMatch: (modeByField[.announcer] ?? .any).value,
+            composerIds: ids(.composer),
+            composerMatch: (modeByField[.composer] ?? .any).value,
+            arrangerIds: ids(.arranger),
+            arrangerMatch: (modeByField[.arranger] ?? .any).value,
+            orchestraLeaderIds: ids(.orchestraLeader),
+            orchestraLeaderMatch: (modeByField[.orchestraLeader] ?? .any).value
+        )
+    }
+
+    private var activeChips: [SearchActiveChip] {
+        var chips: [SearchActiveChip] = []
+        for key in SearchFieldKey.allCases {
+            for option in selectedByField[key, default: []] {
+                chips.append(
+                    SearchActiveChip(
+                        kind: key.filterKind,
+                        valueId: Int64(option.id),
+                        label: option.name
+                    )
+                )
+            }
+        }
+        let transcript = transcriptText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !transcript.isEmpty {
+            chips.append(SearchActiveChip(kind: .transcript, valueId: nil, label: "متن: \(transcript)"))
+        }
+        return chips
+    }
+
+    init(
+        initialFilters: SearchProgramFilters = .empty,
+        onSearch: @escaping (SearchProgramFilters, [SearchActiveChip]) -> Void = { _, _ in }
+    ) {
+        self.initialFilters = initialFilters
+        self.onSearch = onSearch
+        _fieldConfigs = State(initialValue: [])
+        _modeByField = State(
+            initialValue: [
+                .category: .all,
+                .singer: SearchMatchModeUI(initialFilters.singerMatch),
+                .mode: SearchMatchModeUI(initialFilters.modeMatch),
+                .orchestra: SearchMatchModeUI(initialFilters.orchestraMatch),
+                .instrument: SearchMatchModeUI(initialFilters.instrumentMatch),
+                .performer: SearchMatchModeUI(initialFilters.performerMatch),
+                .poet: SearchMatchModeUI(initialFilters.poetMatch),
+                .announcer: SearchMatchModeUI(initialFilters.announcerMatch),
+                .composer: SearchMatchModeUI(initialFilters.composerMatch),
+                .arranger: SearchMatchModeUI(initialFilters.arrangerMatch),
+                .orchestraLeader: SearchMatchModeUI(initialFilters.orchestraLeaderMatch)
+            ]
+        )
         _queryByField = State(initialValue: Dictionary(uniqueKeysWithValues: SearchFieldKey.allCases.map { ($0, "") }))
         _selectedByField = State(initialValue: Dictionary(uniqueKeysWithValues: SearchFieldKey.allCases.map { ($0, []) }))
         _expandedField = State(initialValue: nil)
-        _transcriptText = State(initialValue: "")
+        _transcriptText = State(initialValue: initialFilters.transcriptQuery ?? "")
     }
 
     var body: some View {
@@ -153,7 +264,17 @@ struct SearchContentView: View {
         .task {
             if let loaded = await SearchDataLoader.load() {
                 fieldConfigs = SearchFieldConfig.fromLoaded(loaded)
+                applyInitialFilters()
             }
+        }
+        .onAppear {
+            applyInitialFilters()
+        }
+        .onChange(of: fieldConfigsSignature) { _ in
+            applyInitialFilters()
+        }
+        .onChange(of: initialFilters.restoreKey) { _ in
+            applyInitialFilters()
         }
     }
 
@@ -181,7 +302,7 @@ struct SearchContentView: View {
                     ],
                     spacing: 28
                 ) {
-                    ForEach(Array(fieldConfigs.enumerated()), id: \.element.id) { index, config in
+                    ForEach(Array(fieldConfigsRender.enumerated()), id: \.element.id) { index, config in
                         SearchComboField(
                             key: config.key,
                             options: config.options,
@@ -204,7 +325,7 @@ struct SearchContentView: View {
                                 }
                             )
                         )
-                        .zIndex(expandedField == config.key ? 10_000 : Double(fieldConfigs.count - index))
+                        .zIndex(expandedField == config.key ? 10_000 : Double(fieldConfigsRender.count - index))
                     }
 
                     SearchTranscriptField(text: $transcriptText)
@@ -218,11 +339,13 @@ struct SearchContentView: View {
                 HStack {
                     Spacer(minLength: 0)
                     Button {
+                        guard currentFilters.hasAnyFilter else { return }
+                        onSearch(currentFilters, activeChips)
                     } label: {
                         HStack(spacing: 8) {
                             Image(systemName: "magnifyingglass")
                                 .font(.system(size: 14, weight: .bold))
-                            Text("جستجوی هوشمند در آرشیو")
+                            Text("جستجو کن")
                                 .font(.vazir(11, .bold))
                         }
                         .foregroundStyle(.white)
@@ -231,6 +354,8 @@ struct SearchContentView: View {
                         .background(Palette.primary, in: Capsule())
                     }
                     .buttonStyle(.plain)
+                    .disabled(!currentFilters.hasAnyFilter)
+                    .opacity(currentFilters.hasAnyFilter ? 1 : 0.45)
                     Spacer(minLength: 0)
                 }
                 .zIndex(0)
@@ -252,6 +377,42 @@ struct SearchContentView: View {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .stroke(Palette.secondary.opacity(0.12), lineWidth: 1)
         )
+    }
+
+    private func applyInitialFilters() {
+        guard !fieldConfigs.isEmpty else { return }
+
+        func mapOptions(_ key: SearchFieldKey, _ ids: [Int64]) -> [SearchOption] {
+            guard let config = fieldConfigs.first(where: { $0.key == key }) else { return [] }
+            let wanted = Set(ids.map(String.init))
+            return config.options.filter { wanted.contains($0.id) }
+        }
+
+        modeByField[.singer] = SearchMatchModeUI(initialFilters.singerMatch)
+        modeByField[.mode] = SearchMatchModeUI(initialFilters.modeMatch)
+        modeByField[.orchestra] = SearchMatchModeUI(initialFilters.orchestraMatch)
+        modeByField[.instrument] = SearchMatchModeUI(initialFilters.instrumentMatch)
+        modeByField[.performer] = SearchMatchModeUI(initialFilters.performerMatch)
+        modeByField[.poet] = SearchMatchModeUI(initialFilters.poetMatch)
+        modeByField[.announcer] = SearchMatchModeUI(initialFilters.announcerMatch)
+        modeByField[.composer] = SearchMatchModeUI(initialFilters.composerMatch)
+        modeByField[.arranger] = SearchMatchModeUI(initialFilters.arrangerMatch)
+        modeByField[.orchestraLeader] = SearchMatchModeUI(initialFilters.orchestraLeaderMatch)
+        transcriptText = initialFilters.transcriptQuery ?? ""
+
+        selectedByField[.category] = mapOptions(.category, initialFilters.categoryIds)
+        selectedByField[.singer] = mapOptions(.singer, initialFilters.singerIds)
+        selectedByField[.mode] = mapOptions(.mode, initialFilters.modeIds)
+        selectedByField[.orchestra] = mapOptions(.orchestra, initialFilters.orchestraIds)
+        selectedByField[.instrument] = mapOptions(.instrument, initialFilters.instrumentIds)
+        selectedByField[.performer] = mapOptions(.performer, initialFilters.performerIds)
+        selectedByField[.poet] = mapOptions(.poet, initialFilters.poetIds)
+        selectedByField[.announcer] = mapOptions(.announcer, initialFilters.announcerIds)
+        selectedByField[.composer] = mapOptions(.composer, initialFilters.composerIds)
+        selectedByField[.arranger] = mapOptions(.arranger, initialFilters.arrangerIds)
+        selectedByField[.orchestraLeader] = mapOptions(.orchestraLeader, initialFilters.orchestraLeaderIds)
+        queryByField = Dictionary(uniqueKeysWithValues: SearchFieldKey.allCases.map { ($0, "") })
+        expandedField = nil
     }
 }
 
@@ -717,5 +878,11 @@ private struct SearchTranscriptField: View {
                     .stroke(Color(hex: 0xC4C6CF), lineWidth: 1)
             )
         }
+    }
+}
+
+private extension String {
+    var nilIfEmpty: String? {
+        isEmpty ? nil : self
     }
 }

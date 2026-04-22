@@ -1,5 +1,120 @@
 import Foundation
 
+enum SearchMatchMode: String {
+    case any
+    case all
+}
+
+struct SearchProgramFilters {
+    var transcriptQuery: String?
+    var categoryIds: [Int64]
+    var singerIds: [Int64]
+    var singerMatch: SearchMatchMode
+    var modeIds: [Int64]
+    var modeMatch: SearchMatchMode
+    var orchestraIds: [Int64]
+    var orchestraMatch: SearchMatchMode
+    var instrumentIds: [Int64]
+    var instrumentMatch: SearchMatchMode
+    var performerIds: [Int64]
+    var performerMatch: SearchMatchMode
+    var poetIds: [Int64]
+    var poetMatch: SearchMatchMode
+    var announcerIds: [Int64]
+    var announcerMatch: SearchMatchMode
+    var composerIds: [Int64]
+    var composerMatch: SearchMatchMode
+    var arrangerIds: [Int64]
+    var arrangerMatch: SearchMatchMode
+    var orchestraLeaderIds: [Int64]
+    var orchestraLeaderMatch: SearchMatchMode
+
+    static let empty = SearchProgramFilters(
+        transcriptQuery: nil,
+        categoryIds: [],
+        singerIds: [],
+        singerMatch: .any,
+        modeIds: [],
+        modeMatch: .any,
+        orchestraIds: [],
+        orchestraMatch: .any,
+        instrumentIds: [],
+        instrumentMatch: .any,
+        performerIds: [],
+        performerMatch: .any,
+        poetIds: [],
+        poetMatch: .any,
+        announcerIds: [],
+        announcerMatch: .any,
+        composerIds: [],
+        composerMatch: .any,
+        arrangerIds: [],
+        arrangerMatch: .any,
+        orchestraLeaderIds: [],
+        orchestraLeaderMatch: .any
+    )
+
+    var hasAnyFilter: Bool {
+        let hasIds = !categoryIds.isEmpty || !singerIds.isEmpty || !modeIds.isEmpty || !orchestraIds.isEmpty ||
+            !instrumentIds.isEmpty || !performerIds.isEmpty || !poetIds.isEmpty || !announcerIds.isEmpty ||
+            !composerIds.isEmpty || !arrangerIds.isEmpty || !orchestraLeaderIds.isEmpty
+        return hasIds || !(transcriptQuery?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
+    }
+
+    var restoreKey: String {
+        func joined(_ values: [Int64]) -> String {
+            values.sorted().map(String.init).joined(separator: ",")
+        }
+        let transcript = transcriptQuery?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return [
+            transcript,
+            joined(categoryIds),
+            joined(singerIds), singerMatch.rawValue,
+            joined(modeIds), modeMatch.rawValue,
+            joined(orchestraIds), orchestraMatch.rawValue,
+            joined(instrumentIds), instrumentMatch.rawValue,
+            joined(performerIds), performerMatch.rawValue,
+            joined(poetIds), poetMatch.rawValue,
+            joined(announcerIds), announcerMatch.rawValue,
+            joined(composerIds), composerMatch.rawValue,
+            joined(arrangerIds), arrangerMatch.rawValue,
+            joined(orchestraLeaderIds), orchestraLeaderMatch.rawValue
+        ].joined(separator: "|")
+    }
+}
+
+enum SearchFilterKind: String, Hashable {
+    case category
+    case singer
+    case mode
+    case orchestra
+    case instrument
+    case performer
+    case poet
+    case announcer
+    case composer
+    case arranger
+    case orchestraLeader
+    case transcript
+}
+
+struct SearchActiveChip: Identifiable, Hashable {
+    let kind: SearchFilterKind
+    let valueId: Int64?
+    let label: String
+    var id: String {
+        if let valueId {
+            return "\(kind.rawValue)-\(valueId)"
+        }
+        return "\(kind.rawValue)-text"
+    }
+}
+
+struct SearchProgramResults {
+    let tracks: [TrackRowItem]
+    let total: Int
+}
+
 struct SearchLoadedOptions {
     var categories: [SearchDataOption]
     var singers: [SearchDataOption]
@@ -24,6 +139,12 @@ enum SearchDataLoader {
     static func load() async -> SearchLoadedOptions? {
         await Task.detached(priority: .userInitiated) {
             try? loadSync()
+        }.value
+    }
+
+    static func searchPrograms(filters: SearchProgramFilters) async -> SearchProgramResults? {
+        await Task.detached(priority: .userInitiated) {
+            try? searchProgramsSync(filters: filters)
         }.value
     }
 
@@ -87,6 +208,62 @@ enum SearchDataLoader {
             arrangers: dedupe(options.arrangers.map(toOption)),
             orchestraLeaders: dedupe(options.orchestraLeaders.map(toOption))
         )
+    }
+
+    private static func searchProgramsSync(filters: SearchProgramFilters) throws -> SearchProgramResults {
+        let root = try resolveRepoRoot()
+        let dbPath = try resolveArchiveDbPath(root: root)
+
+        let request = SearchProgramsRequestDTO(
+            transcriptQuery: filters.transcriptQuery?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty,
+            page: 1,
+            categoryIds: filters.categoryIds,
+            singerIds: filters.singerIds,
+            singerMatch: filters.singerMatch.rawValue,
+            modeIds: filters.modeIds,
+            modeMatch: filters.modeMatch.rawValue,
+            orchestraIds: filters.orchestraIds,
+            orchestraMatch: filters.orchestraMatch.rawValue,
+            instrumentIds: filters.instrumentIds,
+            instrumentMatch: filters.instrumentMatch.rawValue,
+            performerIds: filters.performerIds,
+            performerMatch: filters.performerMatch.rawValue,
+            poetIds: filters.poetIds,
+            poetMatch: filters.poetMatch.rawValue,
+            announcerIds: filters.announcerIds,
+            announcerMatch: filters.announcerMatch.rawValue,
+            composerIds: filters.composerIds,
+            composerMatch: filters.composerMatch.rawValue,
+            arrangerIds: filters.arrangerIds,
+            arrangerMatch: filters.arrangerMatch.rawValue,
+            orchestraLeaderIds: filters.orchestraLeaderIds,
+            orchestraLeaderMatch: filters.orchestraLeaderMatch.rawValue
+        )
+        let filtersJson = String(data: try JSONEncoder().encode(request), encoding: .utf8) ?? "{}"
+
+        let payload = try runBridge(
+            root: root,
+            arguments: ["search-programs-json", "--db", dbPath, "--filters-json", filtersJson]
+        )
+        guard !payload.isEmpty, !payload.contains("\"error\"") else {
+            return SearchProgramResults(tracks: [], total: 0)
+        }
+
+        let response = try JSONDecoder().decode(SearchProgramsResponseDTO.self, from: Data(payload.utf8))
+        let rows = response.rows.map { row in
+            let title = row.title?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty ?? "برنامه \(row.no)"
+            return TrackRowItem(
+                id: "track-\(row.id)",
+                trackId: row.id,
+                title: title,
+                subtitle: row.artist?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty ?? row.categoryName,
+                duration: row.duration?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty ?? "۰۰:۰۰",
+                audioURL: row.audioUrl,
+                artworkURLs: []
+            )
+        }
+
+        return SearchProgramResults(tracks: rows, total: Int(response.total))
     }
 
     private static func normalizeName(_ value: String) -> String {
@@ -196,6 +373,12 @@ enum SearchDataLoader {
     }
 }
 
+private extension String {
+    var nilIfEmpty: String? {
+        isEmpty ? nil : self
+    }
+}
+
 private struct SearchOptionsBridgeResponse: Decodable {
     let categories: [SearchOptionDTO]
     let singers: [SearchOptionDTO]
@@ -241,4 +424,59 @@ private struct SearchMusicianDTO: Decodable {
     let name: String
     let instrument: String
     let avatar: String?
+}
+
+private struct SearchProgramsRequestDTO: Encodable {
+    let transcriptQuery: String?
+    let page: Int
+    let categoryIds: [Int64]
+    let singerIds: [Int64]
+    let singerMatch: String
+    let modeIds: [Int64]
+    let modeMatch: String
+    let orchestraIds: [Int64]
+    let orchestraMatch: String
+    let instrumentIds: [Int64]
+    let instrumentMatch: String
+    let performerIds: [Int64]
+    let performerMatch: String
+    let poetIds: [Int64]
+    let poetMatch: String
+    let announcerIds: [Int64]
+    let announcerMatch: String
+    let composerIds: [Int64]
+    let composerMatch: String
+    let arrangerIds: [Int64]
+    let arrangerMatch: String
+    let orchestraLeaderIds: [Int64]
+    let orchestraLeaderMatch: String
+}
+
+private struct SearchProgramsResponseDTO: Decodable {
+    let rows: [SearchProgramRowDTO]
+    let total: Int64
+    let page: Int64
+    let totalPages: Int64?
+}
+
+private struct SearchProgramRowDTO: Decodable {
+    let id: Int64
+    let title: String?
+    let categoryName: String
+    let no: Int64
+    let subNo: String?
+    let duration: String?
+    let audioUrl: String?
+    let artist: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case title
+        case categoryName = "category_name"
+        case no
+        case subNo = "sub_no"
+        case duration
+        case audioUrl = "audio_url"
+        case artist
+    }
 }

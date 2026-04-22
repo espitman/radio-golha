@@ -3,6 +3,7 @@ import SwiftUI
 private enum DesktopPage {
     case home
     case search
+    case searchResults
     case singers
     case players
     case programTracks
@@ -18,7 +19,12 @@ private struct NavigationSnapshot {
     let programDetailsSourcePage: DesktopPage
     let selectedProgramCategory: ProgramItem?
     let selectedProgramTracks: [TrackRowItem]?
+    let selectedSearchTracks: [TrackRowItem]?
+    let selectedSearchTotal: Int
+    let activeSearchFilters: SearchProgramFilters
+    let activeSearchChips: [SearchActiveChip]
     let isProgramTracksLoading: Bool
+    let isSearchResultsLoading: Bool
     let isArtistDetailsLoading: Bool
     let isProgramDetailsLoading: Bool
 }
@@ -31,6 +37,10 @@ struct HomeRootView: View {
     @State private var programDetailsSourcePage: DesktopPage = .home
     @State private var selectedProgramCategory: ProgramItem? = nil
     @State private var selectedProgramTracks: [TrackRowItem]? = nil
+    @State private var selectedSearchTracks: [TrackRowItem]? = nil
+    @State private var selectedSearchTotal: Int = 0
+    @State private var activeSearchFilters: SearchProgramFilters = .empty
+    @State private var activeSearchChips: [SearchActiveChip] = []
     @State private var artistDetailsLoadRequestId: String = ""
     @State private var homeContent: HomeContentData? = nil
     @State private var singersContent: [SingerListItem]? = nil
@@ -39,6 +49,7 @@ struct HomeRootView: View {
     @State private var isSingersLoading = false
     @State private var isPlayersLoading = false
     @State private var isProgramTracksLoading = false
+    @State private var isSearchResultsLoading = false
     @State private var isArtistDetailsLoading = false
     @State private var isProgramDetailsLoading = false
     @State private var homeDataLoaded = false
@@ -193,8 +204,47 @@ struct HomeRootView: View {
                             .transition(pageTransition)
                     }
                 case .search:
-                    SearchContentView()
+                    SearchContentView(
+                        initialFilters: activeSearchFilters,
+                        onSearch: { filters, chips in
+                            openSearchResults(filters, chips: chips)
+                        }
+                    )
+                    .id("search-\(activeSearchFilters.restoreKey)")
                         .transition(pageTransition)
+                case .searchResults:
+                    if isSearchResultsLoading {
+                        DesktopLoadingView(message: "در حال جستجو...")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .transition(pageTransition)
+                    } else if let selectedSearchTracks {
+                        SearchResultsContentView(
+                            tracks: selectedSearchTracks,
+                            total: selectedSearchTotal,
+                            activeChips: activeSearchChips,
+                            onRemoveChip: { chip in
+                                removeSearchChip(chip)
+                            },
+                            onPlayTrack: { track in
+                                handleTrackPlayIntent(track)
+                            },
+                            onOpenProgram: { track in
+                                openProgramDetails(
+                                    programId: track.trackId,
+                                    fallbackTitle: track.title,
+                                    sourcePage: .searchResults
+                                )
+                            },
+                            currentPlayingTrackId: audioPlayer.currentTrack?.id,
+                            isPlayerPlaying: audioPlayer.isPlaying,
+                            isPlayerLoading: audioPlayer.isLoading
+                        )
+                        .transition(pageTransition)
+                    } else {
+                        DesktopLoadingView(message: "نتیجه‌ای یافت نشد")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .transition(pageTransition)
+                    }
                 case .players:
                     if let playersContent {
                         PlayersContentView(players: playersContent) { player in
@@ -332,6 +382,8 @@ struct HomeRootView: View {
             return .artists
         case .search:
             return .search
+        case .searchResults:
+            return .search
         case .players:
             return .instrumentalists
         case .programTracks:
@@ -353,7 +405,7 @@ struct HomeRootView: View {
                 return .artists
             case .players:
                 return .instrumentalists
-            case .search:
+            case .search, .searchResults:
                 return .search
             default:
                 return .programs
@@ -374,7 +426,12 @@ struct HomeRootView: View {
             programDetailsSourcePage: programDetailsSourcePage,
             selectedProgramCategory: selectedProgramCategory,
             selectedProgramTracks: selectedProgramTracks,
+            selectedSearchTracks: selectedSearchTracks,
+            selectedSearchTotal: selectedSearchTotal,
+            activeSearchFilters: activeSearchFilters,
+            activeSearchChips: activeSearchChips,
             isProgramTracksLoading: isProgramTracksLoading,
+            isSearchResultsLoading: isSearchResultsLoading,
             isArtistDetailsLoading: isArtistDetailsLoading,
             isProgramDetailsLoading: isProgramDetailsLoading
         )
@@ -382,16 +439,21 @@ struct HomeRootView: View {
 
     private func restore(from snapshot: NavigationSnapshot) {
         withAnimation(pageAnimation) {
-            currentPage = snapshot.page
             selectedArtistDetails = snapshot.selectedArtistDetails
             artistDetailsSourcePage = snapshot.artistDetailsSourcePage
             selectedProgramDetails = snapshot.selectedProgramDetails
             programDetailsSourcePage = snapshot.programDetailsSourcePage
             selectedProgramCategory = snapshot.selectedProgramCategory
             selectedProgramTracks = snapshot.selectedProgramTracks
+            selectedSearchTracks = snapshot.selectedSearchTracks
+            selectedSearchTotal = snapshot.selectedSearchTotal
+            activeSearchFilters = snapshot.activeSearchFilters
+            activeSearchChips = snapshot.activeSearchChips
             isProgramTracksLoading = snapshot.isProgramTracksLoading
+            isSearchResultsLoading = snapshot.isSearchResultsLoading
             isArtistDetailsLoading = snapshot.isArtistDetailsLoading
             isProgramDetailsLoading = snapshot.isProgramDetailsLoading
+            currentPage = snapshot.page
         }
     }
 
@@ -593,6 +655,87 @@ struct HomeRootView: View {
                 isProgramTracksLoading = false
             }
         }
+    }
+
+    private func openSearchResults(
+        _ filters: SearchProgramFilters,
+        chips: [SearchActiveChip],
+        pushSnapshot: Bool = true
+    ) {
+        guard filters.hasAnyFilter else { return }
+        activeSearchFilters = filters
+        activeSearchChips = chips
+        if pushSnapshot {
+            backStack.append(makeSnapshot())
+        }
+        selectedSearchTracks = nil
+        selectedSearchTotal = 0
+        isSearchResultsLoading = true
+        withAnimation(pageAnimation) {
+            currentPage = .searchResults
+        }
+
+        Task {
+            let start = Date()
+            let loaded = await SearchDataLoader.searchPrograms(filters: filters)
+            let elapsed = Date().timeIntervalSince(start)
+            let minVisible = 0.3
+            if elapsed < minVisible {
+                let remainingNs = UInt64((minVisible - elapsed) * 1_000_000_000)
+                try? await Task.sleep(nanoseconds: remainingNs)
+            }
+            guard currentPage == .searchResults else { return }
+            withAnimation(pageAnimation) {
+                selectedSearchTracks = loaded?.tracks ?? []
+                selectedSearchTotal = loaded?.total ?? 0
+                isSearchResultsLoading = false
+            }
+        }
+    }
+
+    private func removeSearchChip(_ chip: SearchActiveChip) {
+        var filters = activeSearchFilters
+        switch chip.kind {
+        case .category:
+            if let id = chip.valueId { filters.categoryIds.removeAll { $0 == id } }
+        case .singer:
+            if let id = chip.valueId { filters.singerIds.removeAll { $0 == id } }
+        case .mode:
+            if let id = chip.valueId { filters.modeIds.removeAll { $0 == id } }
+        case .orchestra:
+            if let id = chip.valueId { filters.orchestraIds.removeAll { $0 == id } }
+        case .instrument:
+            if let id = chip.valueId { filters.instrumentIds.removeAll { $0 == id } }
+        case .performer:
+            if let id = chip.valueId { filters.performerIds.removeAll { $0 == id } }
+        case .poet:
+            if let id = chip.valueId { filters.poetIds.removeAll { $0 == id } }
+        case .announcer:
+            if let id = chip.valueId { filters.announcerIds.removeAll { $0 == id } }
+        case .composer:
+            if let id = chip.valueId { filters.composerIds.removeAll { $0 == id } }
+        case .arranger:
+            if let id = chip.valueId { filters.arrangerIds.removeAll { $0 == id } }
+        case .orchestraLeader:
+            if let id = chip.valueId { filters.orchestraLeaderIds.removeAll { $0 == id } }
+        case .transcript:
+            filters.transcriptQuery = nil
+        }
+
+        activeSearchFilters = filters
+        activeSearchChips.removeAll { $0.id == chip.id }
+
+        guard filters.hasAnyFilter else {
+            withAnimation(pageAnimation) {
+                currentPage = .search
+                selectedSearchTracks = nil
+                selectedSearchTotal = 0
+                isSearchResultsLoading = false
+            }
+            return
+        }
+
+        openSearchResults(filters, chips: activeSearchChips, pushSnapshot: false)
     }
 }
 

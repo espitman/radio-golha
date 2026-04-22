@@ -1,6 +1,8 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use radiogolha_core::RadioGolhaCore;
+use radiogolha_core::{ProgramSearchFilters, ProgramSortField, SearchMatchMode, SortDirection};
+use serde::Deserialize;
 use serde_json::json;
 use radiogolha_core::user_data::UserDataStore;
 
@@ -38,6 +40,12 @@ enum Command {
     SearchOptionsJson {
         #[arg(long)]
         db: String,
+    },
+    SearchProgramsJson {
+        #[arg(long)]
+        db: String,
+        #[arg(long)]
+        filters_json: String,
     },
     ProgramsByCategoryJson {
         #[arg(long)]
@@ -99,6 +107,9 @@ fn main() -> Result<()> {
         Command::SearchOptionsJson { db } => {
             println!("{}", build_search_options_json(&db));
         }
+        Command::SearchProgramsJson { db, filters_json } => {
+            println!("{}", search_programs_json(&db, &filters_json));
+        }
         Command::ProgramsByCategoryJson { db, category_id } => {
             println!("{}", build_programs_by_category_json(&db, category_id));
         }
@@ -120,6 +131,84 @@ fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+#[derive(Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+struct MacSearchRequest {
+    transcript_query: Option<String>,
+    page: Option<i64>,
+    category_ids: Option<Vec<i64>>,
+    mode_ids: Option<Vec<i64>>,
+    mode_match: Option<String>,
+    orchestra_ids: Option<Vec<i64>>,
+    orchestra_match: Option<String>,
+    instrument_ids: Option<Vec<i64>>,
+    instrument_match: Option<String>,
+    singer_ids: Option<Vec<i64>>,
+    singer_match: Option<String>,
+    poet_ids: Option<Vec<i64>>,
+    poet_match: Option<String>,
+    announcer_ids: Option<Vec<i64>>,
+    announcer_match: Option<String>,
+    composer_ids: Option<Vec<i64>>,
+    composer_match: Option<String>,
+    arranger_ids: Option<Vec<i64>>,
+    arranger_match: Option<String>,
+    performer_ids: Option<Vec<i64>>,
+    performer_match: Option<String>,
+    orchestra_leader_ids: Option<Vec<i64>>,
+    orchestra_leader_match: Option<String>,
+}
+
+fn parse_match_mode(s: &Option<String>) -> SearchMatchMode {
+    match s.as_deref() {
+        Some("all") => SearchMatchMode::All,
+        _ => SearchMatchMode::Any,
+    }
+}
+
+fn search_programs_json(db_path: &str, filters_json: &str) -> String {
+    let req: MacSearchRequest = match serde_json::from_str(filters_json) {
+        Ok(req) => req,
+        Err(error) => return json!({ "error": error.to_string() }).to_string(),
+    };
+
+    let filters = ProgramSearchFilters {
+        transcript_query: req.transcript_query,
+        category_ids: req.category_ids.unwrap_or_default(),
+        mode_ids: req.mode_ids.unwrap_or_default(),
+        mode_match: parse_match_mode(&req.mode_match),
+        orchestra_ids: req.orchestra_ids.unwrap_or_default(),
+        orchestra_match: parse_match_mode(&req.orchestra_match),
+        instrument_ids: req.instrument_ids.unwrap_or_default(),
+        instrument_match: parse_match_mode(&req.instrument_match),
+        singer_ids: req.singer_ids.unwrap_or_default(),
+        singer_match: parse_match_mode(&req.singer_match),
+        poet_ids: req.poet_ids.unwrap_or_default(),
+        poet_match: parse_match_mode(&req.poet_match),
+        announcer_ids: req.announcer_ids.unwrap_or_default(),
+        announcer_match: parse_match_mode(&req.announcer_match),
+        composer_ids: req.composer_ids.unwrap_or_default(),
+        composer_match: parse_match_mode(&req.composer_match),
+        arranger_ids: req.arranger_ids.unwrap_or_default(),
+        arranger_match: parse_match_mode(&req.arranger_match),
+        performer_ids: req.performer_ids.unwrap_or_default(),
+        performer_match: parse_match_mode(&req.performer_match),
+        orchestra_leader_ids: req.orchestra_leader_ids.unwrap_or_default(),
+        orchestra_leader_match: parse_match_mode(&req.orchestra_leader_match),
+        sort_field: ProgramSortField::No,
+        sort_direction: SortDirection::Asc,
+    };
+    let page = req.page.unwrap_or(1);
+
+    match RadioGolhaCore::open(db_path) {
+        Ok(core) => match core.search_programs(&filters, page) {
+            Ok(result) => json!(result).to_string(),
+            Err(error) => json!({ "error": error.to_string() }).to_string(),
+        },
+        Err(error) => json!({ "error": error.to_string() }).to_string(),
+    }
 }
 
 fn build_programs_by_ids_json(db_path: &str, ids_json: &str) -> String {
