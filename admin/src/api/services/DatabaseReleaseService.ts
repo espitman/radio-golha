@@ -28,6 +28,8 @@ type ReleaseManifest = {
 
 export type DatabaseReleaseResult = {
   ok: true
+  didUpload: boolean
+  message: string
   dbUrl: string
   manifestUrl: string
   bucket: string
@@ -108,6 +110,27 @@ async function prepareReleaseFiles(releasedAt: string): Promise<ReleaseManifest>
   return manifest
 }
 
+async function fetchRemoteManifest(manifestUrl: string): Promise<ReleaseManifest | null> {
+  try {
+    const cacheBusted = manifestUrl.includes('?')
+      ? `${manifestUrl}&_ts=${Date.now()}`
+      : `${manifestUrl}?_ts=${Date.now()}`
+
+    const response = await fetch(cacheBusted, {
+      method: 'GET',
+      headers: {
+        'Cache-Control': 'no-cache',
+        Pragma: 'no-cache',
+      },
+    })
+
+    if (!response.ok) return null
+    return (await response.json()) as ReleaseManifest
+  } catch {
+    return null
+  }
+}
+
 export async function releaseDatabaseToLiaraCdn(): Promise<DatabaseReleaseResult> {
   const endpoint = (process.env.LIARA_ENDPOINT?.trim() || 'https://storage.iran.liara.space').replace(/\/+$/, '')
   const configuredBucketName = process.env.LIARA_BUCKET_NAME?.trim()
@@ -134,6 +157,37 @@ export async function releaseDatabaseToLiaraCdn(): Promise<DatabaseReleaseResult
   const dbObjectKey = withPrefix(objectPrefix, RELEASE_DB_FILENAME)
   const manifestObjectKey = withPrefix(objectPrefix, RELEASE_MANIFEST_FILENAME)
   const latestObjectKey = withPrefix(objectPrefix, 'latest.json')
+  const baseUrl = getPublicBaseUrl(endpoint, bucketName)
+  const dbUrl = `${baseUrl}/${dbObjectKey}`
+  const manifestUrl = `${baseUrl}/${manifestObjectKey}`
+
+  const remoteManifest = await fetchRemoteManifest(manifestUrl)
+  if (
+    remoteManifest &&
+    remoteManifest.sha256.toLowerCase() === manifest.sha256.toLowerCase() &&
+    remoteManifest.sizeBytes === manifest.sizeBytes
+  ) {
+    return {
+      ok: true,
+      didUpload: false,
+      message: 'فایل دیتابیس تغییری نکرده و ریلیز جدید لازم نبود.',
+      dbUrl,
+      manifestUrl,
+      bucket: bucketName,
+      endpoint,
+      fileName: RELEASE_DB_FILENAME,
+      sizeBytes: manifest.sizeBytes,
+      sha256: manifest.sha256,
+      releasedAt: remoteManifest.releasedAt,
+      uploadOutput: JSON.stringify({
+        skipped: true,
+        reason: 'unchanged',
+        bucket: bucketName,
+        endpoint,
+        prefix: objectPrefix,
+      }),
+    }
+  }
 
   await client.send(
     new PutObjectCommand({
@@ -168,10 +222,6 @@ export async function releaseDatabaseToLiaraCdn(): Promise<DatabaseReleaseResult
     })
   )
 
-  const baseUrl = getPublicBaseUrl(endpoint, bucketName)
-  const dbUrl = `${baseUrl}/${dbObjectKey}`
-  const manifestUrl = `${baseUrl}/${manifestObjectKey}`
-
   const uploadOutput = JSON.stringify({
     uploaded: [dbObjectKey, manifestObjectKey, latestObjectKey],
     bucket: bucketName,
@@ -181,6 +231,8 @@ export async function releaseDatabaseToLiaraCdn(): Promise<DatabaseReleaseResult
 
   return {
     ok: true,
+    didUpload: true,
+    message: 'ریلیز دیتابیس با موفقیت انجام شد.',
     dbUrl,
     manifestUrl,
     bucket: bucketName,

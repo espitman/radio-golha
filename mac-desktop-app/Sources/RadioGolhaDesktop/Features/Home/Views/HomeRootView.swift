@@ -13,6 +13,8 @@ private enum DesktopPage {
     case programTracks
     case artistDetails
     case programDetails
+    case settings
+    case help
 }
 
 private struct NavigationSnapshot {
@@ -107,7 +109,17 @@ struct HomeRootView: View {
                             openMostPlayedTracksCollection()
                         case .recentlyPlayed:
                             openRecentlyPlayedTracksCollection()
+                        case .settings:
+                            navigateTo(.settings)
+                        case .help:
+                            navigateTo(.help)
                         }
+                    },
+                    onOpenSettings: {
+                        navigateTo(.settings)
+                    },
+                    onOpenHelp: {
+                        navigateTo(.help)
                     }
                 )
                     .frame(width: 256)
@@ -147,22 +159,7 @@ struct HomeRootView: View {
         .animation(.easeInOut(duration: 0.2), value: pendingPlaylistTrackId != nil)
         .task {
             guard !homeDataLoaded else { return }
-            homeDataLoaded = true
-            isHomeLoading = true
-            manualPlaylists = await DesktopPlaylistDataLoader.loadManualPlaylists()
-            favoriteArtistIds = await DesktopFavoriteArtistsDataLoader.loadFavoriteArtistIds()
-            let start = Date()
-            let loaded = await HomeDataLoader.load()
-            let elapsed = Date().timeIntervalSince(start)
-            let minVisible = 0.45
-            if elapsed < minVisible {
-                let remainingNs = UInt64((minVisible - elapsed) * 1_000_000_000)
-                try? await Task.sleep(nanoseconds: remainingNs)
-            }
-            withAnimation(pageAnimation) {
-                homeContent = loaded
-                isHomeLoading = false
-            }
+            await loadHomeBootstrap()
         }
     }
 
@@ -660,6 +657,16 @@ struct HomeRootView: View {
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .transition(pageTransition)
                     }
+                case .settings:
+                    SettingsContentView(
+                        onDatabaseUpdated: {
+                            refreshAllArchiveBackedPages()
+                        }
+                    )
+                        .transition(pageTransition)
+                case .help:
+                    HelpContentView()
+                        .transition(pageTransition)
                 }
             }
             .frame(maxHeight: .infinity)
@@ -667,7 +674,10 @@ struct HomeRootView: View {
         }
     }
 
-    private var selectedTab: DesktopMainTab {
+    private var selectedTab: DesktopMainTab? {
+        if selectedSidebarItem != nil {
+            return nil
+        }
         switch currentPage {
         case .home:
             return .programs
@@ -687,6 +697,10 @@ struct HomeRootView: View {
             return .programs
         case .playlists:
             return .programs
+        case .settings:
+            return nil
+        case .help:
+            return nil
         case .artistDetails:
             switch artistDetailsSourcePage {
             case .singers:
@@ -730,6 +744,10 @@ struct HomeRootView: View {
             return .myPlaylists
         case .programTracks:
             return selectedProgramTracksSidebarItem
+        case .settings:
+            return .settings
+        case .help:
+            return .help
         default:
             return nil
         }
@@ -818,6 +836,66 @@ struct HomeRootView: View {
                 singersContent = loaded
                 isSingersLoading = false
             }
+        }
+    }
+
+    @MainActor
+    private func loadHomeBootstrap() async {
+        homeDataLoaded = true
+        isHomeLoading = true
+        manualPlaylists = await DesktopPlaylistDataLoader.loadManualPlaylists()
+        favoriteArtistIds = await DesktopFavoriteArtistsDataLoader.loadFavoriteArtistIds()
+        let start = Date()
+        let loaded = await HomeDataLoader.load()
+        let elapsed = Date().timeIntervalSince(start)
+        let minVisible = 0.45
+        if elapsed < minVisible {
+            let remainingNs = UInt64((minVisible - elapsed) * 1_000_000_000)
+            try? await Task.sleep(nanoseconds: remainingNs)
+        }
+        withAnimation(pageAnimation) {
+            homeContent = loaded
+            isHomeLoading = false
+        }
+    }
+
+    private func refreshAllArchiveBackedPages() {
+        artistDetailsLoadRequestId = UUID().uuidString
+        programDetailsLoadRequestId = UUID().uuidString
+        programTracksLoadRequestId = UUID().uuidString
+
+        withAnimation(pageAnimation) {
+            homeContent = nil
+            singersContent = nil
+            playersContent = nil
+            selectedProgramTracks = nil
+            selectedSearchTracks = nil
+            selectedArtistDetails = nil
+            selectedProgramDetails = nil
+            selectedSearchTotal = 0
+            selectedProgramCategory = nil
+            selectedProgramTracksBadge = ""
+            selectedProgramTracksDuet = nil
+            selectedProgramTracksSidebarItem = nil
+            activeSearchFilters = .empty
+            activeSearchChips = []
+
+            isProgramTracksLoading = false
+            isSearchResultsLoading = false
+            isArtistDetailsLoading = false
+            isProgramDetailsLoading = false
+            isSingersLoading = false
+            isPlayersLoading = false
+
+            singersDataLoaded = false
+            playersDataLoaded = false
+            backStack = []
+            currentPage = .home
+        }
+
+        Task { @MainActor in
+            homeDataLoaded = false
+            await loadHomeBootstrap()
         }
     }
 

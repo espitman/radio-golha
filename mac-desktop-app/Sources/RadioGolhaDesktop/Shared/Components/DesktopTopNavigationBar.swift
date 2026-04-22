@@ -11,7 +11,7 @@ enum DesktopMainTab {
 }
 
 struct DesktopTopNavigationBar: View {
-    let selectedTab: DesktopMainTab
+    let selectedTab: DesktopMainTab?
     var canGoBack: Bool = false
     var onBack: () -> Void = {}
     var onSelectTab: (DesktopMainTab) -> Void

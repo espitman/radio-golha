@@ -29,6 +29,8 @@ export const Route = createFileRoute('/database/')({
 
 type DatabaseReleasePayload = {
   ok: true
+  didUpload: boolean
+  message: string
   dbUrl: string
   manifestUrl: string
   bucket: string
@@ -93,9 +95,13 @@ function DatabaseIndex() {
         <section className="rounded-[1.6rem] border border-primary/10 bg-white/85 p-5 shadow-[0_18px_45px_rgba(31,78,95,0.06)]">
           {releaseResult && (
             <div className="space-y-2 text-right">
-              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[11px] font-black text-emerald-700">
+              <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-black ${
+                releaseResult.didUpload
+                  ? 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-700'
+                  : 'border border-amber-500/25 bg-amber-500/10 text-amber-800'
+              }`}>
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                ریلیز با موفقیت انجام شد
+                {releaseResult.message}
               </div>
               <p className="text-[12px] font-bold text-muted-foreground">
                 باکت: <span className="font-black text-foreground">{releaseResult.bucket}</span>

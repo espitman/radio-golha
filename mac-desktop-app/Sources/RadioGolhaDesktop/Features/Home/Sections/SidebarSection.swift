@@ -6,11 +6,15 @@ enum SidebarMenuItem: Hashable {
     case myPlaylists
     case topPrograms
     case recentlyPlayed
+    case settings
+    case help
 }
 
 struct SidebarSection: View {
     var selectedItem: SidebarMenuItem? = nil
     var onSelectItem: (SidebarMenuItem) -> Void = { _ in }
+    var onOpenSettings: () -> Void = {}
+    var onOpenHelp: () -> Void = {}
 
     var body: some View {
         VStack(spacing: 0) {
@@ -37,7 +41,11 @@ struct SidebarSection: View {
 
             Spacer(minLength: 0)
 
-            SidebarFooter()
+            SidebarFooter(
+                selectedItem: selectedItem,
+                onOpenSettings: onOpenSettings,
+                onOpenHelp: onOpenHelp
+            )
         }
         .background(Palette.sidebar)
         .multilineTextAlignment(.leading)
