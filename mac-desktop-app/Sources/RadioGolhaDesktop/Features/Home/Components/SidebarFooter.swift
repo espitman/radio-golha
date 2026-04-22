@@ -1,14 +1,12 @@
 import SwiftUI
 
 struct SidebarFooter: View {
-    private let settingsIcon = "https://www.figma.com/api/mcp/asset/42f8b20f-0de4-4047-8110-802d4f516bbc"
-    private let helpIcon = "https://www.figma.com/api/mcp/asset/d14aaedc-b164-41b8-b346-78b25a61bfd3"
     private let profileImage = "https://www.figma.com/api/mcp/asset/c0ff417a-1b3f-474a-bc8a-fb697ca6362e"
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            footerRow(title: "تنظیمات", iconURL: settingsIcon, fallback: "gearshape")
-            footerRow(title: "راهنما", iconURL: helpIcon, fallback: "questionmark.circle")
+            footerRow(title: "تنظیمات", symbol: "gearshape")
+            footerRow(title: "راهنما", symbol: "questionmark.circle")
 
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 0) {
@@ -40,9 +38,11 @@ struct SidebarFooter: View {
         }
     }
 
-    private func footerRow(title: String, iconURL: String, fallback: String) -> some View {
+    private func footerRow(title: String, symbol: String) -> some View {
         HStack(spacing: 12) {
-            FigmaAssetImage(url: iconURL, fallbackSymbol: fallback, fallbackTint: Palette.text.opacity(0.7))
+            Image(systemName: symbol)
+                .font(.system(size: 12, weight: .regular))
+                .foregroundStyle(Palette.text.opacity(0.7))
                 .frame(width: 15, height: 15)
             Text(title)
                 .font(.vazir(10.5))

@@ -17,11 +17,11 @@ struct SidebarSection: View {
             .padding(.bottom, 48)
 
             VStack(spacing: 8) {
-                navItem("صفحه اصلی", "house", active: true)
-                navItem("آرشیو", "photo")
-                navItem("برگزیده‌ها", "star")
-                navItem("مجموعه‌های خاص", "square.stack")
-                navItem("پژوهشگران", "person")
+                navItem("خواننده‌های مورد علاقه", "heart")
+                navItem("نوازندگان مورد علاقه", "music.mic")
+                navItem("پلی لیست‌های من", "music.note.list")
+                navItem("محبوب‌ترین برنامه‌ها", "star")
+                navItem("شنیده‌شده‌ها", "clock.arrow.circlepath")
             }
 
             Spacer(minLength: 0)
