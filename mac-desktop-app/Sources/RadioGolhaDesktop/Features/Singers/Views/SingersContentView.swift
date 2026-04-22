@@ -2,6 +2,11 @@ import SwiftUI
 
 struct SingersContentView: View {
     let singers: [SingerListItem]
+    var title: String = "خوانندگان"
+    var subtitle: String = "فهرست جامع اساتید، خوانندگان و نوازندگان تاریخ رادیو گلها به ترتیب حروف الفبا."
+    var showAlphabetFilter: Bool = true
+    var showHeroBanner: Bool = false
+    var heroBadge: String = "گلها"
     var onSingerTap: (SingerListItem) -> Void = { _ in }
     var favoriteArtistIds: Set<Int64> = []
     var onToggleArtistFavorite: (Int64, String) -> Void = { _, _ in }
@@ -12,42 +17,54 @@ struct SingersContentView: View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
                 VStack(spacing: 0) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("خوانندگان")
-                            .font(.vazir(27, .bold))
-                            .foregroundStyle(Palette.primary)
-                        Text("فهرست جامع اساتید، خوانندگان و نوازندگان تاریخ رادیو گلها به ترتیب حروف الفبا.")
-                            .font(.vazir(10.5))
-                            .foregroundStyle(Color(hex: 0x43474E))
-                            .frame(maxWidth: 620, alignment: .leading)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 48)
-                    .padding(.top, 32)
-
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            ForEach(singersPageAlphabet, id: \.self) { letter in
-                                Button {
-                                    selectedLetter = letter
-                                } label: {
-                                    Text(letter)
-                                        .font(.vazir(10.5, .bold))
-                                        .foregroundStyle(selectedLetter == letter ? Color.white : Palette.primary)
-                                        .padding(.horizontal, 16)
-                                        .padding(.vertical, 8)
-                                        .background(
-                                            selectedLetter == letter ? Palette.secondary : Palette.sidebar,
-                                            in: Capsule()
-                                        )
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
+                    if showHeroBanner {
+                        DesktopHeroBanner(
+                            badge: heroBadge,
+                            title: title,
+                            subtitle: subtitle
+                        )
                         .padding(.horizontal, 48)
-                        .padding(.vertical, 12)
+                        .padding(.top, 32)
+                    } else {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(title)
+                                .font(.vazir(27, .bold))
+                                .foregroundStyle(Palette.primary)
+                            Text(subtitle)
+                                .font(.vazir(10.5))
+                                .foregroundStyle(Color(hex: 0x43474E))
+                                .frame(maxWidth: 620, alignment: .leading)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 48)
+                        .padding(.top, 32)
                     }
-                    .padding(.top, 28)
+
+                    if showAlphabetFilter {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(singersPageAlphabet, id: \.self) { letter in
+                                    Button {
+                                        selectedLetter = letter
+                                    } label: {
+                                        Text(letter)
+                                            .font(.vazir(10.5, .bold))
+                                            .foregroundStyle(selectedLetter == letter ? Color.white : Palette.primary)
+                                            .padding(.horizontal, 16)
+                                            .padding(.vertical, 8)
+                                            .background(
+                                                selectedLetter == letter ? Palette.secondary : Palette.sidebar,
+                                                in: Capsule()
+                                            )
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .padding(.horizontal, 48)
+                            .padding(.vertical, 12)
+                        }
+                        .padding(.top, 28)
+                    }
 
                     LazyVGrid(columns: columns, spacing: 32) {
                         ForEach(filteredItems) { item in
@@ -90,6 +107,7 @@ struct SingersContentView: View {
     }
 
     private var filteredItems: [SingerListItem] {
+        guard showAlphabetFilter else { return singers }
         guard selectedLetter != "همه" else { return singers }
         return singers.filter { matchesLetter(name: $0.name, letterGroup: selectedLetter) }
     }

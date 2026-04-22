@@ -73,15 +73,15 @@ struct SearchResultsContentView: View {
                     .font(.vazir(12, .medium))
                     .foregroundStyle(.white.opacity(0.8))
             }
-            .padding(.bottom, activeChips.isEmpty ? 54 : 88)
+            .padding(.bottom, activeChips.isEmpty ? 44 : 74)
 
             if !activeChips.isEmpty {
                 chipsSection
                     .padding(.horizontal, 22)
-                    .padding(.bottom, 20)
+                    .padding(.bottom, 14)
             }
         }
-        .frame(height: 260)
+        .frame(height: 232)
         .frame(maxWidth: .infinity)
     }
 

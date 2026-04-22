@@ -80,7 +80,7 @@ struct ProgramTracksContentView: View {
             }
             .padding(.bottom, 54)
         }
-        .frame(height: 320)
+        .frame(height: 232)
         .frame(maxWidth: .infinity)
     }
 

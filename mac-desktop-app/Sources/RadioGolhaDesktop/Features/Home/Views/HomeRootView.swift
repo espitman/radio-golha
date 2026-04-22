@@ -6,7 +6,10 @@ private enum DesktopPage {
     case search
     case searchResults
     case singers
+    case favoriteSingers
     case players
+    case favoritePlayers
+    case playlists
     case programTracks
     case artistDetails
     case programDetails
@@ -61,6 +64,7 @@ struct HomeRootView: View {
     @State private var manualPlaylists: [DesktopManualPlaylist] = []
     @State private var favoriteArtistIds: Set<Int64> = []
     @State private var pendingPlaylistTrackId: Int64? = nil
+    @State private var isCreatingPlaylistOnly: Bool = false
     @State private var pendingPlaylistName: String = ""
     @State private var canDismissPlaylistDialogByBackdrop: Bool = false
     @State private var isPlaylistNameFieldFocused: Bool = false
@@ -79,14 +83,30 @@ struct HomeRootView: View {
                 mainCanvas
                     .frame(width: 1024)
                     .environment(\.layoutDirection, .rightToLeft)
-                SidebarSection()
+                SidebarSection(
+                    selectedItem: selectedSidebarItem,
+                    onSelectItem: { item in
+                        switch item {
+                        case .favoriteSingers:
+                            navigateTo(.favoriteSingers)
+                            ensureSingersLoaded()
+                        case .favoritePlayers:
+                            navigateTo(.favoritePlayers)
+                            ensurePlayersLoaded()
+                        case .myPlaylists:
+                            navigateTo(.playlists)
+                        case .topPrograms, .recentlyPlayed:
+                            break
+                        }
+                    }
+                )
                     .frame(width: 256)
                     .environment(\.layoutDirection, .rightToLeft)
             }
             .frame(width: 1280)
             .environment(\.layoutDirection, .leftToRight)
 
-            if pendingPlaylistTrackId != nil {
+            if pendingPlaylistTrackId != nil || isCreatingPlaylistOnly {
                 Color.black.opacity(0.22)
                     .ignoresSafeArea()
                     .zIndex(2_000)
@@ -273,6 +293,33 @@ struct HomeRootView: View {
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .transition(pageTransition)
                     }
+                case .favoriteSingers:
+                    if let singersContent {
+                        SingersContentView(
+                            singers: singersContent.filter { item in
+                                guard let id = item.sourceArtistId else { return false }
+                                return favoriteArtistIds.contains(id)
+                            },
+                            title: "خواننده‌های مورد علاقه",
+                            subtitle: "فهرست خواننده‌هایی که به علاقه‌مندی‌های شما اضافه شده‌اند.",
+                            showAlphabetFilter: false,
+                            showHeroBanner: true,
+                            heroBadge: "مجموعه ویژه",
+                            onSingerTap: { singer in
+                                openArtistDetails(
+                                    ArtistDetailsFactory.fromSinger(singer),
+                                    sourcePage: .favoriteSingers
+                                )
+                            },
+                            favoriteArtistIds: favoriteArtistIds,
+                            onToggleArtistFavorite: toggleArtistFavorite
+                        )
+                        .transition(pageTransition)
+                    } else {
+                        DesktopLoadingView(message: "در حال بارگذاری خواننده‌های مورد علاقه...")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .transition(pageTransition)
+                    }
                 case .search:
                     SearchContentView(
                         initialFilters: activeSearchFilters,
@@ -350,6 +397,42 @@ struct HomeRootView: View {
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .transition(pageTransition)
                     }
+                case .favoritePlayers:
+                    if let playersContent {
+                        PlayersContentView(
+                            players: playersContent.filter { item in
+                                guard let id = item.sourceArtistId else { return false }
+                                return favoriteArtistIds.contains(id)
+                            },
+                            title: "نوازندگان مورد علاقه",
+                            subtitle: "فهرست نوازنده‌هایی که به علاقه‌مندی‌های شما اضافه شده‌اند.",
+                            showInstrumentFilter: false,
+                            showHeroBanner: true,
+                            heroBadge: "مجموعه ویژه",
+                            onPlayerTap: { player in
+                                openArtistDetails(
+                                    ArtistDetailsFactory.fromPlayer(player),
+                                    sourcePage: .favoritePlayers
+                                )
+                            },
+                            favoriteArtistIds: favoriteArtistIds,
+                            onToggleArtistFavorite: toggleArtistFavorite
+                        )
+                        .transition(pageTransition)
+                    } else {
+                        DesktopLoadingView(message: "در حال بارگذاری نوازندگان مورد علاقه...")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .transition(pageTransition)
+                    }
+                case .playlists:
+                    PlaylistsContentView(
+                        playlists: manualPlaylists,
+                        onCreatePlaylist: {
+                            startCreatePlaylistOnly()
+                        },
+                        onOpenPlaylist: { _ in }
+                    )
+                    .transition(pageTransition)
                 case .programTracks:
                     if let category = selectedProgramCategory {
                         if let selectedProgramTracks {
@@ -503,19 +586,29 @@ struct HomeRootView: View {
             return .programs
         case .singers:
             return .artists
+        case .favoriteSingers:
+            return .artists
         case .search:
             return .search
         case .searchResults:
             return .search
         case .players:
             return .instrumentalists
+        case .favoritePlayers:
+            return .instrumentalists
         case .programTracks:
+            return .programs
+        case .playlists:
             return .programs
         case .artistDetails:
             switch artistDetailsSourcePage {
             case .singers:
                 return .artists
+            case .favoriteSingers:
+                return .artists
             case .players:
+                return .instrumentalists
+            case .favoritePlayers:
                 return .instrumentalists
             case .search:
                 return .search
@@ -526,13 +619,30 @@ struct HomeRootView: View {
             switch programDetailsSourcePage {
             case .singers:
                 return .artists
+            case .favoriteSingers:
+                return .artists
             case .players:
+                return .instrumentalists
+            case .favoritePlayers:
                 return .instrumentalists
             case .search, .searchResults:
                 return .search
             default:
                 return .programs
             }
+        }
+    }
+
+    private var selectedSidebarItem: SidebarMenuItem? {
+        switch currentPage {
+        case .favoriteSingers:
+            return .favoriteSingers
+        case .favoritePlayers:
+            return .favoritePlayers
+        case .playlists:
+            return .myPlaylists
+        default:
+            return nil
         }
     }
 
@@ -665,6 +775,7 @@ struct HomeRootView: View {
     }
 
     private func createPlaylistAndAddTrack(_ trackId: Int64) {
+        isCreatingPlaylistOnly = false
         canDismissPlaylistDialogByBackdrop = false
         withAnimation(.easeInOut(duration: 0.2)) {
             pendingPlaylistTrackId = trackId
@@ -682,23 +793,41 @@ struct HomeRootView: View {
         canDismissPlaylistDialogByBackdrop = false
         withAnimation(.easeInOut(duration: 0.18)) {
             pendingPlaylistTrackId = nil
+            isCreatingPlaylistOnly = false
             pendingPlaylistName = ""
         }
         isPlaylistNameFieldFocused = false
     }
 
     private func confirmCreatePlaylistAndAdd() {
-        guard let trackId = pendingPlaylistTrackId else { return }
+        let targetTrackId = pendingPlaylistTrackId
         let name = pendingPlaylistName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
 
         Task {
             guard let newPlaylistId = await DesktopPlaylistDataLoader.createManualPlaylist(name: name) else { return }
-            let _ = await DesktopPlaylistDataLoader.addTrack(playlistId: newPlaylistId, trackId: trackId)
+            if let trackId = targetTrackId {
+                let _ = await DesktopPlaylistDataLoader.addTrack(playlistId: newPlaylistId, trackId: trackId)
+            }
             await refreshManualPlaylists()
             await MainActor.run {
                 dismissPlaylistDialog()
             }
+        }
+    }
+
+    private func startCreatePlaylistOnly() {
+        pendingPlaylistTrackId = nil
+        isCreatingPlaylistOnly = true
+        canDismissPlaylistDialogByBackdrop = false
+        withAnimation(.easeInOut(duration: 0.2)) {
+            pendingPlaylistName = ""
+        }
+        DispatchQueue.main.async {
+            isPlaylistNameFieldFocused = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            canDismissPlaylistDialogByBackdrop = true
         }
     }
 
@@ -751,7 +880,7 @@ struct HomeRootView: View {
                 Button {
                     confirmCreatePlaylistAndAdd()
                 } label: {
-                    Text("ساخت و افزودن")
+                    Text(isCreatingPlaylistOnly ? "ساخت لیست" : "ساخت و افزودن")
                         .font(.vazir(10.5, .bold))
                         .foregroundStyle(.white)
                         .frame(width: 124, height: 34)
