@@ -1,7 +1,9 @@
 import SwiftUI
 
 struct ProgramTracksContentView: View {
-    let category: ProgramItem
+    let title: String
+    let badge: String
+    let countText: String
     let tracks: [TrackRowItem]
     var onPlayTrack: (TrackRowItem) -> Void = { _ in }
     var onOpenProgram: (TrackRowItem) -> Void = { _ in }
@@ -63,18 +65,18 @@ struct ProgramTracksContentView: View {
                 }
 
             VStack(spacing: 8) {
-                Text("مجموعه \(category.title)")
+                Text(badge)
                     .font(.vazir(9, .bold))
                     .foregroundStyle(.white)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 4)
                     .background(Palette.secondary.opacity(0.8), in: Capsule())
 
-                Text(category.title)
+                Text(title)
                     .font(.vazir(40.5, .bold))
                     .foregroundStyle(.white)
 
-                Text(category.count)
+                Text(countText)
                     .font(.vazir(12, .medium))
                     .foregroundStyle(.white.opacity(0.8))
             }

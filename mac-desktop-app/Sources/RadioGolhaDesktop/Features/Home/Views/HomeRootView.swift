@@ -22,6 +22,8 @@ private struct NavigationSnapshot {
     let selectedProgramDetails: ProgramDetailsItem?
     let programDetailsSourcePage: DesktopPage
     let selectedProgramCategory: ProgramItem?
+    let selectedProgramTracksBadge: String
+    let selectedProgramTracksSidebarItem: SidebarMenuItem?
     let selectedProgramTracks: [TrackRowItem]?
     let selectedSearchTracks: [TrackRowItem]?
     let selectedSearchTotal: Int
@@ -40,6 +42,8 @@ struct HomeRootView: View {
     @State private var selectedProgramDetails: ProgramDetailsItem? = nil
     @State private var programDetailsSourcePage: DesktopPage = .home
     @State private var selectedProgramCategory: ProgramItem? = nil
+    @State private var selectedProgramTracksBadge: String = ""
+    @State private var selectedProgramTracksSidebarItem: SidebarMenuItem? = nil
     @State private var selectedProgramTracks: [TrackRowItem]? = nil
     @State private var selectedSearchTracks: [TrackRowItem]? = nil
     @State private var selectedSearchTotal: Int = 0
@@ -61,6 +65,7 @@ struct HomeRootView: View {
     @State private var playersDataLoaded = false
     @State private var backStack: [NavigationSnapshot] = []
     @State private var programDetailsLoadRequestId: String = ""
+    @State private var programTracksLoadRequestId: String = ""
     @State private var manualPlaylists: [DesktopManualPlaylist] = []
     @State private var favoriteArtistIds: Set<Int64> = []
     @State private var pendingPlaylistTrackId: Int64? = nil
@@ -95,8 +100,10 @@ struct HomeRootView: View {
                             ensurePlayersLoaded()
                         case .myPlaylists:
                             navigateTo(.playlists)
-                        case .topPrograms, .recentlyPlayed:
-                            break
+                        case .topPrograms:
+                            openMostPlayedTracksCollection()
+                        case .recentlyPlayed:
+                            openRecentlyPlayedTracksCollection()
                         }
                     }
                 )
@@ -430,7 +437,9 @@ struct HomeRootView: View {
                         onCreatePlaylist: {
                             startCreatePlaylistOnly()
                         },
-                        onOpenPlaylist: { _ in },
+                        onOpenPlaylist: { playlist in
+                            openPlaylistTracksCollection(playlist)
+                        },
                         onRenamePlaylist: { playlistId, name in
                             Task {
                                 let _ = await DesktopPlaylistDataLoader.renamePlaylist(
@@ -459,10 +468,12 @@ struct HomeRootView: View {
                     .transition(pageTransition)
                 case .programTracks:
                     if let category = selectedProgramCategory {
-                        if let selectedProgramTracks {
+                        if let programTracksRows = selectedProgramTracks {
                             ProgramTracksContentView(
-                                category: category,
-                                tracks: selectedProgramTracks,
+                                title: category.title,
+                                badge: selectedProgramTracksBadge.isEmpty ? "مجموعه \(category.title)" : selectedProgramTracksBadge,
+                                countText: category.count,
+                                tracks: programTracksRows,
                                 onPlayTrack: { track in
                                     handleTrackPlayIntent(track)
                                 },
@@ -481,6 +492,22 @@ struct HomeRootView: View {
                                     }
                                 },
                                 onRemoveTrackFromPlaylist: { playlistId, trackId in
+                                    if selectedProgramTracksSidebarItem == .myPlaylists {
+                                        withAnimation(pageAnimation) {
+                                            selectedProgramTracks?.removeAll { row in
+                                                row.trackId == trackId
+                                            }
+                                            if let category = selectedProgramCategory {
+                                                let updatedCount = selectedProgramTracks?.count ?? 0
+                                                selectedProgramCategory = ProgramItem(
+                                                    sourceCategoryId: category.sourceCategoryId,
+                                                    title: category.title,
+                                                    count: "\(updatedCount) برنامه",
+                                                    symbol: category.symbol
+                                                )
+                                            }
+                                        }
+                                    }
                                     Task {
                                         let _ = await DesktopPlaylistDataLoader.removeTrack(playlistId: playlistId, trackId: trackId)
                                         await refreshManualPlaylists()
@@ -665,6 +692,8 @@ struct HomeRootView: View {
             return .favoritePlayers
         case .playlists:
             return .myPlaylists
+        case .programTracks:
+            return selectedProgramTracksSidebarItem
         default:
             return nil
         }
@@ -682,6 +711,8 @@ struct HomeRootView: View {
             selectedProgramDetails: selectedProgramDetails,
             programDetailsSourcePage: programDetailsSourcePage,
             selectedProgramCategory: selectedProgramCategory,
+            selectedProgramTracksBadge: selectedProgramTracksBadge,
+            selectedProgramTracksSidebarItem: selectedProgramTracksSidebarItem,
             selectedProgramTracks: selectedProgramTracks,
             selectedSearchTracks: selectedSearchTracks,
             selectedSearchTotal: selectedSearchTotal,
@@ -701,6 +732,8 @@ struct HomeRootView: View {
             selectedProgramDetails = snapshot.selectedProgramDetails
             programDetailsSourcePage = snapshot.programDetailsSourcePage
             selectedProgramCategory = snapshot.selectedProgramCategory
+            selectedProgramTracksBadge = snapshot.selectedProgramTracksBadge
+            selectedProgramTracksSidebarItem = snapshot.selectedProgramTracksSidebarItem
             selectedProgramTracks = snapshot.selectedProgramTracks
             selectedSearchTracks = snapshot.selectedSearchTracks
             selectedSearchTotal = snapshot.selectedSearchTotal
@@ -1052,6 +1085,8 @@ struct HomeRootView: View {
     private func openProgramTracks(_ category: ProgramItem) {
         backStack.append(makeSnapshot())
         selectedProgramCategory = category
+        selectedProgramTracksBadge = "مجموعه \(category.title)"
+        selectedProgramTracksSidebarItem = nil
         selectedProgramTracks = nil
         isProgramTracksLoading = true
         withAnimation(pageAnimation) {
@@ -1064,6 +1099,9 @@ struct HomeRootView: View {
             return
         }
 
+        let requestId = UUID().uuidString
+        programTracksLoadRequestId = requestId
+
         Task {
             let start = Date()
             let loaded = await ProgramTracksDataLoader.load(categoryId: categoryId) ?? []
@@ -1074,9 +1112,95 @@ struct HomeRootView: View {
                 try? await Task.sleep(nanoseconds: remainingNs)
             }
 
+            guard programTracksLoadRequestId == requestId else { return }
             guard selectedProgramCategory?.id == category.id, currentPage == .programTracks else { return }
             withAnimation(pageAnimation) {
                 selectedProgramTracks = loaded
+                isProgramTracksLoading = false
+            }
+        }
+    }
+
+    private func openMostPlayedTracksCollection() {
+        let category = ProgramItem(
+            title: "محبوب‌ترین برنامه‌ها",
+            count: "۲۰ برنامه",
+            symbol: "star"
+        )
+        openProgramTracksCollection(
+            category: category,
+            badge: "بیشترین شنیده‌شده‌ها",
+            sidebarItem: .topPrograms
+        ) {
+            await TrackCollectionsDataLoader.loadMostPlayed(limit: 20)
+        }
+    }
+
+    private func openRecentlyPlayedTracksCollection() {
+        let category = ProgramItem(
+            title: "شنیده‌شده‌ها",
+            count: "۲۰ برنامه",
+            symbol: "clock"
+        )
+        openProgramTracksCollection(
+            category: category,
+            badge: "پخش‌شده‌های اخیر",
+            sidebarItem: .recentlyPlayed
+        ) {
+            await TrackCollectionsDataLoader.loadRecentlyPlayed(limit: 20)
+        }
+    }
+
+    private func openPlaylistTracksCollection(_ playlist: DesktopManualPlaylist) {
+        let ids = Array(playlist.trackIds)
+        let category = ProgramItem(
+            title: playlist.name,
+            count: "\(playlist.trackIds.count) برنامه",
+            symbol: "music.note.list"
+        )
+        openProgramTracksCollection(
+            category: category,
+            badge: "لیست پخش",
+            sidebarItem: .myPlaylists
+        ) {
+            await TrackCollectionsDataLoader.loadByTrackIds(ids)
+        }
+    }
+
+    private func openProgramTracksCollection(
+        category: ProgramItem,
+        badge: String,
+        sidebarItem: SidebarMenuItem?,
+        loader: @escaping () async -> [TrackRowItem]
+    ) {
+        backStack.append(makeSnapshot())
+        selectedProgramCategory = category
+        selectedProgramTracksBadge = badge
+        selectedProgramTracksSidebarItem = sidebarItem
+        selectedProgramTracks = nil
+        isProgramTracksLoading = true
+        withAnimation(pageAnimation) {
+            currentPage = .programTracks
+        }
+
+        let requestId = UUID().uuidString
+        programTracksLoadRequestId = requestId
+
+        Task {
+            let start = Date()
+            let loaded = await loader()
+            let elapsed = Date().timeIntervalSince(start)
+            let minVisible = 0.3
+            if elapsed < minVisible {
+                let remainingNs = UInt64((minVisible - elapsed) * 1_000_000_000)
+                try? await Task.sleep(nanoseconds: remainingNs)
+            }
+
+            guard programTracksLoadRequestId == requestId else { return }
+            guard currentPage == .programTracks else { return }
+
+            withAnimation(pageAnimation) {
+                selectedProgramTracks = Array(loaded.prefix(20))
                 isProgramTracksLoading = false
             }
         }
