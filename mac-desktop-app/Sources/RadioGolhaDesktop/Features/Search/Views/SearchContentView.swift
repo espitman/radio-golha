@@ -436,7 +436,7 @@ private struct SearchComboField: View {
         }
         let normalizedQuery = normalizeSearch(q)
         return base.filter { option in
-            normalizeSearch(option.name).hasPrefix(normalizedQuery)
+            normalizeSearch(option.name).contains(normalizedQuery)
         }
     }
 
