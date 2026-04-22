@@ -31,6 +31,18 @@ enum DesktopPlaylistDataLoader {
         }.value
     }
 
+    static func renamePlaylist(playlistId: Int64, name: String) async -> Bool {
+        await Task.detached(priority: .userInitiated) {
+            (try? renamePlaylistSync(playlistId: playlistId, name: name)) ?? false
+        }.value
+    }
+
+    static func deletePlaylist(playlistId: Int64) async -> Bool {
+        await Task.detached(priority: .userInitiated) {
+            (try? deletePlaylistSync(playlistId: playlistId)) ?? false
+        }.value
+    }
+
     private static func loadManualPlaylistsSync() throws -> [DesktopManualPlaylist] {
         let root = try resolveRepoRoot()
         let userDbPath = try resolveUserDbPath()
@@ -88,6 +100,37 @@ enum DesktopPlaylistDataLoader {
                 "--user-db", userDbPath,
                 "--playlist-id", String(playlistId),
                 "--track-id", String(trackId)
+            ]
+        )
+        return payload == "ok"
+    }
+
+    private static func renamePlaylistSync(playlistId: Int64, name: String) throws -> Bool {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+        let root = try resolveRepoRoot()
+        let userDbPath = try resolveUserDbPath()
+        let payload = try runBridge(
+            root: root,
+            arguments: [
+                "rename-manual-playlist",
+                "--user-db", userDbPath,
+                "--playlist-id", String(playlistId),
+                "--name", trimmed
+            ]
+        )
+        return payload == "ok"
+    }
+
+    private static func deletePlaylistSync(playlistId: Int64) throws -> Bool {
+        let root = try resolveRepoRoot()
+        let userDbPath = try resolveUserDbPath()
+        let payload = try runBridge(
+            root: root,
+            arguments: [
+                "delete-manual-playlist",
+                "--user-db", userDbPath,
+                "--playlist-id", String(playlistId)
             ]
         )
         return payload == "ok"

@@ -430,7 +430,31 @@ struct HomeRootView: View {
                         onCreatePlaylist: {
                             startCreatePlaylistOnly()
                         },
-                        onOpenPlaylist: { _ in }
+                        onOpenPlaylist: { _ in },
+                        onRenamePlaylist: { playlistId, name in
+                            Task {
+                                let _ = await DesktopPlaylistDataLoader.renamePlaylist(
+                                    playlistId: playlistId,
+                                    name: name
+                                )
+                                await refreshManualPlaylists()
+                            }
+                        },
+                        onDeletePlaylist: { playlistId in
+                            withAnimation(.easeInOut(duration: 0.18)) {
+                                manualPlaylists.removeAll { $0.id == playlistId }
+                            }
+                            Task {
+                                let success = await DesktopPlaylistDataLoader.deletePlaylist(
+                                    playlistId: playlistId
+                                )
+                                if !success {
+                                    await refreshManualPlaylists()
+                                    return
+                                }
+                                await refreshManualPlaylists()
+                            }
+                        }
                     )
                     .transition(pageTransition)
                 case .programTracks:
@@ -855,7 +879,7 @@ struct HomeRootView: View {
             )
                 .padding(.horizontal, 12)
                 .frame(height: 36)
-                .background(Palette.surfaceLow, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .background(Color.white, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .stroke(Palette.border, lineWidth: 1)
@@ -869,7 +893,7 @@ struct HomeRootView: View {
                         .font(.vazir(10.5, .bold))
                         .foregroundStyle(Palette.primary)
                         .frame(width: 92, height: 34)
-                        .background(Palette.surfaceLow, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                        .background(Color.white, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
                         .overlay(
                             RoundedRectangle(cornerRadius: 9, style: .continuous)
                                 .stroke(Palette.border, lineWidth: 1)
@@ -898,7 +922,10 @@ struct HomeRootView: View {
         }
         .padding(18)
         .frame(width: 380)
-        .background(Palette.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color.white)
+        )
         .overlay(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .stroke(Palette.border, lineWidth: 1)

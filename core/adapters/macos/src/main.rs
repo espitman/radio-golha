@@ -117,6 +117,20 @@ enum Command {
         #[arg(long)]
         name: String,
     },
+    RenameManualPlaylist {
+        #[arg(long)]
+        user_db: String,
+        #[arg(long)]
+        playlist_id: i64,
+        #[arg(long)]
+        name: String,
+    },
+    DeleteManualPlaylist {
+        #[arg(long)]
+        user_db: String,
+        #[arg(long)]
+        playlist_id: i64,
+    },
     GetFavoriteArtistIdsJson {
         #[arg(long)]
         user_db: String,
@@ -204,6 +218,19 @@ fn main() -> Result<()> {
         }
         Command::CreateManualPlaylist { user_db, name } => {
             println!("{}", create_manual_playlist(&user_db, &name));
+        }
+        Command::RenameManualPlaylist {
+            user_db,
+            playlist_id,
+            name,
+        } => {
+            println!("{}", rename_manual_playlist(&user_db, playlist_id, &name));
+        }
+        Command::DeleteManualPlaylist {
+            user_db,
+            playlist_id,
+        } => {
+            println!("{}", delete_manual_playlist(&user_db, playlist_id));
         }
         Command::GetFavoriteArtistIdsJson {
             user_db,
@@ -570,6 +597,26 @@ fn create_manual_playlist(user_db_path: &str, name: &str) -> String {
     match UserDataStore::open(user_db_path) {
         Ok(store) => match store.create_playlist(name, "manual", "{}") {
             Ok(id) => json!({ "id": id }).to_string(),
+            Err(error) => json!({ "error": error.to_string() }).to_string(),
+        },
+        Err(error) => json!({ "error": error.to_string() }).to_string(),
+    }
+}
+
+fn rename_manual_playlist(user_db_path: &str, playlist_id: i64, name: &str) -> String {
+    match UserDataStore::open(user_db_path) {
+        Ok(store) => match store.rename_playlist(playlist_id, name) {
+            Ok(_) => "ok".to_string(),
+            Err(error) => json!({ "error": error.to_string() }).to_string(),
+        },
+        Err(error) => json!({ "error": error.to_string() }).to_string(),
+    }
+}
+
+fn delete_manual_playlist(user_db_path: &str, playlist_id: i64) -> String {
+    match UserDataStore::open(user_db_path) {
+        Ok(store) => match store.delete_playlist(playlist_id) {
+            Ok(_) => "ok".to_string(),
             Err(error) => json!({ "error": error.to_string() }).to_string(),
         },
         Err(error) => json!({ "error": error.to_string() }).to_string(),
