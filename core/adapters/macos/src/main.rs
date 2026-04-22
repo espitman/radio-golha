@@ -769,14 +769,18 @@ fn build_duet_programs_json(db_path: &str, singer1: &str, singer2: &str) -> Stri
                     FROM program_singers ps
                     JOIN singer s ON s.id = ps.singer_id
                     JOIN artist a ON a.id = s.artist_id
-                    WHERE ps.program_id = p.id AND a.name = ?1
+                    WHERE ps.program_id = p.id
+                      AND TRIM(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(a.name, '‏', ''), '﻿', ''), '‌', ''), 'ي', 'ی'), 'ك', 'ک'), 'ۀ', 'ه'), 'ة', 'ه')) =
+                          TRIM(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(?1, '‏', ''), '﻿', ''), '‌', ''), 'ي', 'ی'), 'ك', 'ک'), 'ۀ', 'ه'), 'ة', 'ه'))
                   )
                   AND EXISTS (
                     SELECT 1
                     FROM program_singers ps
                     JOIN singer s ON s.id = ps.singer_id
                     JOIN artist a ON a.id = s.artist_id
-                    WHERE ps.program_id = p.id AND a.name = ?2
+                    WHERE ps.program_id = p.id
+                      AND TRIM(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(a.name, '‏', ''), '﻿', ''), '‌', ''), 'ي', 'ی'), 'ك', 'ک'), 'ۀ', 'ه'), 'ة', 'ه')) =
+                          TRIM(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(?2, '‏', ''), '﻿', ''), '‌', ''), 'ي', 'ی'), 'ك', 'ک'), 'ۀ', 'ه'), 'ة', 'ه'))
                   )
                 ORDER BY p.no ASC, p.id ASC
                 ",
