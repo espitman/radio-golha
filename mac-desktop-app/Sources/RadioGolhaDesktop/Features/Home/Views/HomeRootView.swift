@@ -646,7 +646,13 @@ struct HomeRootView: View {
                                 createPlaylistAndAddTrack(trackId)
                             },
                             favoriteArtistIds: favoriteArtistIds,
-                            onToggleArtistFavorite: toggleArtistFavorite
+                            onToggleArtistFavorite: toggleArtistFavorite,
+                            onArtistTap: { artist in
+                                openArtistDetails(
+                                    ArtistDetailsFactory.fromHomeArtist(artist),
+                                    sourcePage: .programDetails
+                                )
+                            }
                         )
                         .transition(pageTransition)
                     } else {

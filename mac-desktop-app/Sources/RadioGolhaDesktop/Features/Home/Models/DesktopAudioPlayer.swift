@@ -120,6 +120,14 @@ final class DesktopAudioPlayer: ObservableObject {
         persistState(force: true)
     }
 
+    func seekBy(seconds delta: Double) {
+        guard player != nil else { return }
+        guard !isLoading else { return }
+        let target = currentTime + delta
+        seekTo(seconds: target)
+        persistState(force: true)
+    }
+
     private func bindObservers(to item: AVPlayerItem) {
         itemStatusObserver = item.observe(\.status, options: [.new, .initial]) { [weak self] item, _ in
             Task { @MainActor in
@@ -212,7 +220,8 @@ final class DesktopAudioPlayer: ObservableObject {
     }
 
     private func seekTo(seconds: Double) {
-        let clamped = max(0, seconds)
+        let maxTime = duration > 0 ? duration : .greatestFiniteMagnitude
+        let clamped = min(max(0, seconds), maxTime)
         let target = CMTime(seconds: clamped, preferredTimescale: 600)
         player?.seek(to: target, toleranceBefore: .zero, toleranceAfter: .zero)
         currentTime = clamped

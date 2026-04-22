@@ -4,6 +4,7 @@ import Combine
 struct BottomPlayerSection: View {
     @ObservedObject var player: DesktopAudioPlayer
     var onOpenCurrentTrack: (TrackRowItem) -> Void = { _ in }
+    private var canSeekByTenSeconds: Bool { player.currentTrack != nil && player.isPlaying && !player.isLoading }
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -67,9 +68,15 @@ struct BottomPlayerSection: View {
                     playerSymbol("shuffle")
                         .frame(width: 18, height: 20)
                         .opacity(0.35)
-                    playerSymbol("backward.end.fill")
-                        .frame(width: 16.25, height: 15)
-                        .opacity(0.35)
+                    Button {
+                        player.seekBy(seconds: -10)
+                    } label: {
+                        playerSymbol("gobackward.10")
+                            .frame(width: 16.25, height: 15)
+                            .opacity(canSeekByTenSeconds ? 1.0 : 0.35)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!canSeekByTenSeconds)
                     Button {
                         player.togglePlayPause()
                     } label: {
@@ -86,9 +93,15 @@ struct BottomPlayerSection: View {
                         }
                     }
                     .buttonStyle(.plain)
-                    playerSymbol("forward.end.fill")
-                        .frame(width: 16.25, height: 15)
-                        .opacity(0.35)
+                    Button {
+                        player.seekBy(seconds: 10)
+                    } label: {
+                        playerSymbol("goforward.10")
+                            .frame(width: 16.25, height: 15)
+                            .opacity(canSeekByTenSeconds ? 1.0 : 0.35)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!canSeekByTenSeconds)
                     playerSymbol("repeat")
                         .frame(width: 16, height: 16)
                         .opacity(0.35)

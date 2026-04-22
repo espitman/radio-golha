@@ -67,7 +67,7 @@ enum TrackCollectionsDataLoader {
                 subtitle: item.artist,
                 duration: normalizedDuration(item.duration),
                 audioURL: item.audioUrl,
-                artworkURLs: []
+                artworkURLs: item.artistImages ?? []
             )
         }
     }
@@ -87,7 +87,7 @@ enum TrackCollectionsDataLoader {
                 subtitle: item.artist,
                 duration: normalizedDuration(item.duration),
                 audioURL: item.audioUrl,
-                artworkURLs: []
+                artworkURLs: item.artistImages ?? []
             )
         }
 
@@ -235,4 +235,5 @@ private struct ProgramByIdTrackDTO: Decodable {
     let artist: String
     let duration: String?
     let audioUrl: String?
+    let artistImages: [String]?
 }

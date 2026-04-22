@@ -15,6 +15,7 @@ struct ProgramDetailsContentView: View {
     var onCreatePlaylistAndAddTrack: (Int64) -> Void = { _ in }
     var favoriteArtistIds: Set<Int64> = []
     var onToggleArtistFavorite: (Int64, String) -> Void = { _, _ in }
+    var onArtistTap: (ArtistItem) -> Void = { _ in }
     @State private var selectedTab: ContentTab = .timeline
     @State private var showPlaylistPicker = false
 
@@ -221,14 +222,18 @@ struct ProgramDetailsContentView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 16) {
                     ForEach(program.artists) { artist in
+                        let artistItem = ArtistItem(
+                            sourceArtistId: artist.sourceArtistId,
+                            name: artist.name,
+                            role: artist.role,
+                            imageURL: artist.imageURL
+                        )
                         ArtistCard(
-                            item: ArtistItem(
-                                sourceArtistId: artist.sourceArtistId,
-                                name: artist.name,
-                                role: artist.role,
-                                imageURL: artist.imageURL
-                            ),
+                            item: artistItem,
                             dark: false,
+                            onTap: {
+                                onArtistTap(artistItem)
+                            },
                             favoriteArtistIds: favoriteArtistIds,
                             onToggleFavorite: onToggleArtistFavorite
                         )

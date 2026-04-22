@@ -467,6 +467,29 @@ fn build_programs_by_ids_json(db_path: &str, ids_json: &str) -> String {
     match RadioGolhaCore::open(db_path) {
         Ok(core) => {
             let conn = core.connection();
+            let artist_images_for_program = |program_id: i64| -> Vec<String> {
+                let mut stmt = match conn.prepare(
+                    "SELECT DISTINCT a.avatar
+                     FROM artist a
+                     LEFT JOIN singer s ON s.artist_id = a.id
+                     LEFT JOIN program_singers ps ON ps.singer_id = s.id
+                     LEFT JOIN performer p ON p.artist_id = a.id
+                     LEFT JOIN program_performers pp ON pp.performer_id = p.id
+                     WHERE (ps.program_id = ?1 OR pp.program_id = ?1)
+                       AND a.avatar IS NOT NULL
+                       AND TRIM(a.avatar) <> ''
+                     ORDER BY a.name ASC",
+                ) {
+                    Ok(stmt) => stmt,
+                    Err(_) => return Vec::new(),
+                };
+
+                let rows = match stmt.query_map([program_id], |row| row.get::<_, String>(0)) {
+                    Ok(rows) => rows,
+                    Err(_) => return Vec::new(),
+                };
+                rows.filter_map(|r| r.ok()).collect()
+            };
             let id_list = ids.iter().map(|id| id.to_string()).collect::<Vec<_>>().join(",");
             let sql = format!(
                 "SELECT
@@ -503,21 +526,38 @@ fn build_programs_by_ids_json(db_path: &str, ids_json: &str) -> String {
             };
 
             let rows = match stmt.query_map([], |row| {
-                Ok(json!({
-                    "id": row.get::<_, i64>(0)?,
-                    "title": row.get::<_, Option<String>>(1)?,
-                    "no": row.get::<_, i64>(2)?,
-                    "artist": row.get::<_, String>(3)?,
-                    "mode": row.get::<_, Option<String>>(4)?,
-                    "duration": row.get::<_, Option<String>>(5)?,
-                    "audioUrl": row.get::<_, Option<String>>(6)?
-                }))
+                Ok((
+                    row.get::<_, i64>(0)?,
+                    row.get::<_, Option<String>>(1)?,
+                    row.get::<_, i64>(2)?,
+                    row.get::<_, String>(3)?,
+                    row.get::<_, Option<String>>(4)?,
+                    row.get::<_, Option<String>>(5)?,
+                    row.get::<_, Option<String>>(6)?,
+                ))
             }) {
                 Ok(rows) => rows,
                 Err(error) => return json!({ "error": error.to_string() }).to_string(),
             };
 
-            let programs: Vec<_> = rows.filter_map(|r| r.ok()).collect();
+            let rows: Vec<_> = rows.filter_map(|r| r.ok()).collect();
+            drop(stmt);
+
+            let programs: Vec<_> = rows
+                .into_iter()
+                .map(|(id, title, no, artist, mode, duration, audio_url)| {
+                    json!({
+                        "id": id,
+                        "title": title,
+                        "no": no,
+                        "artist": artist,
+                        "mode": mode,
+                        "duration": duration,
+                        "audioUrl": audio_url,
+                        "artistImages": artist_images_for_program(id)
+                    })
+                })
+                .collect();
             json!(programs).to_string()
         }
         Err(error) => json!({ "error": error.to_string() }).to_string(),
@@ -957,16 +997,11 @@ fn build_artist_detail_json(db_path: &str, artist_id: i64) -> String {
                 .map_err(|error| error.to_string())
             };
 
-            // Prefer direct artist id. If it has no related tracks, resolve through singer/performer ids.
+            // If the incoming id is already an artist id, keep it as-is.
+            // Only resolve through singer/performer tables when no direct artist row exists.
             let direct_payload = query_artist_payload(artist_id).ok();
             let resolved_artist_id = if let Some(payload) = &direct_payload {
-                if payload.4 > 0 {
-                    payload.0
-                } else {
-                    conn.query_row("SELECT artist_id FROM singer WHERE id = ?1", [artist_id], |row| row.get::<_, i64>(0))
-                        .or_else(|_| conn.query_row("SELECT artist_id FROM performer WHERE id = ?1", [artist_id], |row| row.get::<_, i64>(0)))
-                        .unwrap_or(payload.0)
-                }
+                payload.0
             } else {
                 match conn
                     .query_row("SELECT artist_id FROM singer WHERE id = ?1", [artist_id], |row| row.get::<_, i64>(0))
