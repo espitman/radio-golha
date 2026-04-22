@@ -4,6 +4,8 @@ struct ArtistCard: View {
     let item: ArtistItem
     var dark: Bool = false
     var onTap: (() -> Void)? = nil
+    var favoriteArtistIds: Set<Int64> = []
+    var onToggleFavorite: ((Int64, String) -> Void)? = nil
     @State private var isHovered = false
     private let cardWidth: CGFloat = 208
 
@@ -77,5 +79,22 @@ struct ArtistCard: View {
         .onTapGesture {
             onTap?()
         }
+        .contextMenu {
+            if let sourceArtistId = item.sourceArtistId, let onToggleFavorite {
+                let isFavorite = favoriteArtistIds.contains(sourceArtistId)
+                Button(isFavorite ? "حذف از لیست مورد علاقه" : "افزودن به لیست مورد علاقه") {
+                    onToggleFavorite(sourceArtistId, artistTypeForFavorite())
+                }
+            }
+        }
+    }
+
+    private func artistTypeForFavorite() -> String {
+        if item.role.contains("نوازنده") { return "performer" }
+        if item.role.contains("شاعر") { return "poet" }
+        if item.role.contains("گوینده") { return "announcer" }
+        if item.role.contains("آهنگساز") { return "composer" }
+        if item.role.contains("تنظیم") { return "arranger" }
+        return "singer"
     }
 }

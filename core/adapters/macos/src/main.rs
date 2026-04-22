@@ -47,6 +47,14 @@ enum Command {
         #[arg(long)]
         filters_json: String,
     },
+    TopBarSearchJson {
+        #[arg(long)]
+        db: String,
+        #[arg(long)]
+        query: String,
+        #[arg(long, default_value_t = 10)]
+        limit: i64,
+    },
     ProgramsByCategoryJson {
         #[arg(long)]
         db: String,
@@ -83,6 +91,44 @@ enum Command {
         #[arg(long, default_value_t = 20)]
         limit: i64,
     },
+    GetManualPlaylistsJson {
+        #[arg(long)]
+        user_db: String,
+    },
+    AddTrackToPlaylist {
+        #[arg(long)]
+        user_db: String,
+        #[arg(long)]
+        playlist_id: i64,
+        #[arg(long)]
+        track_id: i64,
+    },
+    CreateManualPlaylist {
+        #[arg(long)]
+        user_db: String,
+        #[arg(long)]
+        name: String,
+    },
+    GetFavoriteArtistIdsJson {
+        #[arg(long)]
+        user_db: String,
+        #[arg(long)]
+        artist_type: Option<String>,
+    },
+    AddFavoriteArtist {
+        #[arg(long)]
+        user_db: String,
+        #[arg(long)]
+        artist_id: i64,
+        #[arg(long)]
+        artist_type: String,
+    },
+    RemoveFavoriteArtist {
+        #[arg(long)]
+        user_db: String,
+        #[arg(long)]
+        artist_id: i64,
+    },
 }
 
 fn main() -> Result<()> {
@@ -110,6 +156,9 @@ fn main() -> Result<()> {
         Command::SearchProgramsJson { db, filters_json } => {
             println!("{}", search_programs_json(&db, &filters_json));
         }
+        Command::TopBarSearchJson { db, query, limit } => {
+            println!("{}", top_bar_search_json(&db, &query, limit));
+        }
         Command::ProgramsByCategoryJson { db, category_id } => {
             println!("{}", build_programs_by_category_json(&db, category_id));
         }
@@ -127,6 +176,35 @@ fn main() -> Result<()> {
         }
         Command::MostPlayedIdsJson { user_db, limit } => {
             println!("{}", get_most_played_ids_json(&user_db, limit));
+        }
+        Command::GetManualPlaylistsJson { user_db } => {
+            println!("{}", get_manual_playlists_json(&user_db));
+        }
+        Command::AddTrackToPlaylist {
+            user_db,
+            playlist_id,
+            track_id,
+        } => {
+            println!("{}", add_track_to_playlist(&user_db, playlist_id, track_id));
+        }
+        Command::CreateManualPlaylist { user_db, name } => {
+            println!("{}", create_manual_playlist(&user_db, &name));
+        }
+        Command::GetFavoriteArtistIdsJson {
+            user_db,
+            artist_type,
+        } => {
+            println!("{}", get_favorite_artist_ids_json(&user_db, artist_type.as_deref()));
+        }
+        Command::AddFavoriteArtist {
+            user_db,
+            artist_id,
+            artist_type,
+        } => {
+            println!("{}", add_favorite_artist(&user_db, artist_id, &artist_type));
+        }
+        Command::RemoveFavoriteArtist { user_db, artist_id } => {
+            println!("{}", remove_favorite_artist(&user_db, artist_id));
         }
     }
 
@@ -207,6 +285,119 @@ fn search_programs_json(db_path: &str, filters_json: &str) -> String {
             Ok(result) => json!(result).to_string(),
             Err(error) => json!({ "error": error.to_string() }).to_string(),
         },
+        Err(error) => json!({ "error": error.to_string() }).to_string(),
+    }
+}
+
+fn top_bar_search_json(db_path: &str, query: &str, limit: i64) -> String {
+    let trimmed = query.trim();
+    if trimmed.is_empty() {
+        return "[]".to_string();
+    }
+    let safe_limit = if limit <= 0 { 10 } else { limit.min(30) };
+    let like = format!("%{}%", trimmed);
+    let starts_with = format!("{}%", trimmed);
+
+    match RadioGolhaCore::open(db_path) {
+        Ok(core) => {
+            let conn = core.connection();
+            let mut stmt = match conn.prepare(
+                "
+                WITH artist_hits AS (
+                    SELECT
+                        'artist' AS kind,
+                        a.id AS id,
+                        a.name AS title,
+                        CASE
+                            WHEN EXISTS (SELECT 1 FROM singer s WHERE s.artist_id = a.id) THEN 'خواننده'
+                            WHEN EXISTS (SELECT 1 FROM performer p WHERE p.artist_id = a.id) THEN COALESCE(
+                                (
+                                    SELECT 'نوازنده ' || i.name
+                                    FROM program_performers pp
+                                    JOIN performer p2 ON p2.id = pp.performer_id
+                                    LEFT JOIN instrument i ON i.id = pp.instrument_id
+                                    WHERE p2.artist_id = a.id
+                                      AND i.name IS NOT NULL
+                                      AND TRIM(i.name) <> ''
+                                    GROUP BY i.id, i.name
+                                    ORDER BY COUNT(*) DESC, i.name ASC
+                                    LIMIT 1
+                                ),
+                                'نوازنده'
+                            )
+                            WHEN EXISTS (SELECT 1 FROM poet p WHERE p.artist_id = a.id) THEN 'شاعر'
+                            WHEN EXISTS (SELECT 1 FROM announcer n WHERE n.artist_id = a.id) THEN 'گوینده'
+                            WHEN EXISTS (SELECT 1 FROM composer c WHERE c.artist_id = a.id) THEN 'آهنگساز'
+                            WHEN EXISTS (SELECT 1 FROM arranger r WHERE r.artist_id = a.id) THEN 'تنظیم‌کننده'
+                            WHEN EXISTS (SELECT 1 FROM orchestra_leader l WHERE l.artist_id = a.id) THEN 'رهبر ارکستر'
+                            ELSE 'هنرمند'
+                        END AS subtitle,
+                        a.avatar AS avatar,
+                        NULL AS track_id,
+                        CASE WHEN a.name LIKE ?2 THEN 0 ELSE 1 END AS rank,
+                        0 AS kind_priority
+                    FROM artist a
+                    WHERE a.name LIKE ?1
+                    LIMIT ?3
+                ),
+                track_hits AS (
+                    SELECT
+                        'track' AS kind,
+                        p.id AS id,
+                        COALESCE(NULLIF(TRIM(p.title), ''), 'برنامه ' || p.no) AS title,
+                        COALESCE(
+                            (
+                                SELECT GROUP_CONCAT(name, ' و ')
+                                FROM (
+                                    SELECT DISTINCT a2.name AS name
+                                    FROM program_singers ps
+                                    JOIN singer s ON s.id = ps.singer_id
+                                    JOIN artist a2 ON a2.id = s.artist_id
+                                    WHERE ps.program_id = p.id
+                                    ORDER BY a2.name ASC
+                                )
+                            ),
+                            'ناشناس'
+                        ) AS subtitle,
+                        NULL AS avatar,
+                        p.id AS track_id,
+                        CASE WHEN COALESCE(p.title, '') LIKE ?2 THEN 0 ELSE 1 END AS rank,
+                        1 AS kind_priority
+                    FROM program p
+                    WHERE COALESCE(p.title, '') LIKE ?1
+                    LIMIT ?3
+                )
+                SELECT kind, id, title, subtitle, avatar, track_id
+                FROM (
+                    SELECT * FROM artist_hits
+                    UNION ALL
+                    SELECT * FROM track_hits
+                )
+                ORDER BY rank ASC, kind_priority ASC, title ASC
+                LIMIT ?3
+                ",
+            ) {
+                Ok(stmt) => stmt,
+                Err(error) => return json!({ "error": error.to_string() }).to_string(),
+            };
+
+            let rows = match stmt.query_map((like, starts_with, safe_limit), |row| {
+                Ok(json!({
+                    "kind": row.get::<_, String>(0)?,
+                    "id": row.get::<_, i64>(1)?,
+                    "title": row.get::<_, String>(2)?,
+                    "subtitle": row.get::<_, String>(3)?,
+                    "avatar": row.get::<_, Option<String>>(4)?,
+                    "trackId": row.get::<_, Option<i64>>(5)?
+                }))
+            }) {
+                Ok(rows) => rows,
+                Err(error) => return json!({ "error": error.to_string() }).to_string(),
+            };
+
+            let results: Vec<_> = rows.filter_map(|r| r.ok()).collect();
+            json!(results).to_string()
+        }
         Err(error) => json!({ "error": error.to_string() }).to_string(),
     }
 }
@@ -324,6 +515,77 @@ fn get_most_played_ids_json(user_db_path: &str, limit: i64) -> String {
     match UserDataStore::open(user_db_path) {
         Ok(store) => match store.get_most_played_tracks(limit) {
             Ok(ids) => json!(ids).to_string(),
+            Err(error) => json!({ "error": error.to_string() }).to_string(),
+        },
+        Err(error) => json!({ "error": error.to_string() }).to_string(),
+    }
+}
+
+fn get_manual_playlists_json(user_db_path: &str) -> String {
+    match UserDataStore::open(user_db_path) {
+        Ok(store) => match store.get_manual_playlists() {
+            Ok(playlists) => json!(playlists).to_string(),
+            Err(error) => json!({ "error": error.to_string() }).to_string(),
+        },
+        Err(error) => json!({ "error": error.to_string() }).to_string(),
+    }
+}
+
+fn add_track_to_playlist(user_db_path: &str, playlist_id: i64, track_id: i64) -> String {
+    match UserDataStore::open(user_db_path) {
+        Ok(store) => match store.add_track(playlist_id, track_id) {
+            Ok(_) => "ok".to_string(),
+            Err(error) => json!({ "error": error.to_string() }).to_string(),
+        },
+        Err(error) => json!({ "error": error.to_string() }).to_string(),
+    }
+}
+
+fn create_manual_playlist(user_db_path: &str, name: &str) -> String {
+    match UserDataStore::open(user_db_path) {
+        Ok(store) => match store.create_playlist(name, "manual", "{}") {
+            Ok(id) => json!({ "id": id }).to_string(),
+            Err(error) => json!({ "error": error.to_string() }).to_string(),
+        },
+        Err(error) => json!({ "error": error.to_string() }).to_string(),
+    }
+}
+
+fn get_favorite_artist_ids_json(user_db_path: &str, artist_type: Option<&str>) -> String {
+    match UserDataStore::open(user_db_path) {
+        Ok(store) => {
+            let result = match artist_type {
+                Some(value) if !value.trim().is_empty() => store.get_favorite_artist_ids_by_type(value),
+                _ => store.get_favorite_artist_ids(),
+            };
+            match result {
+                Ok(ids) => json!(ids).to_string(),
+                Err(error) => json!({ "error": error.to_string() }).to_string(),
+            }
+        }
+        Err(error) => json!({ "error": error.to_string() }).to_string(),
+    }
+}
+
+fn add_favorite_artist(user_db_path: &str, artist_id: i64, artist_type: &str) -> String {
+    let normalized_type = match artist_type.trim() {
+        "performer" | "poet" | "announcer" | "composer" | "arranger" => artist_type.trim(),
+        _ => "singer",
+    };
+
+    match UserDataStore::open(user_db_path) {
+        Ok(store) => match store.add_favorite_artist(artist_id, normalized_type) {
+            Ok(_) => "ok".to_string(),
+            Err(error) => json!({ "error": error.to_string() }).to_string(),
+        },
+        Err(error) => json!({ "error": error.to_string() }).to_string(),
+    }
+}
+
+fn remove_favorite_artist(user_db_path: &str, artist_id: i64) -> String {
+    match UserDataStore::open(user_db_path) {
+        Ok(store) => match store.remove_favorite_artist(artist_id) {
+            Ok(_) => "ok".to_string(),
             Err(error) => json!({ "error": error.to_string() }).to_string(),
         },
         Err(error) => json!({ "error": error.to_string() }).to_string(),

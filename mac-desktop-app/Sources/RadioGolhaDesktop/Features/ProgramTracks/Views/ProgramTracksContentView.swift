@@ -5,6 +5,9 @@ struct ProgramTracksContentView: View {
     let tracks: [TrackRowItem]
     var onPlayTrack: (TrackRowItem) -> Void = { _ in }
     var onOpenProgram: (TrackRowItem) -> Void = { _ in }
+    var manualPlaylists: [DesktopManualPlaylist] = []
+    var onAddTrackToPlaylist: (Int64, Int64) -> Void = { _, _ in }
+    var onCreatePlaylistAndAddTrack: (Int64) -> Void = { _ in }
     var currentPlayingTrackId: String? = nil
     var isPlayerPlaying: Bool = false
     var isPlayerLoading: Bool = false
@@ -101,7 +104,10 @@ struct ProgramTracksContentView: View {
                         isPlayerPlaying: isPlayerPlaying,
                         isPlayerLoading: isPlayerLoading,
                         onPlay: { onPlayTrack(row) },
-                        onOpen: { onOpenProgram(row) }
+                        onOpen: { onOpenProgram(row) },
+                        manualPlaylists: manualPlaylists,
+                        onAddTrackToPlaylist: onAddTrackToPlaylist,
+                        onCreatePlaylistAndAddTrack: onCreatePlaylistAndAddTrack
                     )
                     if index < tracks.count - 1 {
                         Divider().overlay(Palette.text.opacity(0.06))
@@ -144,6 +150,9 @@ private struct ProgramTrackRow: View {
     let isPlayerLoading: Bool
     var onPlay: () -> Void = {}
     var onOpen: () -> Void = {}
+    var manualPlaylists: [DesktopManualPlaylist] = []
+    var onAddTrackToPlaylist: (Int64, Int64) -> Void = { _, _ in }
+    var onCreatePlaylistAndAddTrack: (Int64) -> Void = { _ in }
 
     var body: some View {
         HStack(spacing: 14) {
@@ -189,5 +198,11 @@ private struct ProgramTrackRow: View {
         }
         .padding(.horizontal, 16)
         .frame(height: 72)
+        .trackPlaylistContextMenu(
+            trackId: row.trackId,
+            playlists: manualPlaylists,
+            onAddToPlaylist: onAddTrackToPlaylist,
+            onCreatePlaylistAndAdd: onCreatePlaylistAndAddTrack
+        )
     }
 }

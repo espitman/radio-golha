@@ -6,6 +6,9 @@ struct ArtistDetailsContentView: View {
     var onOpenArtist: (ArtistCollaboratorItem) -> Void = { _ in }
     var onOpenProgram: (ArtistProgramRow) -> Void = { _ in }
     var onPlayTrack: (ArtistProgramRow) -> Void = { _ in }
+    var manualPlaylists: [DesktopManualPlaylist] = []
+    var onAddTrackToPlaylist: (Int64, Int64) -> Void = { _, _ in }
+    var onCreatePlaylistAndAddTrack: (Int64) -> Void = { _ in }
     var currentPlayingTrackId: String? = nil
     var isPlayerPlaying: Bool = false
     var isPlayerLoading: Bool = false
@@ -134,6 +137,12 @@ struct ArtistDetailsContentView: View {
                     ) {
                         onOpenProgram(row)
                     }
+                    .trackPlaylistContextMenu(
+                        trackId: row.trackId,
+                        playlists: manualPlaylists,
+                        onAddToPlaylist: onAddTrackToPlaylist,
+                        onCreatePlaylistAndAdd: onCreatePlaylistAndAddTrack
+                    )
                     if index < artist.programs.count - 1 {
                         Divider().overlay(Color(hex: 0x1C1C17).opacity(0.06))
                     }

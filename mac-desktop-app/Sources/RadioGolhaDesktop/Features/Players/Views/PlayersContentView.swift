@@ -3,6 +3,8 @@ import SwiftUI
 struct PlayersContentView: View {
     let players: [PlayerListItem]
     var onPlayerTap: (PlayerListItem) -> Void = { _ in }
+    var favoriteArtistIds: Set<Int64> = []
+    var onToggleArtistFavorite: (Int64, String) -> Void = { _, _ in }
     @State private var selectedInstrument = "همه"
     private let columns = Array(repeating: GridItem(.fixed(208), spacing: 32), count: 4)
 
@@ -58,10 +60,13 @@ struct PlayersContentView: View {
                                         : item.programsCount,
                                     imageURL: item.imageURL
                                 ),
-                                dark: false
-                            ) {
-                                onPlayerTap(item)
-                            }
+                                dark: false,
+                                onTap: {
+                                    onPlayerTap(item)
+                                },
+                                favoriteArtistIds: favoriteArtistIds,
+                                onToggleFavorite: onToggleArtistFavorite
+                            )
                         }
                     }
                     .padding(.horizontal, 48)

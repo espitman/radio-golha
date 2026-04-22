@@ -57,6 +57,8 @@ struct HomeRootView: View {
     @State private var playersDataLoaded = false
     @State private var backStack: [NavigationSnapshot] = []
     @State private var programDetailsLoadRequestId: String = ""
+    @State private var manualPlaylists: [DesktopManualPlaylist] = []
+    @State private var favoriteArtistIds: Set<Int64> = []
     @StateObject private var audioPlayer = DesktopAudioPlayer()
     private let pageTransition = AnyTransition.asymmetric(
         insertion: .offset(y: -10).combined(with: .opacity),
@@ -95,6 +97,8 @@ struct HomeRootView: View {
             guard !homeDataLoaded else { return }
             homeDataLoaded = true
             isHomeLoading = true
+            manualPlaylists = await DesktopPlaylistDataLoader.loadManualPlaylists()
+            favoriteArtistIds = await DesktopFavoriteArtistsDataLoader.loadFavoriteArtistIds()
             let start = Date()
             let loaded = await HomeDataLoader.load()
             let elapsed = Date().timeIntervalSince(start)
@@ -115,23 +119,44 @@ struct HomeRootView: View {
             DesktopTopNavigationBar(
                 selectedTab: selectedTab,
                 canGoBack: canGoBack,
-                onBack: handleBack
-            ) { tab in
-                switch tab {
-                case .artists:
-                    navigateTo(.singers)
-                    ensureSingersLoaded()
-                case .search:
-                    navigateTo(.search)
-                case .instrumentalists:
-                    navigateTo(.players)
-                    ensurePlayersLoaded()
-                case .programs:
-                    navigateTo(.home)
-                default:
-                    break
+                onBack: handleBack,
+                onSelectTab: { tab in
+                    switch tab {
+                    case .artists:
+                        navigateTo(.singers)
+                        ensureSingersLoaded()
+                    case .search:
+                        navigateTo(.search)
+                    case .instrumentalists:
+                        navigateTo(.players)
+                        ensurePlayersLoaded()
+                    case .programs:
+                        navigateTo(.home)
+                    default:
+                        break
+                    }
+                },
+                onOpenQuickArtist: { artistId, name, avatar in
+                    openArtistDetails(
+                        ArtistDetailsFactory.fromHomeArtist(
+                            ArtistItem(
+                                sourceArtistId: artistId,
+                                name: name,
+                                role: "هنرمند",
+                                imageURL: avatar ?? ""
+                            )
+                        ),
+                        sourcePage: currentPage
+                    )
+                },
+                onOpenQuickTrack: { trackId, title in
+                    openProgramDetails(
+                        programId: trackId,
+                        fallbackTitle: title,
+                        sourcePage: currentPage
+                    )
                 }
-            }
+            )
 
             ZStack {
                 switch currentPage {
@@ -170,6 +195,21 @@ struct HomeRootView: View {
                                     sourcePage: .home
                                 )
                             },
+                            manualPlaylists: manualPlaylists,
+                            onAddTrackToPlaylist: { playlistId, trackId in
+                                Task {
+                                    let _ = await DesktopPlaylistDataLoader.addTrack(playlistId: playlistId, trackId: trackId)
+                                    await refreshManualPlaylists()
+                                }
+                            },
+                            onCreatePlaylistAndAddTrack: { trackId in
+                                Task {
+                                    let name = "لیست من"
+                                    guard let newPlaylistId = await DesktopPlaylistDataLoader.createManualPlaylist(name: name) else { return }
+                                    let _ = await DesktopPlaylistDataLoader.addTrack(playlistId: newPlaylistId, trackId: trackId)
+                                    await refreshManualPlaylists()
+                                }
+                            },
                             onShowAllSingers: {
                                 navigateTo(.singers)
                                 ensureSingersLoaded()
@@ -177,7 +217,9 @@ struct HomeRootView: View {
                             onShowAllInstrumentalists: {
                                 navigateTo(.players)
                                 ensurePlayersLoaded()
-                            }
+                            },
+                            favoriteArtistIds: favoriteArtistIds,
+                            onToggleArtistFavorite: toggleArtistFavorite
                         )
                         .transition(pageTransition)
                     } else if isHomeLoading {
@@ -191,12 +233,17 @@ struct HomeRootView: View {
                     }
                 case .singers:
                     if let singersContent {
-                        SingersContentView(singers: singersContent) { singer in
-                            openArtistDetails(
-                                ArtistDetailsFactory.fromSinger(singer),
-                                sourcePage: .singers
-                            )
-                        }
+                        SingersContentView(
+                            singers: singersContent,
+                            onSingerTap: { singer in
+                                openArtistDetails(
+                                    ArtistDetailsFactory.fromSinger(singer),
+                                    sourcePage: .singers
+                                )
+                            },
+                            favoriteArtistIds: favoriteArtistIds,
+                            onToggleArtistFavorite: toggleArtistFavorite
+                        )
                         .transition(pageTransition)
                     } else {
                         DesktopLoadingView(message: "در حال بارگذاری خواننده‌ها...")
@@ -235,6 +282,21 @@ struct HomeRootView: View {
                                     sourcePage: .searchResults
                                 )
                             },
+                            manualPlaylists: manualPlaylists,
+                            onAddTrackToPlaylist: { playlistId, trackId in
+                                Task {
+                                    let _ = await DesktopPlaylistDataLoader.addTrack(playlistId: playlistId, trackId: trackId)
+                                    await refreshManualPlaylists()
+                                }
+                            },
+                            onCreatePlaylistAndAddTrack: { trackId in
+                                Task {
+                                    let name = "لیست من"
+                                    guard let newPlaylistId = await DesktopPlaylistDataLoader.createManualPlaylist(name: name) else { return }
+                                    let _ = await DesktopPlaylistDataLoader.addTrack(playlistId: newPlaylistId, trackId: trackId)
+                                    await refreshManualPlaylists()
+                                }
+                            },
                             currentPlayingTrackId: audioPlayer.currentTrack?.id,
                             isPlayerPlaying: audioPlayer.isPlaying,
                             isPlayerLoading: audioPlayer.isLoading
@@ -247,12 +309,17 @@ struct HomeRootView: View {
                     }
                 case .players:
                     if let playersContent {
-                        PlayersContentView(players: playersContent) { player in
-                            openArtistDetails(
-                                ArtistDetailsFactory.fromPlayer(player),
-                                sourcePage: .players
-                            )
-                        }
+                        PlayersContentView(
+                            players: playersContent,
+                            onPlayerTap: { player in
+                                openArtistDetails(
+                                    ArtistDetailsFactory.fromPlayer(player),
+                                    sourcePage: .players
+                                )
+                            },
+                            favoriteArtistIds: favoriteArtistIds,
+                            onToggleArtistFavorite: toggleArtistFavorite
+                        )
                         .transition(pageTransition)
                     } else {
                         DesktopLoadingView(message: "در حال بارگذاری نوازندگان...")
@@ -274,6 +341,21 @@ struct HomeRootView: View {
                                         fallbackTitle: track.title,
                                         sourcePage: .programTracks
                                     )
+                                },
+                                manualPlaylists: manualPlaylists,
+                                onAddTrackToPlaylist: { playlistId, trackId in
+                                    Task {
+                                        let _ = await DesktopPlaylistDataLoader.addTrack(playlistId: playlistId, trackId: trackId)
+                                        await refreshManualPlaylists()
+                                    }
+                                },
+                                onCreatePlaylistAndAddTrack: { trackId in
+                                    Task {
+                                        let name = "لیست من"
+                                        guard let newPlaylistId = await DesktopPlaylistDataLoader.createManualPlaylist(name: name) else { return }
+                                        let _ = await DesktopPlaylistDataLoader.addTrack(playlistId: newPlaylistId, trackId: trackId)
+                                        await refreshManualPlaylists()
+                                    }
                                 },
                                 currentPlayingTrackId: audioPlayer.currentTrack?.id,
                                 isPlayerPlaying: audioPlayer.isPlaying,
@@ -337,6 +419,21 @@ struct HomeRootView: View {
                                     artworkURLs: [selectedArtistDetails.imageURL]
                                 )
                                 handleTrackPlayIntent(track)
+                            },
+                            manualPlaylists: manualPlaylists,
+                            onAddTrackToPlaylist: { playlistId, trackId in
+                                Task {
+                                    let _ = await DesktopPlaylistDataLoader.addTrack(playlistId: playlistId, trackId: trackId)
+                                    await refreshManualPlaylists()
+                                }
+                            },
+                            onCreatePlaylistAndAddTrack: { trackId in
+                                Task {
+                                    let name = "لیست من"
+                                    guard let newPlaylistId = await DesktopPlaylistDataLoader.createManualPlaylist(name: name) else { return }
+                                    let _ = await DesktopPlaylistDataLoader.addTrack(playlistId: newPlaylistId, trackId: trackId)
+                                    await refreshManualPlaylists()
+                                }
                             },
                             currentPlayingTrackId: audioPlayer.currentTrack?.id,
                             isPlayerPlaying: audioPlayer.isPlaying,
@@ -511,6 +608,33 @@ struct HomeRootView: View {
                 playersContent = loaded
                 isPlayersLoading = false
             }
+        }
+    }
+
+    @MainActor
+    private func refreshManualPlaylists() async {
+        manualPlaylists = await DesktopPlaylistDataLoader.loadManualPlaylists()
+    }
+
+    @MainActor
+    private func refreshFavoriteArtistIds() async {
+        favoriteArtistIds = await DesktopFavoriteArtistsDataLoader.loadFavoriteArtistIds()
+    }
+
+    private func toggleArtistFavorite(_ artistId: Int64, _ artistType: String) {
+        Task {
+            let isFavorite = await MainActor.run { favoriteArtistIds.contains(artistId) }
+            let success: Bool
+            if isFavorite {
+                success = await DesktopFavoriteArtistsDataLoader.removeFavoriteArtist(artistId: artistId)
+            } else {
+                success = await DesktopFavoriteArtistsDataLoader.addFavoriteArtist(
+                    artistId: artistId,
+                    artistType: artistType
+                )
+            }
+            guard success else { return }
+            await refreshFavoriteArtistIds()
         }
     }
 

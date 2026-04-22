@@ -11,8 +11,13 @@ struct MainContentSection: View {
     var onArtistTap: (ArtistItem) -> Void = { _ in }
     var onProgramCategoryTap: (ProgramItem) -> Void = { _ in }
     var onProgramTap: (TrackRowItem) -> Void = { _ in }
+    var manualPlaylists: [DesktopManualPlaylist] = []
+    var onAddTrackToPlaylist: (Int64, Int64) -> Void = { _, _ in }
+    var onCreatePlaylistAndAddTrack: (Int64) -> Void = { _ in }
     var onShowAllSingers: () -> Void = {}
     var onShowAllInstrumentalists: () -> Void = {}
+    var favoriteArtistIds: Set<Int64> = []
+    var onToggleArtistFavorite: (Int64, String) -> Void = { _, _ in }
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -40,7 +45,9 @@ struct MainContentSection: View {
                         items: content.singers,
                         showAllAction: true,
                         onShowAllAction: onShowAllSingers,
-                        onArtistTap: onArtistTap
+                        onArtistTap: onArtistTap,
+                        favoriteArtistIds: favoriteArtistIds,
+                        onToggleArtistFavorite: onToggleArtistFavorite
                     )
                     .padding(.horizontal, 48)
                     .padding(.top, 48)
@@ -54,7 +61,9 @@ struct MainContentSection: View {
                         items: content.instrumentalists,
                         showAllAction: true,
                         onShowAllAction: onShowAllInstrumentalists,
-                        onArtistTap: onArtistTap
+                        onArtistTap: onArtistTap,
+                        favoriteArtistIds: favoriteArtistIds,
+                        onToggleArtistFavorite: onToggleArtistFavorite
                     )
                     .padding(.horizontal, 48)
                     .padding(.top, 48)
@@ -67,7 +76,10 @@ struct MainContentSection: View {
                         currentPlayingTrackId: currentPlayingTrackId,
                         isPlayerPlaying: isPlayerPlaying,
                         isPlayerLoading: isPlayerLoading,
-                        onProgramTap: onProgramTap
+                        onProgramTap: onProgramTap,
+                        manualPlaylists: manualPlaylists,
+                        onAddTrackToPlaylist: onAddTrackToPlaylist,
+                        onCreatePlaylistAndAddTrack: onCreatePlaylistAndAddTrack
                     )
                         .padding(.horizontal, 48)
                         .padding(.top, 48)
@@ -235,6 +247,8 @@ private struct ArtistsGridSection: View {
     let showAllAction: Bool
     let onShowAllAction: () -> Void
     let onArtistTap: (ArtistItem) -> Void
+    var favoriteArtistIds: Set<Int64> = []
+    var onToggleArtistFavorite: (Int64, String) -> Void = { _, _ in }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 32) {
@@ -246,9 +260,15 @@ private struct ArtistsGridSection: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 24) {
                     ForEach(items) { item in
-                        ArtistCard(item: item, dark: false) {
-                            onArtistTap(item)
-                        }
+                        ArtistCard(
+                            item: item,
+                            dark: false,
+                            onTap: {
+                                onArtistTap(item)
+                            },
+                            favoriteArtistIds: favoriteArtistIds,
+                            onToggleFavorite: onToggleArtistFavorite
+                        )
                         .frame(width: 208)
                     }
                 }
@@ -300,6 +320,9 @@ private struct TopListsSection: View {
     var isPlayerPlaying: Bool = false
     var isPlayerLoading: Bool = false
     var onProgramTap: (TrackRowItem) -> Void = { _ in }
+    var manualPlaylists: [DesktopManualPlaylist] = []
+    var onAddTrackToPlaylist: (Int64, Int64) -> Void = { _, _ in }
+    var onCreatePlaylistAndAddTrack: (Int64) -> Void = { _ in }
 
     var body: some View {
         HStack(alignment: .top, spacing: 48) {
@@ -312,7 +335,10 @@ private struct TopListsSection: View {
                 currentPlayingTrackId: currentPlayingTrackId,
                 isPlayerPlaying: isPlayerPlaying,
                 isPlayerLoading: isPlayerLoading,
-                onProgramTap: onProgramTap
+                onProgramTap: onProgramTap,
+                manualPlaylists: manualPlaylists,
+                onAddTrackToPlaylist: onAddTrackToPlaylist,
+                onCreatePlaylistAndAddTrack: onCreatePlaylistAndAddTrack
             )
 
             ListBlock(
@@ -323,7 +349,10 @@ private struct TopListsSection: View {
                 currentPlayingTrackId: currentPlayingTrackId,
                 isPlayerPlaying: isPlayerPlaying,
                 isPlayerLoading: isPlayerLoading,
-                onProgramTap: onProgramTap
+                onProgramTap: onProgramTap,
+                manualPlaylists: manualPlaylists,
+                onAddTrackToPlaylist: onAddTrackToPlaylist,
+                onCreatePlaylistAndAddTrack: onCreatePlaylistAndAddTrack
             )
         }
     }
@@ -339,6 +368,9 @@ private struct ListBlock: View {
     var isPlayerPlaying: Bool = false
     var isPlayerLoading: Bool = false
     var onProgramTap: (TrackRowItem) -> Void = { _ in }
+    var manualPlaylists: [DesktopManualPlaylist] = []
+    var onAddTrackToPlaylist: (Int64, Int64) -> Void = { _, _ in }
+    var onCreatePlaylistAndAddTrack: (Int64) -> Void = { _ in }
     @State private var isRefreshing = false
 
     var body: some View {
@@ -386,7 +418,10 @@ private struct ListBlock: View {
                             isPlayerPlaying: isPlayerPlaying,
                             isPlayerLoading: isPlayerLoading,
                             onPlayTrack: onPlayTrack,
-                            onProgramTap: onProgramTap
+                            onProgramTap: onProgramTap,
+                            manualPlaylists: manualPlaylists,
+                            onAddTrackToPlaylist: onAddTrackToPlaylist,
+                            onCreatePlaylistAndAddTrack: onCreatePlaylistAndAddTrack
                         )
                         if index < rows.count - 1 {
                             Divider().overlay(Palette.text.opacity(0.06))
@@ -427,6 +462,9 @@ private struct ListRow: View {
     let isPlayerLoading: Bool
     var onPlayTrack: (TrackRowItem) -> Void = { _ in }
     var onProgramTap: (TrackRowItem) -> Void = { _ in }
+    var manualPlaylists: [DesktopManualPlaylist] = []
+    var onAddTrackToPlaylist: (Int64, Int64) -> Void = { _, _ in }
+    var onCreatePlaylistAndAddTrack: (Int64) -> Void = { _ in }
 
     var body: some View {
         HStack(spacing: 16) {
@@ -471,6 +509,12 @@ private struct ListRow: View {
         }
         .padding(.horizontal, 16)
         .frame(height: 72)
+        .trackPlaylistContextMenu(
+            trackId: row.trackId,
+            playlists: manualPlaylists,
+            onAddToPlaylist: onAddTrackToPlaylist,
+            onCreatePlaylistAndAdd: onCreatePlaylistAndAddTrack
+        )
     }
 }
 
