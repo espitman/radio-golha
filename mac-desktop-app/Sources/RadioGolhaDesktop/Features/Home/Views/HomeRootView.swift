@@ -69,6 +69,7 @@ struct HomeRootView: View {
     @State private var manualPlaylists: [DesktopManualPlaylist] = []
     @State private var favoriteArtistIds: Set<Int64> = []
     @State private var pendingPlaylistTrackId: Int64? = nil
+    @State private var pendingPlaylistTrackIds: [Int64]? = nil
     @State private var isCreatingPlaylistOnly: Bool = false
     @State private var pendingPlaylistName: String = ""
     @State private var canDismissPlaylistDialogByBackdrop: Bool = false
@@ -113,7 +114,7 @@ struct HomeRootView: View {
             .frame(width: 1280)
             .environment(\.layoutDirection, .leftToRight)
 
-            if pendingPlaylistTrackId != nil || isCreatingPlaylistOnly {
+            if pendingPlaylistTrackId != nil || pendingPlaylistTrackIds != nil || isCreatingPlaylistOnly {
                 Color.black.opacity(0.22)
                     .ignoresSafeArea()
                     .zIndex(2_000)
@@ -358,6 +359,11 @@ struct HomeRootView: View {
                                     fallbackTitle: track.title,
                                     sourcePage: .searchResults
                                 )
+                            },
+                            onSaveAsPlaylist: {
+                                let trackIds = selectedSearchTracks.compactMap(\.trackId)
+                                guard !trackIds.isEmpty else { return }
+                                createPlaylistAndAddTracks(trackIds)
                             },
                             manualPlaylists: manualPlaylists,
                             onAddTrackToPlaylist: { playlistId, trackId in
@@ -833,6 +839,7 @@ struct HomeRootView: View {
 
     private func createPlaylistAndAddTrack(_ trackId: Int64) {
         isCreatingPlaylistOnly = false
+        pendingPlaylistTrackIds = nil
         canDismissPlaylistDialogByBackdrop = false
         withAnimation(.easeInOut(duration: 0.2)) {
             pendingPlaylistTrackId = trackId
@@ -850,6 +857,7 @@ struct HomeRootView: View {
         canDismissPlaylistDialogByBackdrop = false
         withAnimation(.easeInOut(duration: 0.18)) {
             pendingPlaylistTrackId = nil
+            pendingPlaylistTrackIds = nil
             isCreatingPlaylistOnly = false
             pendingPlaylistName = ""
         }
@@ -858,6 +866,7 @@ struct HomeRootView: View {
 
     private func confirmCreatePlaylistAndAdd() {
         let targetTrackId = pendingPlaylistTrackId
+        let targetTrackIds = pendingPlaylistTrackIds ?? []
         let name = pendingPlaylistName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
 
@@ -866,6 +875,11 @@ struct HomeRootView: View {
             if let trackId = targetTrackId {
                 let _ = await DesktopPlaylistDataLoader.addTrack(playlistId: newPlaylistId, trackId: trackId)
             }
+            if !targetTrackIds.isEmpty {
+                for trackId in targetTrackIds {
+                    let _ = await DesktopPlaylistDataLoader.addTrack(playlistId: newPlaylistId, trackId: trackId)
+                }
+            }
             await refreshManualPlaylists()
             await MainActor.run {
                 dismissPlaylistDialog()
@@ -873,8 +887,27 @@ struct HomeRootView: View {
         }
     }
 
+    private func createPlaylistAndAddTracks(_ trackIds: [Int64]) {
+        let uniqueTrackIds = Array(Set(trackIds))
+        guard !uniqueTrackIds.isEmpty else { return }
+        pendingPlaylistTrackId = nil
+        pendingPlaylistTrackIds = uniqueTrackIds
+        isCreatingPlaylistOnly = false
+        canDismissPlaylistDialogByBackdrop = false
+        withAnimation(.easeInOut(duration: 0.2)) {
+            pendingPlaylistName = ""
+        }
+        DispatchQueue.main.async {
+            isPlaylistNameFieldFocused = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            canDismissPlaylistDialogByBackdrop = true
+        }
+    }
+
     private func startCreatePlaylistOnly() {
         pendingPlaylistTrackId = nil
+        pendingPlaylistTrackIds = nil
         isCreatingPlaylistOnly = true
         canDismissPlaylistDialogByBackdrop = false
         withAnimation(.easeInOut(duration: 0.2)) {

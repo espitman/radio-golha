@@ -7,6 +7,7 @@ struct SearchResultsContentView: View {
     var onRemoveChip: (SearchActiveChip) -> Void = { _ in }
     var onPlayTrack: (TrackRowItem) -> Void = { _ in }
     var onOpenProgram: (TrackRowItem) -> Void = { _ in }
+    var onSaveAsPlaylist: () -> Void = {}
     var manualPlaylists: [DesktopManualPlaylist] = []
     var onAddTrackToPlaylist: (Int64, Int64) -> Void = { _, _ in }
     var onRemoveTrackFromPlaylist: (Int64, Int64) -> Void = { _, _ in }
@@ -121,7 +122,27 @@ struct SearchResultsContentView: View {
                 Text("فهرست قطعات")
                     .font(.vazir(18, .bold))
                     .foregroundStyle(Palette.primary)
+
                 Spacer(minLength: 0)
+
+                Button {
+                    onSaveAsPlaylist()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "square.and.arrow.down")
+                            .font(.system(size: 12, weight: .semibold))
+                        Text("ذخیره نتایج به‌عنوان پلی‌لیست")
+                            .font(.vazir(10, .bold))
+                    }
+                    .foregroundStyle(Palette.secondary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(Palette.secondary.opacity(0.1))
+                    )
+                }
+                .buttonStyle(.plain)
             }
             .padding(.bottom, 8)
             .overlay(alignment: .bottom) {
