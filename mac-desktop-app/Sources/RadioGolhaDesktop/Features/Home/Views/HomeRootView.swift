@@ -628,7 +628,25 @@ struct HomeRootView: View {
                             player: audioPlayer,
                             onBack: {
                                 handleBack()
-                            }
+                            },
+                            manualPlaylists: manualPlaylists,
+                            onAddTrackToPlaylist: { playlistId, trackId in
+                                Task {
+                                    let _ = await DesktopPlaylistDataLoader.addTrack(playlistId: playlistId, trackId: trackId)
+                                    await refreshManualPlaylists()
+                                }
+                            },
+                            onRemoveTrackFromPlaylist: { playlistId, trackId in
+                                Task {
+                                    let _ = await DesktopPlaylistDataLoader.removeTrack(playlistId: playlistId, trackId: trackId)
+                                    await refreshManualPlaylists()
+                                }
+                            },
+                            onCreatePlaylistAndAddTrack: { trackId in
+                                createPlaylistAndAddTrack(trackId)
+                            },
+                            favoriteArtistIds: favoriteArtistIds,
+                            onToggleArtistFavorite: toggleArtistFavorite
                         )
                         .transition(pageTransition)
                     } else {

@@ -70,13 +70,14 @@ enum ProgramDetailsDataLoader {
         var seen = Set<String>()
         var result: [ProgramArtistItem] = []
 
-        func append(_ name: String, _ role: String, _ avatar: String?) {
+        func append(_ artistId: Int64?, _ name: String, _ role: String, _ avatar: String?) {
             let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !trimmedName.isEmpty else { return }
-            let key = "\(trimmedName)|\(role)"
+            let key = "\(artistId.map(String.init) ?? "nil")|\(trimmedName)|\(role)"
             guard seen.insert(key).inserted else { return }
             result.append(
                 ProgramArtistItem(
+                    sourceArtistId: artistId,
                     name: trimmedName,
                     role: role,
                     imageURL: avatar ?? ""
@@ -84,18 +85,18 @@ enum ProgramDetailsDataLoader {
             )
         }
 
-        response.singers.forEach { append($0.name, "خواننده", $0.avatar) }
+        response.singers.forEach { append($0.artistId, $0.name, "خواننده", $0.avatar) }
         response.performers.forEach {
             let role = $0.instrument?
                 .trimmingCharacters(in: .whitespacesAndNewlines)
                 .nilIfBlank
                 .map { "نوازنده \($0)" } ?? "نوازنده"
-            append($0.name, role, $0.avatar)
+            append($0.artistId, $0.name, role, $0.avatar)
         }
-        response.poets.forEach { append($0.name, "شاعر", $0.avatar) }
-        response.announcers.forEach { append($0.name, "گوینده", $0.avatar) }
-        response.composers.forEach { append($0.name, "آهنگساز", $0.avatar) }
-        response.arrangers.forEach { append($0.name, "تنظیم‌کننده", $0.avatar) }
+        response.poets.forEach { append($0.artistId, $0.name, "شاعر", $0.avatar) }
+        response.announcers.forEach { append($0.artistId, $0.name, "گوینده", $0.avatar) }
+        response.composers.forEach { append($0.artistId, $0.name, "آهنگساز", $0.avatar) }
+        response.arrangers.forEach { append($0.artistId, $0.name, "تنظیم‌کننده", $0.avatar) }
 
         return result
     }
@@ -222,11 +223,13 @@ private struct ProgramDetailBridgeResponse: Decodable {
 }
 
 private struct ProgramDetailArtistCreditDTO: Decodable {
+    let artistId: Int64?
     let name: String
     let avatar: String?
 }
 
 private struct ProgramDetailPerformerDTO: Decodable {
+    let artistId: Int64?
     let name: String
     let avatar: String?
     let instrument: String?

@@ -324,7 +324,7 @@ private struct TopBarKeyAwareTextField: NSViewRepresentable {
     }
 
     func makeNSView(context: Context) -> NSTextField {
-        let field = NSTextField()
+        let field = ClickToFocusTextField()
         field.isBordered = false
         field.isBezeled = false
         field.drawsBackground = false
@@ -415,5 +415,19 @@ private struct TopBarKeyAwareTextField: NSViewRepresentable {
             }
             return false
         }
+    }
+}
+
+private final class ClickToFocusTextField: NSTextField {
+    override func becomeFirstResponder() -> Bool {
+        if let event = NSApp.currentEvent {
+            switch event.type {
+            case .leftMouseDown, .leftMouseUp, .rightMouseDown, .rightMouseUp:
+                return super.becomeFirstResponder()
+            default:
+                return false
+            }
+        }
+        return false
     }
 }

@@ -44,9 +44,17 @@ struct ProgramDetailsItem: Identifiable {
 
 struct ProgramArtistItem: Identifiable {
     let id = UUID()
+    let sourceArtistId: Int64?
     let name: String
     let role: String
     let imageURL: String
+
+    init(sourceArtistId: Int64? = nil, name: String, role: String, imageURL: String) {
+        self.sourceArtistId = sourceArtistId
+        self.name = name
+        self.role = role
+        self.imageURL = imageURL
+    }
 }
 
 struct ProgramTimelineItem: Identifiable {

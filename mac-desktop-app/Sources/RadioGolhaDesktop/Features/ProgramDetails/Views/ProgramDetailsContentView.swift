@@ -9,7 +9,14 @@ struct ProgramDetailsContentView: View {
     let program: ProgramDetailsItem
     @ObservedObject var player: DesktopAudioPlayer
     var onBack: () -> Void = {}
+    var manualPlaylists: [DesktopManualPlaylist] = []
+    var onAddTrackToPlaylist: (Int64, Int64) -> Void = { _, _ in }
+    var onRemoveTrackFromPlaylist: (Int64, Int64) -> Void = { _, _ in }
+    var onCreatePlaylistAndAddTrack: (Int64) -> Void = { _ in }
+    var favoriteArtistIds: Set<Int64> = []
+    var onToggleArtistFavorite: (Int64, String) -> Void = { _, _ in }
     @State private var selectedTab: ContentTab = .timeline
+    @State private var showPlaylistPicker = false
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -47,12 +54,43 @@ struct ProgramDetailsContentView: View {
             )
                 .frame(width: 240, height: 240)
 
-            VStack(alignment: .leading, spacing: 0) {
-                Text(program.title)
-                    .font(.vazir(27, .bold))
-                    .foregroundStyle(Palette.primary)
-                    .multilineTextAlignment(.trailing)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
+            VStack(alignment: .trailing, spacing: 0) {
+                HStack(spacing: 8) {
+                    Button {
+                        guard program.programId != nil else { return }
+                        showPlaylistPicker.toggle()
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "music.note.list")
+                                .font(.system(size: 12, weight: .semibold))
+                            Text("افزودن به پلی‌لیست")
+                                .font(.vazir(9.5, .bold))
+                        }
+                        .foregroundStyle(Palette.primary)
+                        .padding(.horizontal, 10)
+                        .frame(height: 28)
+                        .background(Palette.surfaceLow, in: Capsule())
+                        .overlay(
+                            Capsule()
+                                .stroke(Palette.border, lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .fixedSize(horizontal: true, vertical: false)
+                    .opacity(program.programId == nil ? 0.45 : 1)
+                    .disabled(program.programId == nil)
+                    .help("افزودن به پلی‌لیست")
+                    .popover(isPresented: $showPlaylistPicker, arrowEdge: .bottom) {
+                        playlistPickerContent
+                    }
+
+                    Text(program.title)
+                        .font(.vazir(27, .bold))
+                        .foregroundStyle(Palette.primary)
+                        .multilineTextAlignment(.trailing)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                }
+                .frame(maxWidth: .infinity, alignment: .trailing)
 
                 Spacer(minLength: 0)
 
@@ -78,7 +116,7 @@ struct ProgramDetailsContentView: View {
 
                 compactPlayback
             }
-            .frame(maxWidth: .infinity, minHeight: 240, maxHeight: 240, alignment: .topLeading)
+            .frame(maxWidth: .infinity, minHeight: 240, maxHeight: 240, alignment: .topTrailing)
         }
         .environment(\.layoutDirection, .leftToRight)
     }
@@ -170,11 +208,11 @@ struct ProgramDetailsContentView: View {
     }
 
     private var artistGridSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .trailing, spacing: 16) {
             Text("هنرمندان این برنامه")
                 .font(.vazir(18, .bold))
                 .foregroundStyle(Palette.primary)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .trailing)
                 .padding(.bottom, 12)
                 .overlay(alignment: .bottom) {
                     Rectangle().fill(Color(hex: 0xE5E2DA)).frame(height: 1)
@@ -185,11 +223,14 @@ struct ProgramDetailsContentView: View {
                     ForEach(program.artists) { artist in
                         ArtistCard(
                             item: ArtistItem(
+                                sourceArtistId: artist.sourceArtistId,
                                 name: artist.name,
                                 role: artist.role,
                                 imageURL: artist.imageURL
                             ),
-                            dark: false
+                            dark: false,
+                            favoriteArtistIds: favoriteArtistIds,
+                            onToggleFavorite: onToggleArtistFavorite
                         )
                     }
                 }
@@ -200,7 +241,7 @@ struct ProgramDetailsContentView: View {
     }
 
     private var timelineSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .trailing, spacing: 16) {
             HStack(spacing: 20) {
                 tabButton(title: "تایم‌لاین", tab: .timeline)
                 tabButton(title: "اشعار", tab: .lyrics)
@@ -228,7 +269,7 @@ struct ProgramDetailsContentView: View {
                         }
                     }
                 case .lyrics:
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .trailing, spacing: 12) {
                         ForEach(program.lyrics) { item in
                             ProgramLyricsRow(item: item)
                         }
@@ -275,7 +316,83 @@ struct ProgramDetailsContentView: View {
             .filter { $0.role.contains("خواننده") }
             .map { $0.imageURL.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
-        return Array(Set(urls))
+        var seen = Set<String>()
+        var ordered: [String] = []
+        for url in urls where seen.insert(url).inserted {
+            ordered.append(url)
+        }
+        return ordered
+    }
+
+    private var playlistPickerContent: some View {
+        VStack(alignment: .trailing, spacing: 8) {
+            Text("پلی‌لیست‌ها")
+                .font(.vazir(10, .bold))
+                .foregroundStyle(Palette.primary)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+
+            if let trackId = program.programId {
+                ScrollView {
+                    VStack(spacing: 6) {
+                        ForEach(manualPlaylists) { playlist in
+                            let contains = playlist.trackIds.contains(trackId)
+                            Button {
+                                if contains {
+                                    onRemoveTrackFromPlaylist(playlist.id, trackId)
+                                } else {
+                                    onAddTrackToPlaylist(playlist.id, trackId)
+                                }
+                                showPlaylistPicker = false
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Text(contains ? "حذف از \(playlist.name)" : "افزودن به \(playlist.name)")
+                                        .font(.vazir(9.5, .bold))
+                                        .foregroundStyle(Palette.primary)
+                                        .multilineTextAlignment(.trailing)
+                                        .frame(maxWidth: .infinity, alignment: .trailing)
+                                    Image(systemName: contains ? "checkmark.circle.fill" : "circle")
+                                        .font(.system(size: 11, weight: .semibold))
+                                        .foregroundStyle(contains ? Palette.secondary : Palette.primary.opacity(0.5))
+                                }
+                                .padding(.horizontal, 10)
+                                .frame(height: 30)
+                                .background(Palette.surfaceLow, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                .frame(maxHeight: 180)
+
+                Button {
+                    onCreatePlaylistAndAddTrack(trackId)
+                    showPlaylistPicker = false
+                } label: {
+                    HStack(spacing: 6) {
+                        Text("ساخت پلی‌لیست جدید…")
+                            .font(.vazir(9.5, .bold))
+                            .multilineTextAlignment(.trailing)
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 11, weight: .bold))
+                    }
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 30)
+                    .background(Palette.primary, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            } else {
+                Text("افزودن به پلی‌لیست در دسترس نیست")
+                    .font(.vazir(9))
+                    .foregroundStyle(Palette.textMuted)
+                    .multilineTextAlignment(.trailing)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+        }
+        .padding(10)
+        .frame(width: 280)
+        .background(.white)
+        .environment(\.layoutDirection, .leftToRight)
     }
 
     private var isProgramActive: Bool {
@@ -374,7 +491,7 @@ private struct ProgramHeaderArtworkView: View {
     let singerImageURLs: [String]
     @State private var imageIndex = 0
 
-    private let timer = Timer.publish(every: 3.2, on: .main, in: .common).autoconnect()
+    private let timer = Timer.publish(every: 10.0, on: .main, in: .common).autoconnect()
 
     var body: some View {
         ZStack {
@@ -382,7 +499,7 @@ private struct ProgramHeaderArtworkView: View {
                 ForEach(Array(singerImageURLs.enumerated()), id: \.offset) { idx, url in
                     FigmaAssetImage(url: url)
                         .opacity((imageIndex % singerImageURLs.count) == idx ? 1 : 0)
-                        .scaleEffect((imageIndex % singerImageURLs.count) == idx ? 1 : 1.015)
+                        .scaleEffect((imageIndex % singerImageURLs.count) == idx ? 1 : 1.01)
                 }
             } else if let singleSinger = singerImageURLs.first {
                 FigmaAssetImage(url: singleSinger)
@@ -391,7 +508,7 @@ private struct ProgramHeaderArtworkView: View {
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .animation(.easeInOut(duration: 0.55), value: imageIndex)
+        .animation(.easeInOut(duration: 1.1), value: imageIndex)
         .onReceive(timer) { _ in
             guard singerImageURLs.count > 1 else { return }
             imageIndex = (imageIndex + 1) % singerImageURLs.count
@@ -444,13 +561,13 @@ private struct ProgramTimelineRow: View {
                         .font(.vazir(7.5, .bold))
                         .foregroundStyle(Color(hex: 0x8F8E88))
                 }
-                .frame(width: 170, alignment: .leading)
+                .frame(width: 170, alignment: .trailing)
 
                 metaColumn(value: item.singer, label: "خواننده")
                 metaColumn(value: item.musician, label: "نوازنده")
                 metaColumn(value: item.poet, label: "شاعر")
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
@@ -474,7 +591,7 @@ private struct ProgramTimelineRow: View {
     }
 
     private func metaColumn(value: String, label: String) -> some View {
-        VStack(alignment: .leading, spacing: 1) {
+        VStack(alignment: .trailing, spacing: 1) {
             Text(value)
                 .font(.vazir(10.5, .bold))
                 .foregroundStyle(Color(hex: 0x44403C))
@@ -483,7 +600,7 @@ private struct ProgramTimelineRow: View {
                 .font(.vazir(7.5, .bold))
                 .foregroundStyle(Color(hex: 0x8F8E88))
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .trailing)
     }
 }
 
@@ -494,10 +611,10 @@ private struct ProgramLyricsRow: View {
         Text(item.text.replacingOccurrences(of: "\n", with: " / "))
             .font(.vazir(12))
             .foregroundStyle(Color(hex: 0x44403C))
-            .multilineTextAlignment(.leading)
+            .multilineTextAlignment(.trailing)
             .lineLimit(1)
             .truncationMode(.tail)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .trailing)
             .padding(.horizontal, 20)
             .padding(.vertical, 10)
             .background(Palette.surfaceLow, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
