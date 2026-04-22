@@ -1,4 +1,7 @@
 import SwiftUI
+#if os(macOS)
+import AppKit
+#endif
 
 private enum SearchMatchModeUI {
     case all
@@ -259,18 +262,29 @@ private struct SearchComboField: View {
     @Binding var query: String
     @Binding var selected: [SearchOption]
     @Binding var isExpanded: Bool
+    @State private var highlightedIndex: Int? = nil
     private let inputRowHeight: CGFloat = 38
     private let dropdownGap: CGFloat = 6
 
     private var suggestions: [SearchOption] {
         let selectedIds = Set(selected.map(\.id))
         let base = options.filter { !selectedIds.contains($0.id) }
-        if query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        if q.isEmpty {
             return base
         }
+        let normalizedQuery = normalizeSearch(q)
         return base.filter { option in
-            option.name.localizedCaseInsensitiveContains(query)
+            normalizeSearch(option.name).hasPrefix(normalizedQuery)
         }
+    }
+
+    private func normalizeSearch(_ value: String) -> String {
+        value
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "ي", with: "ی")
+            .replacingOccurrences(of: "ك", with: "ک")
+            .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "fa_IR"))
     }
 
     private var comboBaseHeight: CGFloat {
@@ -281,10 +295,38 @@ private struct SearchComboField: View {
         comboBaseHeight + dropdownGap
     }
 
+    private var titleText: String {
+        selected.isEmpty ? key.title : "\(key.title) (\(selected.count))"
+    }
+
+    private func selectOption(_ option: SearchOption) {
+        selected.append(option)
+        query = ""
+        isExpanded = true
+        highlightedIndex = suggestions.isEmpty ? nil : 0
+    }
+
+    private func moveHighlight(_ step: Int) {
+        guard !suggestions.isEmpty else {
+            highlightedIndex = nil
+            return
+        }
+        let current = highlightedIndex ?? (step > 0 ? -1 : suggestions.count)
+        let next = max(0, min(suggestions.count - 1, current + step))
+        highlightedIndex = next
+        isExpanded = true
+    }
+
+    private func selectHighlighted() {
+        guard !suggestions.isEmpty else { return }
+        let index = max(0, min(suggestions.count - 1, highlightedIndex ?? 0))
+        selectOption(suggestions[index])
+    }
+
     var body: some View {
         VStack(alignment: .trailing, spacing: 8) {
             HStack {
-                Text(key.title)
+                Text(titleText)
                     .font(.vazir(10.5, .bold))
                     .foregroundStyle(Palette.primary)
 
@@ -317,21 +359,33 @@ private struct SearchComboField: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
 
-                        TextField("", text: $query)
-                            .textFieldStyle(.plain)
-                            .font(.vazir(10.5))
-                            .foregroundStyle(Palette.text)
-                            .multilineTextAlignment(.trailing)
-                            .frame(maxWidth: .infinity, alignment: .trailing)
-                            .environment(\.layoutDirection, .leftToRight)
-                            .onTapGesture {
+                        KeyAwareTextField(
+                            text: $query,
+                            onFocus: {
+                                isExpanded = true
+                                highlightedIndex = suggestions.isEmpty ? nil : 0
+                            },
+                            onDownArrow: {
+                                moveHighlight(1)
+                            },
+                            onUpArrow: {
+                                moveHighlight(-1)
+                            },
+                            onEnter: {
+                                selectHighlighted()
+                            },
+                            onEscape: {
+                                isExpanded = false
+                                highlightedIndex = nil
+                            }
+                        )
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .onChange(of: query) { value in
+                            if !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                                 isExpanded = true
                             }
-                            .onChange(of: query) { value in
-                                if !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                    isExpanded = true
-                                }
-                            }
+                            highlightedIndex = suggestions.isEmpty ? nil : 0
+                        }
 
                         Button {
                             isExpanded.toggle()
@@ -370,6 +424,13 @@ private struct SearchComboField: View {
             }
             .zIndex(isExpanded ? 100 : 0)
         }
+        .onChange(of: isExpanded) { expanded in
+            if expanded {
+                highlightedIndex = suggestions.isEmpty ? nil : 0
+            } else {
+                highlightedIndex = nil
+            }
+        }
     }
 
     private var dropdownList: some View {
@@ -390,9 +451,7 @@ private struct SearchComboField: View {
                     VStack(spacing: 0) {
                         ForEach(Array(suggestions.enumerated()), id: \.element.id) { index, option in
                             Button {
-                                selected.append(option)
-                                query = ""
-                                isExpanded = true
+                                selectOption(option)
                             } label: {
                                 HStack(spacing: 8) {
                                     if key.supportsAvatar {
@@ -406,6 +465,10 @@ private struct SearchComboField: View {
                                 .padding(.horizontal, 10)
                                 .frame(height: rowHeight)
                                 .contentShape(Rectangle())
+                                .background(
+                                    RoundedRectangle(cornerRadius: 0, style: .continuous)
+                                        .fill(highlightedIndex == index ? Palette.primary.opacity(0.10) : .clear)
+                                )
                             }
                             .buttonStyle(.plain)
 
@@ -425,6 +488,106 @@ private struct SearchComboField: View {
         )
     }
 }
+
+#if os(macOS)
+private struct KeyAwareTextField: NSViewRepresentable {
+    @Binding var text: String
+    var onFocus: () -> Void
+    var onDownArrow: () -> Void
+    var onUpArrow: () -> Void
+    var onEnter: () -> Void
+    var onEscape: () -> Void
+
+    func makeNSView(context: Context) -> KeyAwareNSTextField {
+        let field = KeyAwareNSTextField()
+        field.isBordered = false
+        field.drawsBackground = false
+        field.focusRingType = .none
+        field.usesSingleLineMode = true
+        field.lineBreakMode = .byTruncatingTail
+        field.alignment = .right
+        field.font = NSFont(name: "Vazirmatn-Regular", size: 10.5) ?? NSFont.systemFont(ofSize: 10.5)
+        field.textColor = NSColor(Palette.text)
+        field.delegate = context.coordinator
+        context.coordinator.onFocus = onFocus
+        context.coordinator.onDownArrow = onDownArrow
+        context.coordinator.onUpArrow = onUpArrow
+        context.coordinator.onEnter = onEnter
+        context.coordinator.onEscape = onEscape
+        field.onFocus = { context.coordinator.onFocus?() }
+        return field
+    }
+
+    func updateNSView(_ nsView: KeyAwareNSTextField, context: Context) {
+        if nsView.stringValue != text {
+            nsView.stringValue = text
+        }
+        context.coordinator.onFocus = onFocus
+        context.coordinator.onDownArrow = onDownArrow
+        context.coordinator.onUpArrow = onUpArrow
+        context.coordinator.onEnter = onEnter
+        context.coordinator.onEscape = onEscape
+        nsView.onFocus = { context.coordinator.onFocus?() }
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(text: $text)
+    }
+
+    final class Coordinator: NSObject, NSTextFieldDelegate {
+        @Binding var text: String
+        var onFocus: (() -> Void)?
+        var onDownArrow: (() -> Void)?
+        var onUpArrow: (() -> Void)?
+        var onEnter: (() -> Void)?
+        var onEscape: (() -> Void)?
+
+        init(text: Binding<String>) {
+            _text = text
+        }
+
+        func controlTextDidChange(_ obj: Notification) {
+            guard let field = obj.object as? NSTextField else { return }
+            text = field.stringValue
+        }
+
+        func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+            switch commandSelector {
+            case #selector(NSResponder.moveDown(_:)):
+                onDownArrow?()
+                return true
+            case #selector(NSResponder.moveUp(_:)):
+                onUpArrow?()
+                return true
+            case #selector(NSResponder.insertNewline(_:)):
+                onEnter?()
+                return true
+            case #selector(NSResponder.cancelOperation(_:)):
+                onEscape?()
+                return true
+            default:
+                return false
+            }
+        }
+    }
+}
+
+private final class KeyAwareNSTextField: NSTextField {
+    var onFocus: (() -> Void)?
+
+    override func becomeFirstResponder() -> Bool {
+        let didBecome = super.becomeFirstResponder()
+        if didBecome {
+            onFocus?()
+        }
+        return didBecome
+    }
+
+    override func keyDown(with event: NSEvent) {
+        super.keyDown(with: event)
+    }
+}
+#endif
 
 private struct MatchModeToggle: View {
     @Binding var mode: SearchMatchModeUI
