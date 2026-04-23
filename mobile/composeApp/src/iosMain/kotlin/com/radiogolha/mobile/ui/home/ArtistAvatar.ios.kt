@@ -12,17 +12,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.radiogolha.mobile.theme.GolhaColors
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import kotlinx.cinterop.*
-import org.jetbrains.skia.Image as SkiaImage
-import platform.Foundation.*
-
-@OptIn(ExperimentalForeignApi::class)
+ 
 @Composable
 actual fun ArtistAvatar(
     name: String,
@@ -39,25 +32,8 @@ actual fun ArtistAvatar(
 
     if (normalizedUrl != null && imageBitmap == null) {
         LaunchedEffect(normalizedUrl) {
-            withContext(Dispatchers.Default) {
-                try {
-                    val url = NSURL(string = normalizedUrl)
-                    val data = NSData.dataWithContentsOfURL(url)
-                    if (data != null) {
-                        val bytes = ByteArray(data.length.toInt()).apply {
-                            usePinned { pinned ->
-                                platform.posix.memcpy(pinned.addressOf(0), data.bytes, data.length)
-                            }
-                        }
-                        val skiaImage = SkiaImage.makeFromEncoded(bytes)
-                        imageBitmap = skiaImage.toComposeImageBitmap()
-                    }
-                } catch (e: Exception) {
-                    // Handle error
-                } finally {
-                    isLoading = false
-                }
-            }
+            imageBitmap = loadCachedRemoteImageBitmap(normalizedUrl)
+            isLoading = false
         }
     }
 

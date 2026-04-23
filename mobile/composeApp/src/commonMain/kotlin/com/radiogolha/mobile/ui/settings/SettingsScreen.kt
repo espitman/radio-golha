@@ -274,6 +274,11 @@ private fun DatabaseUpdateSection(
                         color = GolhaColors.PrimaryAccent,
                         trackColor = GolhaColors.Border.copy(alpha = 0.45f),
                     )
+                    Text(
+                        text = "در حال دانلود: ${((value * 100).toInt()).coerceIn(0, 100)}٪",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GolhaColors.SecondaryText,
+                    )
                 } else {
                     LinearProgressIndicator(
                         modifier = Modifier.fillMaxWidth(),
