@@ -37,13 +37,11 @@ fun initDatabase(bundlePath: String): String {
     }
 
     val dbPath = "$appSupportDir/golha_database.db"
-    
-    // Always refresh for debugging
-    if (fileManager.fileExistsAtPath(dbPath)) {
-        fileManager.removeItemAtPath(dbPath, null)
+
+    // Keep existing database (including CDN-updated file) and only bootstrap once.
+    if (!fileManager.fileExistsAtPath(dbPath)) {
+        fileManager.copyItemAtPath(bundlePath, dbPath, null)
     }
-    
-    fileManager.copyItemAtPath(bundlePath, dbPath, null)
     cachedDbPath = dbPath
     return dbPath
 }

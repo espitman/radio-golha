@@ -1,6 +1,10 @@
 import SwiftUI
 
 enum SidebarMenuItem: Hashable {
+    case home
+    case singers
+    case players
+    case search
     case favoriteSingers
     case favoritePlayers
     case myPlaylists
@@ -32,11 +36,11 @@ struct SidebarSection: View {
             .padding(.bottom, 48)
 
             VStack(spacing: 8) {
-                navItem("خواننده‌های مورد علاقه", "heart", item: .favoriteSingers)
-                navItem("نوازندگان مورد علاقه", "music.mic", item: .favoritePlayers)
-                navItem("پلی لیست‌های من", "music.note.list", item: .myPlaylists)
-                navItem("محبوب‌ترین برنامه‌ها", "star", item: .topPrograms)
-                navItem("شنیده‌شده‌ها", "clock.arrow.circlepath", item: .recentlyPlayed)
+                navItem("صفحه اصلی", "house", item: .home)
+                navItem("خواننده‌ها", "music.microphone", item: .singers)
+                navItem("نوازندگان", "music.mic", item: .players)
+                navItem("شنیده‌شده‌های اخیر", "clock.arrow.circlepath", item: .recentlyPlayed)
+                navItem("جستجوی پیشرفته", "magnifyingglass", item: .search)
             }
 
             Spacer(minLength: 0)

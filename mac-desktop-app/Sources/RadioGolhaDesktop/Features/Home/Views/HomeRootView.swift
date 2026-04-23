@@ -97,6 +97,16 @@ struct HomeRootView: View {
                     selectedItem: selectedSidebarItem,
                     onSelectItem: { item in
                         switch item {
+                        case .home:
+                            navigateTo(.home)
+                        case .singers:
+                            navigateTo(.singers)
+                            ensureSingersLoaded()
+                        case .players:
+                            navigateTo(.players)
+                            ensurePlayersLoaded()
+                        case .search:
+                            navigateTo(.search)
                         case .favoriteSingers:
                             navigateTo(.favoriteSingers)
                             ensureSingersLoaded()
@@ -171,18 +181,16 @@ struct HomeRootView: View {
                 onBack: handleBack,
                 onSelectTab: { tab in
                     switch tab {
-                    case .artists:
-                        navigateTo(.singers)
+                    case .favoriteSingers:
+                        navigateTo(.favoriteSingers)
                         ensureSingersLoaded()
-                    case .search:
-                        navigateTo(.search)
-                    case .instrumentalists:
-                        navigateTo(.players)
+                    case .favoritePlayers:
+                        navigateTo(.favoritePlayers)
                         ensurePlayersLoaded()
-                    case .programs:
-                        navigateTo(.home)
-                    default:
-                        break
+                    case .myPlaylists:
+                        navigateTo(.playlists)
+                    case .topPrograms:
+                        openMostPlayedTracksCollection()
                     }
                 },
                 onOpenQuickArtist: { artistId, name, avatar in
@@ -675,75 +683,82 @@ struct HomeRootView: View {
     }
 
     private var selectedTab: DesktopMainTab? {
-        if selectedSidebarItem != nil {
-            return nil
-        }
         switch currentPage {
         case .home:
-            return .programs
+            return nil
         case .singers:
-            return .artists
+            return nil
         case .favoriteSingers:
-            return .artists
+            return .favoriteSingers
         case .search:
-            return .search
+            return nil
         case .searchResults:
-            return .search
+            return nil
         case .players:
-            return .instrumentalists
+            return nil
         case .favoritePlayers:
-            return .instrumentalists
+            return .favoritePlayers
         case .programTracks:
-            return .programs
+            switch selectedProgramTracksSidebarItem {
+            case .myPlaylists:
+                return .myPlaylists
+            case .topPrograms:
+                return .topPrograms
+            default:
+                return nil
+            }
         case .playlists:
-            return .programs
+            return .myPlaylists
         case .settings:
             return nil
         case .help:
             return nil
         case .artistDetails:
             switch artistDetailsSourcePage {
-            case .singers:
-                return .artists
             case .favoriteSingers:
-                return .artists
-            case .players:
-                return .instrumentalists
+                return .favoriteSingers
             case .favoritePlayers:
-                return .instrumentalists
-            case .search:
-                return .search
+                return .favoritePlayers
             default:
-                return .programs
+                return nil
             }
         case .programDetails:
             switch programDetailsSourcePage {
-            case .singers:
-                return .artists
             case .favoriteSingers:
-                return .artists
-            case .players:
-                return .instrumentalists
+                return .favoriteSingers
             case .favoritePlayers:
-                return .instrumentalists
-            case .search, .searchResults:
-                return .search
+                return .favoritePlayers
             default:
-                return .programs
+                return nil
             }
         }
     }
 
     private var selectedSidebarItem: SidebarMenuItem? {
         switch currentPage {
+        case .home:
+            return .home
+        case .singers:
+            return .singers
+        case .players:
+            return .players
+        case .search, .searchResults:
+            return .search
         case .favoriteSingers:
-            return .favoriteSingers
+            return nil
         case .favoritePlayers:
-            return .favoritePlayers
+            return nil
         case .playlists:
-            return .myPlaylists
+            return nil
         case .programTracks:
-            return selectedProgramTracksSidebarItem
+            switch selectedProgramTracksSidebarItem {
+            case .recentlyPlayed:
+                return .recentlyPlayed
+            case .myPlaylists, .topPrograms:
+                return nil
+            default:
+                return selectedProgramTracksSidebarItem
+            }
         case .settings:
             return .settings
         case .help:

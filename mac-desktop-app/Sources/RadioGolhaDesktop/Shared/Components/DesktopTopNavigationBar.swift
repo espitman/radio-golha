@@ -2,12 +2,10 @@ import SwiftUI
 import AppKit
 
 enum DesktopMainTab {
-    case programs
-    case search
-    case artists
-    case instrumentalists
-    case modes
-    case poets
+    case favoriteSingers
+    case favoritePlayers
+    case myPlaylists
+    case topPrograms
 }
 
 struct DesktopTopNavigationBar: View {
@@ -28,16 +26,11 @@ struct DesktopTopNavigationBar: View {
     var body: some View {
         HStack {
             HStack(spacing: 24) {
-                Text("رادیو گلها")
-                    .font(.vazir(15, .bold))
-                    .foregroundStyle(Palette.primaryMuted)
-                    .lineLimit(1)
-
                 HStack(spacing: 20) {
-                    navButton(title: "صفحه اصلی", tab: .programs)
-                    navButton(title: "خواننده‌ها", tab: .artists)
-                    navButton(title: "نوازندگان", tab: .instrumentalists)
-                    navButton(title: "جستجو", tab: .search)
+                    navButton(title: "خواننده‌های مورد علاقه", tab: .favoriteSingers)
+                    navButton(title: "نوازندگان مورد علاقه", tab: .favoritePlayers)
+                    navButton(title: "پلی لیست‌های من", tab: .myPlaylists)
+                    navButton(title: "محبوب‌ترین برنامه‌ها", tab: .topPrograms)
                 }
             }
 

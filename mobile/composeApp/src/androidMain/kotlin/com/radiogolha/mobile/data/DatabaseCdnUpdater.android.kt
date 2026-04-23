@@ -20,12 +20,6 @@ private const val CURRENT_DB_VERSION = 2
 private const val PREFS_NAME = "database_update_state"
 private const val PREF_LAST_APPLIED_RELEASE_AT = "last_applied_release_at"
 
-data class DatabaseCdnUpdateResult(
-    val success: Boolean,
-    val didUpdate: Boolean,
-    val message: String,
-)
-
 private data class DatabaseManifest(
     val fileName: String,
     val sha256: String,
@@ -33,9 +27,9 @@ private data class DatabaseManifest(
     val releasedAt: String?,
 )
 
-suspend fun updateArchiveDatabaseFromCdn(
-    forceDownload: Boolean = false,
-    onProgress: (Float) -> Unit = {},
+actual suspend fun updateArchiveDatabaseFromCdn(
+    forceDownload: Boolean,
+    onProgress: (Float) -> Unit,
 ): DatabaseCdnUpdateResult = withContext(Dispatchers.IO) {
     runCatching {
         val context = AndroidAppContext.require()

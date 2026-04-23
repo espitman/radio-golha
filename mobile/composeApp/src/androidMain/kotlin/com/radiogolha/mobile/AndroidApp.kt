@@ -543,11 +543,13 @@ fun AndroidApp() {
                             if (!isUpdatingDatabaseFromCdn) {
                                 scope.launch {
                                     isUpdatingDatabaseFromCdn = true
-                                    databaseUpdateProgress = 0f
+                                    databaseUpdateProgress = null
                                     val result = updateArchiveDatabaseFromCdn(
                                         forceDownload = false,
                                         onProgress = { progress ->
-                                            databaseUpdateProgress = progress
+                                            scope.launch {
+                                                databaseUpdateProgress = progress
+                                            }
                                         }
                                     )
                                     showDebugToast(result.message)

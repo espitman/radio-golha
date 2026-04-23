@@ -265,27 +265,19 @@ private fun DatabaseUpdateSection(
                 onClick = onUpdateClick,
             )
 
-            if (isUpdating) {
-                val value = progress?.coerceIn(0f, 1f)
-                if (value != null) {
-                    LinearProgressIndicator(
-                        progress = { value },
-                        modifier = Modifier.fillMaxWidth(),
-                        color = GolhaColors.PrimaryAccent,
-                        trackColor = GolhaColors.Border.copy(alpha = 0.45f),
-                    )
-                    Text(
-                        text = "در حال دانلود: ${((value * 100).toInt()).coerceIn(0, 100)}٪",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = GolhaColors.SecondaryText,
-                    )
-                } else {
-                    LinearProgressIndicator(
-                        modifier = Modifier.fillMaxWidth(),
-                        color = GolhaColors.PrimaryAccent,
-                        trackColor = GolhaColors.Border.copy(alpha = 0.45f),
-                    )
-                }
+            val value = progress?.coerceIn(0f, 1f)
+            if (isUpdating && value != null) {
+                LinearProgressIndicator(
+                    progress = { value },
+                    modifier = Modifier.fillMaxWidth(),
+                    color = GolhaColors.PrimaryAccent,
+                    trackColor = GolhaColors.Border.copy(alpha = 0.45f),
+                )
+                Text(
+                    text = "در حال دانلود: ${((value * 100).toInt()).coerceIn(0, 100)}٪",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = GolhaColors.SecondaryText,
+                )
             }
         }
     }

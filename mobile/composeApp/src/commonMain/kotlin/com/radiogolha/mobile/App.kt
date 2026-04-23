@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import com.radiogolha.mobile.debug.importDebugDatabase
 import com.radiogolha.mobile.debug.isDebugDatabaseToolsEnabled
 import com.radiogolha.mobile.debug.showDebugToast
+import com.radiogolha.mobile.data.updateArchiveDatabaseFromCdn
 import com.radiogolha.mobile.theme.GolhaAppTheme
 import com.radiogolha.mobile.ui.home.AppTab
 import com.radiogolha.mobile.ui.home.BottomNavItemUiModel
@@ -121,6 +122,8 @@ fun App() {
 
     var reloadToken by remember { mutableStateOf(0) }
     var isImportingDatabase by remember { mutableStateOf(false) }
+    var isUpdatingDatabaseFromCdn by remember { mutableStateOf(false) }
+    var databaseUpdateProgress by remember { mutableStateOf<Float?>(null) }
     val scope = rememberCoroutineScope()
 
     val homeState by produceState<HomeUiState?>(initialValue = null, reloadToken) {
@@ -635,6 +638,35 @@ fun App() {
                             initialTabIndex = accountInitialTab,
                             bottomNavItems = bottomNavItems,
                             onBottomNavSelected = { onTabSelected(it) },
+                            isUpdatingDatabaseFromCdn = isUpdatingDatabaseFromCdn,
+                            databaseUpdateProgress = databaseUpdateProgress,
+                            onUpdateDatabaseFromCdn = {
+                                if (!isUpdatingDatabaseFromCdn) {
+                                    scope.launch {
+                                        isUpdatingDatabaseFromCdn = true
+                                        databaseUpdateProgress = null
+                                        val result = updateArchiveDatabaseFromCdn(
+                                            forceDownload = false,
+                                            onProgress = { progress ->
+                                                scope.launch {
+                                                    databaseUpdateProgress = progress
+                                                }
+                                            }
+                                        )
+                                        showDebugToast(result.message)
+                                        if (result.success && result.didUpdate) {
+                                            searchState.optionsLoaded = false
+                                            searchState.results = com.radiogolha.mobile.ui.search.SearchResultsUiState()
+                                            searchState.allResults = emptyList()
+                                            searchState.currentPage = com.radiogolha.mobile.ui.search.SearchPage.Filters
+                                            reloadToken += 1
+                                            onTabSelected(AppTab.Home)
+                                        }
+                                        databaseUpdateProgress = null
+                                        isUpdatingDatabaseFromCdn = false
+                                    }
+                                }
+                            },
                             isDebugDatabaseToolsEnabled = isDebugDatabaseToolsEnabled(),
                             isImportingDatabase = isImportingDatabase,
                             onImportDebugDatabase = {
