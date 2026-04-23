@@ -17,6 +17,7 @@ const DB_SOURCE_PATH = path.resolve(REPO_ROOT, 'database/golha_database.db')
 const RELEASE_DIR = path.resolve(REPO_ROOT, '.tmp/db-cdn-release')
 const RELEASE_DB_FILENAME = 'golha_database.db'
 const RELEASE_MANIFEST_FILENAME = 'database_manifest.json'
+const RELEASE_LATEST_TIMESTAMP_FILENAME = 'latest.txt'
 const DEFAULT_OBJECT_PREFIX = 'golha/db'
 
 type ReleaseManifest = {
@@ -156,7 +157,7 @@ export async function releaseDatabaseToLiaraCdn(): Promise<DatabaseReleaseResult
   const manifestBuffer = await fs.readFile(path.resolve(RELEASE_DIR, RELEASE_MANIFEST_FILENAME))
   const dbObjectKey = withPrefix(objectPrefix, RELEASE_DB_FILENAME)
   const manifestObjectKey = withPrefix(objectPrefix, RELEASE_MANIFEST_FILENAME)
-  const latestObjectKey = withPrefix(objectPrefix, 'latest.json')
+  const latestTimestampObjectKey = withPrefix(objectPrefix, RELEASE_LATEST_TIMESTAMP_FILENAME)
   const baseUrl = getPublicBaseUrl(endpoint, bucketName)
   const dbUrl = `${baseUrl}/${dbObjectKey}`
   const manifestUrl = `${baseUrl}/${manifestObjectKey}`
@@ -207,23 +208,17 @@ export async function releaseDatabaseToLiaraCdn(): Promise<DatabaseReleaseResult
     })
   )
 
-  const metadata = {
-    sha256: manifest.sha256,
-    releasedAt,
-    source: 'admin-panel',
-  }
-
   await client.send(
     new PutObjectCommand({
       Bucket: bucketName,
-      Key: latestObjectKey,
-      Body: Buffer.from(JSON.stringify(metadata, null, 2), 'utf8'),
-      ContentType: 'application/json; charset=utf-8',
+      Key: latestTimestampObjectKey,
+      Body: Buffer.from(releasedAt, 'utf8'),
+      ContentType: 'text/plain; charset=utf-8',
     })
   )
 
   const uploadOutput = JSON.stringify({
-    uploaded: [dbObjectKey, manifestObjectKey, latestObjectKey],
+    uploaded: [dbObjectKey, manifestObjectKey, latestTimestampObjectKey],
     bucket: bucketName,
     endpoint,
     prefix: objectPrefix,

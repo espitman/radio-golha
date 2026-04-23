@@ -35,6 +35,9 @@ fun SettingsScreen(
     onArtistClick: (Long) -> Unit = {},
     onShowAllFavorites: () -> Unit = {},
     onOpenDebug: () -> Unit = {},
+    isUpdatingDatabaseFromCdn: Boolean = false,
+    databaseUpdateProgress: Float? = null,
+    onUpdateDatabaseFromCdn: () -> Unit = {},
     isDebugDatabaseToolsEnabled: Boolean,
     isImportingDatabase: Boolean,
     onImportDebugDatabase: () -> Unit,
@@ -198,6 +201,14 @@ fun SettingsScreen(
                                             }
                                         }) 
                                     }
+
+                                    item {
+                                        DatabaseUpdateSection(
+                                            isUpdating = isUpdatingDatabaseFromCdn,
+                                            progress = databaseUpdateProgress,
+                                            onUpdateClick = onUpdateDatabaseFromCdn,
+                                        )
+                                    }
                                     
                                     if (isDebugToolsVisible) {
                                         item {
@@ -218,6 +229,57 @@ fun SettingsScreen(
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DatabaseUpdateSection(
+    isUpdating: Boolean,
+    progress: Float?,
+    onUpdateClick: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier.padding(top = 8.dp),
+        shape = RoundedCornerShape(GolhaRadius.Card),
+        color = GolhaColors.Surface,
+        tonalElevation = 0.dp,
+        shadowElevation = GolhaElevation.Card,
+        border = BorderStroke(1.dp, GolhaColors.Border),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                text = "به‌روزرسانی دیتابیس",
+                style = MaterialTheme.typography.titleLarge,
+                color = GolhaColors.PrimaryText,
+            )
+            SmallPrimaryButton(
+                label = "دریافت نسخه جدید",
+                enabled = !isUpdating,
+                loading = isUpdating,
+                onClick = onUpdateClick,
+            )
+
+            if (isUpdating) {
+                val value = progress?.coerceIn(0f, 1f)
+                if (value != null) {
+                    LinearProgressIndicator(
+                        progress = { value },
+                        modifier = Modifier.fillMaxWidth(),
+                        color = GolhaColors.PrimaryAccent,
+                        trackColor = GolhaColors.Border.copy(alpha = 0.45f),
+                    )
+                } else {
+                    LinearProgressIndicator(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = GolhaColors.PrimaryAccent,
+                        trackColor = GolhaColors.Border.copy(alpha = 0.45f),
+                    )
                 }
             }
         }

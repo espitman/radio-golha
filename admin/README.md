@@ -17,7 +17,7 @@ When clicked, it will:
 1. Read the fixed SQLite file: `database/golha_database.db`
 2. Generate `database_manifest.json` with SHA-256 + size + release timestamp
 3. Upload files to Liara Object Storage (S3 API compatible)
-4. Update `latest.json` metadata
+4. Upload `latest.txt` (release timestamp)
 
 Set these environment variables before starting Admin:
 
@@ -36,6 +36,7 @@ Public URLs after release:
 
 - `https://<base>/golha_database.db`
 - `https://<base>/database_manifest.json`
+- `https://<base>/latest.txt`
 
 # Building For Production
 

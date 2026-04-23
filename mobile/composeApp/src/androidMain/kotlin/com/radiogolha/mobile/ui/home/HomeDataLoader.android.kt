@@ -16,17 +16,7 @@ actual fun requireArchiveDbPath(): String {
     val installedVersion = if (versionFile.exists()) versionFile.readText().trim().toIntOrNull() ?: 0 else 0
     val installedOptVersion = if (optimizationFile.exists()) optimizationFile.readText().trim().toIntOrNull() ?: 0 else 0
     
-    var shouldRefresh = !dbFile.exists() || installedVersion < CURRENT_DB_VERSION
-    
-    if (!shouldRefresh && dbFile.exists()) {
-        runCatching {
-            context.assets.openFd("golha_database.db").use { fd ->
-                if (fd.length != dbFile.length()) {
-                    shouldRefresh = true
-                }
-            }
-        }.onFailure { }
-    }
+    val shouldRefresh = !dbFile.exists() || installedVersion < CURRENT_DB_VERSION
 
     if (shouldRefresh) {
         context.assets.open("golha_database.db").use { input ->

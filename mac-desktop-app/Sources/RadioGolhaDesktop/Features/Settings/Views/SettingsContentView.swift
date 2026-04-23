@@ -63,25 +63,6 @@ struct SettingsContentView: View {
                             .buttonStyle(.plain)
                             .disabled(isUpdating)
                             .opacity(isUpdating ? 0.7 : 1)
-
-                            Button {
-                                updateDatabase(forceDownload: true)
-                            } label: {
-                                Text("به‌روزرسانی اجباری")
-                                    .font(.vazir(10.5, .bold))
-                                    .foregroundStyle(Palette.primary)
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 11)
-                                    .background(Palette.surface, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                            .stroke(Palette.border, lineWidth: 1)
-                                    )
-                            }
-                            .buttonStyle(.plain)
-                            .disabled(isUpdating)
-                            .opacity(isUpdating ? 0.7 : 1)
-                            .help("دانلود و جایگزینی مجدد حتی اگر نسخه فعلی یکسان باشد")
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -144,15 +125,9 @@ struct SettingsContentView: View {
                 await MainActor.run {
                     isUpdating = false
                     isDownloading = false
-                    if forceDownload {
-                        successMessage = result.didUpdate
-                            ? "دیتابیس مجدداً دریافت و جایگزین شد."
-                            : "دیتابیس همین الان هم به‌روز است."
-                    } else {
-                        successMessage = result.didUpdate
-                            ? "دیتابیس با موفقیت به‌روزرسانی شد."
-                            : "دیتابیس همین الان هم به‌روز است."
-                    }
+                    successMessage = result.didUpdate
+                        ? "دیتابیس با موفقیت به‌روزرسانی شد."
+                        : "دیتابیس همین الان هم به‌روز است."
                     errorMessage = nil
                     updatedAtText = result.releasedAt
                     if result.didUpdate {

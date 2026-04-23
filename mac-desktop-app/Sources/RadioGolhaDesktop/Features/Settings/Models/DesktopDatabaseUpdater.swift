@@ -18,6 +18,8 @@ struct DesktopDatabaseUpdateResult {
 
 enum DesktopDatabaseUpdater {
     private static let defaultManifestURLString = "https://storage.iran.liara.space/espitman/golha/db/database_manifest.json"
+    private static let defaultLatestTimestampURLString = "https://storage.iran.liara.space/espitman/golha/db/latest.txt"
+    private static let lastAppliedReleaseKey = "radiogolha.db.lastAppliedReleaseAt"
     private static let noCacheSession: URLSession = {
         let config = URLSessionConfiguration.ephemeral
         config.requestCachePolicy = .reloadIgnoringLocalCacheData
@@ -29,19 +31,23 @@ enum DesktopDatabaseUpdater {
         forceDownload: Bool = false,
         onDownloadProgress: @escaping @Sendable (Double) -> Void = { _ in }
     ) async throws -> DesktopDatabaseUpdateResult {
+        let latestTimestampURL = appendCacheBuster(try resolveLatestTimestampURL())
+        let remoteReleasedAt = try await loadLatestReleasedAt(from: latestTimestampURL)
         let manifestURL = appendCacheBuster(try resolveManifestURL())
         let manifest = try await loadManifest(from: manifestURL)
         let root = try resolveRepoRoot()
         let dbPath = try resolveArchiveDbPath(root: root)
         let destinationURL = URL(fileURLWithPath: dbPath)
+        let localReleasedAt = UserDefaults.standard.string(forKey: lastAppliedReleaseKey)
 
         if !forceDownload,
-           let currentHash = try localDatabaseHashIfExists(at: destinationURL),
-           currentHash.lowercased() == manifest.sha256.lowercased() {
+           FileManager.default.fileExists(atPath: destinationURL.path),
+           !remoteReleasedAt.isEmpty,
+           localReleasedAt == remoteReleasedAt {
             return DesktopDatabaseUpdateResult(
                 didUpdate: false,
                 destinationPath: destinationURL.path,
-                releasedAt: manifest.releasedAt,
+                releasedAt: remoteReleasedAt,
                 sizeBytes: manifest.sizeBytes,
                 sha256: manifest.sha256
             )
@@ -90,10 +96,13 @@ enum DesktopDatabaseUpdater {
             try fm.moveItem(at: tempURL, to: destinationURL)
         }
 
+        let appliedReleasedAt = remoteReleasedAt.isEmpty ? manifest.releasedAt : remoteReleasedAt
+        UserDefaults.standard.set(appliedReleasedAt, forKey: lastAppliedReleaseKey)
+
         return DesktopDatabaseUpdateResult(
             didUpdate: true,
             destinationPath: destinationURL.path,
-            releasedAt: manifest.releasedAt,
+            releasedAt: appliedReleasedAt,
             sizeBytes: manifest.sizeBytes,
             sha256: manifest.sha256
         )
@@ -112,6 +121,24 @@ enum DesktopDatabaseUpdater {
                 domain: "DesktopDatabaseUpdater",
                 code: 40,
                 userInfo: [NSLocalizedDescriptionKey: "آدرس مانیفست دیتابیس نامعتبر است."]
+            )
+        }
+        return url
+    }
+
+    private static func resolveLatestTimestampURL() throws -> URL {
+        let fromEnv = ProcessInfo.processInfo.environment["RADIOGOLHA_DB_LATEST_URL"]?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let raw: String
+        if let fromEnv, !fromEnv.isEmpty {
+            raw = fromEnv
+        } else {
+            raw = defaultLatestTimestampURLString
+        }
+        guard let url = URL(string: raw) else {
+            throw NSError(
+                domain: "DesktopDatabaseUpdater",
+                code: 41,
+                userInfo: [NSLocalizedDescriptionKey: "آدرس latest.txt نامعتبر است."]
             )
         }
         return url
@@ -141,6 +168,15 @@ enum DesktopDatabaseUpdater {
                 userInfo: [NSLocalizedDescriptionKey: "خواندن مانیفست دیتابیس ناموفق بود."]
             )
         }
+    }
+
+    private static func loadLatestReleasedAt(from latestURL: URL) async throws -> String {
+        var request = URLRequest(url: latestURL)
+        request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+        request.setValue("no-cache", forHTTPHeaderField: "Cache-Control")
+        request.setValue("no-cache", forHTTPHeaderField: "Pragma")
+        let (data, _) = try await noCacheSession.data(for: request)
+        return String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private static func downloadDatabase(
@@ -227,15 +263,6 @@ enum DesktopDatabaseUpdater {
             code: 11,
             userInfo: [NSLocalizedDescriptionKey: "فایل دیتابیس آرشیو پیدا نشد."]
         )
-    }
-
-    private static func localDatabaseHashIfExists(at url: URL) throws -> String? {
-        guard FileManager.default.fileExists(atPath: url.path) else {
-            return nil
-        }
-        let data = try Data(contentsOf: url)
-        guard !data.isEmpty else { return nil }
-        return sha256Hex(data)
     }
 
     private static func sha256Hex(_ data: Data) -> String {
