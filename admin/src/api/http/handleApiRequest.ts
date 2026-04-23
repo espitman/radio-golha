@@ -5,6 +5,7 @@ import { listLookupItems } from '../services/LookupService'
 import { getProgramDetail, listPrograms } from '../services/ProgramService'
 import { getProgramSearchOptions, searchPrograms } from '../services/SearchService'
 import { uploadToImgLink } from '../services/UploadService'
+import { releaseDatabaseToLiaraCdn } from '../services/DatabaseReleaseService'
 import { getIntListParam, getIntParam, getMatchModeParam, readBody, respondWithJson, sendJson } from './httpUtils'
 
 type IncomingMessage = {
@@ -152,6 +153,16 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
     } catch (error: any) {
       console.error(`[API] Upload error: ${error.message}`)
       sendJson(res, { error: error?.message || 'Upload failed' }, 500)
+    }
+    return true
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/database/release') {
+    try {
+      const result = await releaseDatabaseToLiaraCdn()
+      sendJson(res, result)
+    } catch (error: any) {
+      sendJson(res, { error: error?.message || 'Database release failed' }, 500)
     }
     return true
   }

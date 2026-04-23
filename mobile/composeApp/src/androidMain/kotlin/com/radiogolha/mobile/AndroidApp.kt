@@ -44,6 +44,7 @@ import com.radiogolha.mobile.data.PlaylistRepository
 import com.radiogolha.mobile.data.PlaylistType
 import com.radiogolha.mobile.data.FavoriteArtistRepository
 import com.radiogolha.mobile.data.PlaybackRepository
+import com.radiogolha.mobile.data.updateArchiveDatabaseFromCdn
 import com.radiogolha.mobile.ui.programs.TrackOptionsSheet
 import com.radiogolha.mobile.ui.programs.PlaylistOptionItem
 import kotlinx.coroutines.Dispatchers
@@ -110,6 +111,8 @@ fun AndroidApp() {
     var favoritesReloadToken by remember { mutableIntStateOf(0) }
     var playbackReloadToken by remember { mutableIntStateOf(0) }
     var isImportingDatabase by remember { mutableStateOf(false) }
+    var isUpdatingDatabaseFromCdn by remember { mutableStateOf(false) }
+    var databaseUpdateProgress by remember { mutableStateOf<Float?>(null) }
     
     var librarySingers by remember { mutableStateOf<List<SingerListItemUiModel>>(emptyList()) }
     var libraryMusicians by remember { mutableStateOf<List<MusicianListItemUiModel>>(emptyList()) }
@@ -534,6 +537,41 @@ fun AndroidApp() {
                         onArtistClick = { id -> navController.navigate(AndroidRoute.ArtistDetail.createRoute(id)) },
                         onShowAllFavorites = { navController.navigate(AndroidRoute.AllFavorites.route) },
                         onOpenDebug = {},
+                        isUpdatingDatabaseFromCdn = isUpdatingDatabaseFromCdn,
+                        databaseUpdateProgress = databaseUpdateProgress,
+                        onUpdateDatabaseFromCdn = {
+                            if (!isUpdatingDatabaseFromCdn) {
+                                scope.launch {
+                                    isUpdatingDatabaseFromCdn = true
+                                    databaseUpdateProgress = null
+                                    val result = updateArchiveDatabaseFromCdn(
+                                        forceDownload = false,
+                                        onProgress = { progress ->
+                                            scope.launch {
+                                                databaseUpdateProgress = progress
+                                            }
+                                        }
+                                    )
+                                    showDebugToast(result.message)
+                                    if (result.success && result.didUpdate) {
+                                        searchState.optionsLoaded = false
+                                        searchState.results = com.radiogolha.mobile.ui.search.SearchResultsUiState()
+                                        searchState.allResults = emptyList()
+                                        searchState.currentPage = com.radiogolha.mobile.ui.search.SearchPage.Filters
+                                        reloadToken += 1
+                                        navController.navigate(AndroidRoute.Home.route) {
+                                            popUpTo(navController.graph.findStartDestination().id) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
+                                    }
+                                    databaseUpdateProgress = null
+                                    isUpdatingDatabaseFromCdn = false
+                                }
+                            }
+                        },
                         isDebugDatabaseToolsEnabled = isDebugDatabaseToolsEnabled(),
                         isImportingDatabase = isImportingDatabase,
                         currentTrack = currentTrack, isPlayerPlaying = isPlayerPlaying, isPlayerLoading = isPlayerLoading,

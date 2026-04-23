@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { LibraryBig, Music4, Workflow } from 'lucide-react'
+import { useState } from 'react'
+import { CheckCircle2, LibraryBig, Loader2, Music4, UploadCloud, Workflow, XCircle } from 'lucide-react'
 
 const ITEMS = [
   {
@@ -26,17 +27,106 @@ export const Route = createFileRoute('/database/')({
   component: DatabaseIndex,
 })
 
+type DatabaseReleasePayload = {
+  ok: true
+  didUpload: boolean
+  message: string
+  dbUrl: string
+  manifestUrl: string
+  bucket: string
+  endpoint: string
+  fileName: string
+  sizeBytes: number
+  sha256: string
+  releasedAt: string
+  uploadOutput: string
+}
+
 function DatabaseIndex() {
+  const [isReleasing, setIsReleasing] = useState(false)
+  const [releaseResult, setReleaseResult] = useState<DatabaseReleasePayload | null>(null)
+  const [releaseError, setReleaseError] = useState<string | null>(null)
+
+  const onRelease = async () => {
+    setIsReleasing(true)
+    setReleaseError(null)
+    setReleaseResult(null)
+
+    try {
+      const response = await fetch('/api/database/release', {
+        method: 'POST',
+      })
+      const payload = await response.json()
+      if (!response.ok) {
+        throw new Error(payload?.error || 'Release failed')
+      }
+      setReleaseResult(payload as DatabaseReleasePayload)
+    } catch (error: any) {
+      setReleaseError(error?.message || 'Release failed')
+    } finally {
+      setIsReleasing(false)
+    }
+  }
+
   return (
     <div className="space-y-4 animate-in" dir="rtl">
       <section className="rounded-[1.8rem] border border-primary/10 bg-white/80 p-5 shadow-[0_18px_50px_rgba(31,78,95,0.06)] backdrop-blur-md">
-        <div className="space-y-2 text-right">
-          <h1 className="text-2xl font-black tracking-tight text-foreground">مدیریت داده‌ها</h1>
-          <p className="text-[12px] font-bold text-muted-foreground">
-            دسترسی سریع به فهرست ارکسترها، سازها و دستگاه‌های ثبت‌شده در آرشیو.
-          </p>
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="space-y-2 text-right">
+            <h1 className="text-2xl font-black tracking-tight text-foreground">مدیریت داده‌ها</h1>
+            <p className="text-[12px] font-bold text-muted-foreground">
+              دسترسی سریع به فهرست ارکسترها، سازها و دستگاه‌های ثبت‌شده در آرشیو.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onRelease}
+            disabled={isReleasing}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-primary px-5 text-[12px] font-black text-white transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-65"
+          >
+            {isReleasing ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+            {isReleasing ? 'در حال ریلیز دیتابیس...' : 'ریلیز دیتابیس روی CDN'}
+          </button>
         </div>
       </section>
+
+      {(releaseResult || releaseError) && (
+        <section className="rounded-[1.6rem] border border-primary/10 bg-white/85 p-5 shadow-[0_18px_45px_rgba(31,78,95,0.06)]">
+          {releaseResult && (
+            <div className="space-y-2 text-right">
+              <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-black ${
+                releaseResult.didUpload
+                  ? 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-700'
+                  : 'border border-amber-500/25 bg-amber-500/10 text-amber-800'
+              }`}>
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                {releaseResult.message}
+              </div>
+              <p className="text-[12px] font-bold text-muted-foreground">
+                باکت: <span className="font-black text-foreground">{releaseResult.bucket}</span>
+              </p>
+              <p className="text-[12px] font-bold text-muted-foreground">Endpoint: {releaseResult.endpoint}</p>
+              <p className="text-[12px] font-bold text-muted-foreground">هش: {releaseResult.sha256}</p>
+              <div className="space-y-1 text-[12px] font-bold">
+                <a className="block text-primary underline underline-offset-4" href={releaseResult.dbUrl} target="_blank" rel="noreferrer">
+                  لینک دیتابیس: {releaseResult.dbUrl}
+                </a>
+                <a className="block text-primary underline underline-offset-4" href={releaseResult.manifestUrl} target="_blank" rel="noreferrer">
+                  لینک مانیفست: {releaseResult.manifestUrl}
+                </a>
+              </div>
+            </div>
+          )}
+
+          {releaseError && (
+            <div className="inline-flex items-center gap-2 rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-[11px] font-black text-red-700">
+              <XCircle className="h-3.5 w-3.5" />
+              {releaseError}
+            </div>
+          )}
+        </section>
+      )}
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {ITEMS.map((item) => (

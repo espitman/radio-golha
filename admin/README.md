@@ -9,6 +9,35 @@ pnpm install
 pnpm dev
 ```
 
+## Database Release To Liara CDN
+
+The Admin panel now includes a `ریلیز دیتابیس روی CDN` button on `/database`.
+When clicked, it will:
+
+1. Read the fixed SQLite file: `database/golha_database.db`
+2. Generate `database_manifest.json` with SHA-256 + size + release timestamp
+3. Upload files to Liara Object Storage (S3 API compatible)
+4. Upload `latest.txt` (release timestamp)
+
+Set these environment variables before starting Admin:
+
+```bash
+export LIARA_ENDPOINT="https://<your-bucket-endpoint>"
+export LIARA_BUCKET_NAME="<bucket-name>" # optional if this key has only one bucket
+export LIARA_ACCESS_KEY="<access-key-id>"
+export LIARA_SECRET_KEY="<secret-access-key>"
+export LIARA_PUBLIC_BASE_URL="https://<public-base-url>" # optional
+export LIARA_OBJECT_PREFIX="golha/db" # optional, default: golha/db
+```
+
+Default endpoint (if `LIARA_ENDPOINT` is not set): `https://storage.iran.liara.space`
+
+Public URLs after release:
+
+- `https://<base>/golha_database.db`
+- `https://<base>/database_manifest.json`
+- `https://<base>/latest.txt`
+
 # Building For Production
 
 To build this application for production:

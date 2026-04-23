@@ -1,0 +1,400 @@
+import Foundation
+
+enum HomeDataLoader {
+    static func load() async -> HomeContentData? {
+        await Task.detached(priority: .userInitiated) {
+            try? loadSync()
+        }.value
+    }
+
+    static func loadTopTracksRows() async -> (top: [TrackRowItem], latest: [TrackRowItem])? {
+        await Task.detached(priority: .userInitiated) {
+            try? loadTopTracksRowsSync()
+        }.value
+    }
+
+    private static func loadSync() throws -> HomeContentData {
+        let root = try resolveRepoRoot()
+        let dbPath = try resolveArchiveDbPath(root: root)
+        let payload = try runBridgeHomeFeed(root: root, dbPath: dbPath)
+        guard !payload.isEmpty else {
+            throw NSError(domain: "HomeDataLoader", code: 3, userInfo: [NSLocalizedDescriptionKey: "Empty home payload"])
+        }
+
+        let response = try JSONDecoder().decode(HomeFeedBridgeResponse.self, from: Data(payload.utf8))
+        let recentTracks = try? loadRecentTracks(root: root, dbPath: dbPath, limit: 5)
+        return mapResponse(response, recentTracks: recentTracks ?? [])
+    }
+
+    private static func loadTopTracksRowsSync() throws -> (top: [TrackRowItem], latest: [TrackRowItem]) {
+        let root = try resolveRepoRoot()
+        let dbPath = try resolveArchiveDbPath(root: root)
+        let payload = try runBridgeTopTracks(root: root, dbPath: dbPath)
+        if payload.isEmpty {
+            return (HomeMockData.topProgramsRows, HomeMockData.latestTracksRows)
+        }
+
+        let tracks = try JSONDecoder().decode([HomeTrackDTO].self, from: Data(payload.utf8)).map {
+            TrackRowItem(
+                id: String($0.id),
+                trackId: $0.id,
+                title: $0.title,
+                subtitle: $0.artist,
+                duration: normalizedDuration($0.duration),
+                audioURL: $0.audioUrl,
+                artworkURLs: $0.artistImages ?? []
+            )
+        }
+
+        let top = Array(tracks.prefix(5))
+        let latest = (try? loadRecentTracks(root: root, dbPath: dbPath, limit: 5)) ?? []
+        return (
+            top.isEmpty ? HomeMockData.topProgramsRows : top,
+            latest
+        )
+    }
+
+    private static func mapResponse(_ response: HomeFeedBridgeResponse, recentTracks: [TrackRowItem]) -> HomeContentData {
+        let categories = response.categories
+            .enumerated()
+            .map { index, category in
+                ProgramItem(
+                    sourceCategoryId: category.id,
+                    title: category.title,
+                    count: "\(category.episodeCount) برنامه",
+                    symbol: symbol(for: category.title, fallbackIndex: index)
+                )
+            }
+
+        let singers = response.singers.map {
+            ArtistItem(
+                sourceArtistId: $0.id,
+                name: $0.name,
+                role: "خواننده",
+                imageURL: $0.avatar ?? ""
+            )
+        }
+
+        let musicians = response.musicians.map {
+            ArtistItem(
+                sourceArtistId: $0.id,
+                name: $0.name,
+                role: $0.instrument?.isEmpty == false ? ($0.instrument ?? "نوازنده") : "نوازنده",
+                imageURL: $0.avatar ?? ""
+            )
+        }
+
+        let modes = response.dastgahs.map { ModeItem(title: $0.name) }
+        let duets = (response.duets ?? []).map {
+            DuetBannerItem(
+                singer1: $0.singer1,
+                singer2: $0.singer2,
+                singer1Avatar: $0.singer1Avatar,
+                singer2Avatar: $0.singer2Avatar,
+                trackCount: $0.trackCount
+            )
+        }
+
+        let tracks = response.topTracks.map {
+            TrackRowItem(
+                id: String($0.id),
+                trackId: $0.id,
+                title: $0.title,
+                subtitle: $0.artist,
+                duration: normalizedDuration($0.duration),
+                audioURL: $0.audioUrl,
+                artworkURLs: $0.artistImages ?? []
+            )
+        }
+
+        let topProgramsRows = Array(tracks.prefix(5))
+        return HomeContentData(
+            programs: categories,
+            singers: singers,
+            instrumentalists: musicians,
+            modes: modes,
+            duets: duets,
+            topProgramsRows: topProgramsRows,
+            latestTracksRows: recentTracks
+        )
+    }
+
+    private static func loadRecentTracks(root: String, dbPath: String, limit: Int) throws -> [TrackRowItem] {
+        let userDbPath = try resolveUserDbPath()
+        let idsPayload = try runBridgeRecentlyPlayedIds(root: root, userDbPath: userDbPath, limit: limit)
+        guard !idsPayload.isEmpty else { return [] }
+
+        let ids = try JSONDecoder().decode([Int64].self, from: Data(idsPayload.utf8))
+        if ids.isEmpty { return [] }
+
+        let idsJson = try String(data: JSONEncoder().encode(ids), encoding: .utf8) ?? "[]"
+        let tracksPayload = try runBridgeProgramsByIds(root: root, dbPath: dbPath, idsJson: idsJson)
+        guard !tracksPayload.isEmpty else { return [] }
+
+        let mapped: [TrackRowItem] = try JSONDecoder().decode([ProgramByIdTrackDTO].self, from: Data(tracksPayload.utf8)).map { item in
+            let trimmedTitle = item.title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return TrackRowItem(
+                id: String(item.id),
+                trackId: item.id,
+                title: trimmedTitle.isEmpty ? "برنامه \(item.no)" : trimmedTitle,
+                subtitle: item.artist,
+                duration: normalizedDuration(item.duration),
+                audioURL: item.audioUrl,
+                artworkURLs: []
+            )
+        }
+
+        let order = Dictionary(uniqueKeysWithValues: ids.enumerated().map { ($1, $0) })
+        return mapped.sorted { lhs, rhs in
+            let li = order[lhs.trackId ?? -1] ?? Int.max
+            let ri = order[rhs.trackId ?? -1] ?? Int.max
+            return li < ri
+        }
+    }
+
+    private static func normalizedDuration(_ value: String?) -> String {
+        guard let value, !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return "۰۰:۰۰"
+        }
+        return value
+    }
+
+    private static func symbol(for title: String, fallbackIndex: Int) -> String {
+        let normalized = title.replacingOccurrences(of: "‌", with: "").lowercased()
+        if normalized.contains("سبز") { return "leaf" }
+        if normalized.contains("تازه") { return "seal" }
+        if normalized.contains("شاخه") { return "sparkles" }
+        if normalized.contains("جاوید") { return "hexagon" }
+        let fallback = ["seal", "leaf", "sparkles", "hexagon"]
+        return fallback[fallbackIndex % fallback.count]
+    }
+
+    private static func resolveRepoRoot() throws -> String {
+        let fileManager = FileManager.default
+        let seeds = [
+            fileManager.currentDirectoryPath,
+            URL(fileURLWithPath: #filePath).deletingLastPathComponent().path
+        ]
+
+        for seed in seeds {
+            var current = URL(fileURLWithPath: seed)
+            while true {
+                let marker = current.appendingPathComponent("core").path
+                if fileManager.fileExists(atPath: marker) {
+                    return current.path
+                }
+
+                let parent = current.deletingLastPathComponent()
+                if parent.path == current.path {
+                    break
+                }
+                current = parent
+            }
+        }
+
+        throw NSError(domain: "HomeDataLoader", code: 1, userInfo: [NSLocalizedDescriptionKey: "Could not resolve repository root"])
+    }
+
+    private static func resolveArchiveDbPath(root: String) throws -> String {
+        if let env = ProcessInfo.processInfo.environment["RADIOGOLHA_ARCHIVE_DB"], !env.isEmpty {
+            return env
+        }
+
+        let candidate = URL(fileURLWithPath: root).appendingPathComponent("database/golha_database.db").path
+        if FileManager.default.fileExists(atPath: candidate) {
+            return candidate
+        }
+
+        throw NSError(domain: "HomeDataLoader", code: 2, userInfo: [NSLocalizedDescriptionKey: "Archive DB not found"])
+    }
+
+    private static func resolveUserDbPath() throws -> String {
+        if let env = ProcessInfo.processInfo.environment["RADIOGOLHA_USER_DB"], !env.isEmpty {
+            return env
+        }
+
+        let fm = FileManager.default
+        let appSupport = try fm.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+        let dir = appSupport.appendingPathComponent("RadioGolhaDesktop", isDirectory: true)
+        if !fm.fileExists(atPath: dir.path) {
+            try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        }
+        return dir.appendingPathComponent("user_data.db").path
+    }
+
+    private static func runBridgeHomeFeed(root: String, dbPath: String) throws -> String {
+        let manifest = URL(fileURLWithPath: root).appendingPathComponent("core/adapters/macos/Cargo.toml").path
+        let binary = URL(fileURLWithPath: root).appendingPathComponent("core/adapters/macos/target/debug/radiogolha-macos-bridge-cli").path
+
+        if !FileManager.default.isExecutableFile(atPath: binary) {
+            _ = try runProcess(
+                launchPath: "/usr/bin/env",
+                arguments: ["cargo", "build", "--manifest-path", manifest, "--bin", "radiogolha-macos-bridge-cli"],
+                currentDirectory: root
+            )
+        }
+
+        return try runProcess(
+            launchPath: binary,
+            arguments: ["home-feed-json", "--db", dbPath],
+            currentDirectory: root
+        )
+    }
+
+    private static func runBridgeTopTracks(root: String, dbPath: String) throws -> String {
+        let manifest = URL(fileURLWithPath: root).appendingPathComponent("core/adapters/macos/Cargo.toml").path
+        let binary = URL(fileURLWithPath: root).appendingPathComponent("core/adapters/macos/target/debug/radiogolha-macos-bridge-cli").path
+
+        if !FileManager.default.isExecutableFile(atPath: binary) {
+            _ = try runProcess(
+                launchPath: "/usr/bin/env",
+                arguments: ["cargo", "build", "--manifest-path", manifest, "--bin", "radiogolha-macos-bridge-cli"],
+                currentDirectory: root
+            )
+        }
+
+        return try runProcess(
+            launchPath: binary,
+            arguments: ["top-tracks-json", "--db", dbPath],
+            currentDirectory: root
+        )
+    }
+
+    private static func runBridgeRecentlyPlayedIds(root: String, userDbPath: String, limit: Int) throws -> String {
+        let manifest = URL(fileURLWithPath: root).appendingPathComponent("core/adapters/macos/Cargo.toml").path
+        let binary = URL(fileURLWithPath: root).appendingPathComponent("core/adapters/macos/target/debug/radiogolha-macos-bridge-cli").path
+
+        if !FileManager.default.isExecutableFile(atPath: binary) {
+            _ = try runProcess(
+                launchPath: "/usr/bin/env",
+                arguments: ["cargo", "build", "--manifest-path", manifest, "--bin", "radiogolha-macos-bridge-cli"],
+                currentDirectory: root
+            )
+        }
+
+        return try runProcess(
+            launchPath: binary,
+            arguments: ["recently-played-ids-json", "--user-db", userDbPath, "--limit", String(limit)],
+            currentDirectory: root
+        )
+    }
+
+    private static func runBridgeProgramsByIds(root: String, dbPath: String, idsJson: String) throws -> String {
+        let manifest = URL(fileURLWithPath: root).appendingPathComponent("core/adapters/macos/Cargo.toml").path
+        let binary = URL(fileURLWithPath: root).appendingPathComponent("core/adapters/macos/target/debug/radiogolha-macos-bridge-cli").path
+
+        if !FileManager.default.isExecutableFile(atPath: binary) {
+            _ = try runProcess(
+                launchPath: "/usr/bin/env",
+                arguments: ["cargo", "build", "--manifest-path", manifest, "--bin", "radiogolha-macos-bridge-cli"],
+                currentDirectory: root
+            )
+        }
+
+        return try runProcess(
+            launchPath: binary,
+            arguments: ["programs-by-ids-json", "--db", dbPath, "--ids-json", idsJson],
+            currentDirectory: root
+        )
+    }
+
+    private static func runProcess(launchPath: String, arguments: [String], currentDirectory: String) throws -> String {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: launchPath)
+        process.arguments = arguments
+        process.currentDirectoryURL = URL(fileURLWithPath: currentDirectory)
+
+        let stdout = Pipe()
+        let stderr = Pipe()
+        process.standardOutput = stdout
+        process.standardError = stderr
+
+        let group = DispatchGroup()
+        var outData = Data()
+        var errData = Data()
+
+        group.enter()
+        DispatchQueue.global(qos: .userInitiated).async {
+            outData = stdout.fileHandleForReading.readDataToEndOfFile()
+            group.leave()
+        }
+
+        group.enter()
+        DispatchQueue.global(qos: .userInitiated).async {
+            errData = stderr.fileHandleForReading.readDataToEndOfFile()
+            group.leave()
+        }
+
+        try process.run()
+        process.waitUntilExit()
+        group.wait()
+
+        let out = String(data: outData, encoding: .utf8) ?? ""
+        if process.terminationStatus == 0 {
+            return out.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+
+        let err = String(data: errData, encoding: .utf8) ?? "Unknown process error"
+        throw NSError(domain: "HomeDataLoader", code: Int(process.terminationStatus), userInfo: [NSLocalizedDescriptionKey: err])
+    }
+}
+
+private struct HomeFeedBridgeResponse: Decodable {
+    let categories: [HomeCategoryDTO]
+    let singers: [HomeSingerDTO]
+    let musicians: [HomeMusicianDTO]
+    let dastgahs: [HomeModeDTO]
+    let topTracks: [HomeTrackDTO]
+    let duets: [HomeDuetDTO]?
+}
+
+private struct HomeCategoryDTO: Decodable {
+    let id: Int64
+    let title: String
+    let episodeCount: Int
+}
+
+private struct HomeSingerDTO: Decodable {
+    let id: Int64
+    let name: String
+    let avatar: String?
+    let programCount: Int?
+}
+
+private struct HomeMusicianDTO: Decodable {
+    let id: Int64
+    let name: String
+    let avatar: String?
+    let instrument: String?
+    let programCount: Int?
+}
+
+private struct HomeModeDTO: Decodable {
+    let name: String
+}
+
+private struct HomeTrackDTO: Decodable {
+    let id: Int64
+    let title: String
+    let artist: String
+    let duration: String?
+    let audioUrl: String?
+    let artistImages: [String]?
+}
+
+private struct HomeDuetDTO: Decodable {
+    let singer1: String
+    let singer2: String
+    let singer1Avatar: String?
+    let singer2Avatar: String?
+    let trackCount: Int
+}
+
+private struct ProgramByIdTrackDTO: Decodable {
+    let id: Int64
+    let title: String?
+    let no: Int64
+    let artist: String
+    let duration: String?
+    let audioUrl: String?
+}

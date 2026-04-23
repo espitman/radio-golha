@@ -1,0 +1,223 @@
+import Foundation
+
+struct DesktopManualPlaylist: Identifiable, Hashable {
+    let id: Int64
+    let name: String
+    let trackIds: Set<Int64>
+}
+
+enum DesktopPlaylistDataLoader {
+    static func loadManualPlaylists() async -> [DesktopManualPlaylist] {
+        await Task.detached(priority: .userInitiated) {
+            (try? loadManualPlaylistsSync()) ?? []
+        }.value
+    }
+
+    static func addTrack(playlistId: Int64, trackId: Int64) async -> Bool {
+        await Task.detached(priority: .userInitiated) {
+            (try? addTrackSync(playlistId: playlistId, trackId: trackId)) ?? false
+        }.value
+    }
+
+    static func createManualPlaylist(name: String) async -> Int64? {
+        await Task.detached(priority: .userInitiated) {
+            try? createManualPlaylistSync(name: name)
+        }.value
+    }
+
+    static func removeTrack(playlistId: Int64, trackId: Int64) async -> Bool {
+        await Task.detached(priority: .userInitiated) {
+            (try? removeTrackSync(playlistId: playlistId, trackId: trackId)) ?? false
+        }.value
+    }
+
+    static func renamePlaylist(playlistId: Int64, name: String) async -> Bool {
+        await Task.detached(priority: .userInitiated) {
+            (try? renamePlaylistSync(playlistId: playlistId, name: name)) ?? false
+        }.value
+    }
+
+    static func deletePlaylist(playlistId: Int64) async -> Bool {
+        await Task.detached(priority: .userInitiated) {
+            (try? deletePlaylistSync(playlistId: playlistId)) ?? false
+        }.value
+    }
+
+    private static func loadManualPlaylistsSync() throws -> [DesktopManualPlaylist] {
+        let root = try resolveRepoRoot()
+        let userDbPath = try resolveUserDbPath()
+        let payload = try runBridge(
+            root: root,
+            arguments: ["get-manual-playlists-json", "--user-db", userDbPath]
+        )
+        guard !payload.isEmpty, !payload.contains("\"error\"") else { return [] }
+        let decoded = try JSONDecoder().decode([ManualPlaylistDTO].self, from: Data(payload.utf8))
+        return decoded.map {
+            DesktopManualPlaylist(
+                id: $0.id,
+                name: $0.name,
+                trackIds: Set($0.trackIds ?? [])
+            )
+        }
+    }
+
+    private static func addTrackSync(playlistId: Int64, trackId: Int64) throws -> Bool {
+        let root = try resolveRepoRoot()
+        let userDbPath = try resolveUserDbPath()
+        let payload = try runBridge(
+            root: root,
+            arguments: [
+                "add-track-to-playlist",
+                "--user-db", userDbPath,
+                "--playlist-id", String(playlistId),
+                "--track-id", String(trackId)
+            ]
+        )
+        return payload == "ok"
+    }
+
+    private static func createManualPlaylistSync(name: String) throws -> Int64? {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        let root = try resolveRepoRoot()
+        let userDbPath = try resolveUserDbPath()
+        let payload = try runBridge(
+            root: root,
+            arguments: ["create-manual-playlist", "--user-db", userDbPath, "--name", trimmed]
+        )
+        guard !payload.isEmpty, !payload.contains("\"error\"") else { return nil }
+        let decoded = try JSONDecoder().decode(CreatePlaylistResponseDTO.self, from: Data(payload.utf8))
+        return decoded.id
+    }
+
+    private static func removeTrackSync(playlistId: Int64, trackId: Int64) throws -> Bool {
+        let root = try resolveRepoRoot()
+        let userDbPath = try resolveUserDbPath()
+        let payload = try runBridge(
+            root: root,
+            arguments: [
+                "remove-track-from-playlist",
+                "--user-db", userDbPath,
+                "--playlist-id", String(playlistId),
+                "--track-id", String(trackId)
+            ]
+        )
+        return payload == "ok"
+    }
+
+    private static func renamePlaylistSync(playlistId: Int64, name: String) throws -> Bool {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+        let root = try resolveRepoRoot()
+        let userDbPath = try resolveUserDbPath()
+        let payload = try runBridge(
+            root: root,
+            arguments: [
+                "rename-manual-playlist",
+                "--user-db", userDbPath,
+                "--playlist-id", String(playlistId),
+                "--name", trimmed
+            ]
+        )
+        return payload == "ok"
+    }
+
+    private static func deletePlaylistSync(playlistId: Int64) throws -> Bool {
+        let root = try resolveRepoRoot()
+        let userDbPath = try resolveUserDbPath()
+        let payload = try runBridge(
+            root: root,
+            arguments: [
+                "delete-manual-playlist",
+                "--user-db", userDbPath,
+                "--playlist-id", String(playlistId)
+            ]
+        )
+        return payload == "ok"
+    }
+
+    private static func resolveRepoRoot() throws -> String {
+        let fileManager = FileManager.default
+        let seeds = [
+            fileManager.currentDirectoryPath,
+            URL(fileURLWithPath: #filePath).deletingLastPathComponent().path
+        ]
+
+        for seed in seeds {
+            var current = URL(fileURLWithPath: seed)
+            while true {
+                let marker = current.appendingPathComponent("core").path
+                if fileManager.fileExists(atPath: marker) {
+                    return current.path
+                }
+                let parent = current.deletingLastPathComponent()
+                if parent.path == current.path {
+                    break
+                }
+                current = parent
+            }
+        }
+        throw NSError(domain: "DesktopPlaylistDataLoader", code: 1, userInfo: [NSLocalizedDescriptionKey: "Could not resolve repository root"])
+    }
+
+    private static func resolveUserDbPath() throws -> String {
+        if let env = ProcessInfo.processInfo.environment["RADIOGOLHA_USER_DB"], !env.isEmpty {
+            return env
+        }
+        let fm = FileManager.default
+        let appSupport = try fm.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+        let dir = appSupport.appendingPathComponent("RadioGolhaDesktop", isDirectory: true)
+        if !fm.fileExists(atPath: dir.path) {
+            try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        }
+        return dir.appendingPathComponent("user_data.db").path
+    }
+
+    private static func runBridge(root: String, arguments: [String]) throws -> String {
+        let manifest = URL(fileURLWithPath: root).appendingPathComponent("core/adapters/macos/Cargo.toml").path
+        let binary = URL(fileURLWithPath: root).appendingPathComponent("core/adapters/macos/target/debug/radiogolha-macos-bridge-cli").path
+        if !FileManager.default.isExecutableFile(atPath: binary) {
+            _ = try runProcess(
+                launchPath: "/usr/bin/env",
+                arguments: ["cargo", "build", "--manifest-path", manifest, "--bin", "radiogolha-macos-bridge-cli"],
+                currentDirectory: root
+            )
+        }
+        return try runProcess(
+            launchPath: binary,
+            arguments: arguments,
+            currentDirectory: root
+        )
+    }
+
+    private static func runProcess(launchPath: String, arguments: [String], currentDirectory: String) throws -> String {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: launchPath)
+        process.arguments = arguments
+        process.currentDirectoryURL = URL(fileURLWithPath: currentDirectory)
+
+        let stdout = Pipe()
+        let stderr = Pipe()
+        process.standardOutput = stdout
+        process.standardError = stderr
+        try process.run()
+        process.waitUntilExit()
+
+        let out = String(data: stdout.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        if process.terminationStatus == 0 {
+            return out.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        let err = String(data: stderr.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? "Unknown process error"
+        throw NSError(domain: "DesktopPlaylistDataLoader", code: Int(process.terminationStatus), userInfo: [NSLocalizedDescriptionKey: err])
+    }
+}
+
+private struct ManualPlaylistDTO: Decodable {
+    let id: Int64
+    let name: String
+    let trackIds: [Int64]?
+}
+
+private struct CreatePlaylistResponseDTO: Decodable {
+    let id: Int64
+}

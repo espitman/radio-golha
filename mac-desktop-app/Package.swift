@@ -10,7 +10,10 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "RadioGolhaDesktop",
-            path: "Sources/RadioGolhaDesktop"
+            path: "Sources/RadioGolhaDesktop",
+            resources: [
+                .process("Resources")
+            ]
         )
     ]
 )

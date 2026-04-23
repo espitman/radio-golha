@@ -59,6 +59,23 @@ enum HomeMockData {
         .init(title: "سه‌گاه"), .init(title: "چهارگاه"), .init(title: "راست‌پنجگاه")
     ]
 
+    static let duets: [DuetBannerItem] = [
+        .init(
+            singer1: "محمدرضا شجریان",
+            singer2: "غلامحسین بنان",
+            singer1Avatar: singers.first?.imageURL,
+            singer2Avatar: singers.dropFirst().first?.imageURL,
+            trackCount: 27
+        ),
+        .init(
+            singer1: "بانو دلکش",
+            singer2: "بانو مرضیه",
+            singer1Avatar: singers.dropFirst(2).first?.imageURL,
+            singer2Avatar: singers.dropFirst(3).first?.imageURL,
+            trackCount: 19
+        )
+    ]
+
     static let topProgramsRows: [TrackRowItem] = [
         .init(title: "گلهای تازه شماره ۱۴", subtitle: "الهه، خالقی، بدیعی", duration: "۱۰:۱۵"),
         .init(title: "جاویدان شماره ۲۵", subtitle: "بنان، معروفی، فرهنگ", duration: "۰۶:۳۰")
@@ -67,5 +84,95 @@ enum HomeMockData {
     static let latestTracksRows: [TrackRowItem] = [
         .init(title: "آستان جانان", subtitle: "محمدرضا شجریان", duration: "۱۰:۱۵"),
         .init(title: "کاروان", subtitle: "غلامحسین بنان", duration: "۰۶:۳۰")
+    ]
+
+    static let singersPageAlphabet: [String] = [
+        "همه", "الف", "ب", "پ", "ت", "ج", "چ", "ح", "خ", "د", "ر", "ز", "س", "ش", "ع", "ق", "م", "ن", "و", "ه", "ی"
+    ]
+
+    static let singersPageItems: [SingerListItem] = [
+        .init(
+            name: "محمدرضا شجریان",
+            programsCount: "۱۲۰ برنامه ثبت شده",
+            imageURL: "https://lh3.googleusercontent.com/aida-public/AB6AXuAWAuv8u0v1OIdyaGEUsfEcihpkz_8B_2gjKaFA66dCpN-Bqm_q4O4aJtGXvZ_0sInBsWn3IeZK0MlQA3l3x1RaiBvHutcVq9wu7H3UxxIJfFUpoqyl_Srw8haM4QQvjRRSHmLVYdboxoZeraXwY6SZucALPrPCdVuwEU5aNdf4mXG7Qwymhth2R1d4g90KlYTTsV3t0IUtD6Rlzg-C8o6AR9RmrXkr11rSrhha2h2uWhGvc6hILiGtcl7JdaCpPvx0APRgcdUscMPr"
+        ),
+        .init(
+            name: "بانو مرضیه",
+            programsCount: "۸۵ برنامه ثبت شده",
+            imageURL: "https://lh3.googleusercontent.com/aida-public/AB6AXuACrGUSeZphvMCbjU0pye8xCe_PoOpzcMulvXk3mHMDKbA3OPCh63S7Aan_HtY6ayCTALorUGT3Z-wU9diP_81YzbfI1u98A80KxnG54vIRcXU0-ysHEXJ-kJJ_S3AxSG27fRfR2cN1vP1VWZIoQI1Kz-zyVjHl9E5crKA0OupEphOwxh_kiUFRyfyrv3py1STGV3Mp_O3JA6O4Web1Pu3U0BO1irzC7NuVwUaJuUR3zz1ipmZ_JsGbMO6Uit47YeaVb-fDS8QMTLcY"
+        ),
+        .init(
+            name: "غلامحسین بنان",
+            programsCount: "۹۴ برنامه ثبت شده",
+            imageURL: "https://lh3.googleusercontent.com/aida-public/AB6AXuA7uzrhoj_jfgLEXEqe_zHCIBmD2nK7-Hu4ebRr9XEuIgj0FjXvjDsaxw6XEr9_AbHIU6FnIUgl8L8Yvn5F1pOJlK860RIOHTB4iq1OGwvbiPwPJM8CF__oLq3j0iJmWfzrpAKzwTBh1HEkuW_kjpE8UgxZpJYilRpvDh2v4DXxD_pBqYiV1REoplA8Xs1HhUHLvtO9GedBX4znf3_Kojkqzl_SJ7c_KEC_HGH2o946wPNz5Cy89q-WpPIwbOZ9Ue7Ex_34FrGLs1Xc"
+        ),
+        .init(
+            name: "بانو دلکش",
+            programsCount: "۷۲ برنامه ثبت شده",
+            imageURL: "https://lh3.googleusercontent.com/aida-public/AB6AXuAyMXtTSRs5UqZMcg51Kxydy5fF2sQHZAFszIOcUBUqZPdvqJjiwNY2kNPAluK1GBXCFc9CTB2XY06W9DCxrlvwodZOw44gPK-RwHjOoeD3Uoj7H8ooUMUsiab4sGaPqMDJDmJM8Il6IJ7HOo17XtQVcVAdfXKAc3G8bagN2UZxoNN2D7MYL1dj82NYQfp8Qt7QsU7wvTupq9FxwT08lhYnGsctnfQ8vr39s6rap1GJURZDRqzwRDbKuofgcOaeojycQpuwDd38JCCz"
+        ),
+        .init(
+            name: "جلیل شهناز",
+            programsCount: "۱۱۵ برنامه ثبت شده",
+            imageURL: "https://lh3.googleusercontent.com/aida-public/AB6AXuA2hVZWR2Z0j1a7SSEmfnLEm3SrIidS3j2EnFElicEuVkB32-M3iGqpEBw-59fsUzo6mazQq9Cw5_uhIc6q0Rcdp6R3-3JH6LDovVJpYKoD2OZgVp--I5kblaeCvWspbFKH_5Z31YKu4Jcn8VxJjtibB9JWPWf8dBh-hS--B2f_2L6VGqfVeAQhyaOYc4w5Ybd-9Q_-p0ZRKje4L0BeAxIdyCesXx1A73fXKJdowlExvTeMsSaXPGNKXqiRfR9qy7W8P0EFR629xeny"
+        ),
+        .init(
+            name: "پرویز یاحقی",
+            programsCount: "۱۰۸ برنامه ثبت شده",
+            imageURL: "https://lh3.googleusercontent.com/aida-public/AB6AXuBySGVnBqhZRyJ-vngmyf-Hd5PQndePKpM0WCl__KpAYTrn0dnSIk9Zjgs-KnsmYUH_ysqpJT1nsIvWCyWYvBv-h1wnzw8n8uLbpN4EzN-J_1IZrcc4ug0Vg-m6fLZnssUMUGYpoB2ZUD7gokhNIF0CyOK4QWM8FX_n-W84HUim4eL-mi0deyVurRese2PR0YMglqNqAZgAaSOubIteZa9EM-CCZeS5IeGJqAURy2yjBe1y-oxNfjXddDA2AHAxlHuzkGgl69d2ANtM"
+        ),
+        .init(
+            name: "حسن کسایی",
+            programsCount: "۹۶ برنامه ثبت شده",
+            imageURL: "https://lh3.googleusercontent.com/aida-public/AB6AXuBySGVnBqhZRyJ-vngmyf-Hd5PQndePKpM0WCl__KpAYTrn0dnSIk9Zjgs-KnsmYUH_ysqpJT1nsIvWCyWYvBv-h1wnzw8n8uLbpN4EzN-J_1IZrcc4ug0Vg-m6fLZnssUMUGYpoB2ZUD7gokhNIF0CyOK4QWM8FX_n-W84HUim4eL-mi0deyVurRese2PR0YMglqNqAZgAaSOubIteZa9EM-CCZeS5IeGJqAURy2yjBe1y-oxNfjXddDA2AHAxlHuzkGgl69d2ANtM"
+        ),
+        .init(
+            name: "فرهنگ شریف",
+            programsCount: "۸۷ برنامه ثبت شده",
+            imageURL: "https://lh3.googleusercontent.com/aida-public/AB6AXuBGekEUXBcApNWh17_qhvE5zV19t7t5ysca3oZ9FEtdwVsgnWNzPE4paUYPvmlUTxB_uvpchE7NsLDop42Z2XcKwL3KuNH7xPuKmzxrW9WppCT6K3Ym293tsAh_vm9OS8Hzx6kAiAndqgLmOu222Rv2-SDcDfZmurPQhtjei3LmDPjmABFjBKvYHUWqvHv4YSbsYVrFKSdnEa6IlEZO0z3ZeNFnHgtk_e9PVNz6AVOaBCZJTcau2o2nG16iErn20SyVh-RV53NW5hsg"
+        )
+    ]
+
+    static let playersPageInstruments: [String] = [
+        "همه", "تار", "سه‌تار", "سنتور", "کمانچه", "ویلن", "نی", "تنبک"
+    ]
+
+    static let playersPageItems: [PlayerListItem] = [
+        .init(
+            name: "جلیل شهناز",
+            instrument: "تار",
+            programsCount: "۹۶ برنامه ثبت شده",
+            imageURL: "https://lh3.googleusercontent.com/aida-public/AB6AXuDpmECMtqxU9603efb-gprCyzSy0zv_Jb2bOlP-25OY9BKroEEJmvLMUbd11QHZuv4U1LbXVl-hRP4gEe17I-8-j1usqc5lWbE_Ywm3sGBpgcNTzwMAFtRGeEOi2mr5-OcaCt_u_NIAvJA35OKX4e1-oY1bgDrwQICxdEK26U-ec_oKxY4A5gQRVW5pxvQlP3M5bPCZMvMxmABAZbJHKKgWfcRjrICr2o5ZLdHczvQnhncxdDslWRnO5Xzi4wbySQXpux8rC_neZMSJ"
+        ),
+        .init(
+            name: "فرهنگ شریف",
+            instrument: "تار",
+            programsCount: "۱۱۲ برنامه ثبت شده",
+            imageURL: "https://lh3.googleusercontent.com/aida-public/AB6AXuAuJhidSr6FLd6UzCY8dVJvxLJL8b7K9DeTaa5wEoT_LyTJYxxl4beINxqu4g5Tfeh4SEEWmfkr09vFPbmxxGz47i8Fw1AWR8A-cKW3hjaStKWzCGzOW7sbg_KdPFp6J3wR02FVXrND9bkcIlk-_istTxmeadQclStqcbWeoZ1pRfevRBlmnAz9J-3OPEymq8ZQ-8ccnceMiMGHcwezZercttJJns56so948APCW4jKxr0FpCvIaqm1HuioJTBr1KaxC6ErckapJXHq"
+        ),
+        .init(
+            name: "محمدرضا لطفی",
+            instrument: "تار و سه تار",
+            programsCount: "۴۵ برنامه ثبت شده",
+            imageURL: "https://lh3.googleusercontent.com/aida-public/AB6AXuCxRzn7wWlNERIy2Jv9mKKDC0dmCOipXaXN-UNYvYjKO1n5_mCy1D4OgywBuB7gCN_F9wUkQSt0qk1sy-uRu5FdsQngSMOacrg3dp-qO1yy6BrFLpzouqYAsMmfQgFgnj4f7tA56I0tZ0dbcerZvw3-aDwrNC2e7ov9gcvNTslVQJfQBRMl9Ct-WRxIVTrVRpB3eDpyeNufQoz7lb7O96dh_LYgEXZExFZLTW8VitB2adWpfwIwOWetkmdxyoeTyw96342odLIrVF-_"
+        ),
+        .init(
+            name: "بیگجه‌خانی",
+            instrument: "تار",
+            programsCount: "۳۸ برنامه ثبت شده",
+            imageURL: "https://lh3.googleusercontent.com/aida-public/AB6AXuC0RRKQQz6esXbZFZL_s8XaEPC62wOsuxOu1GV7TGS-Ue_a0yrKv2lc2mY-ydmSaqGjfzelXpw1s2V8fatmaLKX3dIpTdI7Pj1RnwY1jvDYmTAriVBe8X8HR5Hg9UAJvAkaPr8SxPAuSmpcvinw3iFfZMgRxBUKmlNcPeDAA5dkYiOHHgGuXiEyijDF4QrQm7SvtVD1kMQoEIGygsDQmaqvBoie9NwTrlPhB5isNvJU44-v9eJTIO9XcPoqb9-mt3eS0Ytt7i-G0Tb"
+        ),
+        .init(
+            name: "فریدون حافظی",
+            instrument: "تار",
+            programsCount: "۵۲ برنامه ثبت شده",
+            imageURL: "https://lh3.googleusercontent.com/aida-public/AB6AXuD6py-_wC3zsPTTjQhvKRiJr2GIrfIXgeTa8aVPbDlqXhVd3f5A7P3DfflRvUBjA9nVIGoPkJdMlxfxUjESyj1BLwunFbQV3Wb8K8DG1oJJa0G0XVFbQshzKci_8VlwHD7z2DshxSFZyapXovd4jVx4OqQC4mwLiOTT_4f5SwE5j5pI9vsxsdgU1xCtbbBM1O6Zq_lk7-BZg9OcWgjstlokkXDLghrq16qpOPeMm3uUmcu6EbMUJYUIS5cIFRuX_NeNx6JcK2x7Bl2x"
+        ),
+        .init(
+            name: "لطف‌الله مجد",
+            instrument: "تار",
+            programsCount: "۸۴ برنامه ثبت شده",
+            imageURL: "https://lh3.googleusercontent.com/aida-public/AB6AXuDHFMfjabhNXj3wncSaY5MSF9BuFEl_4tHrE-vbyf8vXkYKuE8cL0yTrG8R1t1b4P__Ga05ZCYgxDhALxbWdpe3GH4ce8xhfEVMYz3PYzytjoaXQ5R1TJDWI2J-MJ0Wl752vvAUwrkGgx0MyUX90ZYuFCVCVFy8-qF5_wYh63ejryMt5FkP24Z4SlBjD9V3soIXFIG1XtHSPbb0Sjjm7SwoKUCj_wwi7jty2eZb-Ox9ypnhcYV82twvLgymhLGXZFtrO23aOXlnDUu7"
+        )
     ]
 }
