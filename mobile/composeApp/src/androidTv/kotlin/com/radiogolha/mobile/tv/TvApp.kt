@@ -124,6 +124,7 @@ fun TvApp() {
             GolhaPatternBackground {
                 var selectedTop by remember { mutableStateOf<TvTopMenuItem?>(null) }
                 var selectedSide by remember { mutableStateOf(TvSideMenuItem.Home) }
+                var selectedArtistId by remember { mutableStateOf<Long?>(null) }
 
                 Row(
                     modifier = Modifier.fillMaxSize()
@@ -156,12 +157,18 @@ fun TvApp() {
                                 .fillMaxHeight()
                                 .weight(1f),
                             selectedTop = selectedTop,
-                            onSelectTop = { selectedTop = it; selectedSide = TvSideMenuItem.Home },
-                            canGoBack = selectedTop != null || selectedSide != TvSideMenuItem.Home,
+                            selectedArtistId = selectedArtistId,
+                            onSelectTop = { selectedTop = it; selectedSide = TvSideMenuItem.Home; selectedArtistId = null },
+                            canGoBack = selectedArtistId != null || selectedTop != null || selectedSide != TvSideMenuItem.Home,
                             onBack = {
-                                selectedTop = null
-                                selectedSide = TvSideMenuItem.Home
+                                if (selectedArtistId != null) {
+                                    selectedArtistId = null
+                                } else {
+                                    selectedTop = null
+                                    selectedSide = TvSideMenuItem.Home
+                                }
                             },
+                            onOpenArtist = { selectedArtistId = it },
                             focusRequesters = topFocusRequesters,
                             duetFocusRequester = duetFocusRequester,
                             programFocusRequester = programFocusRequester,
@@ -186,6 +193,7 @@ fun TvApp() {
                             onSelectItem = { item ->
                                 selectedSide = item
                                 selectedTop = null
+                                selectedArtistId = null
                             },
                             focusRequesters = sidebarFocusRequesters,
                             mainEntryRequester = mainEntryRequester,
@@ -201,9 +209,11 @@ fun TvApp() {
 private fun TvMainPane(
     modifier: Modifier = Modifier,
     selectedTop: TvTopMenuItem?,
+    selectedArtistId: Long?,
     onSelectTop: (TvTopMenuItem) -> Unit,
     canGoBack: Boolean,
     onBack: () -> Unit,
+    onOpenArtist: (Long) -> Unit,
     focusRequesters: List<FocusRequester>,
     duetFocusRequester: FocusRequester,
     programFocusRequester: FocusRequester,
@@ -284,7 +294,17 @@ private fun TvMainPane(
             sidebarEntryRequester = sidebarEntryRequester,
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 18.dp)
         )
-        if (selectedTop == null) {
+        if (selectedArtistId != null) {
+            TvArtistDetailScreen(
+                artistId = selectedArtistId,
+                currentTrack = currentTrack,
+                isPlayerPlaying = isPlayerPlaying,
+                sidebarEntryRequester = sidebarEntryRequester,
+                playerFocusRequester = playerFocusRequester,
+                onPlayTrack = onPlayTrack,
+                modifier = Modifier.weight(1f),
+            )
+        } else if (selectedTop == null) {
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -320,6 +340,7 @@ private fun TvMainPane(
                     modeFocusRequester = modeFocusRequester,
                     playerFocusRequester = modeFocusRequester,
                     sidebarEntryRequester = sidebarEntryRequester,
+                    onOpenArtist = onOpenArtist,
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .padding(top = 28.dp)
@@ -870,6 +891,7 @@ private fun TvFeaturedSingersCarousel(
     modeFocusRequester: FocusRequester,
     playerFocusRequester: FocusRequester,
     sidebarEntryRequester: FocusRequester,
+    onOpenArtist: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -929,7 +951,7 @@ private fun TvFeaturedSingersCarousel(
                                         left = FocusRequester.Cancel
                                     }
                                 },
-                            onClick = {},
+                            onClick = { onOpenArtist(singer.id) },
                         )
                     }
                 }

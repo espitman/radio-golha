@@ -203,4 +203,19 @@ data class ArtistDetailUiModel(
     val trackCount: Int,
     val tracks: List<CategoryProgramUiModel>,
     val isFavorite: Boolean = false,
+    val categoryCounts: List<ArtistCategoryCountUiModel> = emptyList(),
+    val collaborators: List<ArtistCollaboratorUiModel> = emptyList(),
+    val topModes: List<String> = emptyList(),
+)
+
+data class ArtistCategoryCountUiModel(
+    val title: String,
+    val count: Int,
+)
+
+data class ArtistCollaboratorUiModel(
+    val id: Long,
+    val name: String,
+    val role: String,
+    val imageUrl: String? = null,
 )

@@ -97,6 +97,15 @@ struct AndroidArtistDetailPayload {
     instrument: Option<String>,
     track_count: i64,
     tracks: Vec<AndroidCategoryProgramItem>,
+    category_counts: Vec<AndroidArtistCategoryCountItem>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct AndroidArtistCategoryCountItem {
+    category_id: i64,
+    title: String,
+    count: i64,
 }
 
 fn categories_json(db_path: &str) -> Result<String, String> {
@@ -512,6 +521,40 @@ fn artist_detail_json(db_path: &str, artist_id: i64) -> Result<String, String> {
 
     let tracks = rows.collect::<Result<Vec<_>, _>>().map_err(|error| error.to_string())?;
 
+    let mut category_counts_stmt = conn.prepare(
+        "
+        WITH artist_program_ids AS (
+            SELECT DISTINCT ps.program_id AS program_id
+            FROM program_singers ps
+            JOIN singer s ON s.id = ps.singer_id
+            WHERE s.artist_id = ?1
+            UNION
+            SELECT DISTINCT pp.program_id AS program_id
+            FROM program_performers pp
+            JOIN performer pf ON pf.id = pp.performer_id
+            WHERE pf.artist_id = ?1
+        )
+        SELECT c.id, c.title_fa, COUNT(DISTINCT p.id) AS total
+        FROM artist_program_ids ap
+        JOIN program p ON p.id = ap.program_id
+        JOIN category c ON c.id = p.category_id
+        GROUP BY c.id, c.title_fa
+        ORDER BY total DESC, c.id ASC
+        "
+    ).map_err(|error| error.to_string())?;
+
+    let category_count_rows = category_counts_stmt.query_map([resolved_artist_id], |row| {
+        Ok(AndroidArtistCategoryCountItem {
+            category_id: row.get(0)?,
+            title: row.get(1)?,
+            count: row.get(2)?,
+        })
+    }).map_err(|error| error.to_string())?;
+
+    let category_counts = category_count_rows
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|error| error.to_string())?;
+
     let payload = AndroidArtistDetailPayload {
         id: payload.0,
         name: payload.1,
@@ -519,6 +562,7 @@ fn artist_detail_json(db_path: &str, artist_id: i64) -> Result<String, String> {
         instrument: payload.3,
         track_count: payload.4,
         tracks,
+        category_counts,
     };
 
     to_string(&payload).map_err(|error| error.to_string())
