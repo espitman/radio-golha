@@ -77,7 +77,9 @@ import coil.compose.AsyncImage
 import com.radiogolha.mobile.theme.GolhaAppTheme
 import com.radiogolha.mobile.theme.GolhaColors
 import com.radiogolha.mobile.theme.GolhaPatternBackground
+import com.radiogolha.mobile.ui.home.DastgahUiModel
 import com.radiogolha.mobile.ui.home.DuetPairUiModel
+import com.radiogolha.mobile.ui.home.MusicianUiModel
 import com.radiogolha.mobile.ui.home.ProgramUiModel
 import com.radiogolha.mobile.ui.home.SingerUiModel
 import com.radiogolha.mobile.ui.home.loadHomeUiState
@@ -123,7 +125,9 @@ fun TvApp() {
                     }
                     val duetFocusRequester = remember { FocusRequester() }
                     val programFocusRequester = remember { FocusRequester() }
+                    val modeFocusRequester = remember { FocusRequester() }
                     val singerFocusRequester = remember { FocusRequester() }
+                    val musicianFocusRequester = remember { FocusRequester() }
                     val playerFocusRequester = remember { FocusRequester() }
                     val mainEntryRequester = topFocusRequesters.first()
                     val sidebarEntryRequester = sidebarFocusRequesters.first()
@@ -143,7 +147,9 @@ fun TvApp() {
                             focusRequesters = topFocusRequesters,
                             duetFocusRequester = duetFocusRequester,
                             programFocusRequester = programFocusRequester,
+                            modeFocusRequester = modeFocusRequester,
                             singerFocusRequester = singerFocusRequester,
+                            musicianFocusRequester = musicianFocusRequester,
                             playerFocusRequester = playerFocusRequester,
                             sidebarEntryRequester = sidebarEntryRequester,
                         )
@@ -175,13 +181,17 @@ private fun TvMainPane(
     focusRequesters: List<FocusRequester>,
     duetFocusRequester: FocusRequester,
     programFocusRequester: FocusRequester,
+    modeFocusRequester: FocusRequester,
     singerFocusRequester: FocusRequester,
+    musicianFocusRequester: FocusRequester,
     playerFocusRequester: FocusRequester,
     sidebarEntryRequester: FocusRequester,
 ) {
     var duetItems by remember { mutableStateOf<List<DuetPairUiModel>>(emptyList()) }
     var programItems by remember { mutableStateOf<List<ProgramUiModel>>(emptyList()) }
+    var modeItems by remember { mutableStateOf<List<DastgahUiModel>>(emptyList()) }
     var singerItems by remember { mutableStateOf<List<SingerUiModel>>(emptyList()) }
+    var musicianItems by remember { mutableStateOf<List<MusicianUiModel>>(emptyList()) }
     var isHomeLoading by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
@@ -202,9 +212,11 @@ private fun TvMainPane(
             emptyList()
         }
         programItems = home?.programs.orEmpty().sortedByDescending { it.episodeCount }
+        modeItems = home?.dastgahs.orEmpty()
         singerItems = home?.singers.orEmpty()
+        musicianItems = home?.musicians.orEmpty()
         duetItems = homeDuets.ifEmpty { configDuets }
-        println("TV_HOME_LOADED programs=${programItems.size} singers=${singerItems.size} duets=${duetItems.size}")
+        println("TV_HOME_LOADED programs=${programItems.size} modes=${modeItems.size} singers=${singerItems.size} musicians=${musicianItems.size} duets=${duetItems.size}")
         isHomeLoading = false
     }
 
@@ -254,6 +266,29 @@ private fun TvMainPane(
                     isLoading = isHomeLoading,
                     firstCardFocusRequester = singerFocusRequester,
                     programFocusRequester = programFocusRequester,
+                    modeFocusRequester = modeFocusRequester,
+                    playerFocusRequester = modeFocusRequester,
+                    sidebarEntryRequester = sidebarEntryRequester,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 28.dp)
+                )
+                TvModesCarousel(
+                    items = modeItems,
+                    isLoading = isHomeLoading,
+                    firstChipFocusRequester = modeFocusRequester,
+                    singerFocusRequester = singerFocusRequester,
+                    playerFocusRequester = musicianFocusRequester,
+                    sidebarEntryRequester = sidebarEntryRequester,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 28.dp)
+                )
+                TvFeaturedMusiciansCarousel(
+                    items = musicianItems,
+                    isLoading = isHomeLoading,
+                    firstCardFocusRequester = musicianFocusRequester,
+                    modeFocusRequester = modeFocusRequester,
                     playerFocusRequester = playerFocusRequester,
                     sidebarEntryRequester = sidebarEntryRequester,
                     modifier = Modifier
@@ -266,7 +301,7 @@ private fun TvMainPane(
         }
         TvBottomPlayer(
             focusRequester = playerFocusRequester,
-            topEntryRequester = if (selectedTop == null) singerFocusRequester else focusRequesters.first(),
+            topEntryRequester = if (selectedTop == null) musicianFocusRequester else focusRequesters.first(),
             sidebarEntryRequester = sidebarEntryRequester,
         )
     }
@@ -683,11 +718,83 @@ private fun TvProgramsCarousel(
 
 @Composable
 @OptIn(ExperimentalComposeUiApi::class)
+private fun TvModesCarousel(
+    items: List<DastgahUiModel>,
+    isLoading: Boolean,
+    firstChipFocusRequester: FocusRequester,
+    singerFocusRequester: FocusRequester,
+    playerFocusRequester: FocusRequester,
+    sidebarEntryRequester: FocusRequester,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = "دستگاه‌ها و آوازها",
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold
+            ),
+            color = GolhaColors.PrimaryText,
+            textAlign = TextAlign.Start,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.height(18.dp))
+        when {
+            isLoading -> TvModeLoadingRow(
+                firstChipFocusRequester = firstChipFocusRequester,
+                upFocusRequester = singerFocusRequester,
+                downFocusRequester = playerFocusRequester,
+                sidebarEntryRequester = sidebarEntryRequester,
+            )
+            items.isEmpty() -> TvHomeEmptyCard(
+                label = "دستگاهی برای نمایش وجود ندارد",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(45.dp)
+                    .tvMainFocusAnchor(
+                        focusRequester = firstChipFocusRequester,
+                        upFocusRequester = singerFocusRequester,
+                        downFocusRequester = playerFocusRequester,
+                        sidebarEntryRequester = sidebarEntryRequester,
+                    )
+            )
+            else -> {
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    reverseLayout = false
+                ) {
+                    itemsIndexed(items) { index, mode ->
+                        TvModeChip(
+                            title = mode.name,
+                            modifier = Modifier
+                                .then(if (index == 0) Modifier.focusRequester(firstChipFocusRequester) else Modifier)
+                                .focusProperties {
+                                    up = singerFocusRequester
+                                    down = playerFocusRequester
+                                    if (index == 0) {
+                                        right = sidebarEntryRequester
+                                    }
+                                    if (index == items.lastIndex) {
+                                        left = FocusRequester.Cancel
+                                    }
+                                }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalComposeUiApi::class)
 private fun TvFeaturedSingersCarousel(
     items: List<SingerUiModel>,
     isLoading: Boolean,
     firstCardFocusRequester: FocusRequester,
     programFocusRequester: FocusRequester,
+    modeFocusRequester: FocusRequester,
     playerFocusRequester: FocusRequester,
     sidebarEntryRequester: FocusRequester,
     modifier: Modifier = Modifier,
@@ -707,7 +814,7 @@ private fun TvFeaturedSingersCarousel(
         when {
             isLoading -> TvArtistLoadingRow(
                 firstCardFocusRequester = firstCardFocusRequester,
-                upFocusRequester = programFocusRequester,
+                upFocusRequester = modeFocusRequester,
                 downFocusRequester = playerFocusRequester,
                 sidebarEntryRequester = sidebarEntryRequester,
             )
@@ -718,7 +825,7 @@ private fun TvFeaturedSingersCarousel(
                     .height(225.dp)
                     .tvMainFocusAnchor(
                         focusRequester = firstCardFocusRequester,
-                        upFocusRequester = programFocusRequester,
+                        upFocusRequester = modeFocusRequester,
                         downFocusRequester = playerFocusRequester,
                         sidebarEntryRequester = sidebarEntryRequester,
                     )
@@ -740,7 +847,84 @@ private fun TvFeaturedSingersCarousel(
                             modifier = Modifier
                                 .then(if (index == 0) Modifier.focusRequester(firstCardFocusRequester) else Modifier)
                                 .focusProperties {
-                                    up = programFocusRequester
+                                    up = modeFocusRequester
+                                    down = playerFocusRequester
+                                    if (index == 0) {
+                                        right = sidebarEntryRequester
+                                    }
+                                    if (index == items.lastIndex) {
+                                        left = FocusRequester.Cancel
+                                    }
+                                },
+                            onClick = {},
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalComposeUiApi::class)
+private fun TvFeaturedMusiciansCarousel(
+    items: List<MusicianUiModel>,
+    isLoading: Boolean,
+    firstCardFocusRequester: FocusRequester,
+    modeFocusRequester: FocusRequester,
+    playerFocusRequester: FocusRequester,
+    sidebarEntryRequester: FocusRequester,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = "نوازندگان برجسته",
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold
+            ),
+            color = GolhaColors.PrimaryText,
+            textAlign = TextAlign.Start,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.height(18.dp))
+        when {
+            isLoading -> TvArtistLoadingRow(
+                firstCardFocusRequester = firstCardFocusRequester,
+                upFocusRequester = modeFocusRequester,
+                downFocusRequester = playerFocusRequester,
+                sidebarEntryRequester = sidebarEntryRequester,
+            )
+            items.isEmpty() -> TvHomeEmptyCard(
+                label = "نوازنده‌ای برای نمایش وجود ندارد",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(225.dp)
+                    .tvMainFocusAnchor(
+                        focusRequester = firstCardFocusRequester,
+                        upFocusRequester = modeFocusRequester,
+                        downFocusRequester = playerFocusRequester,
+                        sidebarEntryRequester = sidebarEntryRequester,
+                    )
+            )
+            else -> {
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(24.dp),
+                    reverseLayout = false
+                ) {
+                    itemsIndexed(items) { index, musician ->
+                        TvArtistCard(
+                            item = TvArtistCardItem(
+                                id = musician.id,
+                                name = musician.name,
+                                role = musician.instrument.ifBlank { "${musician.programCount} ترک" },
+                                imageUrl = musician.imageUrl,
+                            ),
+                            modifier = Modifier
+                                .then(if (index == 0) Modifier.focusRequester(firstCardFocusRequester) else Modifier)
+                                .focusProperties {
+                                    up = modeFocusRequester
                                     down = playerFocusRequester
                                     if (index == 0) {
                                         right = sidebarEntryRequester
@@ -823,6 +1007,82 @@ private fun TvHomeEmptyCard(
             color = GolhaColors.SecondaryText,
             textAlign = TextAlign.Center
         )
+    }
+}
+
+@Composable
+@OptIn(ExperimentalComposeUiApi::class)
+private fun TvModeChip(
+    title: String,
+    modifier: Modifier = Modifier,
+) {
+    var isFocused by remember { mutableStateOf(false) }
+    Text(
+        text = title,
+        style = MaterialTheme.typography.bodyMedium.copy(
+            fontSize = 10.5.sp,
+            fontWeight = if (isFocused) FontWeight.Bold else FontWeight.Medium
+        ),
+        color = GolhaColors.PrimaryText,
+        textAlign = TextAlign.Center,
+        maxLines = 1,
+        modifier = modifier
+            .onFocusChanged { isFocused = it.isFocused }
+            .clip(RoundedCornerShape(999.dp))
+            .background(if (isFocused) Color.White else GolhaColors.Surface.copy(alpha = 0.92f))
+            .border(
+                width = if (isFocused) 2.dp else 1.dp,
+                color = if (isFocused) GolhaColors.BannerDetail else GolhaColors.Border,
+                shape = RoundedCornerShape(999.dp)
+            )
+            .clickable { }
+            .focusable()
+            .padding(horizontal = 32.dp, vertical = 12.dp)
+    )
+}
+
+@Composable
+@OptIn(ExperimentalComposeUiApi::class)
+private fun TvModeLoadingRow(
+    firstChipFocusRequester: FocusRequester,
+    upFocusRequester: FocusRequester,
+    downFocusRequester: FocusRequester,
+    sidebarEntryRequester: FocusRequester,
+) {
+    LazyRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        reverseLayout = false
+    ) {
+        items(6) { index ->
+            Box(
+                modifier = Modifier
+                    .then(
+                        if (index == 0) {
+                            Modifier.tvMainFocusAnchor(
+                                focusRequester = firstChipFocusRequester,
+                                upFocusRequester = upFocusRequester,
+                                downFocusRequester = downFocusRequester,
+                                sidebarEntryRequester = sidebarEntryRequester,
+                            )
+                        } else {
+                            Modifier.focusProperties {
+                                up = upFocusRequester
+                                down = downFocusRequester
+                                if (index == 5) {
+                                    left = FocusRequester.Cancel
+                                }
+                            }
+                        }
+                    )
+                    .width(if (index % 2 == 0) 112.dp else 92.dp)
+                    .height(45.dp)
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(GolhaColors.Surface.copy(alpha = 0.92f))
+                    .border(1.dp, GolhaColors.Border, RoundedCornerShape(999.dp))
+                    .focusable()
+            )
+        }
     }
 }
 
