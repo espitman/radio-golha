@@ -163,6 +163,7 @@ fun TvApp() {
                                 .fillMaxHeight()
                                 .weight(1f),
                             selectedTop = selectedTop,
+                            selectedSide = selectedSide,
                             selectedArtistId = selectedArtistId,
                             onSelectTop = { selectedTop = it; selectedSide = TvSideMenuItem.Home; selectedArtistId = null },
                             canGoBack = selectedArtistId != null || selectedTop != null || selectedSide != TvSideMenuItem.Home,
@@ -217,6 +218,7 @@ fun TvApp() {
 private fun TvMainPane(
     modifier: Modifier = Modifier,
     selectedTop: TvTopMenuItem?,
+    selectedSide: TvSideMenuItem,
     selectedArtistId: Long?,
     onSelectTop: (TvTopMenuItem) -> Unit,
     canGoBack: Boolean,
@@ -293,13 +295,17 @@ private fun TvMainPane(
 
     val artistEntryFocusRequester = remember { FocusRequester() }
     val artistLastTrackFocusRequester = remember { FocusRequester() }
+    val singersEntryFocusRequester = remember { FocusRequester() }
+    val singersLastCardFocusRequester = remember { FocusRequester() }
     val mainDownFocusRequester = when {
         selectedArtistId != null -> artistEntryFocusRequester
+        selectedTop == null && selectedSide == TvSideMenuItem.Singers -> singersEntryFocusRequester
         selectedTop == null -> duetFocusRequester
         else -> playerFocusRequester
     }
     val playerUpFocusRequester = when {
         selectedArtistId != null -> artistLastTrackFocusRequester
+        selectedTop == null && selectedSide == TvSideMenuItem.Singers -> singersLastCardFocusRequester
         selectedTop == null -> if (topTrackItems.take(5).size > 1) topTracksLastFocusRequester else trackFocusRequester
         else -> focusRequesters.first()
     }
@@ -336,6 +342,16 @@ private fun TvMainPane(
                 sidebarEntryRequester = sidebarEntryRequester,
                 playerFocusRequester = playerFocusRequester,
                 onPlayTrack = playTrackAndFocusPlayer,
+                modifier = Modifier.weight(1f),
+            )
+        } else if (selectedTop == null && selectedSide == TvSideMenuItem.Singers) {
+            TvSingersScreen(
+                entryFocusRequester = singersEntryFocusRequester,
+                lastCardFocusRequester = singersLastCardFocusRequester,
+                topEntryRequester = focusRequesters.first(),
+                sidebarEntryRequester = sidebarEntryRequester,
+                playerFocusRequester = playerFocusRequester,
+                onOpenArtist = onOpenArtist,
                 modifier = Modifier.weight(1f),
             )
         } else if (selectedTop == null) {
@@ -1747,6 +1763,19 @@ private fun TvBottomPlayer(
     val playButtonFocusedColor = Color(0xFFFFC93A)
     val playButtonIdleColor = Color.White
     val playButtonBackground = if (isPlayButtonFocused) playButtonFocusedColor else playButtonIdleColor
+    val singerImages = remember(currentTrack?.id, currentTrack?.artistImages) {
+        currentTrack?.artistImages.orEmpty().filter { it.isNotBlank() }.distinct()
+    }
+    var singerImageIndex by remember(currentTrack?.id) { mutableStateOf(0) }
+
+    LaunchedEffect(currentTrack?.id, singerImages) {
+        singerImageIndex = 0
+        if (singerImages.size <= 1) return@LaunchedEffect
+        while (true) {
+            delay(10_000)
+            singerImageIndex = (singerImageIndex + 1) % singerImages.size
+        }
+    }
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
         Column(
@@ -1875,14 +1904,20 @@ private fun TvBottomPlayer(
                             .background(Color.White.copy(alpha = 0.1f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        val cover = currentTrack?.coverUrl ?: currentTrack?.artistImages?.firstOrNull()
-                        if (!cover.isNullOrBlank()) {
-                            AsyncImage(
-                                model = cover,
-                                contentDescription = currentTrack?.title,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize(),
-                            )
+                        val singerImage = singerImages.getOrNull(singerImageIndex)
+                        if (!singerImage.isNullOrBlank()) {
+                            Crossfade(
+                                targetState = singerImage,
+                                animationSpec = tween(durationMillis = 850, easing = FastOutSlowInEasing),
+                                label = "tvPlayerSingerImage",
+                            ) { imageUrl ->
+                                AsyncImage(
+                                    model = imageUrl,
+                                    contentDescription = currentTrack?.title,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                            }
                         } else {
                             Text(
                                 text = "♪",

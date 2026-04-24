@@ -86,6 +86,7 @@ struct AndroidCategoryProgramItem {
     mode: Option<String>,
     duration: Option<String>,
     audio_url: Option<String>,
+    singer_avatars: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -106,6 +107,16 @@ struct AndroidArtistCategoryCountItem {
     category_id: i64,
     title: String,
     count: i64,
+}
+
+fn split_avatar_list(value: Option<String>) -> Vec<String> {
+    value
+        .unwrap_or_default()
+        .split('|')
+        .map(str::trim)
+        .filter(|item| !item.is_empty())
+        .map(ToOwned::to_owned)
+        .collect()
 }
 
 fn categories_json(db_path: &str) -> Result<String, String> {
@@ -384,6 +395,7 @@ fn programs_by_orchestra_json(db_path: &str, orchestra_id: i64) -> Result<String
             mode: row.get(4)?,
             duration: row.get(5)?,
             audio_url: row.get(6)?,
+            singer_avatars: Vec::new(),
         })
     }).map_err(|error| error.to_string())?;
 
@@ -500,7 +512,18 @@ fn artist_detail_json(db_path: &str, artist_id: i64) -> Result<String, String> {
                 WHERE pm.program_id = p.id
             ) AS mode_names,
             (SELECT MAX(end_time) FROM program_timeline WHERE program_id = p.id) AS duration,
-            p.audio_url
+            p.audio_url,
+            (
+                SELECT GROUP_CONCAT(avatar, '|')
+                FROM (
+                    SELECT DISTINCT a2.avatar AS avatar
+                    FROM program_singers ps
+                    JOIN singer s ON s.id = ps.singer_id
+                    JOIN artist a2 ON a2.id = s.artist_id
+                    WHERE ps.program_id = p.id AND a2.avatar IS NOT NULL AND TRIM(a2.avatar) != ''
+                    ORDER BY a2.name ASC
+                )
+            ) AS singer_avatars
         FROM artist_program_ids ap
         JOIN program p ON p.id = ap.program_id
         ORDER BY p.no ASC, p.id ASC
@@ -516,6 +539,7 @@ fn artist_detail_json(db_path: &str, artist_id: i64) -> Result<String, String> {
             mode: row.get(4)?,
             duration: row.get(5)?,
             audio_url: row.get(6)?,
+            singer_avatars: split_avatar_list(row.get::<_, Option<String>>(7)?),
         })
     }).map_err(|error| error.to_string())?;
 
@@ -649,6 +673,7 @@ fn duet_programs_json(db_path: &str, singer1: &str, singer2: &str) -> Result<Str
             mode: row.get(4)?,
             duration: row.get(5)?,
             audio_url: row.get(6)?,
+            singer_avatars: Vec::new(),
         })
     }).map_err(|e| e.to_string())?;
 
@@ -708,6 +733,7 @@ fn programs_by_mode_json(db_path: &str, mode_id: i64) -> Result<String, String> 
             mode: row.get(4)?,
             duration: row.get(5)?,
             audio_url: row.get(6)?,
+            singer_avatars: Vec::new(),
         })
     }).map_err(|e| e.to_string())?;
 
@@ -734,7 +760,7 @@ fn programs_by_ids_json(db_path: &str, ids_json: &str) -> Result<String, String>
     let rows = stmt.query_map([], |row| {
         Ok(AndroidCategoryProgramItem {
             id: row.get(0)?, title: row.get(1)?, no: row.get(2)?,
-            artist: row.get(3)?, mode: row.get(4)?, duration: row.get(5)?, audio_url: row.get(6)?,
+            artist: row.get(3)?, mode: row.get(4)?, duration: row.get(5)?, audio_url: row.get(6)?, singer_avatars: Vec::new(),
         })
     }).map_err(|e| e.to_string())?;
     let items: Vec<_> = rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())?;
@@ -907,6 +933,7 @@ pub extern "system" fn Java_com_radiogolha_mobile_RustCoreBridge_getProgramsByCa
                 mode: row.get(4)?,
                 duration: row.get(5)?,
                 audio_url: row.get(6)?,
+                singer_avatars: Vec::new(),
             })
         }).map_err(|error| error.to_string())?;
 

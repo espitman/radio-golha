@@ -423,7 +423,7 @@ private fun CategoryProgramUiModel.toTvTrackUiModel(detail: ArtistDetailUiModel)
         duration = duration,
         coverUrl = detail.imageUrl,
         audioUrl = audioUrl,
-        artistImages = detail.imageUrl?.let { listOf(it) }.orEmpty(),
+        artistImages = singerAvatars,
     )
 }
 

@@ -16,6 +16,7 @@ data class CategoryProgramUiModel(
     val duration: String?,
     val dastgah: String?,
     val audioUrl: String? = null,
+    val singerAvatars: List<String> = emptyList(),
 )
 
 data class SingerUiModel(
