@@ -1,5 +1,12 @@
 package com.radiogolha.mobile.tv
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.Canvas
@@ -17,6 +24,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
@@ -31,6 +39,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,6 +48,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
@@ -47,15 +58,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.radiogolha.mobile.theme.GolhaAppTheme
 import com.radiogolha.mobile.theme.GolhaColors
 import com.radiogolha.mobile.theme.GolhaPatternBackground
+import com.radiogolha.mobile.ui.home.DuetPairUiModel
+import com.radiogolha.mobile.ui.home.loadDuetPairsConfig
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 private enum class TvTopMenuItem(val title: String) {
     FavoriteSingers("خواننده‌های مورد علاقه"),
@@ -92,6 +110,7 @@ fun TvApp() {
                     val sidebarFocusRequesters = remember {
                         TvSideMenuItem.entries.map { FocusRequester() }
                     }
+                    val duetFocusRequester = remember { FocusRequester() }
                     val playerFocusRequester = remember { FocusRequester() }
                     val mainEntryRequester = topFocusRequesters.first()
                     val sidebarEntryRequester = sidebarFocusRequesters.first()
@@ -109,6 +128,7 @@ fun TvApp() {
                                 selectedSide = TvSideMenuItem.Home
                             },
                             focusRequesters = topFocusRequesters,
+                            duetFocusRequester = duetFocusRequester,
                             playerFocusRequester = playerFocusRequester,
                             sidebarEntryRequester = sidebarEntryRequester,
                         )
@@ -138,9 +158,18 @@ private fun TvMainPane(
     canGoBack: Boolean,
     onBack: () -> Unit,
     focusRequesters: List<FocusRequester>,
+    duetFocusRequester: FocusRequester,
     playerFocusRequester: FocusRequester,
     sidebarEntryRequester: FocusRequester,
 ) {
+    var duetItems by remember { mutableStateOf<List<DuetPairUiModel>>(emptyList()) }
+
+    LaunchedEffect(Unit) {
+        duetItems = withContext(Dispatchers.Default) {
+            runCatching { loadDuetPairsConfig() }.getOrElse { emptyList() }
+        }
+    }
+
     Column(
         modifier = modifier
     ) {
@@ -150,14 +179,26 @@ private fun TvMainPane(
             canGoBack = canGoBack,
             onBack = onBack,
             focusRequesters = focusRequesters,
-            playerFocusRequester = playerFocusRequester,
+            downFocusRequester = duetFocusRequester,
             sidebarEntryRequester = sidebarEntryRequester,
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 18.dp)
         )
+        if (selectedTop == null) {
+            TvDuetsHeroSlider(
+                items = duetItems,
+                focusRequester = duetFocusRequester,
+                topEntryRequester = focusRequesters.first(),
+                playerFocusRequester = playerFocusRequester,
+                sidebarEntryRequester = sidebarEntryRequester,
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 14.dp)
+            )
+        }
         Spacer(Modifier.weight(1f))
         TvBottomPlayer(
             focusRequester = playerFocusRequester,
-            topEntryRequester = focusRequesters.first(),
+            topEntryRequester = duetFocusRequester,
             sidebarEntryRequester = sidebarEntryRequester,
         )
     }
@@ -171,7 +212,7 @@ private fun TvTopMenuBar(
     canGoBack: Boolean,
     onBack: () -> Unit,
     focusRequesters: List<FocusRequester>,
-    playerFocusRequester: FocusRequester,
+    downFocusRequester: FocusRequester,
     sidebarEntryRequester: FocusRequester,
     modifier: Modifier = Modifier,
 ) {
@@ -193,7 +234,7 @@ private fun TvTopMenuBar(
                     .focusRequester(focusRequesters[index])
                     .focusProperties {
                         up = FocusRequester.Cancel
-                        down = playerFocusRequester
+                        down = downFocusRequester
                         if (index == 0) {
                             right = sidebarEntryRequester
                         }
@@ -218,6 +259,243 @@ private fun TvTopMenuBar(
         )
     }
 }
+
+@Composable
+@OptIn(ExperimentalComposeUiApi::class)
+private fun TvDuetsHeroSlider(
+    items: List<DuetPairUiModel>,
+    focusRequester: FocusRequester,
+    topEntryRequester: FocusRequester,
+    playerFocusRequester: FocusRequester,
+    sidebarEntryRequester: FocusRequester,
+    modifier: Modifier = Modifier,
+) {
+    val slides = if (items.isEmpty()) fallbackTvDuets else items
+    var currentIndex by remember(slides.size) { mutableStateOf(0) }
+    val safeIndex = currentIndex.coerceIn(0, (slides.size - 1).coerceAtLeast(0))
+
+    LaunchedEffect(slides.size) {
+        if (slides.size <= 1) return@LaunchedEffect
+        while (true) {
+            delay(4_000)
+            currentIndex = (currentIndex + 1) % slides.size
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(166.dp)
+            .focusRequester(focusRequester)
+            .focusProperties {
+                up = topEntryRequester
+                down = playerFocusRequester
+                right = sidebarEntryRequester
+                left = FocusRequester.Cancel
+            }
+            .focusable()
+    ) {
+        Crossfade(
+            targetState = slides[safeIndex],
+            animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
+            label = "tvDuetSlider"
+        ) { item ->
+            TvDuetCard(item = item)
+        }
+
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            slides.forEachIndexed { index, _ ->
+                Box(
+                    modifier = Modifier
+                        .size(if (index == safeIndex) 8.dp else 6.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (index == safeIndex) {
+                                GolhaColors.BannerDetail
+                            } else {
+                                Color.White.copy(alpha = 0.35f)
+                            }
+                        )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TvDuetCard(item: DuetPairUiModel) {
+    val inf = rememberInfiniteTransition(label = "tvDuetCard")
+    val glowAlpha by inf.animateFloat(
+        initialValue = 0.06f,
+        targetValue = 0.10f,
+        animationSpec = infiniteRepeatable(tween(2_000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "tvDuetGlow"
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .clip(RoundedCornerShape(24.dp))
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(
+                        Color(0xFF041334),
+                        Color(0xFF08255B),
+                        Color(0xFF031234)
+                    ),
+                    start = Offset.Zero,
+                    end = Offset.Infinite
+                )
+            )
+            .drawBehind {
+                drawCircle(
+                    color = GolhaColors.BannerDetail.copy(alpha = glowAlpha),
+                    radius = size.minDimension * 1.55f,
+                    center = Offset(size.width * 0.82f, size.height * 0.45f)
+                )
+                drawCircle(
+                    color = GolhaColors.BannerDetail.copy(alpha = glowAlpha * 0.8f),
+                    radius = size.minDimension * 1.1f,
+                    center = Offset(size.width * 0.08f, size.height * 1.0f)
+                )
+            }
+            .padding(horizontal = 28.dp, vertical = 18.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "${item.singer1} و ${item.singer2}",
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = GolhaColors.BannerDetail,
+                    maxLines = 1,
+                    textAlign = TextAlign.Start,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (item.trackCount > 0) {
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = "${item.trackCount} ترک",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        ),
+                        color = Color.White.copy(alpha = 0.50f)
+                    )
+                }
+                Spacer(Modifier.height(16.dp))
+                TvDuetProgramsButton()
+            }
+
+            Box(
+                modifier = Modifier
+                    .width(184.dp)
+                    .height(120.dp)
+            ) {
+                TvDuetAvatar(
+                    name = item.singer1,
+                    imageUrl = item.singer1Avatar,
+                    modifier = Modifier
+                        .size(104.dp)
+                        .align(Alignment.CenterStart)
+                )
+                TvDuetAvatar(
+                    name = item.singer2,
+                    imageUrl = item.singer2Avatar,
+                    modifier = Modifier
+                        .size(104.dp)
+                        .align(Alignment.CenterEnd)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TvDuetProgramsButton() {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(999.dp))
+            .background(GolhaColors.BannerDetail.copy(alpha = 0.92f))
+            .padding(horizontal = 20.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Filled.PlayArrow,
+            contentDescription = null,
+            tint = Color(0xFF002045),
+            modifier = Modifier.size(16.dp)
+        )
+        Text(
+            text = "مشاهده برنامه‌ها",
+            style = MaterialTheme.typography.bodySmall.copy(
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold
+            ),
+            color = Color(0xFF002045)
+        )
+    }
+}
+
+@Composable
+private fun TvDuetAvatar(
+    name: String,
+    imageUrl: String?,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(Color.White.copy(alpha = 0.12f)),
+        contentAlignment = Alignment.Center
+    ) {
+        if (!imageUrl.isNullOrBlank()) {
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Filled.Person,
+                contentDescription = null,
+                tint = GolhaColors.BannerDetail.copy(alpha = 0.75f),
+                modifier = Modifier.size(34.dp)
+            )
+        }
+    }
+}
+
+private val fallbackTvDuets = listOf(
+    DuetPairUiModel(
+        singer1 = "محمدرضا شجریان",
+        singer2 = "غلامحسین بنان",
+        trackCount = 27
+    ),
+    DuetPairUiModel(
+        singer1 = "بانو دلکش",
+        singer2 = "بانو مرضیه",
+        trackCount = 19
+    )
+)
 
 @Composable
 private fun TvBackButton(
