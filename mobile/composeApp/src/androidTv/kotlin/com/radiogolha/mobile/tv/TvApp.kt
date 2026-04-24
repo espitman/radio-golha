@@ -36,8 +36,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -82,6 +86,16 @@ fun TvApp() {
                 Row(
                     modifier = Modifier.fillMaxSize()
                 ) {
+                    val topFocusRequesters = remember {
+                        TvTopMenuItem.entries.map { FocusRequester() }
+                    }
+                    val sidebarFocusRequesters = remember {
+                        TvSideMenuItem.entries.map { FocusRequester() }
+                    }
+                    val playerFocusRequester = remember { FocusRequester() }
+                    val mainEntryRequester = topFocusRequesters.first()
+                    val sidebarEntryRequester = sidebarFocusRequesters.first()
+
                     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
                         TvMainPane(
                             modifier = Modifier
@@ -89,6 +103,9 @@ fun TvApp() {
                                 .weight(1f),
                             selectedTop = selectedTop,
                             onSelectTop = { selectedTop = it; selectedSide = TvSideMenuItem.Home },
+                            focusRequesters = topFocusRequesters,
+                            playerFocusRequester = playerFocusRequester,
+                            sidebarEntryRequester = sidebarEntryRequester,
                         )
                     }
                     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
@@ -97,7 +114,9 @@ fun TvApp() {
                             onSelectItem = { item ->
                                 selectedSide = item
                                 selectedTop = null
-                            }
+                            },
+                            focusRequesters = sidebarFocusRequesters,
+                            mainEntryRequester = mainEntryRequester,
                         )
                     }
                 }
@@ -111,6 +130,9 @@ private fun TvMainPane(
     modifier: Modifier = Modifier,
     selectedTop: TvTopMenuItem?,
     onSelectTop: (TvTopMenuItem) -> Unit,
+    focusRequesters: List<FocusRequester>,
+    playerFocusRequester: FocusRequester,
+    sidebarEntryRequester: FocusRequester,
 ) {
     Column(
         modifier = modifier
@@ -118,24 +140,35 @@ private fun TvMainPane(
         TvTopMenuBar(
             selectedTop = selectedTop,
             onSelect = onSelectTop,
+            focusRequesters = focusRequesters,
+            playerFocusRequester = playerFocusRequester,
+            sidebarEntryRequester = sidebarEntryRequester,
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 18.dp)
         )
         Spacer(Modifier.weight(1f))
-        TvBottomPlayer()
+        TvBottomPlayer(
+            focusRequester = playerFocusRequester,
+            topEntryRequester = focusRequesters.first(),
+            sidebarEntryRequester = sidebarEntryRequester,
+        )
     }
 }
 
 @Composable
+@OptIn(ExperimentalComposeUiApi::class)
 private fun TvTopMenuBar(
     selectedTop: TvTopMenuItem?,
     onSelect: (TvTopMenuItem) -> Unit,
+    focusRequesters: List<FocusRequester>,
+    playerFocusRequester: FocusRequester,
+    sidebarEntryRequester: FocusRequester,
     modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Start
     ) {
-        TvTopMenuItem.entries.forEach { item ->
+        TvTopMenuItem.entries.forEachIndexed { index, item ->
             val selected = selectedTop == item
             Text(
                 text = item.title,
@@ -146,6 +179,14 @@ private fun TvTopMenuBar(
                 color = if (selected) GolhaColors.PrimaryText else GolhaColors.SecondaryText,
                 textAlign = TextAlign.Start,
                 modifier = Modifier
+                    .focusRequester(focusRequesters[index])
+                    .focusProperties {
+                        up = FocusRequester.Cancel
+                        down = playerFocusRequester
+                        if (index == 0) {
+                            right = sidebarEntryRequester
+                        }
+                    }
                     .clip(RoundedCornerShape(12.dp))
                     .background(if (selected) GolhaColors.BadgeBackground else Color.Transparent)
                     .border(
@@ -163,7 +204,12 @@ private fun TvTopMenuBar(
 }
 
 @Composable
-private fun TvBottomPlayer() {
+@OptIn(ExperimentalComposeUiApi::class)
+private fun TvBottomPlayer(
+    focusRequester: FocusRequester,
+    topEntryRequester: FocusRequester,
+    sidebarEntryRequester: FocusRequester,
+) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
         Column(
             modifier = Modifier
@@ -212,9 +258,16 @@ private fun TvBottomPlayer() {
                     Spacer(Modifier.width(18.dp))
                     Box(
                         modifier = Modifier
+                            .focusRequester(focusRequester)
+                            .focusProperties {
+                                up = topEntryRequester
+                                down = FocusRequester.Cancel
+                                right = sidebarEntryRequester
+                            }
                             .size(42.dp)
                             .clip(RoundedCornerShape(11.dp))
-                            .background(Color.White),
+                            .background(Color.White)
+                            .focusable(),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -411,7 +464,9 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTriangle(
 @Composable
 private fun TvSidebar(
     selectedItem: TvSideMenuItem,
-    onSelectItem: (TvSideMenuItem) -> Unit
+    onSelectItem: (TvSideMenuItem) -> Unit,
+    focusRequesters: List<FocusRequester>,
+    mainEntryRequester: FocusRequester,
 ) {
     Column(
         modifier = Modifier
@@ -438,7 +493,7 @@ private fun TvSidebar(
         )
         Spacer(Modifier.height(24.dp))
 
-        TvSideMenuItem.entries.forEach { item ->
+        TvSideMenuItem.entries.forEachIndexed { index, item ->
             if (item == TvSideMenuItem.Settings) {
                 Spacer(modifier = Modifier.weight(1f))
                 Spacer(
@@ -454,20 +509,40 @@ private fun TvSidebar(
                 item = item,
                 selected = item == selectedItem,
                 onClick = { onSelectItem(item) },
+                focusRequester = focusRequesters[index],
+                isFirst = index == 0,
+                isLast = index == TvSideMenuItem.entries.lastIndex,
+                mainEntryRequester = mainEntryRequester,
             )
         }
     }
 }
 
 @Composable
+@OptIn(ExperimentalComposeUiApi::class)
 private fun TvSidebarItem(
     item: TvSideMenuItem,
     selected: Boolean,
     onClick: () -> Unit,
+    focusRequester: FocusRequester,
+    isFirst: Boolean,
+    isLast: Boolean,
+    mainEntryRequester: FocusRequester,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .focusRequester(focusRequester)
+            .focusProperties {
+                left = mainEntryRequester
+                right = FocusRequester.Cancel
+                if (isFirst) {
+                    up = FocusRequester.Cancel
+                }
+                if (isLast) {
+                    down = FocusRequester.Cancel
+                }
+            }
             .clip(RoundedCornerShape(10.dp))
             .background(if (selected) Color(0xFFE8E2D1) else Color.Transparent)
             .clickable { onClick() }
