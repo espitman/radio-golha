@@ -145,6 +145,11 @@ fun TvApp() {
                     val mainEntryRequester = topFocusRequesters.first()
                     val sidebarEntryRequester = sidebarFocusRequesters.first()
 
+                    LaunchedEffect(sidebarEntryRequester) {
+                        delay(100)
+                        sidebarEntryRequester.requestFocus()
+                    }
+
                     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
                         TvMainPane(
                             modifier = Modifier
@@ -882,7 +887,7 @@ private fun TvFeaturedSingersCarousel(
         when {
             isLoading -> TvArtistLoadingRow(
                 firstCardFocusRequester = firstCardFocusRequester,
-                upFocusRequester = modeFocusRequester,
+                upFocusRequester = programFocusRequester,
                 downFocusRequester = playerFocusRequester,
                 sidebarEntryRequester = sidebarEntryRequester,
             )
@@ -893,7 +898,7 @@ private fun TvFeaturedSingersCarousel(
                     .height(225.dp)
                     .tvMainFocusAnchor(
                         focusRequester = firstCardFocusRequester,
-                        upFocusRequester = modeFocusRequester,
+                        upFocusRequester = programFocusRequester,
                         downFocusRequester = playerFocusRequester,
                         sidebarEntryRequester = sidebarEntryRequester,
                     )
@@ -915,7 +920,7 @@ private fun TvFeaturedSingersCarousel(
                             modifier = Modifier
                                 .then(if (index == 0) Modifier.focusRequester(firstCardFocusRequester) else Modifier)
                                 .focusProperties {
-                                    up = modeFocusRequester
+                                    up = programFocusRequester
                                     down = playerFocusRequester
                                     if (index == 0) {
                                         right = sidebarEntryRequester
