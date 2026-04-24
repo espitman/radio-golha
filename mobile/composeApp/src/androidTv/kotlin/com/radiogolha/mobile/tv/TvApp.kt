@@ -55,6 +55,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -312,21 +313,19 @@ private fun TvDuetsHeroSlider(
         modifier = modifier
             .fillMaxWidth()
             .height(166.dp)
-            .focusRequester(focusRequester)
-            .focusProperties {
-                up = topEntryRequester
-                down = playerFocusRequester
-                right = sidebarEntryRequester
-                left = FocusRequester.Cancel
-            }
-            .focusable()
     ) {
         Crossfade(
             targetState = slides[safeIndex],
             animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
             label = "tvDuetSlider"
         ) { item ->
-            TvDuetCard(item = item)
+            TvDuetCard(
+                item = item,
+                buttonFocusRequester = focusRequester,
+                topEntryRequester = topEntryRequester,
+                playerFocusRequester = playerFocusRequester,
+                sidebarEntryRequester = sidebarEntryRequester,
+            )
         }
 
         Row(
@@ -355,7 +354,13 @@ private fun TvDuetsHeroSlider(
 }
 
 @Composable
-private fun TvDuetCard(item: DuetPairUiModel) {
+private fun TvDuetCard(
+    item: DuetPairUiModel,
+    buttonFocusRequester: FocusRequester,
+    topEntryRequester: FocusRequester,
+    playerFocusRequester: FocusRequester,
+    sidebarEntryRequester: FocusRequester,
+) {
     val inf = rememberInfiniteTransition(label = "tvDuetCard")
     val glowAlpha by inf.animateFloat(
         initialValue = 0.06f,
@@ -426,7 +431,12 @@ private fun TvDuetCard(item: DuetPairUiModel) {
                     )
                 }
                 Spacer(Modifier.height(16.dp))
-                TvDuetProgramsButton()
+                TvDuetProgramsButton(
+                    focusRequester = buttonFocusRequester,
+                    topEntryRequester = topEntryRequester,
+                    playerFocusRequester = playerFocusRequester,
+                    sidebarEntryRequester = sidebarEntryRequester,
+                )
             }
 
             Box(
@@ -454,11 +464,36 @@ private fun TvDuetCard(item: DuetPairUiModel) {
 }
 
 @Composable
-private fun TvDuetProgramsButton() {
+@OptIn(ExperimentalComposeUiApi::class)
+private fun TvDuetProgramsButton(
+    focusRequester: FocusRequester,
+    topEntryRequester: FocusRequester,
+    playerFocusRequester: FocusRequester,
+    sidebarEntryRequester: FocusRequester,
+) {
+    var isFocused by remember { mutableStateOf(false) }
+    val background = if (isFocused) Color.White else GolhaColors.BannerDetail.copy(alpha = 0.92f)
+    val foreground = Color(0xFF002045)
+
     Row(
         modifier = Modifier
+            .focusRequester(focusRequester)
+            .focusProperties {
+                up = topEntryRequester
+                down = playerFocusRequester
+                right = sidebarEntryRequester
+                left = FocusRequester.Cancel
+            }
+            .onFocusChanged { isFocused = it.isFocused }
             .clip(RoundedCornerShape(999.dp))
-            .background(GolhaColors.BannerDetail.copy(alpha = 0.92f))
+            .background(background)
+            .border(
+                width = if (isFocused) 2.dp else 0.dp,
+                color = GolhaColors.BannerDetail,
+                shape = RoundedCornerShape(999.dp)
+            )
+            .clickable { }
+            .focusable()
             .padding(horizontal = 20.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -466,7 +501,7 @@ private fun TvDuetProgramsButton() {
         Icon(
             imageVector = Icons.Filled.PlayArrow,
             contentDescription = null,
-            tint = Color(0xFF002045),
+            tint = foreground,
             modifier = Modifier.size(16.dp)
         )
         Text(
@@ -475,7 +510,7 @@ private fun TvDuetProgramsButton() {
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold
             ),
-            color = Color(0xFF002045)
+            color = foreground
         )
     }
 }
@@ -580,21 +615,21 @@ private fun TvProgramCard(
 ) {
     Row(
         modifier = modifier
-            .width(188.dp)
-            .height(82.dp)
-            .clip(RoundedCornerShape(14.dp))
+            .width(172.dp)
+            .height(66.dp)
+            .clip(RoundedCornerShape(12.dp))
             .background(GolhaColors.Surface.copy(alpha = 0.9f))
-            .border(1.dp, GolhaColors.Border.copy(alpha = 0.75f), RoundedCornerShape(14.dp))
+            .border(1.dp, GolhaColors.Border.copy(alpha = 0.75f), RoundedCornerShape(12.dp))
             .clickable { }
             .focusable()
-            .padding(12.dp),
+            .padding(9.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Box(
             modifier = Modifier
-                .size(48.dp)
-                .clip(RoundedCornerShape(10.dp))
+                .size(38.dp)
+                .clip(RoundedCornerShape(8.dp))
                 .background(GolhaColors.PrimaryText.copy(alpha = 0.05f)),
             contentAlignment = Alignment.Center
         ) {
@@ -608,7 +643,7 @@ private fun TvProgramCard(
             Text(
                 text = item.title.replace("\n", " "),
                 style = MaterialTheme.typography.bodyMedium.copy(
-                    fontSize = 12.sp,
+                    fontSize = 10.5.sp,
                     fontWeight = FontWeight.Bold
                 ),
                 color = GolhaColors.PrimaryText,
@@ -619,7 +654,7 @@ private fun TvProgramCard(
             Spacer(Modifier.height(2.dp))
             Text(
                 text = "${item.episodeCount} برنامه",
-                style = MaterialTheme.typography.bodySmall.copy(fontSize = 8.sp),
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 7.5.sp),
                 color = Color(0xFF7D786D),
                 maxLines = 1,
                 textAlign = TextAlign.Start,
@@ -640,7 +675,7 @@ private fun TvProgramGlyph(title: String) {
             else -> 4
         }
     }
-    Canvas(modifier = Modifier.size(22.dp)) {
+    Canvas(modifier = Modifier.size(18.dp)) {
         val gold = GolhaColors.BannerDetail
         val stroke = 2.4.dp.toPx()
         when (kind) {
