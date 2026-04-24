@@ -103,6 +103,11 @@ fun TvApp() {
                                 .weight(1f),
                             selectedTop = selectedTop,
                             onSelectTop = { selectedTop = it; selectedSide = TvSideMenuItem.Home },
+                            canGoBack = selectedTop != null || selectedSide != TvSideMenuItem.Home,
+                            onBack = {
+                                selectedTop = null
+                                selectedSide = TvSideMenuItem.Home
+                            },
                             focusRequesters = topFocusRequesters,
                             playerFocusRequester = playerFocusRequester,
                             sidebarEntryRequester = sidebarEntryRequester,
@@ -130,6 +135,8 @@ private fun TvMainPane(
     modifier: Modifier = Modifier,
     selectedTop: TvTopMenuItem?,
     onSelectTop: (TvTopMenuItem) -> Unit,
+    canGoBack: Boolean,
+    onBack: () -> Unit,
     focusRequesters: List<FocusRequester>,
     playerFocusRequester: FocusRequester,
     sidebarEntryRequester: FocusRequester,
@@ -140,6 +147,8 @@ private fun TvMainPane(
         TvTopMenuBar(
             selectedTop = selectedTop,
             onSelect = onSelectTop,
+            canGoBack = canGoBack,
+            onBack = onBack,
             focusRequesters = focusRequesters,
             playerFocusRequester = playerFocusRequester,
             sidebarEntryRequester = sidebarEntryRequester,
@@ -159,6 +168,8 @@ private fun TvMainPane(
 private fun TvTopMenuBar(
     selectedTop: TvTopMenuItem?,
     onSelect: (TvTopMenuItem) -> Unit,
+    canGoBack: Boolean,
+    onBack: () -> Unit,
     focusRequesters: List<FocusRequester>,
     playerFocusRequester: FocusRequester,
     sidebarEntryRequester: FocusRequester,
@@ -199,6 +210,46 @@ private fun TvTopMenuBar(
                     .padding(horizontal = 14.dp, vertical = 8.dp)
             )
             Spacer(Modifier.width(10.dp))
+        }
+        Spacer(Modifier.weight(1f))
+        TvBackButton(
+            enabled = canGoBack,
+            onClick = onBack,
+        )
+    }
+}
+
+@Composable
+private fun TvBackButton(
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .size(34.dp)
+            .clip(RoundedCornerShape(999.dp))
+            .background(GolhaColors.Surface.copy(alpha = 0.85f))
+            .clickable(enabled = enabled) { onClick() }
+            .focusable(enabled = enabled),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.size(14.dp)) {
+            val color = GolhaColors.PrimaryText.copy(alpha = if (enabled) 0.72f else 0.28f)
+            val strokeWidth = 2.2.dp.toPx()
+            drawLine(
+                color = color,
+                start = Offset(size.width * 0.65f, size.height * 0.12f),
+                end = Offset(size.width * 0.28f, size.height * 0.5f),
+                strokeWidth = strokeWidth,
+                cap = StrokeCap.Round
+            )
+            drawLine(
+                color = color,
+                start = Offset(size.width * 0.28f, size.height * 0.5f),
+                end = Offset(size.width * 0.65f, size.height * 0.88f),
+                strokeWidth = strokeWidth,
+                cap = StrokeCap.Round
+            )
         }
     }
 }
