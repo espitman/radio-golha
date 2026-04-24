@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Exec
 import java.io.File
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -26,6 +27,16 @@ val rustLibName = "libradiogolha_android.so"
 val rustJniLibsRootDir = layout.buildDirectory.dir("generated/rust/jniLibs")
 val rustJniLibsDir = layout.buildDirectory.dir("generated/rust/jniLibs/arm64-v8a")
 val archiveAssetsDir = layout.buildDirectory.dir("generated/archive-assets")
+val releaseSigningPropertiesFile = rootProject.file("signing/release-signing.properties")
+val releaseSigningProperties = Properties().apply {
+    if (releaseSigningPropertiesFile.exists()) {
+        releaseSigningPropertiesFile.inputStream().use(::load)
+    }
+}
+val hasReleaseSigningProperties =
+    releaseSigningProperties.getProperty("storeFile").orEmpty().isNotBlank() &&
+        releaseSigningProperties.getProperty("storePassword").orEmpty().isNotBlank() &&
+        releaseSigningProperties.getProperty("keyAlias").orEmpty().isNotBlank()
 
 val syncArchiveDb by tasks.registering(Copy::class) {
     from(rootProject.file("../database/golha_database.db"))
@@ -154,6 +165,18 @@ android {
         compose = true
     }
 
+    signingConfigs {
+        if (hasReleaseSigningProperties) {
+            create("release") {
+                storeFile = file(releaseSigningProperties.getProperty("storeFile"))
+                storePassword = releaseSigningProperties.getProperty("storePassword")
+                keyAlias = releaseSigningProperties.getProperty("keyAlias")
+                keyPassword = releaseSigningProperties.getProperty("keyPassword")
+                    ?: releaseSigningProperties.getProperty("storePassword")
+            }
+        }
+    }
+
     flavorDimensions += "device"
     productFlavors {
         create("mobile") {
@@ -170,7 +193,7 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
     }
 
@@ -214,9 +237,12 @@ tasks.matching {
         "mergeTvReleaseNativeLibs",
         "mergeTvReleaseAssets",
         "lintVitalAnalyzeRelease",
+        "lintVitalAnalyzeTvRelease",
         "generateReleaseLintVitalReportModel",
+        "generateTvReleaseLintVitalReportModel",
         "generateDebugLintModel",
-        "generateReleaseLintModel"
+        "generateReleaseLintModel",
+        "generateTvReleaseLintModel"
     )
 }
     .configureEach {

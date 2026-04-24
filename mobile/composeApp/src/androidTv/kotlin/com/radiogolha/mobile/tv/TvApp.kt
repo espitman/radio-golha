@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -38,6 +39,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Icon
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -173,18 +175,29 @@ private fun TvMainPane(
 ) {
     var duetItems by remember { mutableStateOf<List<DuetPairUiModel>>(emptyList()) }
     var programItems by remember { mutableStateOf<List<ProgramUiModel>>(emptyList()) }
+    var isHomeLoading by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
+        isHomeLoading = true
         val home = withContext(Dispatchers.Default) {
-            runCatching { loadHomeUiState() }.getOrNull()
+            runCatching { loadHomeUiState() }
+                .onFailure { println("ERROR TvMainPane loadHomeUiState: ${it.message}") }
+                .getOrNull()
         }
-        programItems = home?.programs.orEmpty()
-        duetItems = home?.duets.orEmpty()
-        if (duetItems.isEmpty()) {
-            duetItems = withContext(Dispatchers.Default) {
-                runCatching { loadDuetPairsConfig() }.getOrElse { emptyList() }
+        val homeDuets = home?.duets.orEmpty()
+        val configDuets = if (homeDuets.isEmpty()) {
+            withContext(Dispatchers.Default) {
+                runCatching { loadDuetPairsConfig() }
+                    .onFailure { println("ERROR TvMainPane loadDuetPairsConfig: ${it.message}") }
+                    .getOrDefault(emptyList())
             }
+        } else {
+            emptyList()
         }
+        programItems = home?.programs.orEmpty().sortedByDescending { it.episodeCount }
+        duetItems = homeDuets.ifEmpty { configDuets }
+        println("TV_HOME_LOADED programs=${programItems.size} duets=${duetItems.size}")
+        isHomeLoading = false
     }
 
     Column(
@@ -196,13 +209,14 @@ private fun TvMainPane(
             canGoBack = canGoBack,
             onBack = onBack,
             focusRequesters = focusRequesters,
-            downFocusRequester = duetFocusRequester,
+            downFocusRequester = if (selectedTop == null) duetFocusRequester else playerFocusRequester,
             sidebarEntryRequester = sidebarEntryRequester,
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 18.dp)
         )
         if (selectedTop == null) {
             TvDuetsHeroSlider(
                 items = duetItems,
+                isLoading = isHomeLoading,
                 focusRequester = duetFocusRequester,
                 topEntryRequester = focusRequesters.first(),
                 playerFocusRequester = programFocusRequester,
@@ -213,6 +227,7 @@ private fun TvMainPane(
             )
             TvProgramsCarousel(
                 items = programItems,
+                isLoading = isHomeLoading,
                 firstCardFocusRequester = programFocusRequester,
                 duetFocusRequester = duetFocusRequester,
                 playerFocusRequester = playerFocusRequester,
@@ -225,7 +240,7 @@ private fun TvMainPane(
         Spacer(Modifier.weight(1f))
         TvBottomPlayer(
             focusRequester = playerFocusRequester,
-            topEntryRequester = programFocusRequester,
+            topEntryRequester = if (selectedTop == null) programFocusRequester else focusRequesters.first(),
             sidebarEntryRequester = sidebarEntryRequester,
         )
     }
@@ -291,21 +306,21 @@ private fun TvTopMenuBar(
 @OptIn(ExperimentalComposeUiApi::class)
 private fun TvDuetsHeroSlider(
     items: List<DuetPairUiModel>,
+    isLoading: Boolean,
     focusRequester: FocusRequester,
     topEntryRequester: FocusRequester,
     playerFocusRequester: FocusRequester,
     sidebarEntryRequester: FocusRequester,
     modifier: Modifier = Modifier,
 ) {
-    val slides = if (items.isEmpty()) fallbackTvDuets else items
-    var currentIndex by remember(slides.size) { mutableStateOf(0) }
-    val safeIndex = currentIndex.coerceIn(0, (slides.size - 1).coerceAtLeast(0))
+    var currentIndex by remember(items.size) { mutableStateOf(0) }
+    val safeIndex = currentIndex.coerceIn(0, (items.size - 1).coerceAtLeast(0))
 
-    LaunchedEffect(slides.size) {
-        if (slides.size <= 1) return@LaunchedEffect
+    LaunchedEffect(items.size) {
+        if (items.size <= 1) return@LaunchedEffect
         while (true) {
             delay(4_000)
-            currentIndex = (currentIndex + 1) % slides.size
+            currentIndex = (currentIndex + 1) % items.size
         }
     }
 
@@ -314,40 +329,64 @@ private fun TvDuetsHeroSlider(
             .fillMaxWidth()
             .height(166.dp)
     ) {
-        Crossfade(
-            targetState = slides[safeIndex],
-            animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
-            label = "tvDuetSlider"
-        ) { item ->
-            TvDuetCard(
-                item = item,
-                buttonFocusRequester = focusRequester,
-                topEntryRequester = topEntryRequester,
-                playerFocusRequester = playerFocusRequester,
-                sidebarEntryRequester = sidebarEntryRequester,
+        when {
+            isLoading -> TvHomeLoadingCard(
+                label = "در حال بارگذاری دوئت‌ها...",
+                modifier = Modifier.tvMainFocusAnchor(
+                    focusRequester = focusRequester,
+                    upFocusRequester = topEntryRequester,
+                    downFocusRequester = playerFocusRequester,
+                    sidebarEntryRequester = sidebarEntryRequester,
+                )
             )
+            items.isEmpty() -> TvHomeEmptyCard(
+                label = "دوئتی برای نمایش وجود ندارد",
+                modifier = Modifier.tvMainFocusAnchor(
+                    focusRequester = focusRequester,
+                    upFocusRequester = topEntryRequester,
+                    downFocusRequester = playerFocusRequester,
+                    sidebarEntryRequester = sidebarEntryRequester,
+                )
+            )
+            else -> {
+                Crossfade(
+                    targetState = items[safeIndex],
+                    animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
+                    label = "tvDuetSlider"
+                ) { item ->
+                    TvDuetCard(
+                        item = item,
+                        buttonFocusRequester = focusRequester,
+                        topEntryRequester = topEntryRequester,
+                        playerFocusRequester = playerFocusRequester,
+                        sidebarEntryRequester = sidebarEntryRequester,
+                    )
+                }
+            }
         }
 
-        Row(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            slides.forEachIndexed { index, _ ->
-                Box(
-                    modifier = Modifier
-                        .size(if (index == safeIndex) 8.dp else 6.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (index == safeIndex) {
-                                GolhaColors.BannerDetail
-                            } else {
-                                Color.White.copy(alpha = 0.35f)
-                            }
-                        )
-                )
+        if (!isLoading && items.size > 1) {
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                items.forEachIndexed { index, _ ->
+                    Box(
+                        modifier = Modifier
+                            .size(if (index == safeIndex) 8.dp else 6.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (index == safeIndex) {
+                                    GolhaColors.BannerDetail
+                                } else {
+                                    Color.White.copy(alpha = 0.35f)
+                                }
+                            )
+                    )
+                }
             }
         }
     }
@@ -545,31 +584,17 @@ private fun TvDuetAvatar(
     }
 }
 
-private val fallbackTvDuets = listOf(
-    DuetPairUiModel(
-        singer1 = "محمدرضا شجریان",
-        singer2 = "غلامحسین بنان",
-        trackCount = 27
-    ),
-    DuetPairUiModel(
-        singer1 = "بانو دلکش",
-        singer2 = "بانو مرضیه",
-        trackCount = 19
-    )
-)
-
 @Composable
 @OptIn(ExperimentalComposeUiApi::class)
 private fun TvProgramsCarousel(
     items: List<ProgramUiModel>,
+    isLoading: Boolean,
     firstCardFocusRequester: FocusRequester,
     duetFocusRequester: FocusRequester,
     playerFocusRequester: FocusRequester,
     sidebarEntryRequester: FocusRequester,
     modifier: Modifier = Modifier,
 ) {
-    val programs = if (items.isEmpty()) fallbackTvPrograms else items
-
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
             text = "برنامه‌ها",
@@ -582,31 +607,218 @@ private fun TvProgramsCarousel(
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(14.dp))
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            reverseLayout = false
-        ) {
-            itemsIndexed(programs) { index, item ->
-                TvProgramCard(
-                    item = item,
-                    modifier = Modifier
-                        .then(if (index == 0) Modifier.focusRequester(firstCardFocusRequester) else Modifier)
-                        .focusProperties {
-                            up = duetFocusRequester
-                            down = playerFocusRequester
-                            if (index == 0) {
-                                right = sidebarEntryRequester
-                            }
-                            if (index == programs.lastIndex) {
-                                left = FocusRequester.Cancel
-                            }
-                        }
-                )
+        when {
+            isLoading -> TvProgramLoadingRow(
+                firstCardFocusRequester = firstCardFocusRequester,
+                duetFocusRequester = duetFocusRequester,
+                playerFocusRequester = playerFocusRequester,
+                sidebarEntryRequester = sidebarEntryRequester,
+            )
+            items.isEmpty() -> TvHomeEmptyCard(
+                label = "برنامه‌ای برای نمایش وجود ندارد",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(66.dp)
+                    .tvMainFocusAnchor(
+                        focusRequester = firstCardFocusRequester,
+                        upFocusRequester = duetFocusRequester,
+                        downFocusRequester = playerFocusRequester,
+                        sidebarEntryRequester = sidebarEntryRequester,
+                    )
+            )
+            else -> {
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    reverseLayout = false
+                ) {
+                    itemsIndexed(items) { index, item ->
+                        TvProgramCard(
+                            item = item,
+                            modifier = Modifier
+                                .then(if (index == 0) Modifier.focusRequester(firstCardFocusRequester) else Modifier)
+                                .focusProperties {
+                                    up = duetFocusRequester
+                                    down = playerFocusRequester
+                                    if (index == 0) {
+                                        right = sidebarEntryRequester
+                                    }
+                                    if (index == items.lastIndex) {
+                                        left = FocusRequester.Cancel
+                                    }
+                                }
+                        )
+                    }
+                }
             }
         }
     }
 }
+
+@Composable
+private fun TvHomeLoadingCard(
+    label: String,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .clip(RoundedCornerShape(24.dp))
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(
+                        Color(0xFF041334),
+                        Color(0xFF08255B),
+                        Color(0xFF031234)
+                    ),
+                    start = Offset.Zero,
+                    end = Offset.Infinite
+                )
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            CircularProgressIndicator(
+                color = GolhaColors.BannerDetail,
+                strokeWidth = 3.dp,
+                modifier = Modifier.size(28.dp)
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                ),
+                color = Color.White.copy(alpha = 0.86f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun TvHomeEmptyCard(
+    label: String,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .clip(RoundedCornerShape(18.dp))
+            .background(GolhaColors.Surface.copy(alpha = 0.9f))
+            .border(1.dp, GolhaColors.Border.copy(alpha = 0.75f), RoundedCornerShape(18.dp)),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold
+            ),
+            color = GolhaColors.SecondaryText,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+@OptIn(ExperimentalComposeUiApi::class)
+private fun TvProgramLoadingRow(
+    firstCardFocusRequester: FocusRequester,
+    duetFocusRequester: FocusRequester,
+    playerFocusRequester: FocusRequester,
+    sidebarEntryRequester: FocusRequester,
+) {
+    LazyRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        reverseLayout = false
+    ) {
+        items(4) { index ->
+            Row(
+                modifier = Modifier
+                    .then(
+                        if (index == 0) {
+                            Modifier.tvMainFocusAnchor(
+                                focusRequester = firstCardFocusRequester,
+                                upFocusRequester = duetFocusRequester,
+                                downFocusRequester = playerFocusRequester,
+                                sidebarEntryRequester = sidebarEntryRequester,
+                            )
+                        } else {
+                            Modifier.focusProperties {
+                                up = duetFocusRequester
+                                down = playerFocusRequester
+                                if (index == 3) {
+                                    left = FocusRequester.Cancel
+                                }
+                            }
+                        }
+                    )
+                    .width(172.dp)
+                    .height(66.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(GolhaColors.Surface.copy(alpha = 0.9f))
+                    .border(1.dp, GolhaColors.Border.copy(alpha = 0.75f), RoundedCornerShape(12.dp))
+                    .padding(9.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(GolhaColors.PrimaryText.copy(alpha = 0.06f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = GolhaColors.BannerDetail,
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(if (index % 2 == 0) 0.78f else 0.58f)
+                            .height(9.dp)
+                            .clip(RoundedCornerShape(999.dp))
+                            .background(GolhaColors.PrimaryText.copy(alpha = 0.08f))
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.42f)
+                            .height(7.dp)
+                            .clip(RoundedCornerShape(999.dp))
+                            .background(GolhaColors.PrimaryText.copy(alpha = 0.06f))
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalComposeUiApi::class)
+private fun Modifier.tvMainFocusAnchor(
+    focusRequester: FocusRequester,
+    upFocusRequester: FocusRequester,
+    downFocusRequester: FocusRequester,
+    sidebarEntryRequester: FocusRequester,
+): Modifier = this
+    .focusRequester(focusRequester)
+    .focusProperties {
+        up = upFocusRequester
+        down = downFocusRequester
+        right = sidebarEntryRequester
+        left = FocusRequester.Cancel
+    }
+    .focusable()
 
 @Composable
 private fun TvProgramCard(
@@ -715,13 +927,6 @@ private fun TvProgramGlyph(title: String) {
         }
     }
 }
-
-private val fallbackTvPrograms = listOf(
-    ProgramUiModel(title = "گل‌های جاویدان", episodeCount = 101),
-    ProgramUiModel(title = "یک شاخه گل", episodeCount = 465),
-    ProgramUiModel(title = "برگ سبز", episodeCount = 312),
-    ProgramUiModel(title = "گل‌های تازه", episodeCount = 155),
-)
 
 @Composable
 private fun TvBackButton(
@@ -1065,8 +1270,8 @@ private fun TvSidebar(
                 selected = item == selectedItem,
                 onClick = { onSelectItem(item) },
                 focusRequester = focusRequesters[index],
-                isFirst = index == 0,
-                isLast = index == TvSideMenuItem.entries.lastIndex,
+                upFocusRequester = focusRequesters.getOrNull(index - 1),
+                downFocusRequester = focusRequesters.getOrNull(index + 1),
                 mainEntryRequester = mainEntryRequester,
             )
         }
@@ -1080,8 +1285,8 @@ private fun TvSidebarItem(
     selected: Boolean,
     onClick: () -> Unit,
     focusRequester: FocusRequester,
-    isFirst: Boolean,
-    isLast: Boolean,
+    upFocusRequester: FocusRequester?,
+    downFocusRequester: FocusRequester?,
     mainEntryRequester: FocusRequester,
 ) {
     Row(
@@ -1091,12 +1296,8 @@ private fun TvSidebarItem(
             .focusProperties {
                 left = mainEntryRequester
                 right = FocusRequester.Cancel
-                if (isFirst) {
-                    up = FocusRequester.Cancel
-                }
-                if (isLast) {
-                    down = FocusRequester.Cancel
-                }
+                up = upFocusRequester ?: FocusRequester.Cancel
+                down = downFocusRequester ?: FocusRequester.Cancel
             }
             .clip(RoundedCornerShape(10.dp))
             .background(if (selected) Color(0xFFE8E2D1) else Color.Transparent)
