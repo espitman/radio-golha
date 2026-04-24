@@ -144,6 +144,7 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "0.1.0"
+        manifestPlaceholders["appLabel"] = "@string/app_name"
     }
 
     sourceSets["main"].assets.srcDir(archiveAssetsDir)
@@ -151,6 +152,19 @@ android {
 
     buildFeatures {
         compose = true
+    }
+
+    flavorDimensions += "device"
+    productFlavors {
+        create("mobile") {
+            dimension = "device"
+        }
+        create("tv") {
+            dimension = "device"
+            applicationIdSuffix = ".tv"
+            versionNameSuffix = "-tv"
+            manifestPlaceholders["appLabel"] = "رادیو گل‌ها TV"
+        }
     }
 
     buildTypes {
@@ -170,6 +184,9 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    sourceSets["mobile"].manifest.srcFile("src/mobile/AndroidManifest.xml")
+    sourceSets["tv"].manifest.srcFile("src/androidTv/AndroidManifest.xml")
 }
 
 dependencies {
@@ -184,6 +201,18 @@ tasks.matching {
         "mergeReleaseJniLibFolders",
         "mergeReleaseNativeLibs",
         "mergeReleaseAssets",
+        "mergeMobileDebugJniLibFolders",
+        "mergeMobileDebugNativeLibs",
+        "mergeMobileDebugAssets",
+        "mergeMobileReleaseJniLibFolders",
+        "mergeMobileReleaseNativeLibs",
+        "mergeMobileReleaseAssets",
+        "mergeTvDebugJniLibFolders",
+        "mergeTvDebugNativeLibs",
+        "mergeTvDebugAssets",
+        "mergeTvReleaseJniLibFolders",
+        "mergeTvReleaseNativeLibs",
+        "mergeTvReleaseAssets",
         "lintVitalAnalyzeRelease",
         "generateReleaseLintVitalReportModel",
         "generateDebugLintModel",
