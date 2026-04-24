@@ -24,6 +24,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -57,6 +59,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -70,6 +73,8 @@ import com.radiogolha.mobile.theme.GolhaAppTheme
 import com.radiogolha.mobile.theme.GolhaColors
 import com.radiogolha.mobile.theme.GolhaPatternBackground
 import com.radiogolha.mobile.ui.home.DuetPairUiModel
+import com.radiogolha.mobile.ui.home.ProgramUiModel
+import com.radiogolha.mobile.ui.home.loadHomeUiState
 import com.radiogolha.mobile.ui.home.loadDuetPairsConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -111,6 +116,7 @@ fun TvApp() {
                         TvSideMenuItem.entries.map { FocusRequester() }
                     }
                     val duetFocusRequester = remember { FocusRequester() }
+                    val programFocusRequester = remember { FocusRequester() }
                     val playerFocusRequester = remember { FocusRequester() }
                     val mainEntryRequester = topFocusRequesters.first()
                     val sidebarEntryRequester = sidebarFocusRequesters.first()
@@ -129,6 +135,7 @@ fun TvApp() {
                             },
                             focusRequesters = topFocusRequesters,
                             duetFocusRequester = duetFocusRequester,
+                            programFocusRequester = programFocusRequester,
                             playerFocusRequester = playerFocusRequester,
                             sidebarEntryRequester = sidebarEntryRequester,
                         )
@@ -159,14 +166,23 @@ private fun TvMainPane(
     onBack: () -> Unit,
     focusRequesters: List<FocusRequester>,
     duetFocusRequester: FocusRequester,
+    programFocusRequester: FocusRequester,
     playerFocusRequester: FocusRequester,
     sidebarEntryRequester: FocusRequester,
 ) {
     var duetItems by remember { mutableStateOf<List<DuetPairUiModel>>(emptyList()) }
+    var programItems by remember { mutableStateOf<List<ProgramUiModel>>(emptyList()) }
 
     LaunchedEffect(Unit) {
-        duetItems = withContext(Dispatchers.Default) {
-            runCatching { loadDuetPairsConfig() }.getOrElse { emptyList() }
+        val home = withContext(Dispatchers.Default) {
+            runCatching { loadHomeUiState() }.getOrNull()
+        }
+        programItems = home?.programs.orEmpty()
+        duetItems = home?.duets.orEmpty()
+        if (duetItems.isEmpty()) {
+            duetItems = withContext(Dispatchers.Default) {
+                runCatching { loadDuetPairsConfig() }.getOrElse { emptyList() }
+            }
         }
     }
 
@@ -188,17 +204,27 @@ private fun TvMainPane(
                 items = duetItems,
                 focusRequester = duetFocusRequester,
                 topEntryRequester = focusRequesters.first(),
-                playerFocusRequester = playerFocusRequester,
+                playerFocusRequester = programFocusRequester,
                 sidebarEntryRequester = sidebarEntryRequester,
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
                     .padding(top = 14.dp)
             )
+            TvProgramsCarousel(
+                items = programItems,
+                firstCardFocusRequester = programFocusRequester,
+                duetFocusRequester = duetFocusRequester,
+                playerFocusRequester = playerFocusRequester,
+                sidebarEntryRequester = sidebarEntryRequester,
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 28.dp)
+            )
         }
         Spacer(Modifier.weight(1f))
         TvBottomPlayer(
             focusRequester = playerFocusRequester,
-            topEntryRequester = duetFocusRequester,
+            topEntryRequester = programFocusRequester,
             sidebarEntryRequester = sidebarEntryRequester,
         )
     }
@@ -495,6 +521,171 @@ private val fallbackTvDuets = listOf(
         singer2 = "بانو مرضیه",
         trackCount = 19
     )
+)
+
+@Composable
+@OptIn(ExperimentalComposeUiApi::class)
+private fun TvProgramsCarousel(
+    items: List<ProgramUiModel>,
+    firstCardFocusRequester: FocusRequester,
+    duetFocusRequester: FocusRequester,
+    playerFocusRequester: FocusRequester,
+    sidebarEntryRequester: FocusRequester,
+    modifier: Modifier = Modifier,
+) {
+    val programs = if (items.isEmpty()) fallbackTvPrograms else items
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = "برنامه‌ها",
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold
+            ),
+            color = GolhaColors.PrimaryText,
+            textAlign = TextAlign.Start,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.height(14.dp))
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            reverseLayout = false
+        ) {
+            itemsIndexed(programs) { index, item ->
+                TvProgramCard(
+                    item = item,
+                    modifier = Modifier
+                        .then(if (index == 0) Modifier.focusRequester(firstCardFocusRequester) else Modifier)
+                        .focusProperties {
+                            up = duetFocusRequester
+                            down = playerFocusRequester
+                            if (index == 0) {
+                                right = sidebarEntryRequester
+                            }
+                            if (index == programs.lastIndex) {
+                                left = FocusRequester.Cancel
+                            }
+                        }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TvProgramCard(
+    item: ProgramUiModel,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .width(188.dp)
+            .height(82.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(GolhaColors.Surface.copy(alpha = 0.9f))
+            .border(1.dp, GolhaColors.Border.copy(alpha = 0.75f), RoundedCornerShape(14.dp))
+            .clickable { }
+            .focusable()
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(GolhaColors.PrimaryText.copy(alpha = 0.05f)),
+            contentAlignment = Alignment.Center
+        ) {
+            TvProgramGlyph(title = item.title)
+        }
+        Column(
+            modifier = Modifier.weight(1f),
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = item.title.replace("\n", " "),
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                ),
+                color = GolhaColors.PrimaryText,
+                maxLines = 1,
+                textAlign = TextAlign.Start,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = "${item.episodeCount} برنامه",
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 8.sp),
+                color = Color(0xFF7D786D),
+                maxLines = 1,
+                textAlign = TextAlign.Start,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@Composable
+private fun TvProgramGlyph(title: String) {
+    val kind = remember(title) {
+        when {
+            title.contains("رنگارنگ") -> 0
+            title.contains("تازه") -> 1
+            title.contains("یک شاخه") -> 2
+            title.contains("سبز") -> 3
+            else -> 4
+        }
+    }
+    Canvas(modifier = Modifier.size(22.dp)) {
+        val gold = GolhaColors.BannerDetail
+        val stroke = 2.4.dp.toPx()
+        when (kind) {
+            0 -> {
+                val path = Path().apply {
+                    moveTo(size.width * 0.5f, size.height * 0.06f)
+                    lineTo(size.width * 0.86f, size.height * 0.28f)
+                    lineTo(size.width * 0.86f, size.height * 0.72f)
+                    lineTo(size.width * 0.5f, size.height * 0.94f)
+                    lineTo(size.width * 0.14f, size.height * 0.72f)
+                    lineTo(size.width * 0.14f, size.height * 0.28f)
+                    close()
+                }
+                drawPath(path, color = gold.copy(alpha = 0.95f), style = Stroke(width = stroke, cap = StrokeCap.Round))
+            }
+            1 -> {
+                drawCircle(gold.copy(alpha = 0.95f), radius = size.minDimension * 0.34f, style = Stroke(width = stroke))
+                drawCircle(gold.copy(alpha = 0.95f), radius = size.minDimension * 0.17f, style = Stroke(width = stroke))
+            }
+            2 -> {
+                drawLine(gold, Offset(size.width * 0.5f, size.height * 0.08f), Offset(size.width * 0.5f, size.height * 0.92f), strokeWidth = stroke, cap = StrokeCap.Round)
+                drawLine(gold, Offset(size.width * 0.08f, size.height * 0.5f), Offset(size.width * 0.92f, size.height * 0.5f), strokeWidth = stroke, cap = StrokeCap.Round)
+                drawCircle(gold, radius = 3.dp.toPx(), center = Offset(size.width * 0.5f, size.height * 0.5f))
+            }
+            3 -> {
+                val path = Path().apply {
+                    moveTo(size.width * 0.18f, size.height * 0.45f)
+                    cubicTo(size.width * 0.38f, size.height * 0.06f, size.width * 0.86f, size.height * 0.16f, size.width * 0.82f, size.height * 0.68f)
+                    cubicTo(size.width * 0.48f, size.height * 0.78f, size.width * 0.24f, size.height * 0.72f, size.width * 0.18f, size.height * 0.45f)
+                }
+                drawPath(path, color = gold, style = Stroke(width = stroke, cap = StrokeCap.Round))
+                drawLine(gold.copy(alpha = 0.8f), Offset(size.width * 0.28f, size.height * 0.58f), Offset(size.width * 0.72f, size.height * 0.62f), strokeWidth = stroke * 0.65f, cap = StrokeCap.Round)
+            }
+            else -> {
+                drawCircle(gold, radius = size.minDimension * 0.36f, style = Stroke(width = stroke))
+            }
+        }
+    }
+}
+
+private val fallbackTvPrograms = listOf(
+    ProgramUiModel(title = "گل‌های جاویدان", episodeCount = 101),
+    ProgramUiModel(title = "یک شاخه گل", episodeCount = 465),
+    ProgramUiModel(title = "برگ سبز", episodeCount = 312),
+    ProgramUiModel(title = "گل‌های تازه", episodeCount = 155),
 )
 
 @Composable
