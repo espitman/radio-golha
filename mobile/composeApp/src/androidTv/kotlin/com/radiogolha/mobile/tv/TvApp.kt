@@ -297,15 +297,19 @@ private fun TvMainPane(
     val artistLastTrackFocusRequester = remember { FocusRequester() }
     val singersEntryFocusRequester = remember { FocusRequester() }
     val singersLastCardFocusRequester = remember { FocusRequester() }
+    val playersEntryFocusRequester = remember { FocusRequester() }
+    val playersLastCardFocusRequester = remember { FocusRequester() }
     val mainDownFocusRequester = when {
         selectedArtistId != null -> artistEntryFocusRequester
         selectedTop == null && selectedSide == TvSideMenuItem.Singers -> singersEntryFocusRequester
+        selectedTop == null && selectedSide == TvSideMenuItem.Players -> playersEntryFocusRequester
         selectedTop == null -> duetFocusRequester
         else -> playerFocusRequester
     }
     val playerUpFocusRequester = when {
         selectedArtistId != null -> artistLastTrackFocusRequester
         selectedTop == null && selectedSide == TvSideMenuItem.Singers -> singersLastCardFocusRequester
+        selectedTop == null && selectedSide == TvSideMenuItem.Players -> playersLastCardFocusRequester
         selectedTop == null -> if (topTrackItems.take(5).size > 1) topTracksLastFocusRequester else trackFocusRequester
         else -> focusRequesters.first()
     }
@@ -348,6 +352,16 @@ private fun TvMainPane(
             TvSingersScreen(
                 entryFocusRequester = singersEntryFocusRequester,
                 lastCardFocusRequester = singersLastCardFocusRequester,
+                topEntryRequester = focusRequesters.first(),
+                sidebarEntryRequester = sidebarEntryRequester,
+                playerFocusRequester = playerFocusRequester,
+                onOpenArtist = onOpenArtist,
+                modifier = Modifier.weight(1f),
+            )
+        } else if (selectedTop == null && selectedSide == TvSideMenuItem.Players) {
+            TvPlayersScreen(
+                entryFocusRequester = playersEntryFocusRequester,
+                lastCardFocusRequester = playersLastCardFocusRequester,
                 topEntryRequester = focusRequesters.first(),
                 sidebarEntryRequester = sidebarEntryRequester,
                 playerFocusRequester = playerFocusRequester,
