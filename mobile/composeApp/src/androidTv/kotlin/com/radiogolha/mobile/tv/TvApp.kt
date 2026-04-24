@@ -299,10 +299,12 @@ private fun TvMainPane(
     val singersLastCardFocusRequester = remember { FocusRequester() }
     val playersEntryFocusRequester = remember { FocusRequester() }
     val playersLastCardFocusRequester = remember { FocusRequester() }
+    val settingsEntryFocusRequester = remember { FocusRequester() }
     val mainDownFocusRequester = when {
         selectedArtistId != null -> artistEntryFocusRequester
         selectedTop == null && selectedSide == TvSideMenuItem.Singers -> singersEntryFocusRequester
         selectedTop == null && selectedSide == TvSideMenuItem.Players -> playersEntryFocusRequester
+        selectedTop == null && selectedSide == TvSideMenuItem.Settings -> settingsEntryFocusRequester
         selectedTop == null -> duetFocusRequester
         else -> playerFocusRequester
     }
@@ -310,6 +312,7 @@ private fun TvMainPane(
         selectedArtistId != null -> artistLastTrackFocusRequester
         selectedTop == null && selectedSide == TvSideMenuItem.Singers -> singersLastCardFocusRequester
         selectedTop == null && selectedSide == TvSideMenuItem.Players -> playersLastCardFocusRequester
+        selectedTop == null && selectedSide == TvSideMenuItem.Settings -> settingsEntryFocusRequester
         selectedTop == null -> if (topTrackItems.take(5).size > 1) topTracksLastFocusRequester else trackFocusRequester
         else -> focusRequesters.first()
     }
@@ -366,6 +369,14 @@ private fun TvMainPane(
                 sidebarEntryRequester = sidebarEntryRequester,
                 playerFocusRequester = playerFocusRequester,
                 onOpenArtist = onOpenArtist,
+                modifier = Modifier.weight(1f),
+            )
+        } else if (selectedTop == null && selectedSide == TvSideMenuItem.Settings) {
+            TvSettingsScreen(
+                entryFocusRequester = settingsEntryFocusRequester,
+                topEntryRequester = focusRequesters.first(),
+                sidebarEntryRequester = sidebarEntryRequester,
+                playerFocusRequester = playerFocusRequester,
                 modifier = Modifier.weight(1f),
             )
         } else if (selectedTop == null) {

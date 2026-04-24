@@ -93,7 +93,7 @@ internal fun TvSingersScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp)
-            .padding(top = 28.dp, bottom = 28.dp),
+            .padding(top = 7.dp, bottom = 28.dp),
     ) {
         Text(
             text = "خوانندگان",
