@@ -35,6 +35,7 @@ struct AndroidSingerItem {
     id: i64,
     name: String,
     avatar: Option<String>,
+    program_count: i64,
 }
 
 #[derive(Serialize)]
@@ -143,6 +144,7 @@ fn home_json(db_path: &str) -> Result<String, String> {
             id: row.get(0)?,
             name: row.get(1)?,
             avatar: row.get(2)?,
+            program_count: row.get(3)?,
         })
     }).map_err(|error| error.to_string())?;
 
