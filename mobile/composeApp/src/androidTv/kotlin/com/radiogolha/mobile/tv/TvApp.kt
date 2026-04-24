@@ -120,6 +120,7 @@ fun TvApp() {
         val player = rememberGolhaPlayer()
         val currentTrack by player.currentTrack.collectAsState()
         val isPlayerPlaying by player.isPlaying.collectAsState()
+        val isPlayerLoading by player.isLoading.collectAsState()
         val currentPositionMs by player.currentPositionMs.collectAsState()
         val durationMs by player.durationMs.collectAsState()
 
@@ -187,6 +188,7 @@ fun TvApp() {
                             sidebarEntryRequester = sidebarEntryRequester,
                             currentTrack = currentTrack,
                             isPlayerPlaying = isPlayerPlaying,
+                            isPlayerLoading = isPlayerLoading,
                             currentPositionMs = currentPositionMs,
                             durationMs = durationMs,
                             onPlayTrack = { player.play(it) },
@@ -233,6 +235,7 @@ private fun TvMainPane(
     sidebarEntryRequester: FocusRequester,
     currentTrack: TrackUiModel?,
     isPlayerPlaying: Boolean,
+    isPlayerLoading: Boolean,
     currentPositionMs: Long,
     durationMs: Long,
     onPlayTrack: (TrackUiModel) -> Unit,
@@ -327,6 +330,7 @@ private fun TvMainPane(
                 artistId = selectedArtistId,
                 currentTrack = currentTrack,
                 isPlayerPlaying = isPlayerPlaying,
+                isPlayerLoading = isPlayerLoading,
                 entryFocusRequester = artistEntryFocusRequester,
                 lastTrackFocusRequester = artistLastTrackFocusRequester,
                 sidebarEntryRequester = sidebarEntryRequester,
@@ -393,6 +397,7 @@ private fun TvMainPane(
                     modeFocusRequester = modeFocusRequester,
                     playerFocusRequester = trackRefreshFocusRequester,
                     sidebarEntryRequester = sidebarEntryRequester,
+                    onOpenArtist = onOpenArtist,
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .padding(top = 28.dp)
@@ -410,6 +415,7 @@ private fun TvMainPane(
                     sidebarEntryRequester = sidebarEntryRequester,
                     currentTrackId = currentTrack?.id,
                     isPlayerPlaying = isPlayerPlaying,
+                    isPlayerLoading = isPlayerLoading,
                     onPlayTrack = playTrackAndFocusPlayer,
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
@@ -425,6 +431,7 @@ private fun TvMainPane(
             sidebarEntryRequester = sidebarEntryRequester,
             currentTrack = currentTrack,
             isPlaying = isPlayerPlaying,
+            isLoading = isPlayerLoading,
             currentPositionMs = currentPositionMs,
             durationMs = durationMs,
             onTogglePlayback = onTogglePlayerPlayback,
@@ -1000,6 +1007,7 @@ private fun TvFeaturedMusiciansCarousel(
     modeFocusRequester: FocusRequester,
     playerFocusRequester: FocusRequester,
     sidebarEntryRequester: FocusRequester,
+    onOpenArtist: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -1059,7 +1067,7 @@ private fun TvFeaturedMusiciansCarousel(
                                         left = FocusRequester.Cancel
                                     }
                                 },
-                            onClick = {},
+                            onClick = { onOpenArtist(musician.id) },
                         )
                     }
                 }
@@ -1083,6 +1091,7 @@ private fun TvTopTracksSection(
     sidebarEntryRequester: FocusRequester,
     currentTrackId: Long?,
     isPlayerPlaying: Boolean,
+    isPlayerLoading: Boolean,
     onPlayTrack: (TrackUiModel) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -1210,6 +1219,7 @@ private fun TvTopTracksSection(
                                     left = FocusRequester.Cancel
                                 },
                             isPlaying = isPlayerPlaying && currentTrackId == track.id,
+                            isLoading = isPlayerLoading && currentTrackId == track.id,
                             onClick = { onPlayTrack(track) },
                         )
                     }
@@ -1723,6 +1733,7 @@ private fun TvBottomPlayer(
     sidebarEntryRequester: FocusRequester,
     currentTrack: TrackUiModel?,
     isPlaying: Boolean,
+    isLoading: Boolean,
     currentPositionMs: Long,
     durationMs: Long,
     onTogglePlayback: () -> Unit,
@@ -1807,13 +1818,17 @@ private fun TvBottomPlayer(
                             .focusable(interactionSource = playButtonInteractionSource),
                         contentAlignment = Alignment.Center
                     ) {
-                        if (isPlaying) {
-                            TvPlayerPauseGlyph(
+                        when {
+                            isLoading -> CircularProgressIndicator(
+                                color = Color(0xFF002045),
+                                strokeWidth = 2.5.dp,
+                                modifier = Modifier.size(22.dp),
+                            )
+                            isPlaying -> TvPlayerPauseGlyph(
                                 color = Color(0xFF002045),
                                 modifier = Modifier.size(18.dp),
                             )
-                        } else {
-                            Icon(
+                            else -> Icon(
                                 imageVector = Icons.Filled.PlayArrow,
                                 contentDescription = null,
                                 tint = Color(0xFF002045),

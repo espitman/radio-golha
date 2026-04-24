@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -56,6 +57,7 @@ internal fun TvTrackRow(
     item: TvTrackRowItem,
     modifier: Modifier = Modifier,
     isPlaying: Boolean = false,
+    isLoading: Boolean = false,
     onClick: () -> Unit = {},
 ) {
     var isFocused by remember { mutableStateOf(false) }
@@ -84,30 +86,31 @@ internal fun TvTrackRow(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(if (isFocused) GolhaColors.PrimaryText else Color(0xFFE9E6DD)),
+                    .background(if (isFocused || isLoading || isPlaying) GolhaColors.PrimaryText else Color(0xFFE9E6DD)),
                 contentAlignment = Alignment.Center,
             ) {
-                if (!item.coverUrl.isNullOrBlank()) {
-                    AsyncImage(
+                when {
+                    isLoading -> CircularProgressIndicator(
+                        color = Color.White,
+                        strokeWidth = 2.5.dp,
+                        modifier = Modifier.size(24.dp),
+                    )
+                    isPlaying -> TvPauseGlyph(
+                        color = Color.White,
+                        modifier = Modifier.size(24.dp),
+                    )
+                    !item.coverUrl.isNullOrBlank() -> AsyncImage(
                         model = item.coverUrl,
                         contentDescription = item.title,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize(),
                     )
-                } else {
-                    if (isPlaying) {
-                        TvPauseGlyph(
-                            color = if (isFocused) Color.White else GolhaColors.PrimaryText,
-                            modifier = Modifier.size(24.dp),
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Filled.PlayArrow,
-                            contentDescription = null,
-                            tint = if (isFocused) Color.White else GolhaColors.PrimaryText,
-                            modifier = Modifier.size(28.dp),
-                        )
-                    }
+                    else -> Icon(
+                        imageVector = Icons.Filled.PlayArrow,
+                        contentDescription = null,
+                        tint = if (isFocused) Color.White else GolhaColors.PrimaryText,
+                        modifier = Modifier.size(28.dp),
+                    )
                 }
             }
 

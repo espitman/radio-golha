@@ -59,6 +59,7 @@ internal fun TvArtistDetailScreen(
     artistId: Long,
     currentTrack: TrackUiModel?,
     isPlayerPlaying: Boolean,
+    isPlayerLoading: Boolean,
     entryFocusRequester: FocusRequester,
     lastTrackFocusRequester: FocusRequester,
     sidebarEntryRequester: FocusRequester,
@@ -131,6 +132,7 @@ internal fun TvArtistDetailScreen(
                     detail = resolved,
                     currentTrack = currentTrack,
                     isPlayerPlaying = isPlayerPlaying,
+                    isPlayerLoading = isPlayerLoading,
                     firstTrackFocusRequester = firstTrackFocusRequester,
                     lastTrackFocusRequester = lastTrackFocusRequester,
                     heroFocusRequester = entryFocusRequester,
@@ -278,6 +280,7 @@ private fun TvArtistProgramsPanel(
     detail: ArtistDetailUiModel,
     currentTrack: TrackUiModel?,
     isPlayerPlaying: Boolean,
+    isPlayerLoading: Boolean,
     firstTrackFocusRequester: FocusRequester,
     lastTrackFocusRequester: FocusRequester,
     heroFocusRequester: FocusRequester,
@@ -339,6 +342,7 @@ private fun TvArtistProgramsPanel(
                             coverUrl = null,
                         ),
                         isPlaying = currentTrack?.id == track.id && isPlayerPlaying,
+                        isLoading = currentTrack?.id == track.id && isPlayerLoading,
                         onClick = { onPlayTrack(track) },
                         modifier = Modifier
                             .focusRequester(currentFocusRequester)
