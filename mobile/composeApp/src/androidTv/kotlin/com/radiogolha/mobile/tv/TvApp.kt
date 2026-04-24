@@ -12,6 +12,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -1729,7 +1731,11 @@ private fun TvBottomPlayer(
         if (durationMs > 0L) currentPositionMs.toFloat() / durationMs.toFloat() else 0f
     }
     val hasPlayableTrack = !currentTrack?.audioUrl.isNullOrBlank()
-    var isPlayButtonFocused by remember { mutableStateOf(false) }
+    val playButtonInteractionSource = remember { MutableInteractionSource() }
+    val isPlayButtonFocused by playButtonInteractionSource.collectIsFocusedAsState()
+    val playButtonFocusedColor = Color(0xFFFFC93A)
+    val playButtonIdleColor = Color.White
+    val playButtonBackground = if (isPlayButtonFocused) playButtonFocusedColor else playButtonIdleColor
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
         Column(
@@ -1786,16 +1792,19 @@ private fun TvBottomPlayer(
                                 right = sidebarEntryRequester
                             }
                             .size(42.dp)
+                            .clip(RoundedCornerShape(11.dp))
+                            .background(playButtonBackground)
                             .border(
                                 width = if (isPlayButtonFocused) 3.dp else 0.dp,
-                                color = if (isPlayButtonFocused) GolhaColors.BannerDetail else Color.Transparent,
+                                color = if (isPlayButtonFocused) Color.White else Color.Transparent,
                                 shape = RoundedCornerShape(11.dp),
                             )
-                            .clip(RoundedCornerShape(11.dp))
-                            .background(if (isPlayButtonFocused) Color(0xFFE0B84E) else Color.White)
-                            .clickable(enabled = hasPlayableTrack) { onTogglePlayback() }
-                            .onFocusChanged { isPlayButtonFocused = it.isFocused }
-                            .focusable(),
+                            .clickable(
+                                enabled = hasPlayableTrack,
+                                interactionSource = playButtonInteractionSource,
+                                indication = null,
+                            ) { onTogglePlayback() }
+                            .focusable(interactionSource = playButtonInteractionSource),
                         contentAlignment = Alignment.Center
                     ) {
                         if (isPlaying) {
