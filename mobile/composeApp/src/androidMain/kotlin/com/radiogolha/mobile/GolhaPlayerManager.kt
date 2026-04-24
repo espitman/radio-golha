@@ -12,6 +12,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import androidx.media3.common.PlaybackException
 import java.io.ByteArrayOutputStream
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -138,6 +139,11 @@ class GolhaPlayerManager(private val context: Context) : GolhaPlayer {
                         _durationMs.value = player.duration.coerceAtLeast(0L)
                     }
                 }
+
+                override fun onPlayerError(error: PlaybackException) {
+                    _isLoading.value = false
+                    println("ERROR GolhaPlayerManager playback failed: ${error.errorCodeName} ${error.message}")
+                }
             }
         )
     }
@@ -209,6 +215,7 @@ class GolhaPlayerManager(private val context: Context) : GolhaPlayer {
         p.setMediaItem(mediaItem)
         p.prepare()
         p.playWhenReady = true
+        p.play()
     }
 
     private fun createMetadata(track: TrackUiModel): MediaMetadata {

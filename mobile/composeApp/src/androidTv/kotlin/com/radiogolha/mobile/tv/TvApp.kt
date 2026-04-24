@@ -47,6 +47,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -75,6 +76,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.radiogolha.mobile.rememberGolhaPlayer
 import com.radiogolha.mobile.theme.GolhaAppTheme
 import com.radiogolha.mobile.theme.GolhaColors
 import com.radiogolha.mobile.theme.GolhaPatternBackground
@@ -111,6 +113,12 @@ private enum class TvSideMenuItem(val title: String, val icon: ImageVector) {
 @Composable
 fun TvApp() {
     GolhaAppTheme {
+        val player = rememberGolhaPlayer()
+        val currentTrack by player.currentTrack.collectAsState()
+        val isPlayerPlaying by player.isPlaying.collectAsState()
+        val currentPositionMs by player.currentPositionMs.collectAsState()
+        val durationMs by player.durationMs.collectAsState()
+
         // Keep the shell geometry predictable, but force content RTL.
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
             GolhaPatternBackground {
@@ -159,6 +167,12 @@ fun TvApp() {
                             trackFocusRequester = trackFocusRequester,
                             playerFocusRequester = playerFocusRequester,
                             sidebarEntryRequester = sidebarEntryRequester,
+                            currentTrack = currentTrack,
+                            isPlayerPlaying = isPlayerPlaying,
+                            currentPositionMs = currentPositionMs,
+                            durationMs = durationMs,
+                            onPlayTrack = { player.play(it) },
+                            onTogglePlayerPlayback = { player.togglePlayback() },
                         )
                     }
                     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
@@ -195,6 +209,12 @@ private fun TvMainPane(
     trackFocusRequester: FocusRequester,
     playerFocusRequester: FocusRequester,
     sidebarEntryRequester: FocusRequester,
+    currentTrack: TrackUiModel?,
+    isPlayerPlaying: Boolean,
+    currentPositionMs: Long,
+    durationMs: Long,
+    onPlayTrack: (TrackUiModel) -> Unit,
+    onTogglePlayerPlayback: () -> Unit,
 ) {
     var duetItems by remember { mutableStateOf<List<DuetPairUiModel>>(emptyList()) }
     var programItems by remember { mutableStateOf<List<ProgramUiModel>>(emptyList()) }
@@ -331,6 +351,9 @@ private fun TvMainPane(
                     musicianFocusRequester = musicianFocusRequester,
                     playerFocusRequester = playerFocusRequester,
                     sidebarEntryRequester = sidebarEntryRequester,
+                    currentTrackId = currentTrack?.id,
+                    isPlayerPlaying = isPlayerPlaying,
+                    onPlayTrack = onPlayTrack,
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .padding(top = 28.dp, bottom = 28.dp)
@@ -343,6 +366,11 @@ private fun TvMainPane(
             focusRequester = playerFocusRequester,
             topEntryRequester = if (selectedTop == null) trackFocusRequester else focusRequesters.first(),
             sidebarEntryRequester = sidebarEntryRequester,
+            currentTrack = currentTrack,
+            isPlaying = isPlayerPlaying,
+            currentPositionMs = currentPositionMs,
+            durationMs = durationMs,
+            onTogglePlayback = onTogglePlayerPlayback,
         )
     }
 }
@@ -994,6 +1022,9 @@ private fun TvTopTracksSection(
     musicianFocusRequester: FocusRequester,
     playerFocusRequester: FocusRequester,
     sidebarEntryRequester: FocusRequester,
+    currentTrackId: Long?,
+    isPlayerPlaying: Boolean,
+    onPlayTrack: (TrackUiModel) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val displayedTracks = remember(tracks) { tracks.take(5) }
@@ -1108,7 +1139,8 @@ private fun TvTopTracksSection(
                                     }
                                     left = FocusRequester.Cancel
                                 },
-                            onClick = {},
+                            isPlaying = isPlayerPlaying && currentTrackId == track.id,
+                            onClick = { onPlayTrack(track) },
                         )
                     }
                 }
@@ -1619,7 +1651,18 @@ private fun TvBottomPlayer(
     focusRequester: FocusRequester,
     topEntryRequester: FocusRequester,
     sidebarEntryRequester: FocusRequester,
+    currentTrack: TrackUiModel?,
+    isPlaying: Boolean,
+    currentPositionMs: Long,
+    durationMs: Long,
+    onTogglePlayback: () -> Unit,
 ) {
+    val progress = remember(currentTrack?.id, currentPositionMs, durationMs) {
+        if (durationMs > 0L) currentPositionMs.toFloat() / durationMs.toFloat() else 0f
+    }
+    val hasPlayableTrack = !currentTrack?.audioUrl.isNullOrBlank()
+    var isPlayButtonFocused by remember { mutableStateOf(false) }
+
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
         Column(
             modifier = Modifier
@@ -1627,7 +1670,7 @@ private fun TvBottomPlayer(
                 .height(72.dp)
                 .background(Color(0xFF002045))
         ) {
-            TvPlayerSeekBar(progress = 0f)
+            TvPlayerSeekBar(progress = progress)
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -1638,9 +1681,9 @@ private fun TvBottomPlayer(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    TvEqualizerIndicator(isActive = false)
+                    TvEqualizerIndicator(isActive = isPlaying)
                     Text(
-                        text = "00:00 / 00:00",
+                        text = "${formatTvPlaybackTime(currentPositionMs)} / ${formatTvPlaybackTime(durationMs)}",
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
@@ -1675,17 +1718,31 @@ private fun TvBottomPlayer(
                                 right = sidebarEntryRequester
                             }
                             .size(42.dp)
+                            .border(
+                                width = if (isPlayButtonFocused) 3.dp else 0.dp,
+                                color = if (isPlayButtonFocused) GolhaColors.BannerDetail else Color.Transparent,
+                                shape = RoundedCornerShape(11.dp),
+                            )
                             .clip(RoundedCornerShape(11.dp))
-                            .background(Color.White)
-                            .focusable(),
+                            .background(if (isPlayButtonFocused) GolhaColors.BannerDetail else Color.White)
+                            .clickable(enabled = hasPlayableTrack) { onTogglePlayback() }
+                            .onFocusChanged { isPlayButtonFocused = it.isFocused }
+                            .focusable(enabled = hasPlayableTrack),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Filled.PlayArrow,
-                            contentDescription = null,
-                            tint = Color(0xFF002045),
-                            modifier = Modifier.size(26.dp)
-                        )
+                        if (isPlaying) {
+                            TvPlayerPauseGlyph(
+                                color = Color(0xFF002045),
+                                modifier = Modifier.size(18.dp),
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Filled.PlayArrow,
+                                contentDescription = null,
+                                tint = Color(0xFF002045),
+                                modifier = Modifier.size(26.dp)
+                            )
+                        }
                     }
                     Spacer(Modifier.width(18.dp))
                     TvPlayerCanvasIcon(TvPlayerIconKind.ForwardTen, alpha = 0.35f)
@@ -1703,7 +1760,7 @@ private fun TvBottomPlayer(
                         horizontalAlignment = Alignment.End
                     ) {
                         Text(
-                            text = "—",
+                            text = currentTrack?.title ?: "ترکی انتخاب نشده",
                             style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
                             color = Color.White,
                             modifier = Modifier.fillMaxWidth(),
@@ -1711,7 +1768,7 @@ private fun TvBottomPlayer(
                             maxLines = 1
                         )
                         Text(
-                            text = "—",
+                            text = currentTrack?.artist ?: "برای شروع، یک ترک را پخش کنید",
                             style = MaterialTheme.typography.bodySmall.copy(fontSize = 9.sp),
                             color = Color.White.copy(alpha = 0.6f),
                             modifier = Modifier.fillMaxWidth(),
@@ -1726,16 +1783,64 @@ private fun TvBottomPlayer(
                             .background(Color.White.copy(alpha = 0.1f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "♪",
-                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                            color = Color.White.copy(alpha = 0.85f)
-                        )
+                        val cover = currentTrack?.coverUrl ?: currentTrack?.artistImages?.firstOrNull()
+                        if (!cover.isNullOrBlank()) {
+                            AsyncImage(
+                                model = cover,
+                                contentDescription = currentTrack?.title,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        } else {
+                            Text(
+                                text = "♪",
+                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                color = Color.White.copy(alpha = 0.85f)
+                            )
+                        }
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun TvPlayerPauseGlyph(
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .width(4.dp)
+                .height(16.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(color),
+        )
+        Spacer(Modifier.width(4.dp))
+        Box(
+            modifier = Modifier
+                .width(4.dp)
+                .height(16.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(color),
+        )
+    }
+}
+
+private fun formatTvPlaybackTime(timeMs: Long): String {
+    val totalSeconds = (timeMs / 1000L).coerceAtLeast(0L)
+    val hours = totalSeconds / 3600L
+    val minutes = (totalSeconds % 3600L) / 60L
+    val seconds = totalSeconds % 60L
+    val minuteText = minutes.toString().padStart(2, '0')
+    val secondText = seconds.toString().padStart(2, '0')
+    return if (hours > 0L) "$hours:$minuteText:$secondText" else "$minuteText:$secondText"
 }
 
 @Composable

@@ -55,6 +55,7 @@ internal data class TvTrackRowItem(
 internal fun TvTrackRow(
     item: TvTrackRowItem,
     modifier: Modifier = Modifier,
+    isPlaying: Boolean = false,
     onClick: () -> Unit = {},
 ) {
     var isFocused by remember { mutableStateOf(false) }
@@ -94,12 +95,19 @@ internal fun TvTrackRow(
                         modifier = Modifier.fillMaxSize(),
                     )
                 } else {
-                    Icon(
-                        imageVector = Icons.Filled.PlayArrow,
-                        contentDescription = null,
-                        tint = if (isFocused) Color.White else GolhaColors.PrimaryText,
-                        modifier = Modifier.size(28.dp),
-                    )
+                    if (isPlaying) {
+                        TvPauseGlyph(
+                            color = if (isFocused) Color.White else GolhaColors.PrimaryText,
+                            modifier = Modifier.size(24.dp),
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Filled.PlayArrow,
+                            contentDescription = null,
+                            tint = if (isFocused) Color.White else GolhaColors.PrimaryText,
+                            modifier = Modifier.size(28.dp),
+                        )
+                    }
                 }
             }
 
@@ -144,6 +152,34 @@ internal fun TvTrackRow(
                 modifier = Modifier.width(76.dp),
             )
         }
+    }
+}
+
+@Composable
+private fun TvPauseGlyph(
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .width(6.dp)
+                .height(22.dp)
+                .clip(RoundedCornerShape(3.dp))
+                .background(color),
+        )
+        Spacer(Modifier.width(5.dp))
+        Box(
+            modifier = Modifier
+                .width(6.dp)
+                .height(22.dp)
+                .clip(RoundedCornerShape(3.dp))
+                .background(color),
+        )
     }
 }
 
