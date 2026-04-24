@@ -59,6 +59,8 @@ internal fun TvArtistDetailScreen(
     artistId: Long,
     currentTrack: TrackUiModel?,
     isPlayerPlaying: Boolean,
+    entryFocusRequester: FocusRequester,
+    lastTrackFocusRequester: FocusRequester,
     sidebarEntryRequester: FocusRequester,
     playerFocusRequester: FocusRequester,
     onPlayTrack: (TrackUiModel) -> Unit,
@@ -66,7 +68,6 @@ internal fun TvArtistDetailScreen(
 ) {
     var detail by remember(artistId) { mutableStateOf<ArtistDetailUiModel?>(null) }
     var isLoading by remember(artistId) { mutableStateOf(true) }
-    val heroFocusRequester = remember { FocusRequester() }
     val firstTrackFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(artistId) {
@@ -92,7 +93,8 @@ internal fun TvArtistDetailScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(280.dp)
-                    .focusRequester(heroFocusRequester)
+                    .focusRequester(entryFocusRequester)
+                    .focusRequester(lastTrackFocusRequester)
                     .focusProperties {
                         right = sidebarEntryRequester
                         down = playerFocusRequester
@@ -103,7 +105,8 @@ internal fun TvArtistDetailScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(220.dp)
-                    .focusRequester(heroFocusRequester)
+                    .focusRequester(entryFocusRequester)
+                    .focusRequester(lastTrackFocusRequester)
                     .focusProperties {
                         right = sidebarEntryRequester
                         down = playerFocusRequester
@@ -116,7 +119,7 @@ internal fun TvArtistDetailScreen(
                     detail = resolved,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .focusRequester(heroFocusRequester)
+                        .focusRequester(entryFocusRequester)
                         .focusProperties {
                             right = sidebarEntryRequester
                             down = firstTrackFocusRequester
@@ -129,7 +132,8 @@ internal fun TvArtistDetailScreen(
                     currentTrack = currentTrack,
                     isPlayerPlaying = isPlayerPlaying,
                     firstTrackFocusRequester = firstTrackFocusRequester,
-                    heroFocusRequester = heroFocusRequester,
+                    lastTrackFocusRequester = lastTrackFocusRequester,
+                    heroFocusRequester = entryFocusRequester,
                     playerFocusRequester = playerFocusRequester,
                     onPlayTrack = onPlayTrack,
                     modifier = Modifier.fillMaxWidth(),
@@ -275,14 +279,15 @@ private fun TvArtistProgramsPanel(
     currentTrack: TrackUiModel?,
     isPlayerPlaying: Boolean,
     firstTrackFocusRequester: FocusRequester,
+    lastTrackFocusRequester: FocusRequester,
     heroFocusRequester: FocusRequester,
     playerFocusRequester: FocusRequester,
     onPlayTrack: (TrackUiModel) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val visibleTracks = remember(detail.artistId, detail.tracks) { detail.tracks.take(20) }
+    val visibleTracks = remember(detail.artistId, detail.tracks) { detail.tracks }
     val rowFocusRequesters = remember(detail.artistId, visibleTracks.size) {
-        List(visibleTracks.size) { FocusRequester() }
+        List((visibleTracks.size - 1).coerceAtLeast(0)) { FocusRequester() }
     }
 
     Column(modifier = modifier) {
@@ -294,6 +299,12 @@ private fun TvArtistProgramsPanel(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(92.dp)
+                    .focusRequester(lastTrackFocusRequester)
+                    .focusProperties {
+                        up = heroFocusRequester
+                        down = playerFocusRequester
+                    }
+                    .focusable()
                     .clip(RoundedCornerShape(18.dp))
                     .background(Color.White.copy(alpha = 0.78f))
                     .border(1.dp, GolhaColors.Border.copy(alpha = 0.7f), RoundedCornerShape(18.dp)),
@@ -308,9 +319,17 @@ private fun TvArtistProgramsPanel(
             ) {
                 visibleTracks.forEachIndexed { index, program ->
                     val track = program.toTvTrackUiModel(detail)
-                    val currentFocusRequester = if (index == 0) firstTrackFocusRequester else rowFocusRequesters[index]
-                    val previousFocusRequester = if (index == 0) heroFocusRequester else if (index == 1) firstTrackFocusRequester else rowFocusRequesters[index - 1]
-                    val nextFocusRequester = if (index == visibleTracks.lastIndex) playerFocusRequester else rowFocusRequesters[index + 1]
+                    val currentFocusRequester = when {
+                        index == 0 -> firstTrackFocusRequester
+                        index == visibleTracks.lastIndex -> lastTrackFocusRequester
+                        else -> rowFocusRequesters[index - 1]
+                    }
+                    val previousFocusRequester = if (index == 0) heroFocusRequester else if (index == 1) firstTrackFocusRequester else rowFocusRequesters[index - 2]
+                    val nextFocusRequester = when {
+                        index == visibleTracks.lastIndex -> playerFocusRequester
+                        index + 1 == visibleTracks.lastIndex -> lastTrackFocusRequester
+                        else -> rowFocusRequesters[index]
+                    }
                     TvTrackRow(
                         item = TvTrackRowItem(
                             id = track.id,
@@ -323,6 +342,13 @@ private fun TvArtistProgramsPanel(
                         onClick = { onPlayTrack(track) },
                         modifier = Modifier
                             .focusRequester(currentFocusRequester)
+                            .then(
+                                if (index == 0 && visibleTracks.size == 1) {
+                                    Modifier.focusRequester(lastTrackFocusRequester)
+                                } else {
+                                    Modifier
+                                }
+                            )
                             .focusProperties {
                                 up = previousFocusRequester
                                 down = nextFocusRequester

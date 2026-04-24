@@ -85,6 +85,10 @@ for _ in $(seq 1 120); do
   sleep 2
 done
 
+HOST_TIME_MS="$(($(date +%s) * 1000))"
+echo "🕒 Syncing emulator clock..."
+"$ADB_BIN" -s "$SERIAL" shell cmd alarm set-time "$HOST_TIME_MS" >/dev/null 2>&1 || true
+
 echo "🔨 Building Android TV debug APK..."
 cd "$MOBILE_DIR"
 ./gradlew :composeApp:assembleTvDebug

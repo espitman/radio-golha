@@ -51,6 +51,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -91,6 +92,7 @@ import com.radiogolha.mobile.ui.home.loadDuetPairsConfig
 import com.radiogolha.mobile.ui.home.loadTopTracks
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private enum class TvTopMenuItem(val title: String) {
@@ -142,6 +144,7 @@ fun TvApp() {
                     val musicianFocusRequester = remember { FocusRequester() }
                     val trackRefreshFocusRequester = remember { FocusRequester() }
                     val trackFocusRequester = remember { FocusRequester() }
+                    val topTracksLastFocusRequester = remember { FocusRequester() }
                     val playerFocusRequester = remember { FocusRequester() }
                     val mainEntryRequester = topFocusRequesters.first()
                     val sidebarEntryRequester = sidebarFocusRequesters.first()
@@ -177,6 +180,7 @@ fun TvApp() {
                             musicianFocusRequester = musicianFocusRequester,
                             trackRefreshFocusRequester = trackRefreshFocusRequester,
                             trackFocusRequester = trackFocusRequester,
+                            topTracksLastFocusRequester = topTracksLastFocusRequester,
                             playerFocusRequester = playerFocusRequester,
                             sidebarEntryRequester = sidebarEntryRequester,
                             currentTrack = currentTrack,
@@ -222,6 +226,7 @@ private fun TvMainPane(
     musicianFocusRequester: FocusRequester,
     trackRefreshFocusRequester: FocusRequester,
     trackFocusRequester: FocusRequester,
+    topTracksLastFocusRequester: FocusRequester,
     playerFocusRequester: FocusRequester,
     sidebarEntryRequester: FocusRequester,
     currentTrack: TrackUiModel?,
@@ -281,6 +286,27 @@ private fun TvMainPane(
         trackFocusRequester.requestFocus()
     }
 
+    val artistEntryFocusRequester = remember { FocusRequester() }
+    val artistLastTrackFocusRequester = remember { FocusRequester() }
+    val mainDownFocusRequester = when {
+        selectedArtistId != null -> artistEntryFocusRequester
+        selectedTop == null -> duetFocusRequester
+        else -> playerFocusRequester
+    }
+    val playerUpFocusRequester = when {
+        selectedArtistId != null -> artistLastTrackFocusRequester
+        selectedTop == null -> if (topTrackItems.take(5).size > 1) topTracksLastFocusRequester else trackFocusRequester
+        else -> focusRequesters.first()
+    }
+    val focusScope = rememberCoroutineScope()
+    val playTrackAndFocusPlayer: (TrackUiModel) -> Unit = { track ->
+        onPlayTrack(track)
+        focusScope.launch {
+            delay(80)
+            playerFocusRequester.requestFocus()
+        }
+    }
+
     Column(
         modifier = modifier
     ) {
@@ -290,7 +316,7 @@ private fun TvMainPane(
             canGoBack = canGoBack,
             onBack = onBack,
             focusRequesters = focusRequesters,
-            downFocusRequester = if (selectedTop == null) duetFocusRequester else playerFocusRequester,
+            downFocusRequester = mainDownFocusRequester,
             sidebarEntryRequester = sidebarEntryRequester,
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 18.dp)
         )
@@ -299,9 +325,11 @@ private fun TvMainPane(
                 artistId = selectedArtistId,
                 currentTrack = currentTrack,
                 isPlayerPlaying = isPlayerPlaying,
+                entryFocusRequester = artistEntryFocusRequester,
+                lastTrackFocusRequester = artistLastTrackFocusRequester,
                 sidebarEntryRequester = sidebarEntryRequester,
                 playerFocusRequester = playerFocusRequester,
-                onPlayTrack = onPlayTrack,
+                onPlayTrack = playTrackAndFocusPlayer,
                 modifier = Modifier.weight(1f),
             )
         } else if (selectedTop == null) {
@@ -374,12 +402,13 @@ private fun TvMainPane(
                     onRefresh = { topTracksRefreshNonce += 1 },
                     refreshFocusRequester = trackRefreshFocusRequester,
                     firstRowFocusRequester = trackFocusRequester,
+                    lastRowFocusRequester = topTracksLastFocusRequester,
                     musicianFocusRequester = musicianFocusRequester,
                     playerFocusRequester = playerFocusRequester,
                     sidebarEntryRequester = sidebarEntryRequester,
                     currentTrackId = currentTrack?.id,
                     isPlayerPlaying = isPlayerPlaying,
-                    onPlayTrack = onPlayTrack,
+                    onPlayTrack = playTrackAndFocusPlayer,
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .padding(top = 28.dp, bottom = 28.dp)
@@ -390,7 +419,7 @@ private fun TvMainPane(
         }
         TvBottomPlayer(
             focusRequester = playerFocusRequester,
-            topEntryRequester = if (selectedTop == null) trackFocusRequester else focusRequesters.first(),
+            topEntryRequester = playerUpFocusRequester,
             sidebarEntryRequester = sidebarEntryRequester,
             currentTrack = currentTrack,
             isPlaying = isPlayerPlaying,
@@ -1046,6 +1075,7 @@ private fun TvTopTracksSection(
     onRefresh: () -> Unit,
     refreshFocusRequester: FocusRequester,
     firstRowFocusRequester: FocusRequester,
+    lastRowFocusRequester: FocusRequester,
     musicianFocusRequester: FocusRequester,
     playerFocusRequester: FocusRequester,
     sidebarEntryRequester: FocusRequester,
@@ -1136,16 +1166,20 @@ private fun TvTopTracksSection(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     displayedTracks.forEachIndexed { index, track ->
-                        val currentFocusRequester = if (index == 0) firstRowFocusRequester else rowFocusRequesters[index]
+                        val currentFocusRequester = when {
+                            index == 0 -> firstRowFocusRequester
+                            index == displayedTracks.lastIndex -> lastRowFocusRequester
+                            else -> rowFocusRequesters[index]
+                        }
                         val previousFocusRequester = when (index) {
                             0 -> refreshFocusRequester
                             1 -> firstRowFocusRequester
                             else -> rowFocusRequesters[index - 1]
                         }
-                        val nextFocusRequester = if (index == displayedTracks.lastIndex) {
-                            playerFocusRequester
-                        } else {
-                            rowFocusRequesters[index + 1]
+                        val nextFocusRequester = when {
+                            index == displayedTracks.lastIndex -> playerFocusRequester
+                            index + 1 == displayedTracks.lastIndex -> lastRowFocusRequester
+                            else -> rowFocusRequesters[index + 1]
                         }
 
                         TvTrackRow(
@@ -1158,6 +1192,13 @@ private fun TvTopTracksSection(
                             ),
                             modifier = Modifier
                                 .focusRequester(currentFocusRequester)
+                                .then(
+                                    if (index == 0 && displayedTracks.size == 1) {
+                                        Modifier.focusRequester(lastRowFocusRequester)
+                                    } else {
+                                        Modifier
+                                    }
+                                )
                                 .focusProperties {
                                     up = previousFocusRequester
                                     down = nextFocusRequester
@@ -1751,10 +1792,10 @@ private fun TvBottomPlayer(
                                 shape = RoundedCornerShape(11.dp),
                             )
                             .clip(RoundedCornerShape(11.dp))
-                            .background(if (isPlayButtonFocused) GolhaColors.BannerDetail else Color.White)
+                            .background(if (isPlayButtonFocused) Color(0xFFE0B84E) else Color.White)
                             .clickable(enabled = hasPlayableTrack) { onTogglePlayback() }
                             .onFocusChanged { isPlayButtonFocused = it.isFocused }
-                            .focusable(enabled = hasPlayableTrack),
+                            .focusable(),
                         contentAlignment = Alignment.Center
                     ) {
                         if (isPlaying) {
