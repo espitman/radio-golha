@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.MaterialTheme
@@ -82,8 +83,10 @@ import com.radiogolha.mobile.ui.home.DuetPairUiModel
 import com.radiogolha.mobile.ui.home.MusicianUiModel
 import com.radiogolha.mobile.ui.home.ProgramUiModel
 import com.radiogolha.mobile.ui.home.SingerUiModel
+import com.radiogolha.mobile.ui.home.TrackUiModel
 import com.radiogolha.mobile.ui.home.loadHomeUiState
 import com.radiogolha.mobile.ui.home.loadDuetPairsConfig
+import com.radiogolha.mobile.ui.home.loadTopTracks
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -128,6 +131,8 @@ fun TvApp() {
                     val modeFocusRequester = remember { FocusRequester() }
                     val singerFocusRequester = remember { FocusRequester() }
                     val musicianFocusRequester = remember { FocusRequester() }
+                    val trackRefreshFocusRequester = remember { FocusRequester() }
+                    val trackFocusRequester = remember { FocusRequester() }
                     val playerFocusRequester = remember { FocusRequester() }
                     val mainEntryRequester = topFocusRequesters.first()
                     val sidebarEntryRequester = sidebarFocusRequesters.first()
@@ -150,6 +155,8 @@ fun TvApp() {
                             modeFocusRequester = modeFocusRequester,
                             singerFocusRequester = singerFocusRequester,
                             musicianFocusRequester = musicianFocusRequester,
+                            trackRefreshFocusRequester = trackRefreshFocusRequester,
+                            trackFocusRequester = trackFocusRequester,
                             playerFocusRequester = playerFocusRequester,
                             sidebarEntryRequester = sidebarEntryRequester,
                         )
@@ -184,6 +191,8 @@ private fun TvMainPane(
     modeFocusRequester: FocusRequester,
     singerFocusRequester: FocusRequester,
     musicianFocusRequester: FocusRequester,
+    trackRefreshFocusRequester: FocusRequester,
+    trackFocusRequester: FocusRequester,
     playerFocusRequester: FocusRequester,
     sidebarEntryRequester: FocusRequester,
 ) {
@@ -192,7 +201,10 @@ private fun TvMainPane(
     var modeItems by remember { mutableStateOf<List<DastgahUiModel>>(emptyList()) }
     var singerItems by remember { mutableStateOf<List<SingerUiModel>>(emptyList()) }
     var musicianItems by remember { mutableStateOf<List<MusicianUiModel>>(emptyList()) }
+    var topTrackItems by remember { mutableStateOf<List<TrackUiModel>>(emptyList()) }
     var isHomeLoading by remember { mutableStateOf(true) }
+    var isTopTracksRefreshing by remember { mutableStateOf(false) }
+    var topTracksRefreshNonce by remember { mutableStateOf(0) }
 
     LaunchedEffect(Unit) {
         isHomeLoading = true
@@ -215,9 +227,23 @@ private fun TvMainPane(
         modeItems = home?.dastgahs.orEmpty()
         singerItems = home?.singers.orEmpty()
         musicianItems = home?.musicians.orEmpty()
+        topTrackItems = home?.topTracks.orEmpty()
         duetItems = homeDuets.ifEmpty { configDuets }
-        println("TV_HOME_LOADED programs=${programItems.size} modes=${modeItems.size} singers=${singerItems.size} musicians=${musicianItems.size} duets=${duetItems.size}")
+        println("TV_HOME_LOADED programs=${programItems.size} modes=${modeItems.size} singers=${singerItems.size} musicians=${musicianItems.size} topTracks=${topTrackItems.size} duets=${duetItems.size}")
         isHomeLoading = false
+    }
+
+    LaunchedEffect(topTracksRefreshNonce) {
+        if (topTracksRefreshNonce == 0) return@LaunchedEffect
+        isTopTracksRefreshing = true
+        topTrackItems = withContext(Dispatchers.Default) {
+            runCatching { loadTopTracks() }
+                .onFailure { println("ERROR TvMainPane loadTopTracks: ${it.message}") }
+                .getOrDefault(emptyList())
+        }
+        println("TV_TOP_TRACKS_REFRESHED count=${topTrackItems.size}")
+        isTopTracksRefreshing = false
+        trackFocusRequester.requestFocus()
     }
 
     Column(
@@ -289,6 +315,20 @@ private fun TvMainPane(
                     isLoading = isHomeLoading,
                     firstCardFocusRequester = musicianFocusRequester,
                     modeFocusRequester = modeFocusRequester,
+                    playerFocusRequester = trackRefreshFocusRequester,
+                    sidebarEntryRequester = sidebarEntryRequester,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 28.dp)
+                )
+                TvTopTracksSection(
+                    tracks = topTrackItems,
+                    isLoading = isHomeLoading,
+                    isRefreshing = isTopTracksRefreshing,
+                    onRefresh = { topTracksRefreshNonce += 1 },
+                    refreshFocusRequester = trackRefreshFocusRequester,
+                    firstRowFocusRequester = trackFocusRequester,
+                    musicianFocusRequester = musicianFocusRequester,
                     playerFocusRequester = playerFocusRequester,
                     sidebarEntryRequester = sidebarEntryRequester,
                     modifier = Modifier
@@ -301,7 +341,7 @@ private fun TvMainPane(
         }
         TvBottomPlayer(
             focusRequester = playerFocusRequester,
-            topEntryRequester = if (selectedTop == null) musicianFocusRequester else focusRequesters.first(),
+            topEntryRequester = if (selectedTop == null) trackFocusRequester else focusRequesters.first(),
             sidebarEntryRequester = sidebarEntryRequester,
         )
     }
@@ -938,6 +978,180 @@ private fun TvFeaturedMusiciansCarousel(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalComposeUiApi::class)
+private fun TvTopTracksSection(
+    tracks: List<TrackUiModel>,
+    isLoading: Boolean,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
+    refreshFocusRequester: FocusRequester,
+    firstRowFocusRequester: FocusRequester,
+    musicianFocusRequester: FocusRequester,
+    playerFocusRequester: FocusRequester,
+    sidebarEntryRequester: FocusRequester,
+    modifier: Modifier = Modifier,
+) {
+    val displayedTracks = remember(tracks) { tracks.take(5) }
+    val rowFocusRequesters = remember(displayedTracks.size) {
+        List(displayedTracks.size) { FocusRequester() }
+    }
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TvRefreshButton(
+                    isRefreshing = isRefreshing,
+                    onClick = onRefresh,
+                    modifier = Modifier
+                        .focusRequester(refreshFocusRequester)
+                        .focusProperties {
+                            up = musicianFocusRequester
+                            down = firstRowFocusRequester
+                            right = sidebarEntryRequester
+                            left = FocusRequester.Cancel
+                        },
+                )
+                Text(
+                    text = "برترین ترک‌ها",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = GolhaColors.PrimaryText,
+                    textAlign = TextAlign.End,
+                )
+            }
+        }
+        Spacer(Modifier.height(16.dp))
+        when {
+            isLoading -> {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    repeat(5) { index ->
+                        TvTrackLoadingRow(
+                            modifier = Modifier
+                                .then(
+                                    if (index == 0) {
+                                        Modifier.tvMainFocusAnchor(
+                                            focusRequester = firstRowFocusRequester,
+                                            upFocusRequester = refreshFocusRequester,
+                                            downFocusRequester = playerFocusRequester,
+                                            sidebarEntryRequester = sidebarEntryRequester,
+                                        )
+                                    } else {
+                                        Modifier.focusProperties {
+                                            up = if (index == 1) firstRowFocusRequester else FocusRequester.Cancel
+                                            down = if (index == 4) playerFocusRequester else FocusRequester.Cancel
+                                        }
+                                    }
+                                )
+                        )
+                    }
+                }
+            }
+            displayedTracks.isEmpty() -> TvHomeEmptyCard(
+                label = "ترکی برای نمایش وجود ندارد",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(150.dp)
+                    .tvMainFocusAnchor(
+                        focusRequester = firstRowFocusRequester,
+                        upFocusRequester = refreshFocusRequester,
+                        downFocusRequester = playerFocusRequester,
+                        sidebarEntryRequester = sidebarEntryRequester,
+                    )
+            )
+            else -> {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    displayedTracks.forEachIndexed { index, track ->
+                        val currentFocusRequester = if (index == 0) firstRowFocusRequester else rowFocusRequesters[index]
+                        val previousFocusRequester = when (index) {
+                            0 -> refreshFocusRequester
+                            1 -> firstRowFocusRequester
+                            else -> rowFocusRequesters[index - 1]
+                        }
+                        val nextFocusRequester = if (index == displayedTracks.lastIndex) {
+                            playerFocusRequester
+                        } else {
+                            rowFocusRequesters[index + 1]
+                        }
+
+                        TvTrackRow(
+                            item = TvTrackRowItem(
+                                id = track.id,
+                                title = track.title,
+                                artist = track.artist,
+                                duration = track.duration,
+                                coverUrl = track.coverUrl,
+                            ),
+                            modifier = Modifier
+                                .focusRequester(currentFocusRequester)
+                                .focusProperties {
+                                    up = previousFocusRequester
+                                    down = nextFocusRequester
+                                    if (index == 0) {
+                                        right = sidebarEntryRequester
+                                    }
+                                    left = FocusRequester.Cancel
+                                },
+                            onClick = {},
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TvRefreshButton(
+    isRefreshing: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var isFocused by remember { mutableStateOf(false) }
+    Box(
+        modifier = modifier
+            .size(34.dp)
+            .clip(CircleShape)
+            .background(if (isFocused) GolhaColors.BannerDetail else GolhaColors.Surface.copy(alpha = 0.86f))
+            .border(
+                width = 1.dp,
+                color = if (isFocused) GolhaColors.BannerDetail else GolhaColors.Border.copy(alpha = 0.6f),
+                shape = CircleShape,
+            )
+            .clickable(enabled = !isRefreshing) { onClick() }
+            .onFocusChanged { isFocused = it.isFocused }
+            .focusable(),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (isRefreshing) {
+            CircularProgressIndicator(
+                color = if (isFocused) Color.White else GolhaColors.BannerDetail,
+                strokeWidth = 2.dp,
+                modifier = Modifier.size(17.dp),
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Filled.Refresh,
+                contentDescription = null,
+                tint = if (isFocused) Color.White else GolhaColors.PrimaryText.copy(alpha = 0.72f),
+                modifier = Modifier.size(19.dp),
+            )
         }
     }
 }
