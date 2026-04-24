@@ -2,9 +2,11 @@ package com.radiogolha.mobile.tv
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -36,7 +38,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
@@ -109,19 +114,25 @@ private fun TvMainPane(
 ) {
     Column(
         modifier = modifier
-            .padding(horizontal = 24.dp, vertical = 18.dp)
     ) {
-        TvTopMenuBar(selectedTop = selectedTop, onSelect = onSelectTop)
+        TvTopMenuBar(
+            selectedTop = selectedTop,
+            onSelect = onSelectTop,
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 18.dp)
+        )
+        Spacer(Modifier.weight(1f))
+        TvBottomPlayer()
     }
 }
 
 @Composable
 private fun TvTopMenuBar(
     selectedTop: TvTopMenuItem?,
-    onSelect: (TvTopMenuItem) -> Unit
+    onSelect: (TvTopMenuItem) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Start
     ) {
         TvTopMenuItem.entries.forEach { item ->
@@ -149,6 +160,252 @@ private fun TvTopMenuBar(
             Spacer(Modifier.width(10.dp))
         }
     }
+}
+
+@Composable
+private fun TvBottomPlayer() {
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(72.dp)
+                .background(Color(0xFF002045))
+        ) {
+            TvPlayerSeekBar(progress = 0f)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 32.dp)
+            ) {
+                Row(
+                    modifier = Modifier.align(Alignment.CenterStart),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    TvEqualizerIndicator(isActive = false)
+                    Text(
+                        text = "00:00 / 00:00",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = Color.White.copy(alpha = 0.9f)
+                    )
+                    Spacer(
+                        modifier = Modifier
+                            .width(1.dp)
+                            .height(28.dp)
+                            .background(Color.White.copy(alpha = 0.1f))
+                    )
+                }
+
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .width(260.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    TvPlayerCanvasIcon(TvPlayerIconKind.Shuffle, alpha = 0.35f)
+                    Spacer(Modifier.width(18.dp))
+                    TvPlayerCanvasIcon(TvPlayerIconKind.BackTen, alpha = 0.35f)
+                    Spacer(Modifier.width(18.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(RoundedCornerShape(11.dp))
+                            .background(Color.White),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.PlayArrow,
+                            contentDescription = null,
+                            tint = Color(0xFF002045),
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+                    Spacer(Modifier.width(18.dp))
+                    TvPlayerCanvasIcon(TvPlayerIconKind.ForwardTen, alpha = 0.35f)
+                    Spacer(Modifier.width(18.dp))
+                    TvPlayerCanvasIcon(TvPlayerIconKind.Repeat, alpha = 0.35f)
+                }
+
+                Row(
+                    modifier = Modifier.align(Alignment.CenterEnd),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.width(220.dp),
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        Text(
+                            text = "—",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
+                            color = Color.White,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.End,
+                            maxLines = 1
+                        )
+                        Text(
+                            text = "—",
+                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 9.sp),
+                            color = Color.White.copy(alpha = 0.6f),
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.End,
+                            maxLines = 1
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(Color.White.copy(alpha = 0.1f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "♪",
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                            color = Color.White.copy(alpha = 0.85f)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TvPlayerSeekBar(progress: Float) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(4.dp)
+            .background(Color.White.copy(alpha = 0.1f))
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(progress.coerceIn(0f, 1f))
+                .height(4.dp)
+                .background(Color(0xFFD4AF37))
+        )
+    }
+}
+
+@Composable
+private fun TvEqualizerIndicator(isActive: Boolean) {
+    val heights = listOf(6.dp, 15.dp, 24.dp, 12.dp, 18.dp, 9.dp)
+    Row(
+        modifier = Modifier
+            .width(36.dp)
+            .height(24.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(3.dp)
+    ) {
+        heights.forEach { height ->
+            Box(
+                modifier = Modifier
+                    .width(3.dp)
+                    .height(height)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(
+                        if (isActive) {
+                            Color(0xFFD4AF37)
+                        } else {
+                            GolhaColors.SecondaryText.copy(alpha = 0.35f)
+                        }
+                    )
+            )
+        }
+    }
+}
+
+private enum class TvPlayerIconKind {
+    Shuffle,
+    BackTen,
+    ForwardTen,
+    Repeat,
+}
+
+@Composable
+private fun TvPlayerCanvasIcon(
+    kind: TvPlayerIconKind,
+    alpha: Float,
+) {
+    val tint = Color.White.copy(alpha = alpha)
+    Box(
+        modifier = Modifier.size(22.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val strokeWidth = 2.2.dp.toPx()
+            val w = size.width
+            val h = size.height
+
+            when (kind) {
+                TvPlayerIconKind.Shuffle -> {
+                    drawLine(tint, Offset(w * 0.16f, h * 0.32f), Offset(w * 0.42f, h * 0.32f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+                    drawLine(tint, Offset(w * 0.42f, h * 0.32f), Offset(w * 0.74f, h * 0.68f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+                    drawLine(tint, Offset(w * 0.16f, h * 0.68f), Offset(w * 0.42f, h * 0.68f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+                    drawLine(tint, Offset(w * 0.42f, h * 0.68f), Offset(w * 0.74f, h * 0.32f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+                    drawSmallArrow(tint, Offset(w * 0.82f, h * 0.68f), forward = true, strokeWidth = strokeWidth)
+                    drawSmallArrow(tint, Offset(w * 0.82f, h * 0.32f), forward = true, strokeWidth = strokeWidth)
+                }
+                TvPlayerIconKind.BackTen -> {
+                    drawLine(tint, Offset(w * 0.28f, h * 0.24f), Offset(w * 0.28f, h * 0.76f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+                    drawTriangle(
+                        tint,
+                        Offset(w * 0.72f, h * 0.22f),
+                        Offset(w * 0.40f, h * 0.50f),
+                        Offset(w * 0.72f, h * 0.78f)
+                    )
+                }
+                TvPlayerIconKind.ForwardTen -> {
+                    drawTriangle(
+                        tint,
+                        Offset(w * 0.28f, h * 0.22f),
+                        Offset(w * 0.60f, h * 0.50f),
+                        Offset(w * 0.28f, h * 0.78f)
+                    )
+                    drawLine(tint, Offset(w * 0.72f, h * 0.24f), Offset(w * 0.72f, h * 0.76f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+                }
+                TvPlayerIconKind.Repeat -> {
+                    drawLine(tint, Offset(w * 0.18f, h * 0.36f), Offset(w * 0.78f, h * 0.36f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+                    drawSmallArrow(tint, Offset(w * 0.82f, h * 0.36f), forward = true, strokeWidth = strokeWidth)
+                    drawLine(tint, Offset(w * 0.82f, h * 0.64f), Offset(w * 0.22f, h * 0.64f), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+                    drawSmallArrow(tint, Offset(w * 0.18f, h * 0.64f), forward = false, strokeWidth = strokeWidth)
+                }
+            }
+        }
+    }
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSmallArrow(
+    color: Color,
+    tip: Offset,
+    forward: Boolean,
+    strokeWidth: Float,
+) {
+    val x = if (forward) -1f else 1f
+    drawLine(color, tip, Offset(tip.x + x * 4.dp.toPx(), tip.y - 3.dp.toPx()), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+    drawLine(color, tip, Offset(tip.x + x * 4.dp.toPx(), tip.y + 3.dp.toPx()), strokeWidth = strokeWidth, cap = StrokeCap.Round)
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTriangle(
+    color: Color,
+    first: Offset,
+    second: Offset,
+    third: Offset,
+) {
+    drawPath(
+        path = Path().apply {
+            moveTo(first.x, first.y)
+            lineTo(second.x, second.y)
+            lineTo(third.x, third.y)
+            close()
+        },
+        color = color
+    )
 }
 
 @Composable
@@ -184,6 +441,13 @@ private fun TvSidebar(
         TvSideMenuItem.entries.forEach { item ->
             if (item == TvSideMenuItem.Settings) {
                 Spacer(modifier = Modifier.weight(1f))
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(Color(0x1A1C1C17))
+                )
+                Spacer(Modifier.height(12.dp))
             }
 
             TvSidebarItem(
