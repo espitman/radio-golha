@@ -2,7 +2,10 @@ import { createRootRoute, createRoute, createRouter } from "@tanstack/react-rout
 import { AppShell } from "../components/layout/AppShell";
 import { HomePage } from "../features/home/HomePage";
 import { SearchPage } from "../features/search/SearchPage";
+import { SingersPage } from "../features/singers/SingersPage";
+import { PlayersPage } from "../features/players/PlayersPage";
 import { SettingsPage } from "../features/settings/SettingsPage";
+import { ArtistDetailsPage } from "../features/artists/ArtistDetailsPage";
 
 function PlaceholderPage({ title }: { title: string }) {
   return (
@@ -23,8 +26,8 @@ const indexRoute = createRoute({
 
 const routes = [
   indexRoute,
-  createRoute({ getParentRoute: () => rootRoute, path: "/singers", component: () => <PlaceholderPage title="خوانندگان" /> }),
-  createRoute({ getParentRoute: () => rootRoute, path: "/players", component: () => <PlaceholderPage title="نوازندگان" /> }),
+  createRoute({ getParentRoute: () => rootRoute, path: "/singers", component: SingersPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: "/players", component: PlayersPage }),
   createRoute({ getParentRoute: () => rootRoute, path: "/playlists", component: () => <PlaceholderPage title="پلی لیست‌های من" /> }),
   createRoute({ getParentRoute: () => rootRoute, path: "/favorite-singers", component: () => <PlaceholderPage title="خواننده‌های مورد علاقه" /> }),
   createRoute({ getParentRoute: () => rootRoute, path: "/favorite-players", component: () => <PlaceholderPage title="نوازندگان مورد علاقه" /> }),
@@ -38,6 +41,7 @@ const routes = [
   createRoute({ getParentRoute: () => rootRoute, path: "/collections", component: () => <PlaceholderPage title="مجموعه‌های خاص" /> }),
   createRoute({ getParentRoute: () => rootRoute, path: "/researchers", component: () => <PlaceholderPage title="پژوهشگران" /> }),
   createRoute({ getParentRoute: () => rootRoute, path: "/artists", component: () => <PlaceholderPage title="هنرمندان" /> }),
+  createRoute({ getParentRoute: () => rootRoute, path: "/artists/$artistId", component: ArtistDetailsPage }),
   createRoute({ getParentRoute: () => rootRoute, path: "/modes", component: () => <PlaceholderPage title="دستگاه‌ها" /> }),
   createRoute({ getParentRoute: () => rootRoute, path: "/poets", component: () => <PlaceholderPage title="شاعران" /> }),
 ];

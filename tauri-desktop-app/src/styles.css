@@ -135,3 +135,50 @@ button {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+.segmented-control {
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  width: 128px;
+  height: 28px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e5e2da;
+  padding: 2px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.segmented-control input {
+  display: none;
+}
+
+.segmented-control label {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: rgba(28, 28, 23, 0.62);
+  transition: color 160ms ease;
+}
+
+.segmented-control .selection-slider {
+  position: absolute;
+  inset-block: 2px;
+  right: 2px;
+  width: calc(50% - 2px);
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(28, 28, 23, 0.08);
+  transition: transform 180ms ease;
+}
+
+.segmented-control input:nth-of-type(2):checked ~ .selection-slider {
+  transform: translateX(-100%);
+}
+
+.segmented-control input:checked + label {
+  color: #002045;
+}
