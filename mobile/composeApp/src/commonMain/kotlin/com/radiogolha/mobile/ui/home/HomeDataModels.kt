@@ -70,7 +70,8 @@ internal data class CategoryProgramDto(
     val artist: String = "",
     val duration: String? = null,
     val mode: String? = null,
-    val audioUrl: String? = null
+    val audioUrl: String? = null,
+    val singerAvatars: List<String> = emptyList(),
 )
 
 @Serializable

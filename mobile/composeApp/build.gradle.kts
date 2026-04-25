@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Exec
 import java.io.File
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -20,36 +21,72 @@ val ndkRoot = androidSdkRoot.map { "$it/ndk/27.1.12297006" }
 val ndkPrebuiltDir = ndkRoot.map { "$it/toolchains/llvm/prebuilt/darwin-x86_64" }
 val rustAdapterDir = rootProject.file("../core/adapters/android")
 val rustIosAdapterDir = rootProject.file("../core/adapters/ios")
-val rustTarget = "aarch64-linux-android"
 val rustApiLevel = "24"
 val rustLibName = "libradiogolha_android.so"
 val rustJniLibsRootDir = layout.buildDirectory.dir("generated/rust/jniLibs")
-val rustJniLibsDir = layout.buildDirectory.dir("generated/rust/jniLibs/arm64-v8a")
 val archiveAssetsDir = layout.buildDirectory.dir("generated/archive-assets")
+val androidRustTargets = listOf(
+    AndroidRustTarget(
+        triple = "aarch64-linux-android",
+        abi = "arm64-v8a",
+        linkerPrefix = "aarch64-linux-android",
+        cargoEnvKey = "AARCH64_LINUX_ANDROID",
+        ccEnvKey = "aarch64_linux_android",
+    ),
+    AndroidRustTarget(
+        triple = "armv7-linux-androideabi",
+        abi = "armeabi-v7a",
+        linkerPrefix = "armv7a-linux-androideabi",
+        cargoEnvKey = "ARMV7_LINUX_ANDROIDEABI",
+        ccEnvKey = "armv7_linux_androideabi",
+    ),
+)
+
+data class AndroidRustTarget(
+    val triple: String,
+    val abi: String,
+    val linkerPrefix: String,
+    val cargoEnvKey: String,
+    val ccEnvKey: String,
+)
+val releaseSigningPropertiesFile = rootProject.file("signing/release-signing.properties")
+val releaseSigningProperties = Properties().apply {
+    if (releaseSigningPropertiesFile.exists()) {
+        releaseSigningPropertiesFile.inputStream().use(::load)
+    }
+}
+val hasReleaseSigningProperties =
+    releaseSigningProperties.getProperty("storeFile").orEmpty().isNotBlank() &&
+        releaseSigningProperties.getProperty("storePassword").orEmpty().isNotBlank() &&
+        releaseSigningProperties.getProperty("keyAlias").orEmpty().isNotBlank()
 
 val syncArchiveDb by tasks.registering(Copy::class) {
     from(rootProject.file("../database/golha_database.db"))
     into(archiveAssetsDir)
 }
 
-val buildRustAndroid by tasks.registering(Exec::class) {
+val buildRustAndroid by tasks.registering {
     dependsOn(syncArchiveDb)
-    workingDir = rustAdapterDir
 
     doFirst {
-        rustJniLibsDir.get().asFile.mkdirs()
+        rustJniLibsRootDir.get().asFile.mkdirs()
     }
 
-    environment("ANDROID_NDK_HOME", ndkRoot.get())
-    environment("CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER", "${ndkPrebuiltDir.get()}/bin/aarch64-linux-android${rustApiLevel}-clang")
-    environment("CC_aarch64_linux_android", "${ndkPrebuiltDir.get()}/bin/aarch64-linux-android${rustApiLevel}-clang")
-    environment("AR_aarch64_linux_android", "${ndkPrebuiltDir.get()}/bin/llvm-ar")
-    commandLine("cargo", "build", "--target", rustTarget)
-
     doLast {
-        copy {
-            from(File(rustAdapterDir, "target/$rustTarget/debug/$rustLibName"))
-            into(rustJniLibsDir.get().asFile)
+        androidRustTargets.forEach { target ->
+            val clang = "${ndkPrebuiltDir.get()}/bin/${target.linkerPrefix}${rustApiLevel}-clang"
+            exec {
+                workingDir = rustAdapterDir
+                environment("ANDROID_NDK_HOME", ndkRoot.get())
+                environment("CARGO_TARGET_${target.cargoEnvKey}_LINKER", clang)
+                environment("CC_${target.ccEnvKey}", clang)
+                environment("AR_${target.ccEnvKey}", "${ndkPrebuiltDir.get()}/bin/llvm-ar")
+                commandLine("cargo", "build", "--target", target.triple)
+            }
+            copy {
+                from(File(rustAdapterDir, "target/${target.triple}/debug/$rustLibName"))
+                into(rustJniLibsRootDir.get().dir(target.abi).asFile)
+            }
         }
     }
 }
@@ -144,6 +181,7 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "0.1.0"
+        manifestPlaceholders["appLabel"] = "@string/app_name"
     }
 
     sourceSets["main"].assets.srcDir(archiveAssetsDir)
@@ -153,10 +191,35 @@ android {
         compose = true
     }
 
+    signingConfigs {
+        if (hasReleaseSigningProperties) {
+            create("release") {
+                storeFile = file(releaseSigningProperties.getProperty("storeFile"))
+                storePassword = releaseSigningProperties.getProperty("storePassword")
+                keyAlias = releaseSigningProperties.getProperty("keyAlias")
+                keyPassword = releaseSigningProperties.getProperty("keyPassword")
+                    ?: releaseSigningProperties.getProperty("storePassword")
+            }
+        }
+    }
+
+    flavorDimensions += "device"
+    productFlavors {
+        create("mobile") {
+            dimension = "device"
+        }
+        create("tv") {
+            dimension = "device"
+            applicationIdSuffix = ".tv"
+            versionNameSuffix = "-tv"
+            manifestPlaceholders["appLabel"] = "رادیو گل‌ها TV"
+        }
+    }
+
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
     }
 
@@ -170,6 +233,9 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    sourceSets["mobile"].manifest.srcFile("src/mobile/AndroidManifest.xml")
+    sourceSets["tv"].manifest.srcFile("src/androidTv/AndroidManifest.xml")
 }
 
 dependencies {
@@ -184,10 +250,25 @@ tasks.matching {
         "mergeReleaseJniLibFolders",
         "mergeReleaseNativeLibs",
         "mergeReleaseAssets",
+        "mergeMobileDebugJniLibFolders",
+        "mergeMobileDebugNativeLibs",
+        "mergeMobileDebugAssets",
+        "mergeMobileReleaseJniLibFolders",
+        "mergeMobileReleaseNativeLibs",
+        "mergeMobileReleaseAssets",
+        "mergeTvDebugJniLibFolders",
+        "mergeTvDebugNativeLibs",
+        "mergeTvDebugAssets",
+        "mergeTvReleaseJniLibFolders",
+        "mergeTvReleaseNativeLibs",
+        "mergeTvReleaseAssets",
         "lintVitalAnalyzeRelease",
+        "lintVitalAnalyzeTvRelease",
         "generateReleaseLintVitalReportModel",
+        "generateTvReleaseLintVitalReportModel",
         "generateDebugLintModel",
-        "generateReleaseLintModel"
+        "generateReleaseLintModel",
+        "generateTvReleaseLintModel"
     )
 }
     .configureEach {

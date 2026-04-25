@@ -251,7 +251,8 @@ internal fun CategoryProgramDto.toCategoryProgramUiModel() = CategoryProgramUiMo
     singer = artist,
     duration = duration,
     dastgah = mode,
-    audioUrl = audioUrl
+    audioUrl = audioUrl,
+    singerAvatars = singerAvatars,
 )
 
 @kotlinx.serialization.Serializable
