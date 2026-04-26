@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ArtistCard } from "../../components/artist/ArtistCard";
 import { HomeSkeleton } from "../../components/skeleton/Skeletons";
 import { TrackList, type TrackRowData } from "../../components/track/TrackRow";
-import { getHomeData, type CoreHomePayload } from "../../lib/coreApi";
+import { getHomeData, getTopTracks, type CoreHomePayload } from "../../lib/coreApi";
 import { readRecentTracks, RECENT_TRACKS_CHANGED_EVENT } from "../../lib/recentTracks";
 
 type ProgramCardData = {
@@ -38,12 +38,29 @@ const programs: ProgramCardData[] = [
 
 type HomeShowAllRoute = "/archive" | "/singers" | "/players" | "/recent" | "/popular";
 
-function SectionHeader({ title, showAllTo, refresh = false }: { title: string; showAllTo?: HomeShowAllRoute; refresh?: boolean }) {
+function SectionHeader({
+  title,
+  showAllTo,
+  refresh = false,
+  onRefresh,
+  isRefreshing = false,
+}: {
+  title: string;
+  showAllTo?: HomeShowAllRoute;
+  refresh?: boolean;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
+}) {
   return (
     <div className="mb-8 flex items-end justify-between">
       <h3 className="text-3xl font-bold text-primary">{title}</h3>
       {refresh ? (
-        <button className="text-secondary transition-transform duration-500 hover:rotate-180">
+        <button
+          className="text-secondary transition-transform duration-500 hover:rotate-180 disabled:cursor-default disabled:opacity-50"
+          onClick={onRefresh}
+          disabled={isRefreshing}
+          type="button"
+        >
           <span className="material-symbols-outlined">refresh</span>
         </button>
       ) : showAllTo ? (
@@ -80,6 +97,7 @@ export function HomePage() {
   const [homeData, setHomeData] = useState<CoreHomePayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [recentTracks, setRecentTracks] = useState<TrackRowData[]>([]);
+  const [isRefreshingTopTracks, setIsRefreshingTopTracks] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -94,6 +112,18 @@ export function HomePage() {
       isMounted = false;
     };
   }, []);
+
+  function handleRefreshTopTracks() {
+    if (isRefreshingTopTracks) return;
+    setIsRefreshingTopTracks(true);
+    getTopTracks(5)
+      .then((topTracks) => {
+        setHomeData((current) => (current ? { ...current, topTracks } : current));
+      })
+      .finally(() => {
+        setIsRefreshingTopTracks(false);
+      });
+  }
 
   useEffect(() => {
     const refresh = () => {
@@ -230,7 +260,7 @@ export function HomePage() {
 
       <section className="mx-auto grid max-w-5xl grid-cols-12 gap-12 px-12 py-12">
         <div className="col-span-6">
-          <SectionHeader title="برترین برنامه‌ها" refresh />
+          <SectionHeader title="برترین برنامه‌ها" refresh onRefresh={handleRefreshTopTracks} isRefreshing={isRefreshingTopTracks} />
           <TrackList tracks={dynamicTopTracks} />
         </div>
         <div className="col-span-6">
