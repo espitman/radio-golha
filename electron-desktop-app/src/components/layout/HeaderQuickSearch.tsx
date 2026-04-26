@@ -171,7 +171,6 @@ export function HeaderQuickSearch() {
                   type="button"
                   dir="ltr"
                 >
-                  <ArtistAvatar result={result} />
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-right text-[10px] font-bold text-primary/88" dir="rtl">
                       {result.title}
@@ -180,6 +179,7 @@ export function HeaderQuickSearch() {
                       {result.subtitle}
                     </div>
                   </div>
+                  <ArtistAvatar result={result} />
                 </button>
               ))}
             </div>
