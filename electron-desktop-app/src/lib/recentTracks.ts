@@ -5,6 +5,7 @@ export const RECENT_TRACKS_CHANGED_EVENT = "radioGolha:recentTracksChanged";
 
 export type RecentTrack = PlayerTrack & {
   playedAt: number;
+  playCount: number;
 };
 
 function readRawRecentTracks(): RecentTrack[] {
@@ -28,6 +29,14 @@ export function readRecentTracks(limit?: number): RecentTrack[] {
   return typeof limit === "number" ? tracks.slice(0, limit) : tracks;
 }
 
+export function readPopularTracks(limit?: number): RecentTrack[] {
+  const tracks = readRawRecentTracks().sort((left, right) => {
+    if (right.playCount !== left.playCount) return right.playCount - left.playCount;
+    return right.playedAt - left.playedAt;
+  });
+  return typeof limit === "number" ? tracks.slice(0, limit) : tracks;
+}
+
 export function writeRecentTracks(tracks: RecentTrack[]) {
   localStorage.setItem(RECENT_TRACKS_STORAGE_KEY, JSON.stringify(tracks));
   dispatchRecentTracksChanged();
@@ -35,14 +44,17 @@ export function writeRecentTracks(tracks: RecentTrack[]) {
 
 export function pushRecentTrack(track: PlayerTrack) {
   const trackKey = String(track.id ?? `${track.title}:${track.subtitle}:${track.duration}`);
+  const currentTracks = readRawRecentTracks();
+  const existingTrack = currentTracks.find((item) => String(item.id ?? `${item.title}:${item.subtitle}:${item.duration}`) === trackKey);
   const nextTrack: RecentTrack = {
     ...track,
     playedAt: Date.now(),
+    playCount: (existingTrack?.playCount ?? 0) + 1,
   };
 
   const nextTracks = [
     nextTrack,
-    ...readRawRecentTracks().filter((item) => String(item.id ?? `${item.title}:${item.subtitle}:${item.duration}`) !== trackKey),
+    ...currentTracks.filter((item) => String(item.id ?? `${item.title}:${item.subtitle}:${item.duration}`) !== trackKey),
   ].slice(0, 100);
 
   writeRecentTracks(nextTracks);
