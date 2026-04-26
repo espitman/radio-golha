@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import clsx from "clsx";
 import { BottomPlayer } from "../player/BottomPlayer";
@@ -19,6 +20,11 @@ const topItems = [
 
 export function AppShell() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const contentRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    contentRef.current?.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [pathname]);
 
   return (
     <div className="h-screen overflow-hidden bg-surface text-on-surface selection:bg-secondary-container selection:text-on-secondary-container" dir="rtl">
@@ -74,7 +80,7 @@ export function AppShell() {
         </div>
       </aside>
 
-      <main className="shamseh-pattern relative mr-64 h-screen overflow-y-auto pb-32">
+      <main ref={contentRef} className="shamseh-pattern relative mr-64 h-screen overflow-y-auto pb-32">
         <header className="sticky top-0 z-40 flex h-20 w-full items-center justify-between bg-surface/80 px-12 backdrop-blur-xl">
           <div className="flex items-center gap-10">
             <nav className="flex gap-6">
@@ -114,7 +120,9 @@ export function AppShell() {
           </div>
         </header>
 
-        <Outlet />
+        <div key={pathname} className="page-route-transition">
+          <Outlet />
+        </div>
       </main>
 
       <BottomPlayer />

@@ -9,10 +9,17 @@ if [[ ! -d "$APP_DIR" ]]; then
   exit 1
 fi
 
+if ! command -v pnpm >/dev/null 2>&1; then
+  echo "pnpm is required to run the Tauri desktop app." >&2
+  exit 1
+fi
+
 cd "$APP_DIR"
 
 if [[ ! -d node_modules ]]; then
+  echo "Installing Tauri desktop dependencies..."
   pnpm install
 fi
 
-pnpm tauri dev
+echo "Running Tauri desktop app..."
+pnpm tauri dev "$@"

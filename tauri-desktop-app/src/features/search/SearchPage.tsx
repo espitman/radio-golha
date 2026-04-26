@@ -53,14 +53,14 @@ function FilterField({ filter }: { filter: FilterInput }) {
 
 export function SearchPage() {
   return (
-    <div className="mx-auto max-w-6xl px-8 py-12">
+    <div className="mx-auto max-w-5xl px-12 pb-32 pt-12">
       <div className="mb-10 text-right">
-        <h2 className="mb-2 text-3xl font-bold text-primary">جستجوی پیشرفته در گنجینه</h2>
-        <p className="text-sm text-on-surface-variant/70">با استفاده از فیلترهای زیر، در میراث موسیقی اصیل ایران کاوش کنید</p>
+        <h1 className="mb-3 text-4xl font-bold text-primary">جستجوی پیشرفته در گنجینه</h1>
+        <p className="max-w-2xl text-right leading-relaxed text-on-surface-variant">با استفاده از فیلترهای زیر، در میراث موسیقی اصیل ایران کاوش کنید</p>
       </div>
 
       <form className="space-y-8 rounded-xl border border-secondary/10 bg-surface-container/30 p-8 backdrop-blur-sm">
-        <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2">
           {filters.map((filter) => (
             <FilterField key={filter.id} filter={filter} />
           ))}

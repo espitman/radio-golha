@@ -1,21 +1,18 @@
-type ProgramCard = {
+import { Link } from "@tanstack/react-router";
+import { ArtistCard } from "../../components/artist/ArtistCard";
+import { TrackList } from "../../components/track/TrackRow";
+
+type ProgramCardData = {
   title: string;
   count: string;
   icon: string;
 };
 
-type ArtistCard = {
+type HomeArtist = {
   name: string;
   role: string;
   image: string;
   alt: string;
-};
-
-type TrackRow = {
-  title: string;
-  subtitle: string;
-  duration: string;
-  rounded?: boolean;
 };
 
 const heroImage =
@@ -34,21 +31,21 @@ const images = {
     "https://lh3.googleusercontent.com/aida-public/AB6AXuBGekEUXBcApNWh17_qhvE5zV19t7t5ysca3oZ9FEtdwVsgnWNzPE4paUYPvmlUTxB_uvpchE7NsLDop42Z2XcKwL3KuNH7xPuKmzxrW9WppCT6K3Ym293tsAh_vm9OS8Hzx6kAiAndqgLmOu222Rv2-SDcDfZmurPQhtjei3LmDPjmABFjBKvYHUWqvHv4YSbsYVrFKSdnEa6IlEZO0z3ZeNFnHgtk_e9PVNz6AVOaBCZJTcau2o2nG16iErn20SyVh-RV53NW5hsg",
 };
 
-const programs: ProgramCard[] = [
+const programs: ProgramCardData[] = [
   { title: "گل‌های تازه", count: "۱۵۵ برنامه", icon: "filter_vintage" },
   { title: "برگ سبز", count: "۳۱۲ برنامه", icon: "eco" },
   { title: "یک شاخه گل", count: "۴۶۵ برنامه", icon: "local_florist" },
   { title: "گلهای جاویدان", count: "۱۰۱ برنامه", icon: "auto_awesome" },
 ];
 
-const singers: ArtistCard[] = [
+const singers: HomeArtist[] = [
   { name: "محمدرضا شجریان", role: "خواننده", image: images.shajarian, alt: "استاد محمدرضا شجریان" },
   { name: "غلامحسین بنان", role: "خواننده", image: images.banan, alt: "استاد غلامحسین بنان" },
   { name: "بانو دلکش", role: "خواننده", image: images.delkash, alt: "بانو دلکش" },
   { name: "بانو مرضیه", role: "خواننده", image: images.marzieh, alt: "بانو مرضیه" },
 ];
 
-const players: ArtistCard[] = [
+const players: HomeArtist[] = [
   { name: "جلیل شهناز", role: "نوازنده تار", image: images.delkash, alt: "استاد جلیل شهناز" },
   { name: "حسن کسایی", role: "نوازنده نی", image: images.marzieh, alt: "استاد حسن کسایی" },
   { name: "فرهنگ شریف", role: "نوازنده تار", image: images.sharif, alt: "استاد فرهنگ شریف" },
@@ -57,12 +54,12 @@ const players: ArtistCard[] = [
 
 const modes = ["شور", "ماهور", "همایون", "اصفهان", "سه‌گاه", "چهارگاه", "راست‌پنجگاه", "نوا", "ابوعطا", "دشتی"];
 
-const topPrograms: TrackRow[] = [
-  { title: "گلهای تازه شماره ۱۲۰", subtitle: "استاد شجریان - فرهنگ شریف", duration: "۱۵:۲۰", rounded: true },
-  { title: "تکنوازان شماره ۲۵", subtitle: "جلیل شهناز - ناصر فرهنگ‌فر", duration: "۱۲:۴۵", rounded: true },
+const topPrograms = [
+  { title: "گلهای تازه شماره ۱۲۰", subtitle: "استاد شجریان - فرهنگ شریف", duration: "۱۵:۲۰" },
+  { title: "تکنوازان شماره ۲۵", subtitle: "جلیل شهناز - ناصر فرهنگ‌فر", duration: "۱۲:۴۵" },
 ];
 
-const recentTracks: TrackRow[] = [
+const recentTracks = [
   { title: "آستان جانان", subtitle: "آواز شور", duration: "۰۴:۱۵" },
   { title: "کاروان", subtitle: "غلامحسین بنان", duration: "۰۶:۳۰" },
 ];
@@ -85,9 +82,13 @@ function SectionHeader({ title, showAll = true, refresh = false }: { title: stri
   );
 }
 
-function ProgramCard({ program }: { program: ProgramCard }) {
+function ProgramCard({ program }: { program: ProgramCardData }) {
   return (
-    <div className="group flex cursor-pointer items-center gap-4 rounded-2xl border border-outline-variant/20 bg-surface-container-low p-4 transition-all hover:bg-white hover:shadow-xl hover:shadow-primary/5">
+    <Link
+      to="/programs/$programId"
+      params={{ programId: program.title }}
+      className="group flex cursor-pointer items-center gap-4 rounded-2xl border border-outline-variant/20 bg-surface-container-low p-4 transition-all hover:bg-white hover:shadow-xl hover:shadow-primary/5"
+    >
       <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-primary/5 text-secondary transition-colors group-hover:bg-secondary group-hover:text-white">
         <span className="material-symbols-outlined text-3xl">{program.icon}</span>
       </div>
@@ -95,63 +96,21 @@ function ProgramCard({ program }: { program: ProgramCard }) {
         <h4 className="text-lg font-bold text-primary">{program.title}</h4>
         <p className="text-xs text-stone-500">{program.count}</p>
       </div>
-    </div>
+    </Link>
   );
 }
 
-function ArtistCard({ artist }: { artist: ArtistCard }) {
-  return (
-    <div className="group relative overflow-hidden rounded-xl border border-outline-variant/10 bg-surface-container-lowest transition-all duration-500 hover:shadow-xl">
-      <div className="relative aspect-square overflow-hidden">
-        <img
-          alt={artist.alt}
-          className="h-full w-full object-cover grayscale transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0"
-          src={artist.image}
-        />
-        <div className="absolute inset-0 flex items-end bg-gradient-to-t from-primary/80 via-transparent to-transparent p-6 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
-          <button className="w-full rounded-full bg-secondary-container px-6 py-2 text-xs font-bold text-on-secondary-container">مشاهده آثار</button>
-        </div>
-      </div>
-      <div className="p-5 text-right">
-        <h3 className="mb-1 text-xl font-bold text-primary">{artist.name}</h3>
-        <p className="text-sm font-medium text-on-surface-variant">{artist.role}</p>
-      </div>
-    </div>
-  );
-}
 
-function TrackList({ rows, squarePlay = false }: { rows: TrackRow[]; squarePlay?: boolean }) {
-  return (
-    <div className="overflow-hidden rounded-2xl border border-outline-variant/20 bg-surface-container-low shadow-sm">
-      <div className="divide-y divide-on-surface/5">
-        {rows.map((row) => (
-          <div key={row.title} className="group flex items-center gap-4 p-4 transition-colors hover:bg-white/50">
-            <div
-              className={
-                squarePlay
-                  ? "flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg bg-primary/5 text-secondary transition-all group-hover:bg-secondary group-hover:text-white"
-                  : "flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-primary/5 text-primary transition-all group-hover:bg-secondary group-hover:text-white"
-              }
-            >
-              <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>play_arrow</span>
-            </div>
-            <div className="flex-1">
-              <h5 className="text-sm font-bold text-primary">{row.title}</h5>
-              <p className="mt-0.5 text-xs text-stone-500">{row.subtitle}</p>
-            </div>
-            <div className="text-xs font-medium text-stone-400">{row.duration}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 export function HomePage() {
   return (
     <>
-      <section className="px-12 py-8">
-        <div className="group relative h-[320px] overflow-hidden rounded-3xl shadow-2xl shadow-primary/10">
+      <section className="mx-auto max-w-5xl px-12 py-8">
+        <Link
+          to="/programs/$programId"
+          params={{ programId: "گلهای رنگارنگ" }}
+          className="group relative block h-[320px] overflow-hidden rounded-3xl shadow-2xl shadow-primary/10"
+        >
           <img
             alt="نمای نزدیک از ساز سنتی ایران"
             className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -165,34 +124,34 @@ export function HomePage() {
                 بشنوید آثاری جاودانه از استاد محمدرضا شجریان و غلامحسین بنان در مجموعه‌ای بی‌نظیر که روح هر شنونده‌ای را جلا می‌دهد.
               </p>
               <div className="flex gap-4">
-                <button className="flex items-center gap-2 rounded-full bg-secondary px-8 py-3 font-bold text-on-secondary transition-colors hover:bg-secondary-container">
+                <span className="flex items-center gap-2 rounded-full bg-secondary px-8 py-3 font-bold text-on-secondary transition-colors group-hover:bg-secondary-container">
                   <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>play_arrow</span>
                   پخش آخرین قسمت
-                </button>
-                <button className="rounded-full border border-white/20 bg-white/10 px-8 py-3 font-bold text-white backdrop-blur-md transition-colors hover:bg-white/20">
+                </span>
+                <span className="rounded-full border border-white/20 bg-white/10 px-8 py-3 font-bold text-white backdrop-blur-md transition-colors group-hover:bg-white/20">
                   مشاهده لیست پخش
-                </button>
+                </span>
               </div>
             </div>
           </div>
-        </div>
+        </Link>
       </section>
 
-      <section className="px-12 py-12">
+      <section className="mx-auto max-w-5xl px-12 py-12">
         <SectionHeader title="برنامه‌ها" />
         <div className="grid grid-cols-4 gap-6">
           {programs.map((program) => <ProgramCard key={program.title} program={program} />)}
         </div>
       </section>
 
-      <section className="px-12 py-12">
+      <section className="mx-auto max-w-5xl px-12 py-12">
         <SectionHeader title="خوانندگان برجسته" />
         <div className="grid grid-cols-4 gap-8">
-          {singers.map((artist) => <ArtistCard key={artist.name} artist={artist} />)}
+          {singers.map((artist) => <ArtistCard key={artist.name} artist={{ name: artist.name, subtitle: artist.role, image: artist.image, alt: artist.alt }} />)}
         </div>
       </section>
 
-      <section className="px-12 py-8">
+      <section className="mx-auto max-w-5xl px-12 py-8">
         <h3 className="mb-6 text-2xl font-bold text-primary">دستگاه‌ها و آوازها</h3>
         <div className="no-scrollbar flex gap-4 overflow-x-auto scroll-smooth pb-4">
           {modes.map((mode) => (
@@ -207,23 +166,21 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="px-12 py-12">
+      <section className="mx-auto max-w-5xl px-12 py-12">
         <SectionHeader title="نوازندگان برجسته" />
         <div className="grid grid-cols-4 gap-8">
-          {players.map((artist) => <ArtistCard key={artist.name} artist={artist} />)}
+          {players.map((artist) => <ArtistCard key={artist.name} artist={{ name: artist.name, subtitle: artist.role, image: artist.image, alt: artist.alt }} />)}
         </div>
       </section>
 
-      <section className="grid grid-cols-12 gap-12 px-12 py-12">
+      <section className="mx-auto grid max-w-5xl grid-cols-12 gap-12 px-12 py-12">
         <div className="col-span-6">
           <SectionHeader title="برترین برنامه‌ها" showAll={false} refresh />
-          <div className="space-y-6">
-            <TrackList rows={topPrograms} />
-          </div>
+          <TrackList tracks={topPrograms} />
         </div>
         <div className="col-span-6">
           <SectionHeader title="شنیده شده‌های اخیر" showAll={false} />
-          <TrackList rows={recentTracks} squarePlay />
+          <TrackList tracks={recentTracks} playShape="square" />
         </div>
       </section>
     </>

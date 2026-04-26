@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { ArtistCard } from "../../components/artist/ArtistCard";
 
 type SingerCard = {
   name: string;
@@ -7,7 +7,7 @@ type SingerCard = {
   alt: string;
 };
 
-const alphabet = ["همه", "ی", "ه", "و", "ن", "م", "ق", "ع", "ش", "س", "ز", "ر", "د", "خ", "ح", "چ", "ج", "ت", "پ", "ب", "الف"];
+const alphabet = ["همه", "الف", "ب", "پ", "ت", "ج", "چ", "ح", "خ", "د", "ر", "ز", "س", "ش", "ع", "ق", "م", "ن", "و", "ه", "ی"];
 
 const singers: SingerCard[] = [
   {
@@ -68,43 +68,19 @@ const singers: SingerCard[] = [
   },
 ];
 
-function SingerCardView({ singer }: { singer: SingerCard }) {
-  return (
-    <Link
-      to="/artists/$artistId"
-      params={{ artistId: singer.name }}
-      className="group relative block overflow-hidden rounded-xl border border-outline-variant/10 bg-surface-container-lowest transition-all duration-500 hover:shadow-xl"
-    >
-      <div className="relative aspect-square overflow-hidden">
-        <img
-          alt={singer.alt}
-          className="h-full w-full object-cover grayscale transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0"
-          src={singer.image}
-        />
-        <div className="absolute inset-0 flex items-end bg-gradient-to-t from-primary/80 via-transparent to-transparent p-6 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
-          <span className="block w-full rounded-full bg-secondary-container px-6 py-2 text-center text-xs font-bold text-on-secondary-container">مشاهده آثار</span>
-        </div>
-      </div>
-      <div className="p-5 text-right">
-        <h3 className="mb-1 text-xl font-bold text-primary">{singer.name}</h3>
-        <p className="text-sm font-medium text-on-surface-variant">{singer.count}</p>
-      </div>
-    </Link>
-  );
-}
 
 export function SingersPage() {
   return (
-    <div className="px-6 pb-32 pt-8 md:px-12">
-      <div className="mb-12 text-right">
-        <h1 className="mb-2 text-5xl font-black text-primary">خوانندگان</h1>
-        <p className="mr-auto max-w-2xl text-on-surface-variant leading-relaxed">
+    <div className="mx-auto max-w-5xl px-12 pb-32 pt-12">
+      <div className="mb-10 text-right">
+        <h1 className="mb-3 text-4xl font-bold text-primary">خوانندگان</h1>
+        <p className="max-w-2xl text-right leading-relaxed text-on-surface-variant">
           فهرست جامع اساتید، خوانندگان و نوازندگان تاریخ رادیو گلها به ترتیب حروف الفبا.
         </p>
       </div>
 
       <div className="no-scrollbar mb-12 overflow-x-auto">
-        <div className="flex min-w-max flex-row-reverse gap-2 pb-4">
+        <div className="flex min-w-max justify-start gap-2 pb-4">
           {alphabet.map((letter, index) => (
             <button
               key={letter}
@@ -122,7 +98,7 @@ export function SingersPage() {
 
       <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
         {singers.map((singer) => (
-          <SingerCardView key={singer.name} singer={singer} />
+          <ArtistCard key={singer.name} artist={{ name: singer.name, subtitle: singer.count, image: singer.image, alt: singer.alt }} />
         ))}
       </div>
     </div>

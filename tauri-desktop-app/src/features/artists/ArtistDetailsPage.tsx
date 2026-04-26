@@ -1,12 +1,8 @@
+import { TrackRow } from "../../components/track/TrackRow";
+
 type ArtistStat = {
   label: string;
   value: string;
-};
-
-type TrackRow = {
-  title: string;
-  meta: string;
-  duration: string;
 };
 
 type RelatedArtist = {
@@ -24,12 +20,12 @@ const stats: ArtistStat[] = [
   { value: "۱۰", label: "یک شاخه گل" },
 ];
 
-const tracks: TrackRow[] = [
-  { title: "گلهای تازه، شماره ۲۵ - آواز شور", meta: "برنامه گلهای تازه • فرامرز پایور", duration: "۴۲:۱۵" },
-  { title: "یک شاخه گل، شماره ۴۰۲", meta: "برنامه یک شاخه گل • اسدالله ملک", duration: "۲۸:۴۰" },
-  { title: "گلهای رنگارنگ، شماره ۵۸۰", meta: "برنامه گلهای رنگارنگ • جلیل شهناز", duration: "۳۵:۱۰" },
-  { title: "گلهای تازه، شماره ۱۰ - ماهور", meta: "برنامه گلهای تازه • پرویز یاحقی", duration: "۳۸:۲۰" },
-  { title: "یک شاخه گل، شماره ۴۱۲", meta: "برنامه یک شاخه گل • فرهنگ شریف", duration: "۲۵:۱۵" },
+const tracks = [
+  { title: "گلهای تازه، شماره ۲۵ - آواز شور", subtitle: "برنامه گلهای تازه • فرامرز پایور", duration: "۴۲:۱۵" },
+  { title: "یک شاخه گل، شماره ۴۰۲", subtitle: "برنامه یک شاخه گل • اسدالله ملک", duration: "۲۸:۴۰" },
+  { title: "گلهای رنگارنگ، شماره ۵۸۰", subtitle: "برنامه گلهای رنگارنگ • جلیل شهناز", duration: "۳۵:۱۰" },
+  { title: "گلهای تازه، شماره ۱۰ - ماهور", subtitle: "برنامه گلهای تازه • پرویز یاحقی", duration: "۳۸:۲۰" },
+  { title: "یک شاخه گل، شماره ۴۱۲", subtitle: "برنامه یک شاخه گل • فرهنگ شریف", duration: "۲۵:۱۵" },
 ];
 
 const relatedArtists: RelatedArtist[] = [
@@ -81,8 +77,8 @@ function RelatedArtistCard({ artist }: { artist: RelatedArtist }) {
 
 export function ArtistDetailsPage() {
   return (
-    <div className="pb-32 text-right">
-      <section className="grid grid-cols-12 items-end gap-12 px-12 py-8">
+    <div className="mx-auto max-w-5xl px-12 pb-32 pt-12 text-right">
+      <section className="grid grid-cols-12 items-end gap-10 pb-12">
         <div className="group relative col-span-4 aspect-square overflow-hidden rounded-lg">
           <img
             alt="محمدرضا شجریان"
@@ -94,7 +90,7 @@ export function ArtistDetailsPage() {
 
         <div className="col-span-8 flex h-full flex-col justify-end pb-8">
           <div className="mb-10 max-w-2xl">
-            <h1 className="mb-6 text-6xl font-black tracking-[-0.06em] text-secondary">محمدرضا شجریان</h1>
+            <h1 className="mb-3 text-4xl font-bold text-primary">محمدرضا شجریان</h1>
             <button className="inline-flex items-center gap-2 rounded-full bg-secondary px-6 py-2 text-sm font-black text-white transition-all hover:bg-on-secondary-container">
               <span className="material-symbols-outlined text-lg">favorite</span>
               <span>افزودن به علاقه‌مندی‌ها</span>
@@ -112,31 +108,19 @@ export function ArtistDetailsPage() {
         </div>
       </section>
 
-      <section className="grid grid-cols-12 gap-8 px-12 py-12">
+      <section className="grid grid-cols-12 gap-8 py-12">
         <main className="col-span-9">
           <div className="mb-6 flex items-end justify-between">
-            <h2 className="text-3xl font-black text-primary">برنامه‌ها</h2>
+            <h2 className="text-2xl font-bold text-primary">برنامه‌ها</h2>
             <span className="text-xs font-bold text-secondary">۵ برنامه منتخب</span>
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-outline-variant/20 bg-surface-container-low shadow-sm">
-            {tracks.map((track, index) => (
-              <button
-                key={track.title}
-                className="group grid w-full grid-cols-[1fr_auto] items-center gap-6 border-b border-outline-variant/20 px-6 py-5 text-right transition-colors last:border-b-0 hover:bg-surface-container"
-              >
-                <span>
-                  <span className="block text-lg font-black text-primary transition-colors group-hover:text-secondary">{track.title}</span>
-                  <span className="mt-1 block text-sm font-bold text-on-surface-variant">{track.meta}</span>
-                </span>
-                <span className="flex items-center gap-4">
-                  <span className="text-sm font-bold text-on-surface-variant">{track.duration}</span>
-                  <span className="grid h-10 w-10 place-items-center rounded-full bg-secondary-container text-on-secondary-container transition-colors group-hover:bg-secondary group-hover:text-white">
-                    <span className="material-symbols-outlined text-[20px]">{index === 0 ? "pause" : "play_arrow"}</span>
-                  </span>
-                </span>
-              </button>
-            ))}
+<div className="overflow-hidden rounded-2xl border border-outline-variant/20 bg-surface-container-low shadow-sm">
+            <div className="divide-y divide-on-surface/5">
+              {tracks.map((track, index) => (
+                <TrackRow key={track.title} track={track} linkMode="none" isPlaying={index === 0} />
+              ))}
+            </div>
           </div>
         </main>
 
