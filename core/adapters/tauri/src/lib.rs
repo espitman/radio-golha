@@ -149,17 +149,28 @@ pub fn get_home_data(db_path: &str) -> AdapterResult<HomePayload> {
     let core = open_core(db_path)?;
     let conn = core.connection();
 
-    let programs = core
-        .category_breakdown()
-        .map_err(|error| error.to_string())?
-        .into_iter()
-        .enumerate()
-        .map(|(index, item)| HomeProgramItem {
-            id: index as i64 + 1,
-            title: item.name,
-            episode_count: item.total,
+    let mut category_stmt = conn
+        .prepare(
+            "
+            SELECT c.id, c.title_fa, COUNT(*) AS total
+            FROM program p
+            JOIN category c ON c.id = p.category_id
+            GROUP BY c.id, c.title_fa
+            ORDER BY total DESC, c.id ASC
+            ",
+        )
+        .map_err(|error| error.to_string())?;
+    let programs = category_stmt
+        .query_map([], |row| {
+            Ok(HomeProgramItem {
+                id: row.get(0)?,
+                title: row.get(1)?,
+                episode_count: row.get(2)?,
+            })
         })
-        .collect();
+        .map_err(|error| error.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|error| error.to_string())?;
 
     let modes = core
         .browse_lookup_items(LookupKind::Modes, "", 1)

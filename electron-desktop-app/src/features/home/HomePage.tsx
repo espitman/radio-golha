@@ -5,6 +5,7 @@ import { TrackList } from "../../components/track/TrackRow";
 import { getHomeData, type CoreHomePayload } from "../../lib/coreApi";
 
 type ProgramCardData = {
+  id: number;
   title: string;
   count: string;
   icon: string;
@@ -27,10 +28,10 @@ const images = {
 };
 
 const programs: ProgramCardData[] = [
-  { title: "گل‌های تازه", count: "۱۵۵ برنامه", icon: "filter_vintage" },
-  { title: "برگ سبز", count: "۳۱۲ برنامه", icon: "eco" },
-  { title: "یک شاخه گل", count: "۴۶۵ برنامه", icon: "local_florist" },
-  { title: "گلهای جاویدان", count: "۱۰۱ برنامه", icon: "auto_awesome" },
+  { id: 1, title: "گل‌های تازه", count: "۱۵۵ برنامه", icon: "filter_vintage" },
+  { id: 2, title: "برگ سبز", count: "۳۱۲ برنامه", icon: "eco" },
+  { id: 3, title: "یک شاخه گل", count: "۴۶۵ برنامه", icon: "local_florist" },
+  { id: 4, title: "گلهای جاویدان", count: "۱۰۱ برنامه", icon: "auto_awesome" },
 ];
 
 
@@ -63,8 +64,8 @@ function SectionHeader({ title, showAll = true, refresh = false }: { title: stri
 function ProgramCard({ program }: { program: ProgramCardData }) {
   return (
     <Link
-      to="/programs/$programId"
-      params={{ programId: program.title }}
+      to="/program-categories/$categoryId"
+      params={{ categoryId: String(program.id) }}
       className="group flex cursor-pointer items-center gap-4 rounded-2xl border border-outline-variant/20 bg-surface-container-low p-4 transition-all hover:bg-white hover:shadow-xl hover:shadow-primary/5"
     >
       <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-primary/5 text-secondary transition-colors group-hover:bg-secondary group-hover:text-white">
@@ -107,10 +108,12 @@ export function HomePage() {
   }
 
   const dynamicPrograms = homeData.programs.slice(0, 4).map((program, index) => ({
+    id: program.id,
     title: program.title,
     count: `${program.episodeCount.toLocaleString("fa-IR")} برنامه`,
     icon: programs[index]?.icon ?? "radio",
   }));
+  const heroCategory = homeData.programs.find((program) => program.title.includes("رنگارنگ")) ?? homeData.programs[0];
   const dynamicSingers = homeData.singers.slice(0, 4).map((artist) => ({
     id: artist.id,
     name: artist.name,
@@ -137,8 +140,8 @@ export function HomePage() {
     <>
       <section className="mx-auto max-w-5xl px-12 py-8">
         <Link
-          to="/programs/$programId"
-          params={{ programId: "گلهای رنگارنگ" }}
+          to="/program-categories/$categoryId"
+          params={{ categoryId: String(heroCategory?.id ?? 1) }}
           className="group relative block h-[320px] overflow-hidden rounded-3xl shadow-2xl shadow-primary/10"
         >
           <img

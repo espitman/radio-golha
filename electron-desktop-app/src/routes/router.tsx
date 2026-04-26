@@ -8,6 +8,7 @@ import { PlayersPage } from "../features/players/PlayersPage";
 import { SettingsPage } from "../features/settings/SettingsPage";
 import { ArtistDetailsPage } from "../features/artists/ArtistDetailsPage";
 import { ProgramDetailsPage } from "../features/programs/ProgramDetailsPage";
+import { ProgramCategoryPage } from "../features/programCategories/ProgramCategoryPage";
 import { TrackDetailsPage } from "../features/tracks/TrackDetailsPage";
 
 function PlaceholderPage({ title }: { title: string }) {
@@ -31,6 +32,7 @@ const routes = [
   createRoute({ getParentRoute: () => rootRoute, path: "/singers", component: SingersPage }),
   createRoute({ getParentRoute: () => rootRoute, path: "/players", component: PlayersPage }),
   createRoute({ getParentRoute: () => rootRoute, path: "/playlists", component: () => <PlaceholderPage title="پلی لیست‌های من" /> }),
+  createRoute({ getParentRoute: () => rootRoute, path: "/program-categories/$categoryId", component: ProgramCategoryPage }),
   createRoute({ getParentRoute: () => rootRoute, path: "/programs/$programId", component: ProgramDetailsPage }),
   createRoute({ getParentRoute: () => rootRoute, path: "/tracks/$trackId", component: TrackDetailsPage }),
   createRoute({ getParentRoute: () => rootRoute, path: "/favorite-singers", component: () => <PlaceholderPage title="خواننده‌های مورد علاقه" /> }),
