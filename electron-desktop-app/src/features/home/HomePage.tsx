@@ -231,7 +231,7 @@ export function HomePage() {
       <section className="mx-auto max-w-5xl px-12 py-12">
         <SectionHeader title="خوانندگان برجسته" showAllTo="/singers" />
         <div className="grid grid-cols-4 gap-8">
-          {dynamicSingers.map((artist) => <ArtistCard key={artist.name} artist={{ id: artist.id, name: artist.name, subtitle: artist.role, image: artist.image, alt: artist.alt }} />)}
+          {dynamicSingers.map((artist) => <ArtistCard key={artist.name} artist={{ id: artist.id, name: artist.name, subtitle: artist.role, image: artist.image, alt: artist.alt, favoriteKind: "singer" }} />)}
         </div>
       </section>
 
@@ -254,7 +254,7 @@ export function HomePage() {
       <section className="mx-auto max-w-5xl px-12 py-12">
         <SectionHeader title="نوازندگان برجسته" showAllTo="/players" />
         <div className="grid grid-cols-4 gap-8">
-          {dynamicPlayers.map((artist) => <ArtistCard key={artist.name} artist={{ id: artist.id, name: artist.name, subtitle: artist.role, image: artist.image, alt: artist.alt }} />)}
+          {dynamicPlayers.map((artist) => <ArtistCard key={artist.name} artist={{ id: artist.id, name: artist.name, subtitle: artist.role, image: artist.image, alt: artist.alt, favoriteKind: "player" }} />)}
         </div>
       </section>
 

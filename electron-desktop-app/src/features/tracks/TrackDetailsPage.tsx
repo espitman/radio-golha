@@ -112,7 +112,17 @@ export function TrackDetailsPage() {
         <h2 className="mb-8 border-b border-surface-container-highest pb-4 text-right text-2xl font-black text-primary">هنرمندان این برنامه</h2>
         <div className="grid grid-cols-2 gap-10 md:grid-cols-4">
           {artists.map((artist) => (
-            <ArtistCard key={`${artist.artistId ?? artist.name}`} align="center" artist={{ id: artist.artistId ?? artist.name, name: artist.name, subtitle: artist.role, image: artist.avatar || "" }} />
+            <ArtistCard
+              key={`${artist.artistId ?? artist.name}`}
+              align="center"
+              artist={{
+                id: artist.artistId ?? artist.name,
+                name: artist.name,
+                subtitle: artist.role,
+                image: artist.avatar || "",
+                favoriteKind: artist.role.startsWith("نوازنده") ? "player" : artist.role === "خواننده" ? "singer" : undefined,
+              }}
+            />
           ))}
         </div>
       </section>

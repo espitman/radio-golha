@@ -65,7 +65,7 @@ export function PlayersPage() {
       {visiblePlayers.length > 0 ? (
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visiblePlayers.map((player) => (
-            <ArtistCard key={player.id} artist={{ id: player.id, name: player.name, subtitle: `${player.instrument} • ${player.programCount.toLocaleString("fa-IR")} برنامه ثبت شده`, image: player.avatar || "", alt: player.name }} />
+            <ArtistCard key={player.id} artist={{ id: player.id, name: player.name, subtitle: `${player.instrument} • ${player.programCount.toLocaleString("fa-IR")} برنامه ثبت شده`, image: player.avatar || "", alt: player.name, favoriteKind: "player" }} />
           ))}
         </div>
       ) : (

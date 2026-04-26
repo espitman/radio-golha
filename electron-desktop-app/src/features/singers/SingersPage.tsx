@@ -72,7 +72,7 @@ export function SingersPage() {
       {visibleSingers.length > 0 ? (
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {visibleSingers.map((singer) => (
-            <ArtistCard key={singer.id} artist={{ id: singer.id, name: singer.name, subtitle: `${singer.programCount.toLocaleString("fa-IR")} برنامه ثبت شده`, image: singer.avatar || "", alt: singer.name }} />
+            <ArtistCard key={singer.id} artist={{ id: singer.id, name: singer.name, subtitle: `${singer.programCount.toLocaleString("fa-IR")} برنامه ثبت شده`, image: singer.avatar || "", alt: singer.name, favoriteKind: "singer" }} />
           ))}
         </div>
       ) : (

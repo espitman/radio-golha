@@ -3,12 +3,14 @@ import { useEffect, useState } from "react";
 import { ArtistDetailsSkeleton } from "../../components/skeleton/Skeletons";
 import { TrackList } from "../../components/track/TrackRow";
 import { getArtistDetail, type CoreArtistDetail } from "../../lib/coreApi";
+import { FAVORITE_ARTISTS_CHANGED_EVENT, isFavoriteArtist, toggleFavoriteArtist, type FavoriteArtistKind } from "../../lib/favoriteArtists";
 
 export function ArtistDetailsPage() {
   const { artistId } = useParams({ strict: false }) as { artistId?: string };
   const numericArtistId = Number(artistId);
   const [artist, setArtist] = useState<CoreArtistDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
     if (!Number.isFinite(numericArtistId)) {
@@ -29,6 +31,22 @@ export function ArtistDetailsPage() {
     };
   }, [numericArtistId]);
 
+  useEffect(() => {
+    const refresh = () => {
+      if (!artist) return;
+      const favoriteKind: FavoriteArtistKind = artist.instrument ? "player" : "singer";
+      setIsFavorite(isFavoriteArtist(artist.id, favoriteKind));
+    };
+
+    refresh();
+    window.addEventListener(FAVORITE_ARTISTS_CHANGED_EVENT, refresh);
+    window.addEventListener("storage", refresh);
+    return () => {
+      window.removeEventListener(FAVORITE_ARTISTS_CHANGED_EVENT, refresh);
+      window.removeEventListener("storage", refresh);
+    };
+  }, [artist]);
+
   if (error) return <div className="mx-auto max-w-5xl px-12 py-12 text-right text-sm font-bold text-on-error-container">{error}</div>;
   if (!artist) return <ArtistDetailsSkeleton />;
 
@@ -40,6 +58,7 @@ export function ArtistDetailsPage() {
     audioUrl: track.audioUrl,
     artworkUrls: track.singerAvatars,
   }));
+  const favoriteKind: FavoriteArtistKind = artist.instrument ? "player" : "singer";
 
   return (
     <div className="mx-auto max-w-5xl px-12 pb-[144px] pt-12 text-right">
@@ -59,9 +78,31 @@ export function ArtistDetailsPage() {
           <div className="mb-10 max-w-2xl">
             <h1 className="mb-3 text-4xl font-bold text-primary">{artist.name}</h1>
             {artist.instrument ? <p className="mb-4 text-sm font-bold text-on-surface-variant">{artist.instrument}</p> : null}
-            <button className="inline-flex items-center gap-2 rounded-full bg-secondary px-6 py-2 text-sm font-black text-white transition-all hover:bg-on-secondary-container">
-              <span className="material-symbols-outlined text-lg">favorite</span>
-              <span>افزودن به علاقه‌مندی‌ها</span>
+            <button
+              className={
+                isFavorite
+                  ? "inline-flex items-center gap-2 rounded-full bg-secondary px-6 py-2 text-sm font-black text-white transition-all hover:bg-on-secondary-container"
+                  : "inline-flex items-center gap-2 rounded-full bg-secondary px-6 py-2 text-sm font-black text-white transition-all hover:bg-on-secondary-container"
+              }
+              onClick={() => {
+                const nextState = toggleFavoriteArtist({
+                  id: artist.id,
+                  kind: favoriteKind,
+                  name: artist.name,
+                  subtitle: artist.instrument ?? `${artist.trackCount.toLocaleString("fa-IR")} برنامه ثبت شده`,
+                  image: artist.avatar || "",
+                });
+                setIsFavorite(nextState);
+              }}
+              type="button"
+            >
+              <span
+                className="material-symbols-outlined text-lg"
+                style={{ fontVariationSettings: isFavorite ? "'FILL' 1" : "'FILL' 0" }}
+              >
+                favorite
+              </span>
+              <span>{isFavorite ? "حذف از علاقه‌مندی‌ها" : "افزودن به علاقه‌مندی‌ها"}</span>
             </button>
           </div>
 
