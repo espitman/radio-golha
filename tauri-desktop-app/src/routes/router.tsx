@@ -1,5 +1,6 @@
 import { createRootRoute, createRoute, createRouter } from "@tanstack/react-router";
 import { AppShell } from "../components/layout/AppShell";
+import { PageHeader } from "../components/layout/PageHeader";
 import { HomePage } from "../features/home/HomePage";
 import { SearchPage } from "../features/search/SearchPage";
 import { SingersPage } from "../features/singers/SingersPage";
@@ -11,9 +12,8 @@ import { TrackDetailsPage } from "../features/tracks/TrackDetailsPage";
 
 function PlaceholderPage({ title }: { title: string }) {
   return (
-    <section className="pt-3 text-right">
-      <h1 className="text-4xl font-black tracking-[-0.05em]">{title}</h1>
-      <p className="mt-4 text-sm font-bold text-golha-muted">این route آماده است و در فاز بعدی به دیتابیس و کامپوننت‌های اصلی وصل می‌شود.</p>
+    <section className="mx-auto max-w-5xl px-12 pb-32 pt-8 text-right">
+      <PageHeader title={title} subtitle="این route آماده است و در فاز بعدی به دیتابیس و کامپوننت‌های اصلی وصل می‌شود." />
     </section>
   );
 }

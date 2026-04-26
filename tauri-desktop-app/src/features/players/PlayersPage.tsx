@@ -1,4 +1,5 @@
 import { ArtistCard } from "../../components/artist/ArtistCard";
+import { PageHeader } from "../../components/layout/PageHeader";
 
 type PlayerCard = {
   name: string;
@@ -64,13 +65,8 @@ const players: PlayerCard[] = [
 
 export function PlayersPage() {
   return (
-    <div className="mx-auto max-w-5xl px-12 pb-32 pt-12">
-      <div className="mb-10 text-right">
-        <h1 className="mb-3 text-4xl font-bold text-primary">نوازندگان</h1>
-        <p className="max-w-2xl text-right leading-relaxed text-on-surface-variant">
-          فهرست مشاهیر موسیقی اصیل ایرانی و نوازندگان برجسته برنامه‌های گلها به تفکیک تخصص و ساز.
-        </p>
-      </div>
+    <div className="mx-auto max-w-5xl px-12 pb-32 pt-8">
+      <PageHeader title="نوازندگان" subtitle="فهرست مشاهیر موسیقی اصیل ایرانی و نوازندگان برجسته برنامه‌های گلها به تفکیک تخصص و ساز." />
 
       <div className="mb-12 flex flex-wrap items-center justify-start gap-2">
         {instruments.map((instrument) => (

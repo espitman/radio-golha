@@ -1,4 +1,5 @@
 import { ArtistCard } from "../../components/artist/ArtistCard";
+import { PageHeader } from "../../components/layout/PageHeader";
 
 type SingerCard = {
   name: string;
@@ -71,13 +72,8 @@ const singers: SingerCard[] = [
 
 export function SingersPage() {
   return (
-    <div className="mx-auto max-w-5xl px-12 pb-32 pt-12">
-      <div className="mb-10 text-right">
-        <h1 className="mb-3 text-4xl font-bold text-primary">خوانندگان</h1>
-        <p className="max-w-2xl text-right leading-relaxed text-on-surface-variant">
-          فهرست جامع اساتید، خوانندگان و نوازندگان تاریخ رادیو گلها به ترتیب حروف الفبا.
-        </p>
-      </div>
+    <div className="mx-auto max-w-5xl px-12 pb-32 pt-8">
+      <PageHeader title="خوانندگان" subtitle="فهرست جامع اساتید، خوانندگان و نوازندگان تاریخ رادیو گلها به ترتیب حروف الفبا." />
 
       <div className="no-scrollbar mb-12 overflow-x-auto">
         <div className="flex min-w-max justify-start gap-2 pb-4">
