@@ -128,7 +128,7 @@ export function HomePage() {
     image: artist.avatar || images.sharif,
     alt: artist.name,
   }));
-  const dynamicModes = homeData.modes.map((mode) => mode.name);
+  const dynamicModes = homeData.modes.map((mode) => ({ id: mode.id, name: mode.name }));
   const dynamicTopTracks = homeData.topTracks.slice(0, 5).map((track) => ({
     id: track.id,
     title: track.title,
@@ -190,13 +190,14 @@ export function HomePage() {
         <h3 className="mb-6 text-2xl font-bold text-primary">دستگاه‌ها و آوازها</h3>
         <div className="no-scrollbar flex gap-4 overflow-x-auto scroll-smooth pb-4">
           {dynamicModes.map((mode) => (
-            <a
-              key={mode}
+            <Link
+              key={mode.id}
+              to="/modes/$modeId"
+              params={{ modeId: String(mode.id) }}
               className="flex-none rounded-full border border-outline-variant/30 bg-surface-container-high px-8 py-3 font-medium text-on-surface shadow-sm transition-all hover:bg-secondary-container hover:text-on-secondary-container"
-              href="#"
             >
-              {mode}
-            </a>
+              {mode.name}
+            </Link>
           ))}
         </div>
       </section>

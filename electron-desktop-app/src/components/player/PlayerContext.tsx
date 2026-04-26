@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { getTrackDetail } from "../../lib/coreApi";
 
 export type PlayerTrack = {
   id?: number | string;
@@ -74,9 +75,41 @@ function writeStoredPlayerState(track: PlayerTrack, currentTime: number) {
   );
 }
 
+function hasArtwork(track: PlayerTrack) {
+  return Boolean(track.artworkUrls?.some(Boolean));
+}
+
+async function fetchTrackArtwork(trackId: PlayerTrack["id"]) {
+  const numericTrackId = Number(trackId);
+  if (!Number.isFinite(numericTrackId)) return [];
+
+  const detail = await getTrackDetail(numericTrackId);
+  return detail.singers.map((artist) => artist.avatar).filter((avatar): avatar is string => Boolean(avatar));
+}
+
+async function resolvePlayableTrack(track: PlayerTrack): Promise<PlayerTrack> {
+  if (track.audioUrl) return track;
+
+  const numericTrackId = Number(track.id);
+  if (!Number.isFinite(numericTrackId)) return track;
+
+  const detail = await getTrackDetail(numericTrackId);
+  const artworkUrls = detail.singers.map((artist) => artist.avatar).filter((avatar): avatar is string => Boolean(avatar));
+
+  return {
+    ...track,
+    title: track.title || detail.title,
+    subtitle: track.subtitle || detail.singers.map((artist) => artist.name).join(" و ") || detail.categoryName,
+    duration: track.duration || detail.duration || "نامشخص",
+    audioUrl: detail.audioUrl,
+    artworkUrls: track.artworkUrls?.length ? track.artworkUrls : artworkUrls,
+  };
+}
+
 export function PlayerProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pendingRestoreTimeRef = useRef<number | null>(null);
+  const artworkRequestIdRef = useRef(0);
   const [currentTrack, setCurrentTrack] = useState<PlayerTrack | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -165,30 +198,59 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     };
   }, [currentTime, currentTrack]);
 
+  useEffect(() => {
+    if (!currentTrack || hasArtwork(currentTrack)) return;
+
+    const requestId = artworkRequestIdRef.current + 1;
+    artworkRequestIdRef.current = requestId;
+
+    fetchTrackArtwork(currentTrack.id)
+      .then((artworkUrls) => {
+        if (artworkRequestIdRef.current !== requestId || !artworkUrls.length) return;
+        setCurrentTrack((track) => {
+          if (!track || hasArtwork(track) || String(track.id ?? "") !== String(currentTrack.id ?? "")) return track;
+          return { ...track, artworkUrls };
+        });
+      })
+      .catch(() => {
+        // Artwork is nice-to-have; playback should never fail because an image lookup failed.
+      });
+  }, [currentTrack]);
+
   const playTrack = useCallback((track: PlayerTrack) => {
     const audio = audioRef.current;
     setCurrentTrack(track);
     setCurrentTime(0);
     setDuration(parseDuration(track.duration));
+    setIsLoading(true);
 
-    if (!audio || !track.audioUrl) {
-      setIsPlaying(false);
-      setIsLoading(false);
-      return;
-    }
+    resolvePlayableTrack(track)
+      .then((playableTrack) => {
+        setCurrentTrack(playableTrack);
+        setDuration(parseDuration(playableTrack.duration));
 
-    const nextSource = toAbsoluteAudioUrl(track.audioUrl);
-    const isSameSource = audio.src === nextSource;
-    if (!isSameSource) {
-      setIsLoading(true);
-      audio.src = nextSource;
-      audio.currentTime = 0;
-    }
+        if (!audio || !playableTrack.audioUrl) {
+          setIsPlaying(false);
+          setIsLoading(false);
+          return;
+        }
 
-    audio.play().catch(() => {
-      setIsPlaying(false);
-      setIsLoading(false);
-    });
+        const nextSource = toAbsoluteAudioUrl(playableTrack.audioUrl);
+        const isSameSource = audio.src === nextSource;
+        if (!isSameSource) {
+          audio.src = nextSource;
+          audio.currentTime = 0;
+        }
+
+        audio.play().catch(() => {
+          setIsPlaying(false);
+          setIsLoading(false);
+        });
+      })
+      .catch(() => {
+        setIsPlaying(false);
+        setIsLoading(false);
+      });
   }, []);
 
   const togglePlayPause = useCallback(() => {

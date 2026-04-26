@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import clsx from "clsx";
 import { BottomPlayer } from "../player/BottomPlayer";
@@ -21,10 +21,32 @@ const topItems = [
 export function AppShell() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const contentRef = useRef<HTMLElement | null>(null);
+  const isBrowserBackRef = useRef(false);
+  const [historyStack, setHistoryStack] = useState<string[]>(() => [window.location.pathname]);
 
   useEffect(() => {
     contentRef.current?.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [pathname]);
+
+  useEffect(() => {
+    setHistoryStack((current) => {
+      if (current[current.length - 1] === pathname) return current;
+
+      if (isBrowserBackRef.current) {
+        isBrowserBackRef.current = false;
+        const previousIndex = current.lastIndexOf(pathname);
+        return previousIndex >= 0 ? current.slice(0, previousIndex + 1) : [pathname];
+      }
+
+      return [...current, pathname];
+    });
+  }, [pathname]);
+
+  function handleBack() {
+    if (historyStack.length <= 1) return;
+    isBrowserBackRef.current = true;
+    window.history.back();
+  }
 
   return (
     <div className="h-screen overflow-hidden bg-surface text-on-surface selection:bg-secondary-container selection:text-on-secondary-container" dir="rtl">
@@ -114,7 +136,18 @@ export function AppShell() {
               />
               <span className="material-symbols-outlined absolute right-3 top-2 text-xl text-primary/40">search</span>
             </div>
-            <button className="grid h-[30px] w-[30px] place-items-center rounded-full bg-surface-container-low text-primary/70 transition-colors hover:text-secondary" aria-label="بازگشت">
+            <button
+              className={clsx(
+                "grid h-[30px] w-[30px] place-items-center rounded-full bg-surface-container-low transition-colors",
+                historyStack.length > 1
+                  ? "text-primary/70 hover:text-secondary"
+                  : "cursor-not-allowed text-primary/25",
+              )}
+              aria-label="بازگشت"
+              disabled={historyStack.length <= 1}
+              onClick={handleBack}
+              type="button"
+            >
               <span className="material-symbols-outlined text-[18px]">chevron_left</span>
             </button>
           </div>

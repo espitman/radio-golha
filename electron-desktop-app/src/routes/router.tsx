@@ -11,6 +11,7 @@ import { ArtistDetailsPage } from "../features/artists/ArtistDetailsPage";
 import { ProgramDetailsPage } from "../features/programs/ProgramDetailsPage";
 import { ProgramCategoryPage } from "../features/programCategories/ProgramCategoryPage";
 import { TrackDetailsPage } from "../features/tracks/TrackDetailsPage";
+import { ModeTracksPage } from "../features/modes/ModeTracksPage";
 
 function PlaceholderPage({ title }: { title: string }) {
   return (
@@ -51,6 +52,7 @@ const routes = [
   createRoute({ getParentRoute: () => rootRoute, path: "/artists", component: () => <PlaceholderPage title="هنرمندان" /> }),
   createRoute({ getParentRoute: () => rootRoute, path: "/artists/$artistId", component: ArtistDetailsPage }),
   createRoute({ getParentRoute: () => rootRoute, path: "/modes", component: () => <PlaceholderPage title="دستگاه‌ها" /> }),
+  createRoute({ getParentRoute: () => rootRoute, path: "/modes/$modeId", component: ModeTracksPage }),
   createRoute({ getParentRoute: () => rootRoute, path: "/poets", component: () => <PlaceholderPage title="شاعران" /> }),
 ];
 

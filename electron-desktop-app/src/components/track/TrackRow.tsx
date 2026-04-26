@@ -47,9 +47,11 @@ function PlayButton({
   );
 }
 
-type TrackContentProps = Required<Pick<TrackRowProps, "track" | "playShape" | "isPlaying">>;
+type TrackContentProps = Required<Pick<TrackRowProps, "track" | "playShape" | "isPlaying">> & {
+  onPlay: () => void;
+};
 
-function TrackContent({ track, playShape, isPlaying }: TrackContentProps) {
+function TrackContent({ track, playShape, isPlaying, onPlay }: TrackContentProps) {
   const player = usePlayer();
   const isCurrentTrack = player.currentTrack?.id != null && String(player.currentTrack.id) === String(track.id ?? track.to ?? track.title);
   const displayPlaying = isCurrentTrack && player.isPlaying;
@@ -58,18 +60,7 @@ function TrackContent({ track, playShape, isPlaying }: TrackContentProps) {
   function handlePlay(event: MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     event.stopPropagation();
-    if (isCurrentTrack && track.audioUrl) {
-      player.togglePlayPause();
-      return;
-    }
-    player.playTrack({
-      id: track.id ?? track.to ?? track.title,
-      title: track.title,
-      subtitle: track.subtitle,
-      duration: track.duration,
-      audioUrl: track.audioUrl,
-      artworkUrls: track.artworkUrls,
-    });
+    onPlay();
   }
 
   return (
@@ -92,19 +83,36 @@ function TrackContent({ track, playShape, isPlaying }: TrackContentProps) {
 }
 
 export function TrackRow({ track, playShape = "circle", linkMode = "row", isPlaying = false }: TrackRowProps) {
+  const player = usePlayer();
   const className = "group flex items-center gap-4 p-4 text-right transition-colors hover:bg-white/50";
+  const isCurrentTrack = player.currentTrack?.id != null && String(player.currentTrack.id) === String(track.id ?? track.to ?? track.title);
+
+  function startPlayback() {
+    if (isCurrentTrack && track.audioUrl) {
+      player.togglePlayPause();
+      return;
+    }
+    player.playTrack({
+      id: track.id ?? track.to ?? track.title,
+      title: track.title,
+      subtitle: track.subtitle,
+      duration: track.duration,
+      audioUrl: track.audioUrl,
+      artworkUrls: track.artworkUrls,
+    });
+  }
 
   if (linkMode === "row") {
     return (
       <Link to="/programs/$programId" params={{ programId: String(track.id ?? track.to ?? track.title) }} className={className}>
-        <TrackContent track={track} playShape={playShape} isPlaying={isPlaying} />
+        <TrackContent track={track} playShape={playShape} isPlaying={isPlaying} onPlay={startPlayback} />
       </Link>
     );
   }
 
   return (
-    <div className={className}>
-      <TrackContent track={track} playShape={playShape} isPlaying={isPlaying} />
+    <div className={`${className} cursor-pointer`} onClick={startPlayback}>
+      <TrackContent track={track} playShape={playShape} isPlaying={isPlaying} onPlay={startPlayback} />
     </div>
   );
 }

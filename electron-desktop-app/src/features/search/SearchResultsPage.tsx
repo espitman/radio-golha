@@ -183,7 +183,7 @@ export function SearchResultsPage() {
                     </span>
                   </button>
                   <div className="min-w-0 flex-1 text-right">
-                    <Link to="/programs/$programId" params={{ programId: String(row.id) }} className="block truncate text-sm font-bold text-primary transition-colors hover:text-secondary">
+                    <Link to="/tracks/$trackId" params={{ trackId: String(row.id) }} className="block truncate text-sm font-bold text-primary transition-colors hover:text-secondary">
                       {row.title}
                     </Link>
                     <p className="mt-0.5 truncate text-xs text-stone-500">{row.artist || row.categoryName}</p>
