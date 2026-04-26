@@ -2,8 +2,9 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArtistCard } from "../../components/artist/ArtistCard";
 import { HomeSkeleton } from "../../components/skeleton/Skeletons";
-import { TrackList } from "../../components/track/TrackRow";
+import { TrackList, type TrackRowData } from "../../components/track/TrackRow";
 import { getHomeData, type CoreHomePayload } from "../../lib/coreApi";
+import { readRecentTracks, RECENT_TRACKS_CHANGED_EVENT } from "../../lib/recentTracks";
 
 type ProgramCardData = {
   id: number;
@@ -33,15 +34,6 @@ const programs: ProgramCardData[] = [
   { id: 2, title: "برگ سبز", count: "۳۱۲ برنامه", icon: "eco" },
   { id: 3, title: "یک شاخه گل", count: "۴۶۵ برنامه", icon: "local_florist" },
   { id: 4, title: "گلهای جاویدان", count: "۱۰۱ برنامه", icon: "auto_awesome" },
-];
-
-
-
-
-
-const recentTracks = [
-  { title: "آستان جانان", subtitle: "آواز شور", duration: "۰۴:۱۵" },
-  { title: "کاروان", subtitle: "غلامحسین بنان", duration: "۰۶:۳۰" },
 ];
 
 type HomeShowAllRoute = "/archive" | "/singers" | "/players" | "/recent" | "/popular";
@@ -87,6 +79,7 @@ function ProgramCard({ program }: { program: ProgramCardData }) {
 export function HomePage() {
   const [homeData, setHomeData] = useState<CoreHomePayload | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [recentTracks, setRecentTracks] = useState<TrackRowData[]>([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -99,6 +92,29 @@ export function HomePage() {
       });
     return () => {
       isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const refresh = () => {
+      setRecentTracks(
+        readRecentTracks(5).map((track) => ({
+          id: track.id,
+          title: track.title,
+          subtitle: track.subtitle,
+          duration: track.duration,
+          audioUrl: track.audioUrl,
+          artworkUrls: track.artworkUrls,
+        })),
+      );
+    };
+
+    refresh();
+    window.addEventListener(RECENT_TRACKS_CHANGED_EVENT, refresh);
+    window.addEventListener("storage", refresh);
+    return () => {
+      window.removeEventListener(RECENT_TRACKS_CHANGED_EVENT, refresh);
+      window.removeEventListener("storage", refresh);
     };
   }, []);
 
@@ -219,7 +235,13 @@ export function HomePage() {
         </div>
         <div className="col-span-6">
           <SectionHeader title="شنیده شده‌های اخیر" showAllTo="/recent" />
-          <TrackList tracks={recentTracks} playShape="square" />
+          {recentTracks.length > 0 ? (
+            <TrackList tracks={recentTracks} playShape="square" linkMode="none" />
+          ) : (
+            <div className="rounded-2xl border border-outline-variant/20 bg-surface-container-low px-8 py-12 text-center text-sm font-bold text-on-surface-variant">
+              هنوز برنامه‌ای پخش نشده است.
+            </div>
+          )}
         </div>
       </section>
     </div>

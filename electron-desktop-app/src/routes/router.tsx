@@ -12,6 +12,7 @@ import { ProgramDetailsPage } from "../features/programs/ProgramDetailsPage";
 import { ProgramCategoryPage } from "../features/programCategories/ProgramCategoryPage";
 import { TrackDetailsPage } from "../features/tracks/TrackDetailsPage";
 import { ModeTracksPage } from "../features/modes/ModeTracksPage";
+import { RecentTracksPage } from "../features/recent/RecentTracksPage";
 
 function PlaceholderPage({ title }: { title: string }) {
   return (
@@ -40,7 +41,7 @@ const routes = [
   createRoute({ getParentRoute: () => rootRoute, path: "/favorite-singers", component: () => <PlaceholderPage title="خواننده‌های مورد علاقه" /> }),
   createRoute({ getParentRoute: () => rootRoute, path: "/favorite-players", component: () => <PlaceholderPage title="نوازندگان مورد علاقه" /> }),
   createRoute({ getParentRoute: () => rootRoute, path: "/popular", component: () => <PlaceholderPage title="محبوب‌ترین برنامه‌ها" /> }),
-  createRoute({ getParentRoute: () => rootRoute, path: "/recent", component: () => <PlaceholderPage title="شنیده شده‌های اخیر" /> }),
+  createRoute({ getParentRoute: () => rootRoute, path: "/recent", component: RecentTracksPage }),
   createRoute({ getParentRoute: () => rootRoute, path: "/search", component: SearchPage }),
   createRoute({ getParentRoute: () => rootRoute, path: "/search-results", component: SearchResultsPage }),
   createRoute({ getParentRoute: () => rootRoute, path: "/settings", component: SettingsPage }),

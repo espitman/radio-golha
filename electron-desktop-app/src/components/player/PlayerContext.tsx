@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { getTrackDetail } from "../../lib/coreApi";
+import { pushRecentTrack } from "../../lib/recentTracks";
 
 export type PlayerTrack = {
   id?: number | string;
@@ -242,10 +243,14 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
           audio.currentTime = 0;
         }
 
-        audio.play().catch(() => {
-          setIsPlaying(false);
-          setIsLoading(false);
-        });
+        audio.play()
+          .then(() => {
+            pushRecentTrack(playableTrack);
+          })
+          .catch(() => {
+            setIsPlaying(false);
+            setIsLoading(false);
+          });
       })
       .catch(() => {
         setIsPlaying(false);
