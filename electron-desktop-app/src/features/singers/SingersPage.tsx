@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ArtistCard } from "../../components/artist/ArtistCard";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ArtistsListPageSkeleton } from "../../components/skeleton/Skeletons";
 import { getSingers, type CoreHomeArtist } from "../../lib/coreApi";
 
 const alphabet = ["همه", "الف", "ب", "پ", "ت", "ج", "چ", "ح", "خ", "د", "ر", "ز", "س", "ش", "ع", "ق", "م", "ن", "و", "ه", "ی"];
@@ -41,7 +42,7 @@ export function SingersPage() {
   }, []);
 
   if (error) return <div className="mx-auto max-w-5xl px-12 py-12 text-right text-sm font-bold text-on-error-container">{error}</div>;
-  if (!singers) return <div className="mx-auto max-w-5xl px-12 py-12 text-right text-sm font-bold text-on-surface-variant">در حال بارگذاری...</div>;
+  if (!singers) return <ArtistsListPageSkeleton tabs="letters" />;
 
   const visibleSingers = singers.filter((singer) => singerMatchesLetter(singer, activeLetter));
 

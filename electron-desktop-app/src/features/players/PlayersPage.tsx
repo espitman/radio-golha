@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ArtistCard } from "../../components/artist/ArtistCard";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ArtistsListPageSkeleton } from "../../components/skeleton/Skeletons";
 import { getMusicians, type CoreHomeMusician } from "../../lib/coreApi";
 
 function normalizeInstrument(value: string) {
@@ -27,7 +28,7 @@ export function PlayersPage() {
   }, []);
 
   if (error) return <div className="mx-auto max-w-5xl px-12 py-12 text-right text-sm font-bold text-on-error-container">{error}</div>;
-  if (!players) return <div className="mx-auto max-w-5xl px-12 py-12 text-right text-sm font-bold text-on-surface-variant">در حال بارگذاری...</div>;
+  if (!players) return <ArtistsListPageSkeleton tabs="instruments" />;
 
   const instruments = [
     "همه",

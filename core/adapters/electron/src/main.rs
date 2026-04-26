@@ -12,6 +12,13 @@ struct LimitPayload {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+struct TopSearchPayload {
+    query: String,
+    limit: Option<i64>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct ArtistPayload {
     artist_id: i64,
 }
@@ -87,6 +94,10 @@ fn run() -> Result<(), String> {
             write_json(&radiogolha_tauri_adapter::get_track_detail(&db_path, payload.program_id)?)?
         }
         "get-search-options" => write_json(&radiogolha_tauri_adapter::get_search_options(&db_path)?)?,
+        "top-bar-search" => {
+            let payload: TopSearchPayload = parse_payload()?;
+            write_json(&radiogolha_tauri_adapter::top_bar_search(&db_path, &payload.query, payload.limit.unwrap_or(10))?)?
+        }
         "search-programs" => {
             let payload: SearchProgramsPayload = parse_payload()?;
             write_json(&radiogolha_tauri_adapter::search_programs(&db_path, payload)?)?

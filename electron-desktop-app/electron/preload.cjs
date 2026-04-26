@@ -10,5 +10,6 @@ contextBridge.exposeInMainWorld("radioGolhaCore", {
   getProgramTracks: (programId) => ipcRenderer.invoke("core:getProgramTracks", programId),
   getTrackDetail: (programId) => ipcRenderer.invoke("core:getTrackDetail", programId),
   getSearchOptions: () => ipcRenderer.invoke("core:getSearchOptions"),
+  topBarSearch: (query, limit) => ipcRenderer.invoke("core:topBarSearch", query, limit),
   searchPrograms: (payload) => ipcRenderer.invoke("core:searchPrograms", payload),
 });

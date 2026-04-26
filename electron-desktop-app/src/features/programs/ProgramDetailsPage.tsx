@@ -1,5 +1,6 @@
 import { useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { BannerTracksPageSkeleton } from "../../components/skeleton/Skeletons";
 import { TrackList } from "../../components/track/TrackRow";
 import { getProgramTracks, type CoreProgramTracks } from "../../lib/coreApi";
 
@@ -32,7 +33,7 @@ export function ProgramDetailsPage() {
   }, [numericProgramId]);
 
   if (error) return <div className="mx-auto max-w-5xl px-12 py-12 text-right text-sm font-bold text-on-error-container">{error}</div>;
-  if (!program) return <div className="mx-auto max-w-5xl px-12 py-12 text-right text-sm font-bold text-on-surface-variant">در حال بارگذاری...</div>;
+  if (!program) return <BannerTracksPageSkeleton />;
 
   const tracks = program.tracks.map((track) => ({
     id: track.id,

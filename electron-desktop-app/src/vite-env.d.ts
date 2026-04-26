@@ -10,6 +10,7 @@ import type {
   CoreSearchOptions,
   CoreSearchPayload,
   CoreSearchResponse,
+  CoreTopBarSearchResult,
   CoreTrack,
   CoreTrackDetail,
 } from "./lib/coreApi";
@@ -26,6 +27,7 @@ declare global {
       getProgramTracks: (programId: number) => Promise<CoreProgramTracks | null>;
       getTrackDetail: (programId: number) => Promise<CoreTrackDetail | null>;
       getSearchOptions: () => Promise<CoreSearchOptions | null>;
+      topBarSearch: (query: string, limit?: number) => Promise<CoreTopBarSearchResult[] | null>;
       searchPrograms: (payload: CoreSearchPayload) => Promise<CoreSearchResponse | null>;
     };
   }

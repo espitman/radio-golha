@@ -1,5 +1,6 @@
 import { useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { BannerTracksPageSkeleton } from "../../components/skeleton/Skeletons";
 import { TrackList, type TrackRowData } from "../../components/track/TrackRow";
 import { getModes, searchPrograms, type CoreMode, type CoreProgramListItem } from "../../lib/coreApi";
 
@@ -49,7 +50,7 @@ export function ModeTracksPage() {
   }, [numericModeId]);
 
   if (error) return <div className="mx-auto max-w-5xl px-12 py-12 text-right text-sm font-bold text-on-error-container">{error}</div>;
-  if (!tracks) return <div className="mx-auto max-w-5xl px-12 py-12 text-right text-sm font-bold text-on-surface-variant">در حال بارگذاری...</div>;
+  if (!tracks) return <BannerTracksPageSkeleton titleWidth="w-52" />;
 
   const title = mode?.name ?? "دستگاه / آواز";
 

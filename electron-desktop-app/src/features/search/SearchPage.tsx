@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { SearchFormSkeleton } from "../../components/skeleton/Skeletons";
 import { getSearchOptions, type CoreSearchOptions, type CoreSearchPayload } from "../../lib/coreApi";
 
 type MatchMode = "all" | "any";
@@ -368,7 +369,7 @@ export function SearchPage() {
   }
 
   if (error) return <div className="mx-auto max-w-5xl px-12 py-12 text-right text-sm font-bold text-on-error-container">{error}</div>;
-  if (!searchOptions) return <div className="mx-auto max-w-5xl px-12 py-12 text-right text-sm font-bold text-on-surface-variant">در حال بارگذاری...</div>;
+  if (!searchOptions) return <SearchFormSkeleton />;
 
   const dynamicFilters = filters.map((filter) => {
     switch (filter.id) {

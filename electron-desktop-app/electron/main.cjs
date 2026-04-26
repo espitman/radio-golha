@@ -81,6 +81,7 @@ ipcMain.handle("core:getArtistDetail", async (_event, artistId) => runCoreComman
 ipcMain.handle("core:getProgramTracks", async (_event, programId) => runCoreCommand("get-program-tracks", { programId }));
 ipcMain.handle("core:getTrackDetail", async (_event, programId) => runCoreCommand("get-track-detail", { programId }));
 ipcMain.handle("core:getSearchOptions", async () => runCoreCommand("get-search-options"));
+ipcMain.handle("core:topBarSearch", async (_event, query, limit) => runCoreCommand("top-bar-search", { query, limit }));
 ipcMain.handle("core:searchPrograms", async (_event, payload) => runCoreCommand("search-programs", payload));
 
 app.whenReady().then(() => {

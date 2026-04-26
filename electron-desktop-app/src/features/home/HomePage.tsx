@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArtistCard } from "../../components/artist/ArtistCard";
+import { HomeSkeleton } from "../../components/skeleton/Skeletons";
 import { TrackList } from "../../components/track/TrackRow";
 import { getHomeData, type CoreHomePayload } from "../../lib/coreApi";
 
@@ -43,7 +44,9 @@ const recentTracks = [
   { title: "کاروان", subtitle: "غلامحسین بنان", duration: "۰۶:۳۰" },
 ];
 
-function SectionHeader({ title, showAll = true, refresh = false }: { title: string; showAll?: boolean; refresh?: boolean }) {
+type HomeShowAllRoute = "/archive" | "/singers" | "/players" | "/recent" | "/popular";
+
+function SectionHeader({ title, showAllTo, refresh = false }: { title: string; showAllTo?: HomeShowAllRoute; refresh?: boolean }) {
   return (
     <div className="mb-8 flex items-end justify-between">
       <h3 className="text-3xl font-bold text-primary">{title}</h3>
@@ -51,11 +54,11 @@ function SectionHeader({ title, showAll = true, refresh = false }: { title: stri
         <button className="text-secondary transition-transform duration-500 hover:rotate-180">
           <span className="material-symbols-outlined">refresh</span>
         </button>
-      ) : showAll ? (
-        <a className="flex items-center gap-1 font-medium text-secondary transition-all hover:gap-2" href="#">
+      ) : showAllTo ? (
+        <Link className="flex items-center gap-1 font-medium text-secondary transition-all hover:gap-2" to={showAllTo}>
           مشاهده همه
           <span className="material-symbols-outlined text-sm">arrow_back</span>
-        </a>
+        </Link>
       ) : null}
     </div>
   );
@@ -104,7 +107,7 @@ export function HomePage() {
   }
 
   if (!homeData) {
-    return <div className="mx-auto max-w-5xl px-12 py-12 text-right text-sm font-bold text-on-surface-variant">در حال بارگذاری...</div>;
+    return <HomeSkeleton />;
   }
 
   const dynamicPrograms = homeData.programs.slice(0, 4).map((program, index) => ({
@@ -180,7 +183,7 @@ export function HomePage() {
       </section>
 
       <section className="mx-auto max-w-5xl px-12 py-12">
-        <SectionHeader title="خوانندگان برجسته" />
+        <SectionHeader title="خوانندگان برجسته" showAllTo="/singers" />
         <div className="grid grid-cols-4 gap-8">
           {dynamicSingers.map((artist) => <ArtistCard key={artist.name} artist={{ id: artist.id, name: artist.name, subtitle: artist.role, image: artist.image, alt: artist.alt }} />)}
         </div>
@@ -203,7 +206,7 @@ export function HomePage() {
       </section>
 
       <section className="mx-auto max-w-5xl px-12 py-12">
-        <SectionHeader title="نوازندگان برجسته" />
+        <SectionHeader title="نوازندگان برجسته" showAllTo="/players" />
         <div className="grid grid-cols-4 gap-8">
           {dynamicPlayers.map((artist) => <ArtistCard key={artist.name} artist={{ id: artist.id, name: artist.name, subtitle: artist.role, image: artist.image, alt: artist.alt }} />)}
         </div>
@@ -211,11 +214,11 @@ export function HomePage() {
 
       <section className="mx-auto grid max-w-5xl grid-cols-12 gap-12 px-12 py-12">
         <div className="col-span-6">
-          <SectionHeader title="برترین برنامه‌ها" showAll={false} refresh />
+          <SectionHeader title="برترین برنامه‌ها" refresh />
           <TrackList tracks={dynamicTopTracks} />
         </div>
         <div className="col-span-6">
-          <SectionHeader title="شنیده شده‌های اخیر" showAll={false} />
+          <SectionHeader title="شنیده شده‌های اخیر" showAllTo="/recent" />
           <TrackList tracks={recentTracks} playShape="square" />
         </div>
       </section>

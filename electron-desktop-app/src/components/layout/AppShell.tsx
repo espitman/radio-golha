@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import clsx from "clsx";
+import { HeaderQuickSearch } from "./HeaderQuickSearch";
 import { BottomPlayer } from "../player/BottomPlayer";
 
 const sideItems = [
@@ -127,15 +128,7 @@ export function AppShell() {
           </div>
 
           <div className="app-no-drag-region flex items-center gap-6">
-            <div className="relative group">
-              <input
-                className="w-64 rounded-full border-none bg-surface-container-low px-10 py-2 pr-10 text-right text-sm outline-none transition-all focus:ring-1 focus:ring-secondary/30"
-                dir="rtl"
-                placeholder="جستجو در آرشیو..."
-                type="text"
-              />
-              <span className="material-symbols-outlined absolute right-3 top-2 text-xl text-primary/40">search</span>
-            </div>
+            <HeaderQuickSearch />
             <button
               className={clsx(
                 "grid h-[30px] w-[30px] place-items-center rounded-full bg-surface-container-low transition-colors",

@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { usePlayer } from "../../components/player/PlayerContext";
+import { TrackListSkeleton } from "../../components/skeleton/Skeletons";
 import { searchPrograms, type CoreSearchPayload, type CoreSearchResponse } from "../../lib/coreApi";
 
 type SearchChip = {
@@ -166,9 +167,7 @@ export function SearchResultsPage() {
         </div>
 
         {isLoading ? (
-          <div className="rounded-2xl border border-outline-variant/20 bg-surface-container-low px-8 py-12 text-center text-sm font-bold text-on-surface-variant">
-            در حال بارگذاری نتایج...
-          </div>
+          <TrackListSkeleton count={7} />
         ) : result?.rows.length ? (
           <div className="overflow-hidden rounded-2xl border border-outline-variant/20 bg-surface-container-low shadow-sm">
             <div className="divide-y divide-on-surface/5">

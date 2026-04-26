@@ -96,6 +96,17 @@ pub struct ProgramTracksPayload {
     pub tracks: Vec<TrackItem>,
 }
 
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TopBarSearchResult {
+    pub kind: String,
+    pub id: i64,
+    pub title: String,
+    pub subtitle: String,
+    pub avatar: Option<String>,
+    pub track_id: Option<i64>,
+}
+
 #[derive(Debug, Clone, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct SearchProgramsPayload {
@@ -220,6 +231,111 @@ pub fn get_modes(db_path: &str) -> AdapterResult<Vec<HomeModeItem>> {
 pub fn get_search_options(db_path: &str) -> AdapterResult<ProgramSearchOptions> {
     let core = open_core(db_path)?;
     core.program_search_options().map_err(|error| error.to_string())
+}
+
+pub fn top_bar_search(db_path: &str, query: &str, limit: i64) -> AdapterResult<Vec<TopBarSearchResult>> {
+    let trimmed = query.trim();
+    if trimmed.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let safe_limit = if limit <= 0 { 10 } else { limit.min(30) };
+    let like = format!("%{}%", trimmed);
+    let starts_with = format!("{}%", trimmed);
+    let core = open_core(db_path)?;
+    let conn = core.connection();
+
+    let mut stmt = conn.prepare(
+        "
+        WITH artist_hits AS (
+            SELECT
+                'artist' AS kind,
+                a.id AS id,
+                a.name AS title,
+                CASE
+                    WHEN EXISTS (SELECT 1 FROM singer s WHERE s.artist_id = a.id) THEN 'خواننده'
+                    WHEN EXISTS (SELECT 1 FROM performer p WHERE p.artist_id = a.id) THEN COALESCE(
+                        (
+                            SELECT 'نوازنده ' || i.name
+                            FROM program_performers pp
+                            JOIN performer p2 ON p2.id = pp.performer_id
+                            LEFT JOIN instrument i ON i.id = pp.instrument_id
+                            WHERE p2.artist_id = a.id
+                              AND i.name IS NOT NULL
+                              AND TRIM(i.name) <> ''
+                            GROUP BY i.id, i.name
+                            ORDER BY COUNT(*) DESC, i.name ASC
+                            LIMIT 1
+                        ),
+                        'نوازنده'
+                    )
+                    WHEN EXISTS (SELECT 1 FROM poet p WHERE p.artist_id = a.id) THEN 'شاعر'
+                    WHEN EXISTS (SELECT 1 FROM announcer n WHERE n.artist_id = a.id) THEN 'گوینده'
+                    WHEN EXISTS (SELECT 1 FROM composer c WHERE c.artist_id = a.id) THEN 'آهنگساز'
+                    WHEN EXISTS (SELECT 1 FROM arranger r WHERE r.artist_id = a.id) THEN 'تنظیم‌کننده'
+                    WHEN EXISTS (SELECT 1 FROM orchestra_leader l WHERE l.artist_id = a.id) THEN 'رهبر ارکستر'
+                    ELSE 'هنرمند'
+                END AS subtitle,
+                a.avatar AS avatar,
+                NULL AS track_id,
+                CASE WHEN a.name LIKE ?2 THEN 0 ELSE 1 END AS rank,
+                0 AS kind_priority
+            FROM artist a
+            WHERE a.name LIKE ?1
+            LIMIT ?3
+        ),
+        track_hits AS (
+            SELECT
+                'track' AS kind,
+                p.id AS id,
+                COALESCE(NULLIF(TRIM(p.title), ''), 'برنامه ' || p.no) AS title,
+                COALESCE(
+                    (
+                        SELECT GROUP_CONCAT(name, ' و ')
+                        FROM (
+                            SELECT DISTINCT a2.name AS name
+                            FROM program_singers ps
+                            JOIN singer s ON s.id = ps.singer_id
+                            JOIN artist a2 ON a2.id = s.artist_id
+                            WHERE ps.program_id = p.id
+                            ORDER BY a2.name ASC
+                        )
+                    ),
+                    'ناشناس'
+                ) AS subtitle,
+                NULL AS avatar,
+                p.id AS track_id,
+                CASE WHEN COALESCE(p.title, '') LIKE ?2 THEN 0 ELSE 1 END AS rank,
+                1 AS kind_priority
+            FROM program p
+            WHERE COALESCE(p.title, '') LIKE ?1
+            LIMIT ?3
+        )
+        SELECT kind, id, title, subtitle, avatar, track_id
+        FROM (
+            SELECT * FROM artist_hits
+            UNION ALL
+            SELECT * FROM track_hits
+        )
+        ORDER BY rank ASC, kind_priority ASC, title ASC
+        LIMIT ?3
+        ",
+    ).map_err(|error| error.to_string())?;
+
+    stmt
+        .query_map((like, starts_with, safe_limit), |row| {
+            Ok(TopBarSearchResult {
+                kind: row.get(0)?,
+                id: row.get(1)?,
+                title: row.get(2)?,
+                subtitle: row.get(3)?,
+                avatar: row.get(4)?,
+                track_id: row.get(5)?,
+            })
+        })
+        .map_err(|error| error.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|error| error.to_string())
 }
 
 pub fn search_programs(db_path: &str, payload: SearchProgramsPayload) -> AdapterResult<ProgramSearchResponse> {

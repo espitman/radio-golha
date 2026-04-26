@@ -1,6 +1,7 @@
 import { useParams } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { ArtistCard } from "../../components/artist/ArtistCard";
+import { TrackDetailsSkeleton } from "../../components/skeleton/Skeletons";
 import { getTrackDetail, type CoreTimelineSegment, type CoreTrackDetail } from "../../lib/coreApi";
 
 function MetaBlock({ label, value, bordered = false }: { label: string; value: string; bordered?: boolean }) {
@@ -82,7 +83,7 @@ export function TrackDetailsPage() {
   }, [detail]);
 
   if (error) return <div className="mx-auto max-w-5xl px-12 py-12 text-right text-sm font-bold text-on-error-container">{error}</div>;
-  if (!detail) return <div className="mx-auto max-w-5xl px-12 py-12 text-right text-sm font-bold text-on-surface-variant">در حال بارگذاری...</div>;
+  if (!detail) return <TrackDetailsSkeleton />;
 
   const portrait = detail.singers.find((artist) => artist.avatar)?.avatar || artists.find((artist) => artist.avatar)?.avatar;
 

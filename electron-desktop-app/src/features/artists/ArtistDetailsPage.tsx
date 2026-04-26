@@ -1,5 +1,6 @@
 import { useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { ArtistDetailsSkeleton } from "../../components/skeleton/Skeletons";
 import { TrackList } from "../../components/track/TrackRow";
 import { getArtistDetail, type CoreArtistDetail } from "../../lib/coreApi";
 
@@ -29,7 +30,7 @@ export function ArtistDetailsPage() {
   }, [numericArtistId]);
 
   if (error) return <div className="mx-auto max-w-5xl px-12 py-12 text-right text-sm font-bold text-on-error-container">{error}</div>;
-  if (!artist) return <div className="mx-auto max-w-5xl px-12 py-12 text-right text-sm font-bold text-on-surface-variant">در حال بارگذاری...</div>;
+  if (!artist) return <ArtistDetailsSkeleton />;
 
   const tracks = artist.tracks.map((track) => ({
     id: track.id,

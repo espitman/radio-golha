@@ -95,6 +95,15 @@ export type CoreSearchResponse = {
   totalPages: number;
 };
 
+export type CoreTopBarSearchResult = {
+  kind: "artist" | "track";
+  id: number;
+  title: string;
+  subtitle: string;
+  avatar?: string | null;
+  trackId?: number | null;
+};
+
 export type CoreArtistCredit = {
   artistId?: number | null;
   name: string;
@@ -175,6 +184,7 @@ type ElectronCoreBridge = {
   getProgramTracks: (programId: number) => Promise<CoreProgramTracks | null>;
   getTrackDetail: (programId: number) => Promise<CoreTrackDetail | null>;
   getSearchOptions: () => Promise<CoreSearchOptions | null>;
+  topBarSearch: (query: string, limit?: number) => Promise<CoreTopBarSearchResult[] | null>;
   searchPrograms: (payload: CoreSearchPayload) => Promise<CoreSearchResponse | null>;
 };
 
@@ -313,6 +323,183 @@ export function getTrackDetail(programId: number) {
 
 export function getSearchOptions() {
   return withFallback(async () => bridge()?.getSearchOptions(), fallbackSearchOptions);
+}
+
+function normalizePersianText(value: string) {
+  return value.trim().replace(/ي/g, "ی").replace(/ك/g, "ک").toLocaleLowerCase("fa-IR");
+}
+
+function scoreSearchMatch(value: string, query: string) {
+  if (value.startsWith(query)) return 0;
+  const wordHit = value.split(/\s+/).some((part) => part.startsWith(query));
+  if (wordHit) return 1;
+  return 2;
+}
+
+let cachedTopBarArtistPoolPromise: Promise<CoreTopBarSearchResult[]> | null = null;
+
+const topBarRolePriority = {
+  singer: 0,
+  performer: 1,
+  poet: 2,
+  announcer: 3,
+  composer: 4,
+  arranger: 5,
+  orchestraLeader: 6,
+} as const;
+
+type TopBarRoleKind = keyof typeof topBarRolePriority;
+
+function rankTopBarRole(kind: TopBarRoleKind) {
+  return topBarRolePriority[kind];
+}
+
+async function loadTopBarArtistPool() {
+  if (!cachedTopBarArtistPoolPromise) {
+    cachedTopBarArtistPoolPromise = Promise.all([getSearchOptions(), getSingers(), getMusicians()])
+      .then(([options, singers, musicians]) => {
+        const singerByName = new Map<string, CoreHomeArtist>();
+        const musicianByName = new Map<string, CoreHomeMusician>();
+        const mergedByName = new Map<string, { result: CoreTopBarSearchResult; role: TopBarRoleKind }>();
+
+        singers.forEach((artist) => {
+          singerByName.set(normalizePersianText(artist.name), artist);
+        });
+
+        musicians.forEach((artist) => {
+          musicianByName.set(normalizePersianText(artist.name), artist);
+        });
+
+        const append = (items: CoreSearchOption[], role: TopBarRoleKind, subtitle: string, resolveSubtitle?: (item: CoreSearchOption) => string) => {
+          items.forEach((item) => {
+            const normalizedName = normalizePersianText(item.name);
+            const singer = singerByName.get(normalizedName);
+            const musician = musicianByName.get(normalizedName);
+            const nextSubtitle = resolveSubtitle?.(item) ?? subtitle;
+            const existing = mergedByName.get(normalizedName);
+            if (!existing || rankTopBarRole(role) < rankTopBarRole(existing.role)) {
+              mergedByName.set(normalizedName, {
+                role,
+                result: {
+                  kind: "artist",
+                  id: singer?.id ?? musician?.id ?? item.id,
+                  title: item.name,
+                  subtitle: nextSubtitle,
+                  avatar: singer?.avatar ?? musician?.avatar ?? null,
+                  trackId: null,
+                },
+              });
+            }
+          });
+        };
+
+        append(options.singers, "singer", "خواننده");
+        append(options.performers, "performer", "نوازنده", (item) => {
+          const instrument = musicianByName.get(normalizePersianText(item.name))?.instrument?.trim();
+          return instrument ? instrument : "نوازنده";
+        });
+        append(options.poets, "poet", "شاعر");
+        append(options.announcers, "announcer", "گوینده");
+        append(options.composers, "composer", "آهنگساز");
+        append(options.arrangers, "arranger", "تنظیم‌کننده");
+        append(options.orchestraLeaders, "orchestraLeader", "رهبر ارکستر");
+
+        return Array.from(mergedByName.values()).map((entry) => entry.result);
+      })
+      .catch(() => {
+        return [
+          ...fallbackHome.singers.map((artist) => ({
+            kind: "artist" as const,
+            id: artist.id,
+            title: artist.name,
+            subtitle: "خواننده",
+            avatar: artist.avatar,
+            trackId: null,
+          })),
+          ...fallbackHome.musicians.map((artist) => ({
+            kind: "artist" as const,
+            id: artist.id,
+            title: artist.name,
+            subtitle: artist.instrument || "نوازنده",
+            avatar: artist.avatar,
+            trackId: null,
+          })),
+        ];
+      });
+  }
+
+  return cachedTopBarArtistPoolPromise;
+}
+
+async function fallbackTopBarSearch(query: string, limit: number) {
+  const normalized = normalizePersianText(query);
+  if (!normalized) return [];
+
+  const [artistPool, searchResponse] = await Promise.all([
+    loadTopBarArtistPool(),
+    searchPrograms({ transcriptQuery: query, page: 1 }).catch(() => ({
+      rows: fallbackTracks.map((track) => ({
+        id: track.id,
+        title: track.title,
+        categoryName: "گلها",
+        no: track.id,
+        duration: track.duration,
+        audioUrl: track.audioUrl,
+        artist: track.artist,
+      })),
+      total: fallbackTracks.length,
+      page: 1,
+      totalPages: 1,
+    })),
+  ]);
+
+  const artists = artistPool
+    .filter((item) => normalizePersianText(item.title).includes(normalized))
+    .sort((left, right) => {
+      const leftScore = scoreSearchMatch(normalizePersianText(left.title), normalized);
+      const rightScore = scoreSearchMatch(normalizePersianText(right.title), normalized);
+      if (leftScore !== rightScore) return leftScore - rightScore;
+      return left.title.localeCompare(right.title, "fa-IR");
+    });
+
+  const seenTracks = new Set<number>();
+  const tracks = searchResponse.rows
+    .filter((row) => {
+      const rowNormalizedTitle = normalizePersianText(row.title);
+      if (!rowNormalizedTitle.includes(normalized)) return false;
+      if (seenTracks.has(row.id)) return false;
+      seenTracks.add(row.id);
+      return true;
+    })
+    .map((row) => ({
+      kind: "track" as const,
+      id: row.id,
+      title: row.title,
+      subtitle: row.artist || "ناشناس",
+      avatar: null,
+      trackId: row.id,
+    }))
+    .sort((left, right) => {
+      const leftScore = scoreSearchMatch(normalizePersianText(left.title), normalized);
+      const rightScore = scoreSearchMatch(normalizePersianText(right.title), normalized);
+      if (leftScore !== rightScore) return leftScore - rightScore;
+      return left.title.localeCompare(right.title, "fa-IR");
+    });
+
+  return [...artists, ...tracks].slice(0, limit);
+}
+
+export async function topBarSearch(query: string, limit = 10) {
+  try {
+    const payload = await bridge()?.topBarSearch(query, limit);
+    if (payload) {
+      return payload;
+    }
+  } catch {
+    // Older Electron main/preload processes may not expose the latest IPC handler yet.
+  }
+
+  return fallbackTopBarSearch(query, limit);
 }
 
 export function searchPrograms(payload: CoreSearchPayload) {
