@@ -23,6 +23,12 @@ type PlayerContextValue = {
 };
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
+const PLAYER_STORAGE_KEY = "radioGolha.playerState";
+
+type StoredPlayerState = {
+  track: PlayerTrack;
+  currentTime: number;
+};
 
 function toAbsoluteAudioUrl(value: string) {
   try {
@@ -43,8 +49,34 @@ function parseDuration(value: string) {
   return 0;
 }
 
+function readStoredPlayerState(): StoredPlayerState | null {
+  try {
+    const raw = localStorage.getItem(PLAYER_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as StoredPlayerState;
+    if (!parsed.track?.title) return null;
+    return {
+      track: parsed.track,
+      currentTime: Math.max(0, Number(parsed.currentTime) || 0),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredPlayerState(track: PlayerTrack, currentTime: number) {
+  localStorage.setItem(
+    PLAYER_STORAGE_KEY,
+    JSON.stringify({
+      track,
+      currentTime: Math.max(0, currentTime),
+    } satisfies StoredPlayerState),
+  );
+}
+
 export function PlayerProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const pendingRestoreTimeRef = useRef<number | null>(null);
   const [currentTrack, setCurrentTrack] = useState<PlayerTrack | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -57,7 +89,18 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     audioRef.current = audio;
 
     const updateTime = () => setCurrentTime(audio.currentTime || 0);
-    const updateDuration = () => setDuration(Number.isFinite(audio.duration) ? audio.duration : 0);
+    const restorePendingTime = () => {
+      const pendingTime = pendingRestoreTimeRef.current;
+      if (pendingTime == null) return;
+      const safeDuration = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : Number.MAX_SAFE_INTEGER;
+      audio.currentTime = Math.max(0, Math.min(pendingTime, safeDuration));
+      setCurrentTime(audio.currentTime || pendingTime);
+      pendingRestoreTimeRef.current = null;
+    };
+    const updateDuration = () => {
+      setDuration(Number.isFinite(audio.duration) ? audio.duration : 0);
+      restorePendingTime();
+    };
     const markLoading = () => setIsLoading(true);
     const markReady = () => setIsLoading(false);
     const markPlaying = () => {
@@ -77,6 +120,18 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     audio.addEventListener("pause", markPaused);
     audio.addEventListener("ended", markEnded);
 
+    const storedState = readStoredPlayerState();
+    if (storedState) {
+      setCurrentTrack(storedState.track);
+      setCurrentTime(storedState.currentTime);
+      setDuration(parseDuration(storedState.track.duration));
+      if (storedState.track.audioUrl) {
+        pendingRestoreTimeRef.current = storedState.currentTime;
+        audio.src = toAbsoluteAudioUrl(storedState.track.audioUrl);
+        audio.load();
+      }
+    }
+
     return () => {
       audio.pause();
       audio.removeEventListener("timeupdate", updateTime);
@@ -91,6 +146,24 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       audioRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    if (!currentTrack) return;
+    writeStoredPlayerState(currentTrack, currentTime);
+  }, [currentTime, currentTrack]);
+
+  useEffect(() => {
+    const persistBeforeClose = () => {
+      if (!currentTrack) return;
+      writeStoredPlayerState(currentTrack, audioRef.current?.currentTime || currentTime);
+    };
+    window.addEventListener("beforeunload", persistBeforeClose);
+    window.addEventListener("pagehide", persistBeforeClose);
+    return () => {
+      window.removeEventListener("beforeunload", persistBeforeClose);
+      window.removeEventListener("pagehide", persistBeforeClose);
+    };
+  }, [currentTime, currentTrack]);
 
   const playTrack = useCallback((track: PlayerTrack) => {
     const audio = audioRef.current;
