@@ -87,7 +87,7 @@ export function TrackDetailsPage() {
   const portrait = detail.singers.find((artist) => artist.avatar)?.avatar || artists.find((artist) => artist.avatar)?.avatar;
 
   return (
-    <main className="mx-auto max-w-5xl px-12 pb-32 pt-12">
+    <main className="mx-auto max-w-5xl px-12 pb-[144px] pt-12">
       <section className="mb-20 flex flex-col items-stretch gap-12 md:flex-row-reverse">
         <div className="w-full md:w-1/3">
           <div className="relative aspect-square overflow-hidden rounded-xl bg-surface-container-high shadow-2xl">

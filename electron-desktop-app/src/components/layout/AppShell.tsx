@@ -80,7 +80,7 @@ export function AppShell() {
         </div>
       </aside>
 
-      <main ref={contentRef} className="shamseh-pattern relative mr-64 h-screen overflow-y-auto pb-32">
+      <main ref={contentRef} className="shamseh-pattern relative mr-64 h-screen overflow-y-auto">
         <header className="app-drag-region sticky top-0 z-40 flex h-24 w-full items-center justify-between bg-surface/80 px-12 pt-4 backdrop-blur-xl">
           <div className="app-no-drag-region flex items-center gap-10">
             <nav className="flex gap-6">

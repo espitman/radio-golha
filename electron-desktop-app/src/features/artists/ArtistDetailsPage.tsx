@@ -36,10 +36,12 @@ export function ArtistDetailsPage() {
     title: track.title,
     subtitle: track.artist,
     duration: track.duration,
+    audioUrl: track.audioUrl,
+    artworkUrls: track.singerAvatars,
   }));
 
   return (
-    <div className="mx-auto max-w-5xl px-12 pb-32 pt-12 text-right">
+    <div className="mx-auto max-w-5xl px-12 pb-[144px] pt-12 text-right">
       <section className="grid grid-cols-12 items-end gap-10 pb-12">
         <div className="group relative col-span-4 aspect-square overflow-hidden rounded-lg bg-surface-container-high">
           {artist.avatar ? (

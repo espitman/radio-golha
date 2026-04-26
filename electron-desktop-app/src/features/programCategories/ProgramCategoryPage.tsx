@@ -9,6 +9,7 @@ function toTrackRow(row: CoreProgramListItem): TrackRowData {
     title: row.title,
     subtitle: row.artist || row.categoryName,
     duration: row.duration || "نامشخص",
+    audioUrl: row.audioUrl,
   };
 }
 
@@ -50,7 +51,7 @@ export function ProgramCategoryPage() {
   const title = category?.titleFa ?? "برنامه‌ها";
 
   return (
-    <main className="pb-32 pt-12">
+    <main className="pb-[144px] pt-12">
       <div className="mx-auto max-w-5xl px-12">
         <section className="hero-pattern relative flex h-[260px] w-full items-end justify-center overflow-hidden rounded-3xl bg-primary">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(210,167,56,0.25),transparent_35%),linear-gradient(135deg,rgba(9,47,83,0.95),rgba(6,32,58,0.98))]" />

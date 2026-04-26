@@ -3,6 +3,7 @@ import { AppShell } from "../components/layout/AppShell";
 import { PageHeader } from "../components/layout/PageHeader";
 import { HomePage } from "../features/home/HomePage";
 import { SearchPage } from "../features/search/SearchPage";
+import { SearchResultsPage } from "../features/search/SearchResultsPage";
 import { SingersPage } from "../features/singers/SingersPage";
 import { PlayersPage } from "../features/players/PlayersPage";
 import { SettingsPage } from "../features/settings/SettingsPage";
@@ -13,7 +14,7 @@ import { TrackDetailsPage } from "../features/tracks/TrackDetailsPage";
 
 function PlaceholderPage({ title }: { title: string }) {
   return (
-    <section className="mx-auto max-w-5xl px-12 pb-32 pt-8 text-right">
+    <section className="mx-auto max-w-5xl px-12 pb-[144px] pt-8 text-right">
       <PageHeader title={title} subtitle="این route آماده است و در فاز بعدی به دیتابیس و کامپوننت‌های اصلی وصل می‌شود." />
     </section>
   );
@@ -40,6 +41,7 @@ const routes = [
   createRoute({ getParentRoute: () => rootRoute, path: "/popular", component: () => <PlaceholderPage title="محبوب‌ترین برنامه‌ها" /> }),
   createRoute({ getParentRoute: () => rootRoute, path: "/recent", component: () => <PlaceholderPage title="شنیده شده‌های اخیر" /> }),
   createRoute({ getParentRoute: () => rootRoute, path: "/search", component: SearchPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: "/search-results", component: SearchResultsPage }),
   createRoute({ getParentRoute: () => rootRoute, path: "/settings", component: SettingsPage }),
   createRoute({ getParentRoute: () => rootRoute, path: "/help", component: () => <PlaceholderPage title="راهنما" /> }),
   createRoute({ getParentRoute: () => rootRoute, path: "/archive", component: () => <PlaceholderPage title="آرشیو" /> }),

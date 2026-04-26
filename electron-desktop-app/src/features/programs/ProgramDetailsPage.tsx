@@ -39,10 +39,12 @@ export function ProgramDetailsPage() {
     title: track.title,
     subtitle: track.artist,
     duration: track.duration,
+    audioUrl: track.audioUrl,
+    artworkUrls: track.singerAvatars,
   }));
 
   return (
-    <main className="program-detail-content pb-32 pt-12">
+    <main className="program-detail-content pb-[144px] pt-12">
       <div className="mx-auto max-w-5xl px-12">
         <section className="hero-pattern relative flex h-[360px] w-full items-end justify-center overflow-hidden rounded-3xl bg-primary">
           <div className="absolute inset-0">

@@ -1,4 +1,6 @@
 import { Link } from "@tanstack/react-router";
+import type { MouseEvent } from "react";
+import { usePlayer } from "../player/PlayerContext";
 
 export type TrackRowData = {
   title: string;
@@ -6,6 +8,8 @@ export type TrackRowData = {
   duration: string;
   to?: string;
   id?: number | string;
+  audioUrl?: string | null;
+  artworkUrls?: string[];
 };
 
 type TrackRowProps = {
@@ -15,7 +19,17 @@ type TrackRowProps = {
   isPlaying?: boolean;
 };
 
-function PlayButton({ shape = "circle", isPlaying = false }: { shape?: "circle" | "square"; isPlaying?: boolean }) {
+function PlayButton({
+  shape = "circle",
+  isPlaying = false,
+  isLoading = false,
+  onClick,
+}: {
+  shape?: "circle" | "square";
+  isPlaying?: boolean;
+  isLoading?: boolean;
+  onClick: (event: MouseEvent<HTMLButtonElement>) => void;
+}) {
   return (
     <button
       className={
@@ -23,9 +37,12 @@ function PlayButton({ shape = "circle", isPlaying = false }: { shape?: "circle" 
           ? "flex h-10 w-10 items-center justify-center rounded-lg bg-primary/5 text-secondary transition-all group-hover:bg-secondary group-hover:text-white"
           : "flex h-10 w-10 items-center justify-center rounded-full bg-primary/5 text-primary transition-all group-hover:bg-secondary group-hover:text-white"
       }
+      onClick={onClick}
       type="button"
     >
-      <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>{isPlaying ? "pause" : "play_arrow"}</span>
+      <span className={`material-symbols-outlined text-xl ${isLoading ? "animate-spin" : ""}`} style={{ fontVariationSettings: "'FILL' 1" }}>
+        {isLoading ? "progress_activity" : isPlaying ? "pause" : "play_arrow"}
+      </span>
     </button>
   );
 }
@@ -33,9 +50,31 @@ function PlayButton({ shape = "circle", isPlaying = false }: { shape?: "circle" 
 type TrackContentProps = Required<Pick<TrackRowProps, "track" | "playShape" | "isPlaying">>;
 
 function TrackContent({ track, playShape, isPlaying }: TrackContentProps) {
+  const player = usePlayer();
+  const isCurrentTrack = player.currentTrack?.id != null && String(player.currentTrack.id) === String(track.id ?? track.to ?? track.title);
+  const displayPlaying = isCurrentTrack && player.isPlaying;
+  const displayLoading = isCurrentTrack && player.isLoading;
+
+  function handlePlay(event: MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (isCurrentTrack && track.audioUrl) {
+      player.togglePlayPause();
+      return;
+    }
+    player.playTrack({
+      id: track.id ?? track.to ?? track.title,
+      title: track.title,
+      subtitle: track.subtitle,
+      duration: track.duration,
+      audioUrl: track.audioUrl,
+      artworkUrls: track.artworkUrls,
+    });
+  }
+
   return (
     <>
-      <PlayButton shape={playShape} isPlaying={isPlaying} />
+      <PlayButton shape={playShape} isPlaying={displayPlaying || isPlaying} isLoading={displayLoading} onClick={handlePlay} />
       <div className="flex-1 text-right">
         <Link
           to="/tracks/$trackId"

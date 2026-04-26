@@ -2,7 +2,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 
 export function SettingsPage() {
   return (
-    <section className="mx-auto max-w-5xl px-12 pb-32 pt-8 text-right">
+    <section className="mx-auto max-w-5xl px-12 pb-[144px] pt-8 text-right">
       <PageHeader title="تنظیمات" />
       <div className="mt-8 rounded-[28px] bg-white/55 p-7 shadow-sm">
         <h2 className="text-xl font-black">به‌روزرسانی دیتابیس</h2>

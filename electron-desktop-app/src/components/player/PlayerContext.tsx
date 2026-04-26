@@ -1,0 +1,173 @@
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+
+export type PlayerTrack = {
+  id?: number | string;
+  title: string;
+  subtitle: string;
+  duration: string;
+  audioUrl?: string | null;
+  artworkUrls?: string[];
+};
+
+type PlayerContextValue = {
+  currentTrack: PlayerTrack | null;
+  isPlaying: boolean;
+  isLoading: boolean;
+  currentTime: number;
+  duration: number;
+  progress: number;
+  playTrack: (track: PlayerTrack) => void;
+  togglePlayPause: () => void;
+  seekBy: (seconds: number) => void;
+  seekToProgress: (progress: number) => void;
+};
+
+const PlayerContext = createContext<PlayerContextValue | null>(null);
+
+function toAbsoluteAudioUrl(value: string) {
+  try {
+    return new URL(value, window.location.href).href;
+  } catch {
+    return value;
+  }
+}
+
+function parseDuration(value: string) {
+  const normalized = value
+    .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+    .replace(/\s/g, "");
+  const parts = normalized.split(":").map((part) => Number(part));
+  if (parts.some((part) => !Number.isFinite(part))) return 0;
+  if (parts.length === 2) return parts[0] * 60 + parts[1];
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  return 0;
+}
+
+export function PlayerProvider({ children }: { children: ReactNode }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [currentTrack, setCurrentTrack] = useState<PlayerTrack | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  useEffect(() => {
+    const audio = new Audio();
+    audio.preload = "metadata";
+    audioRef.current = audio;
+
+    const updateTime = () => setCurrentTime(audio.currentTime || 0);
+    const updateDuration = () => setDuration(Number.isFinite(audio.duration) ? audio.duration : 0);
+    const markLoading = () => setIsLoading(true);
+    const markReady = () => setIsLoading(false);
+    const markPlaying = () => {
+      setIsPlaying(true);
+      setIsLoading(false);
+    };
+    const markPaused = () => setIsPlaying(false);
+    const markEnded = () => setIsPlaying(false);
+
+    audio.addEventListener("timeupdate", updateTime);
+    audio.addEventListener("durationchange", updateDuration);
+    audio.addEventListener("loadedmetadata", updateDuration);
+    audio.addEventListener("loadstart", markLoading);
+    audio.addEventListener("waiting", markLoading);
+    audio.addEventListener("canplay", markReady);
+    audio.addEventListener("playing", markPlaying);
+    audio.addEventListener("pause", markPaused);
+    audio.addEventListener("ended", markEnded);
+
+    return () => {
+      audio.pause();
+      audio.removeEventListener("timeupdate", updateTime);
+      audio.removeEventListener("durationchange", updateDuration);
+      audio.removeEventListener("loadedmetadata", updateDuration);
+      audio.removeEventListener("loadstart", markLoading);
+      audio.removeEventListener("waiting", markLoading);
+      audio.removeEventListener("canplay", markReady);
+      audio.removeEventListener("playing", markPlaying);
+      audio.removeEventListener("pause", markPaused);
+      audio.removeEventListener("ended", markEnded);
+      audioRef.current = null;
+    };
+  }, []);
+
+  const playTrack = useCallback((track: PlayerTrack) => {
+    const audio = audioRef.current;
+    setCurrentTrack(track);
+    setCurrentTime(0);
+    setDuration(parseDuration(track.duration));
+
+    if (!audio || !track.audioUrl) {
+      setIsPlaying(false);
+      setIsLoading(false);
+      return;
+    }
+
+    const nextSource = toAbsoluteAudioUrl(track.audioUrl);
+    const isSameSource = audio.src === nextSource;
+    if (!isSameSource) {
+      setIsLoading(true);
+      audio.src = nextSource;
+      audio.currentTime = 0;
+    }
+
+    audio.play().catch(() => {
+      setIsPlaying(false);
+      setIsLoading(false);
+    });
+  }, []);
+
+  const togglePlayPause = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio || !currentTrack?.audioUrl) return;
+    if (audio.paused) {
+      setIsLoading(true);
+      audio.play().catch(() => {
+        setIsPlaying(false);
+        setIsLoading(false);
+      });
+    } else {
+      audio.pause();
+    }
+  }, [currentTrack]);
+
+  const seekToProgress = useCallback((nextProgress: number) => {
+    const audio = audioRef.current;
+    const safeDuration = audio?.duration && Number.isFinite(audio.duration) ? audio.duration : duration || parseDuration(currentTrack?.duration ?? "");
+    if (!audio || !safeDuration) return;
+    const clamped = Math.max(0, Math.min(1, nextProgress));
+    audio.currentTime = clamped * safeDuration;
+    setCurrentTime(audio.currentTime);
+  }, [currentTrack?.duration, duration]);
+
+  const seekBy = useCallback((seconds: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const safeDuration = Number.isFinite(audio.duration) ? audio.duration : duration;
+    audio.currentTime = Math.max(0, Math.min(safeDuration || Number.MAX_SAFE_INTEGER, audio.currentTime + seconds));
+    setCurrentTime(audio.currentTime);
+  }, [duration]);
+
+  const effectiveDuration = duration || parseDuration(currentTrack?.duration ?? "");
+  const value = useMemo<PlayerContextValue>(() => ({
+    currentTrack,
+    isPlaying,
+    isLoading,
+    currentTime,
+    duration: effectiveDuration,
+    progress: effectiveDuration > 0 ? currentTime / effectiveDuration : 0,
+    playTrack,
+    togglePlayPause,
+    seekBy,
+    seekToProgress,
+  }), [currentTrack, currentTime, effectiveDuration, isLoading, isPlaying, playTrack, seekBy, seekToProgress, togglePlayPause]);
+
+  return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
+}
+
+export function usePlayer() {
+  const context = useContext(PlayerContext);
+  if (!context) throw new Error("usePlayer must be used within PlayerProvider");
+  return context;
+}

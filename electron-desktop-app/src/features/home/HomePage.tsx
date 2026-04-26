@@ -134,10 +134,12 @@ export function HomePage() {
     title: track.title,
     subtitle: track.artist,
     duration: track.duration,
+    audioUrl: track.audioUrl,
+    artworkUrls: track.singerAvatars,
   }));
 
   return (
-    <>
+    <div className="pb-[96px]">
       <section className="mx-auto max-w-5xl px-12 py-8">
         <Link
           to="/program-categories/$categoryId"
@@ -216,6 +218,6 @@ export function HomePage() {
           <TrackList tracks={recentTracks} playShape="square" />
         </div>
       </section>
-    </>
+    </div>
   );
 }

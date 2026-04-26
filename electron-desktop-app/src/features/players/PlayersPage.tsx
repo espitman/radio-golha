@@ -39,7 +39,7 @@ export function PlayersPage() {
       : players.filter((player) => normalizeInstrument(player.instrument) === activeInstrument);
 
   return (
-    <div className="mx-auto max-w-5xl px-12 pb-32 pt-8">
+    <div className="mx-auto max-w-5xl px-12 pb-[144px] pt-8">
       <PageHeader title="نوازندگان" subtitle="فهرست مشاهیر موسیقی اصیل ایرانی و نوازندگان برجسته برنامه‌های گلها به تفکیک تخصص و ساز." />
 
       <div className="no-scrollbar mb-12 overflow-x-auto">

@@ -46,7 +46,7 @@ export function SingersPage() {
   const visibleSingers = singers.filter((singer) => singerMatchesLetter(singer, activeLetter));
 
   return (
-    <div className="mx-auto max-w-5xl px-12 pb-32 pt-8">
+    <div className="mx-auto max-w-5xl px-12 pb-[144px] pt-8">
       <PageHeader title="خوانندگان" subtitle="فهرست جامع اساتید، خوانندگان و نوازندگان تاریخ رادیو گلها به ترتیب حروف الفبا." />
 
       <div className="no-scrollbar mb-12 overflow-x-auto">
