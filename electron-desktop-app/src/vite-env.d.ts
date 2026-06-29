@@ -29,7 +29,6 @@ declare global {
       getSearchOptions: () => Promise<CoreSearchOptions | null>;
       topBarSearch: (query: string, limit?: number) => Promise<CoreTopBarSearchResult[] | null>;
       searchPrograms: (payload: CoreSearchPayload) => Promise<CoreSearchResponse | null>;
-      showFavoriteArtistContextMenu: (payload: { x: number; y: number; isFavorite: boolean }) => Promise<"toggle" | null>;
     };
   }
 }
