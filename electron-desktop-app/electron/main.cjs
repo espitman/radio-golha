@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, Menu } = require("electron");
 const { execFile } = require("child_process");
 const path = require("path");
 
@@ -83,6 +83,35 @@ ipcMain.handle("core:getTrackDetail", async (_event, programId) => runCoreComman
 ipcMain.handle("core:getSearchOptions", async () => runCoreCommand("get-search-options"));
 ipcMain.handle("core:topBarSearch", async (_event, query, limit) => runCoreCommand("top-bar-search", { query, limit }));
 ipcMain.handle("core:searchPrograms", async (_event, payload) => runCoreCommand("search-programs", payload));
+ipcMain.handle("ui:showFavoriteArtistContextMenu", async (event, payload) => {
+  const targetWindow = BrowserWindow.fromWebContents(event.sender);
+  if (!targetWindow) return null;
+
+  return new Promise((resolve) => {
+    let resolved = false;
+    const finish = (value) => {
+      if (resolved) return;
+      resolved = true;
+      resolve(value);
+    };
+
+    const menu = Menu.buildFromTemplate([
+      {
+        id: "toggle-favorite-artist",
+        label: payload?.isFavorite ? "حذف از علاقه‌مندی‌ها" : "افزودن به علاقه‌مندی‌ها",
+        type: "normal",
+        click: () => finish("toggle"),
+      },
+    ]);
+
+    menu.popup({
+      window: targetWindow,
+      x: Math.round(Number(payload?.x) || 0),
+      y: Math.round(Number(payload?.y) || 0),
+      callback: () => finish(null),
+    });
+  });
+});
 
 app.whenReady().then(() => {
   createWindow();

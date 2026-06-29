@@ -12,4 +12,5 @@ contextBridge.exposeInMainWorld("radioGolhaCore", {
   getSearchOptions: () => ipcRenderer.invoke("core:getSearchOptions"),
   topBarSearch: (query, limit) => ipcRenderer.invoke("core:topBarSearch", query, limit),
   searchPrograms: (payload) => ipcRenderer.invoke("core:searchPrograms", payload),
+  showFavoriteArtistContextMenu: (payload) => ipcRenderer.invoke("ui:showFavoriteArtistContextMenu", payload),
 });
